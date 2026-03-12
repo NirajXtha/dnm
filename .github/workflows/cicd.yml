@@ -27,7 +27,7 @@ jobs:
         run: |
           $sln = (Get-ChildItem -Filter "*.sln" | Select-Object -First 1).FullName
           Write-Host "Restoring solution: $sln"
-          # Force restore even if it thinks they exist
+          # Explicitly pointing to the packages directory helps MSBuild resolve HintPaths
           nuget restore "$sln" -PackagesDirectory "${{ github.workspace }}\packages"
         shell: pwsh
 
@@ -41,16 +41,18 @@ jobs:
           $sln = (Get-ChildItem -Filter "*.sln" | Select-Object -First 1).FullName
           Write-Host "Building Solution: $sln"
 
-          # Building the SLN instead of CSPROJ ensures NeoErp.Data is built with correct references
+          # NOTE: "Any CPU" (with space) is required for .sln files 
+          # "AnyCPU" (no space) is usually for .csproj files
           msbuild "$sln" `
             /t:Rebuild `
             /p:Configuration=Release `
-            /p:Platform="AnyCPU" `
+            /p:Platform="Any CPU" `
             /p:VisualStudioVersion=17.0 `
+            /p:SolutionDir="${{ github.workspace }}\\" `
             /p:CscToolPath="$roslynPath" `
             /p:CscToolExe="csc.exe" `
             /p:RestorePackages=false `
-            /p:MaxCpuCount=1 `
+            /m `
             /verbosity:minimal
         shell: pwsh
 
@@ -60,17 +62,16 @@ jobs:
           $dest = "${{ github.workspace }}\publish"
           New-Item -ItemType Directory -Path $dest -Force | Out-Null
 
-          # Standard Folders
+          # Standard folders to copy
           $folders = @("Views","Content","Scripts","Images","fonts","js","Areas","App_Start")
           foreach ($folder in $folders) {
             $from = Join-Path $src $folder
-            $to   = Join-Path $dest $folder
             if (Test-Path $from) {
-              Copy-Item -Path $from -Destination $to -Recurse -Force
+              Copy-Item -Path $from -Destination (Join-Path $dest $folder) -Recurse -Force
             }
           }
 
-          # bin: Grab DLLs from the Web bin (where they end up after build)
+          # bin: Grab DLLs from the Web bin where they are compiled
           $binSrc  = "${{ github.workspace }}\NeoErp.Web\bin"
           $binDest = Join-Path $dest "bin"
           New-Item -ItemType Directory -Path $binDest -Force | Out-Null
@@ -81,7 +82,7 @@ jobs:
               ForEach-Object { Copy-Item -Path $_.FullName -Destination $binDest -Force }
           }
 
-          # Root-level files
+          # Root files
           $rootFiles = @("Web.config","Description.txt","ProductCondition.xml","packages.config")
           foreach ($file in $rootFiles) {
             $from = Join-Path $src $file
