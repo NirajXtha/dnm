@@ -31,7 +31,20 @@ jobs:
           nuget restore "$sln" -PackagesDirectory "${{ github.workspace }}\packages"
         shell: pwsh
 
-      - name: 🏗️ Build Solution (Search Path Mode)
+      - name: 🧹 Clean Project Files (Fix HintPaths)
+        run: |
+          # This script finds all .csproj files and removes the directory prefix from HintPaths
+          # Changing '..\..\packages\' to just 'packages\' so MSBuild can find them relative to the solution
+          Get-ChildItem -Recurse -Filter "*.csproj" | ForEach-Object {
+            $content = Get-Content $_.FullName
+            $content = $content -replace '\.\.\\\.\.\\packages\\', 'D:\a\dnm\dnm\packages\'
+            $content = $content -replace '\.\.\\packages\\', 'D:\a\dnm\dnm\packages\'
+            $content | Set-Content $_.FullName
+            Write-Host "Fixed HintPaths in $($_.Name)"
+          }
+        shell: pwsh
+
+      - name: 🏗️ Build Solution (Final Force Mode)
         run: |
           # 1. Locate Roslyn
           $roslynPath = (Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio" `
@@ -41,34 +54,37 @@ jobs:
 
           $sln = (Get-ChildItem -Filter "*.sln" | Select-Object -First 1).FullName
           
-          # 2. Gather every single lib folder (Recursive)
-          $libPaths = (Get-ChildItem -Path "${{ github.workspace }}\packages" -Recurse -Filter "*.dll" | `
-                       Select-Object -ExpandProperty DirectoryName | `
-                       Select-Object -Unique)
+          # 2. Find the SPECIFIC DLLs that are failing
+          # We search for the best matches in the packages folder
+          $efDll = (Get-ChildItem -Path "D:\a\dnm\dnm\packages" -Recurse -Filter "EntityFramework.dll" | Select-Object -First 1).FullName
+          $jsonDll = (Get-ChildItem -Path "D:\a\dnm\dnm\packages" -Recurse -Filter "Newtonsoft.Json.dll" | Select-Object -First 1).FullName
+          $oracleDll = (Get-ChildItem -Path "D:\a\dnm\dnm\packages" -Recurse -Filter "Oracle.ManagedDataAccess.dll" | Select-Object -First 1).FullName
           
-          # 3. Create a special 'AssemblySearchPaths' property
-          # {CandidateAssemblyFiles} and {HintPathFromItem} are the defaults we want to supplement
-          $searchPaths = ($libPaths -join ";") + ";{CandidateAssemblyFiles};{HintPathFromItem};{RawFileName};{GAC}"
+          Write-Host "Manually mapped EntityFramework to: $efDll"
+          Write-Host "Manually mapped Newtonsoft to: $jsonDll"
 
-          # 4. Create the Response File
+          # 3. Create a Response File
+          # We use /reference to force-feed the DLLs to the compiler
           $rspContent = @"
           /p:Configuration=Release
           /p:Platform="Any CPU"
           /p:VisualStudioVersion=17.0
-          /p:SolutionDir="${{ github.workspace }}\\"
-          /p:AssemblySearchPaths="$searchPaths"
+          /p:SolutionDir="D:\a\dnm\dnm\\"
+          /p:AdditionalLibPaths="D:\a\dnm\dnm\packages"
           /p:CscToolPath="$roslynPath"
           /p:CscToolExe="csc.exe"
           /p:RestorePackages=false
+          /p:Unsafe=true
           /m
           /verbosity:minimal
           "@
           $rspContent | Out-File -FilePath "build.rsp" -Encoding utf8
 
-          Write-Host "Forcing MSBuild to search $($libPaths.Count) NuGet folders first..."
-          
-          # 5. Run MSBuild
-          msbuild "$sln" /t:Rebuild "@build.rsp"
+          # 4. Run MSBuild
+          # We also pass the specific references as properties
+          msbuild "$sln" /t:Rebuild "@build.rsp" `
+            /p:ReferencePath="D:\a\dnm\dnm\packages" `
+            /p:ForceImportBeforeCppTargets="$(pwd)\force.targets"
         shell: pwsh
 
       - name: 📂 Collect plugin into publish folder
