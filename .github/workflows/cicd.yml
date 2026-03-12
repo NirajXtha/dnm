@@ -23,19 +23,23 @@ jobs:
       - name: 🔧 Setup NuGet
         uses: NuGet/setup-nuget@v2
 
-      # This step is critical. It links the packages to the MSBuild context.
+      # Automatically finds the .sln file and restores it
       - name: 📦 Restore NuGet Packages
-        run: nuget restore NeoErp.sln  # <-- Replace with your actual Solution file name (.sln)
+        run: |
+          $sln = (Get-ChildItem -Filter "*.sln" | Select-Object -First 1).FullName
+          Write-Host "Restoring solution: $sln"
+          nuget restore "$sln"
+        shell: pwsh
 
       - name: 🏗️ Build NeoErp.Web (Release)
         run: |
-          # Dynamically find the Roslyn path for modern C# features
+          # Find Roslyn compiler path
           $roslynPath = (Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio" `
             -Recurse -Filter "csc.exe" | `
             Where-Object { $_.FullName -match "Roslyn" } | `
             Select-Object -First 1).DirectoryName
 
-          # Identify the project to build
+          # Find the Web project
           $csproj = (Get-ChildItem -Recurse -Filter "NeoErp.Web.csproj" | Select-Object -First 1).FullName
           Write-Host "Building project: $csproj"
 
@@ -58,7 +62,7 @@ jobs:
 
           New-Item -ItemType Directory -Path $dest -Force | Out-Null
 
-          # Copy Standard Folders
+          # Standard Folders
           $folders = @("Views","Content","Scripts","Images","fonts","js","Areas","App_Start")
           foreach ($folder in $folders) {
             $from = Join-Path $src $folder
@@ -69,18 +73,19 @@ jobs:
             }
           }
 
-          # bin: only NeoErp.Distribution DLLs from the build output
-          # Note: We look in NeoErp.Web\bin because that's where MSBuild outputs the final binaries
+          # bin: focus on output DLLs
           $binSrc  = "${{ github.workspace }}\NeoErp.Web\bin"
           $binDest = Join-Path $dest "bin"
           New-Item -ItemType Directory -Path $binDest -Force | Out-Null
 
-          Get-ChildItem -Path $binSrc -File |
-            Where-Object { $_.Name -match '^NeoErp\.Distribution' } |
-            ForEach-Object {
-              Write-Host "Copying DLL: $($_.Name)"
-              Copy-Item -Path $_.FullName -Destination $binDest -Force
-            }
+          if (Test-Path $binSrc) {
+            Get-ChildItem -Path $binSrc -File |
+              Where-Object { $_.Name -match '^NeoErp\.Distribution' } |
+              ForEach-Object {
+                Write-Host "Copying DLL: $($_.Name)"
+                Copy-Item -Path $_.FullName -Destination $binDest -Force
+              }
+          }
 
           # Root-level files
           $rootFiles = @(
