@@ -46,6 +46,7 @@ jobs:
     #       $sln = (Get-ChildItem -Recurse -Filter "*.sln" | Select-Object -First 1).FullName
     #       nuget restore $sln -PackagesDirectory "${{ github.workspace }}\packages" -Source "${{ github.workspace }}\packages"
     #     shell: pwsh
+
       - name: 🔍 Verify packages on runner
         run: |
           Write-Host "=== Does packages folder exist? ==="
@@ -63,6 +64,29 @@ jobs:
           Write-Host "`n=== packages folder size ==="
           (Get-ChildItem "${{ github.workspace }}\packages" -Recurse | Measure-Object).Count
         shell: pwsh
+        
+      - name: 🧹 Clean solution
+        run: |
+          $roslynPath = (Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio" `
+            -Recurse -Filter "csc.exe" | `
+            Where-Object { $_.FullName -match "Roslyn" } | `
+            Select-Object -First 1).DirectoryName
+
+          $csproj = (Get-ChildItem -Recurse -Filter "*.csproj" | `
+            Where-Object { $_.FullName -match "NeoErp.Web" } | `
+            Select-Object -First 1).FullName
+          Write-Host "Cleaning project: $csproj"
+
+          msbuild $csproj `
+            /t:Clean `
+            /p:Configuration=Release `
+            /p:Platform="AnyCPU" `
+            /p:SolutionDir="${{ github.workspace }}\\" `
+            /p:CscToolPath="$roslynPath" `
+            /p:CscToolExe="csc.exe" `
+            /verbosity:minimal
+        shell: pwsh
+
       - name: 🏗️ Build NeoErp.Web (Release)
         run: |
           $roslynPath = (Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio" `
@@ -73,33 +97,12 @@ jobs:
           $csproj = (Get-ChildItem -Recurse -Filter "*.csproj" | `
             Where-Object { $_.FullName -match "NeoErp.Web" } | `
             Select-Object -First 1).FullName
-          Write-Host "Found project: $csproj"
+          Write-Host "Building project: $csproj"
 
           msbuild $csproj `
+            /t:Rebuild `
             /p:Configuration=Release `
             /p:Platform="AnyCPU" `
-            /p:VisualStudioVersion=17.0 `
-            /p:RestorePackages=false `
-            /p:SolutionDir="${{ github.workspace }}\\" `
-            /p:CscToolPath="$roslynPath" `
-            /p:CscToolExe="csc.exe" `
-            /m `
-            /verbosity:minimal
-        shell: pwsh
-
-      - name: 🏗️ Build full solution (Release)
-        run: |
-          $roslynPath = (Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio" `
-            -Recurse -Filter "csc.exe" | `
-            Where-Object { $_.FullName -match "Roslyn" } | `
-            Select-Object -First 1).DirectoryName
-
-          $sln = (Get-ChildItem -Recurse -Filter "*.sln" | Select-Object -First 1).FullName
-          Write-Host "Found solution: $sln"
-
-          msbuild $sln `
-            /p:Configuration=Release `
-            /p:Platform="Any CPU" `
             /p:VisualStudioVersion=17.0 `
             /p:RestorePackages=false `
             /p:SolutionDir="${{ github.workspace }}\\" `
