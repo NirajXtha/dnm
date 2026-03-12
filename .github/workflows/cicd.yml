@@ -31,30 +31,40 @@ jobs:
           nuget restore "$sln" -PackagesDirectory "${{ github.workspace }}\packages"
         shell: pwsh
 
-      - name: 🏗️ Build Solution
+      - name: 🏗️ Build Solution (Aggressive Reference Mode)
         run: |
-          # Find Roslyn compiler
+          # 1. Locate Roslyn
           $roslynPath = (Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio" `
             -Recurse -Filter "csc.exe" | `
             Where-Object { $_.FullName -match "Roslyn" } | `
             Select-Object -First 1).DirectoryName
 
+          # 2. Find the Solution file
           $sln = (Get-ChildItem -Filter "*.sln" | Select-Object -First 1).FullName
-          Write-Host "Building Solution: $sln"
+          
+          # 3. AGGRESSIVE: Find every folder inside /packages that contains a .dll
+          # This bypasses broken "..\..\packages" paths in your .csproj files
+          Write-Host "Searching for DLL libraries in packages folder..."
+          $libPaths = (Get-ChildItem -Path "${{ github.workspace }}\packages" -Recurse -Filter "*.dll" | `
+                       Select-Object -ExpandProperty DirectoryName | `
+                       Select-Object -Unique)
+          
+          $refPath = $libPaths -join ";"
+          Write-Host "Injecting $($libPaths.Count) unique library paths into MSBuild."
 
-          # Use MSBuild with explicit package overrides
-          # The key is ReferencePath, which tells MSBuild where to look for DLLs 
-          # when the HintPath in the .csproj is wrong.
+          # 4. Run MSBuild
+          # ReferencePath: Overrides the HintPath inside the project files
+          # SolutionDir: Ensures $(SolutionDir) macros resolve to the root
           msbuild "$sln" `
             /t:Rebuild `
             /p:Configuration=Release `
             /p:Platform="Any CPU" `
             /p:VisualStudioVersion=17.0 `
             /p:SolutionDir="${{ github.workspace }}\\" `
-            /p:ReferencePath="${{ github.workspace }}\packages" `
-            /p:NuGetPackagesDirectory="${{ github.workspace }}\packages" `
+            /p:ReferencePath="$refPath" `
             /p:CscToolPath="$roslynPath" `
             /p:CscToolExe="csc.exe" `
+            /p:RestorePackages=false `
             /m `
             /verbosity:minimal
         shell: pwsh
