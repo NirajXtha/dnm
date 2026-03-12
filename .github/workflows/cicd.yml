@@ -20,31 +20,14 @@ jobs:
       - name: 🔧 Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: 🔧 Setup NuGet
-        uses: NuGet/setup-nuget@v2
-        with:
-          nuget-version: 'latest'
-
-      - name: 🗃️ Cache NuGet packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.nuget/packages
-            ${{ github.workspace }}/**/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('**/packages.config', '**/*.csproj') }}
-          restore-keys: |
-            nuget-${{ runner.os }}-
-
-      - name: 📦 Restore NuGet packages
-        run: nuget restore **/*.sln
-        shell: pwsh
-
       - name: 🏗️ Build full solution (Release)
         run: |
           msbuild **/*.sln `
             /p:Configuration=Release `
             /p:Platform="Any CPU" `
             /p:VisualStudioVersion=17.0 `
+            /p:RestorePackages=false `
+            /p:SolutionDir="${{ github.workspace }}\\" `
             /m `
             /verbosity:minimal
         shell: pwsh
