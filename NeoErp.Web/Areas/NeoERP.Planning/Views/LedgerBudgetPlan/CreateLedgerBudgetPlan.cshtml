@@ -1,0 +1,1092 @@
+﻿@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@using NeoErp.Core.Models;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+    ViewBag.Title = "Create Plan";
+    Layout = null;
+    string plancode = ViewBag.PlanCode;
+    string productSelectionLimit = string.Empty;
+    productSelectionLimit = ViewBag.productSelectionLimit;
+}
+<style>
+    .customdesign label {
+        font-size: 13px;
+    }
+
+    .k-grid {
+        font-size: 11px;
+    }
+
+    .customdesign .form-control {
+        padding: 3.5px 5px !important;
+        height: auto !important;
+    }
+
+    .k-autocomplete.k-state-default, .k-picker-wrap.k-state-default, .k-numeric-wrap.k-state-default, .k-dropdown-wrap.k-state-default {
+        background-color: #fafafa;
+    }
+
+    .input-group.input-medium.date-picker.input-daterange {
+        width: 100% !important;
+    }
+
+    .datefilter > label {
+        text-align: left;
+    }
+
+    fieldset {
+        border: 1px solid #aaa;
+        border-radius: 5px;
+    }
+
+
+
+    .treeViewField {
+        min-height: 170px;
+    }
+
+    .md-radio-inline > div {
+        padding: 0px 10px 0px 0px;
+        float: left;
+    }
+
+    #productTab .k-group.k-treeview-lines {
+        max-height: 700px !important;
+    }
+</style>
+<script src="~/Areas/NeoERP.Planning/Scripts/jquery.maskedinput.min.js"></script>
+<script src="~/Areas/NeoERP.Planning/Scripts/DateFilter.js"></script>
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+            @*<li>
+                    <i class="fa fa-home"></i>
+                    <a href="/Distribution/Home/Dashboard#!Distribution/">Home</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>
+                <li>
+                    <a href="#">Group Setup</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>*@
+        </ul>
+    </div>
+
+</div>
+<div class="col-md-12">
+    <div id="LedgerBudgetCtrl" class="portlet light form-fit1 bordered common">
+        <div class="portlet-title">
+            <div class="caption">
+                <i class="fa fa-list-alt font-green-haze"></i>
+                <span class="caption-subject font-green-haze bold uppercase">
+                    {{pageName}}
+                </span>
+            </div>
+            <span class="pull-right">
+                <button type="button" id="addplan" name="addplan" class="btn btn-primary btn-sm">[+] Add</button>
+            </span>
+            <span class="actions pull-right" id="controlbuttons">
+                <button type="button" id="cancelBudgetplan" name="cancelBudgetplan" class="btn btn-default btn-circle btn-sm"><i class="fa fa-times"></i> Cancel</button>
+                <button type="button" id="resetplan" name="resetplan" class="btn btn-warning btn-circle btn-sm"><i class="fa fa-refresh"></i> Reset</button>
+                <button type="button" id="btngenerateplan" name="next" class="btn btn-primary btn-circle btn-sm">
+                    <i class="fa fa-caret-right"></i> Next
+                </button>
+            </span>
+        </div>
+        <div class="portlet-body row">
+            <div class="customdesign" id="showFormPanel">
+                <form id="generateplan" name="generateplan" novalidate>
+                    <div class="col-md-6">
+                        <div class="columndivide">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label class="control-label">
+                                            Plan Name <span style="color:red" ng-show="generateplan.planName.$invalid">
+                                                <span ng-show="generateplan.planName.$error.required">*</span>
+                                            </span>
+                                        </label>
+                                        <input type="text" id="planName" name="planName" class="form-control input-sm" ng-model="planName" required />
+                                    </div>
+                                </div>
+                                <input type="hidden" id="plancode" ng-model="plancode" value="" />
+
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label class="control-label">
+                                            Frequency <span style="color:red" ng-show="generateplan.frequency.$invalid">
+                                                <span ng-show="generateplan.frequency.$error.required">*</span>
+                                            </span>
+                                        </label>
+                                        <input id="frequency" ng-model="frequency" name="frequency" style="width: 100%;" required />
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+
+                                    <label class="control-label">
+                                        Date Format :
+                                    </label>
+                                    <div>
+                                        <input type="radio" id="dateFormatAD" name="dateFormat" value="AD"
+                                               ng-model="dateFormat" ng-change="DateFormatChange()" class="">
+                                        <label for="dateFormatAD"> AD</label>
+                                        <input type="radio" id="dateFormatBS" name="dateFormat" value="BS"
+                                               ng-model="dateFormat" ng-change="DateFormatChange()" class="">
+                                        <label for="dateFormatBS"> BS </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- date field-->
+                            <div class="row">
+
+                            </div>
+                            <!-- date field-->
+                            <div class="row">
+
+                                @Html.Partial("~/Areas/NeoERP.Planning/Views/Shared/PlanningDateField.cshtml", true)
+
+                            </div>
+                            <div class="row">
+                                <div class="col-md-8 form-group">
+                                    <label class="control-label">Remarks</label>
+                                    <input type="text" id="remarks" name="remarks" class="form-control input-sm" ng-model="remarks" required />
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mulitiitem-select">
+                            <div class="form-group">
+                                <fieldset>
+                                    <legend class="planOption">Plan Options</legend>
+                                    <div class="col-md-6 form-group">
+                                        <label class="control-label">Select Account</label>
+                                        <select id="account"
+                                                k-ng-model="accvalue"
+                                                k-value-primitive="true"
+                                                kendo-drop-down-list style="width: 100%"
+                                                k-options="accountOptions"></select>
+                                    </div>
+                                    @*<div class="col-md-6 form-group">
+                                            <div ng-show="IsCustomerProduct">
+                                                <label class="control-label">Select branch</label>
+                                                <select id="branchs"
+                                                        k-ng-model="branchvalue"
+                                                        k-value-primitive="true"
+                                                        kendo-drop-down-list style="width: 100%"
+                                                        k-options="branchOptions"></select>
+                                            </div>
+                                        </div>*@
+                                    <div class="col-md-6 form-group" ng-show="divisionFlag=='Y'">
+                                            <label class="control-label">Select division</label>
+                                            <select id="divisions"
+                                                    k-ng-model="divisionvalue"
+                                                    k-value-primitive="true"
+                                                    kendo-drop-down-list style="width: 100%"
+                                                    k-options="divisionOptions"></select>
+                                    </div>
+                                </fieldset>
+                                <fieldset class="treeViewField">
+                                    <legend class="productMaster">Budget Center</legend>
+                                    <label class="control-label">Choose budget center from list.</label>
+
+                                    @Html.Partial("~/Areas/NeoERP.Planning/Views/LedgerBudgetPlan/_LBAFilter.cshtml")
+                                    @*@Html.Partial("~/Areas/NeoERP.Planning/Views/BudgetPlan/_COAFilter.cshtml")*@
+                                </fieldset>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="@Scripts.Url("~/Areas/NeoERP.Planning/Scripts/DateFilterWithADBS.js")" type="text/javascript"></script>
+<script src="@Scripts.Url("~/JS/ReportFilter.js")" type="text/javascript"></script>
+
+<script>
+
+
+
+
+    var nextDiffer = $.Deferred();
+
+    var productSelectionLimit = '@productSelectionLimit';
+    showloader();
+    var branchCode = '@workingContent.CurrentUserinformation.branch_code';
+    var user_no = '@workingContent.CurrentUserinformation.User_id';
+
+    var p_code = '@plancode';
+    $(document).ready(function () {
+        if (p_code != "") {
+            $('.form-wizard.custom-plantwizard ul>li').first().find('a').attr("href", "/Planning/Home/Index#!Planning/BudgetPlan/CreatePlan/" + p_code);
+            $('.form-wizard.custom-plantwizard ul>li').last().find('a').attr("href", "/Planning/Home/Index#!Planning/BudgetPlan/PlanSetup/" + p_code);
+        }
+        else {
+            setTimeout(function () {
+                var dateFormat = $('input[name=dateFormat]:checked').val();
+                if (dateFormat != "")
+                    DateFilter.init(dateFormat, getSelectedOption);
+                var frelist = $("#frequency_listbox li");
+                $.each(frelist, function (i, v) {
+                    if($(v).html().toUpperCase()!="MONTH")
+                        $(v).css("display", "none");
+                });
+                //ar = jQuery.grep(frelist, function (n) {
+                //    return $(n).html() == "MONTH";   //or n[1] for second item in two item array
+                //});
+            }, 1000);
+        }
+        setTimeout(function () {
+            var dateOptions = $('#ddlDateFilterVoucher option');
+            var check = $.grep(dateOptions, function (n, i) {
+                return n.value == 'Next Year';
+            });
+            if (check.length == 0) {
+                appendNextYear();
+            }
+        }, 1500);
+        $('.row.form-inline.colgap').addClass('hidden');
+        $("#productToggle").trigger('click');
+        BindFrequency();
+        //BindPlanType();
+        //BindPlanFor();
+        $("#showFormPanel").hide();
+        $('#controlbuttons').hide();
+        $("#showFormPanel").show();
+        $('#controlbuttons').show();
+        $("#addplan").hide();
+
+        //$.ajax({
+        //    type: "GET",
+        //    url: window.location.protocol + "//" + window.location.host + "/api/PlanApi/getEmployeeByUserId",
+        //    data: { userId: user_no }
+        //}).success(function (result) {
+        //    setTimeout(function () {
+        //        if (result.DATA != null)
+        //            $('#employees').data('kendoDropDownList').value(result.DATA);
+        //    }, 1000);
+        //}).fail(function (failEx) { }).error(function (err) { });
+        hideloader();
+    });
+    function appendNextYear() {
+        $.getJSON("/Areas/NeoERP.Planning/dateRange.json", {
+            format: "json"
+        }).done(function (data) {
+            $('#ddlDateFilterVoucher').append('<option value="Next Year" data-start-date="' + data.start_date + '" data-end-date="' + data.end_date + '">Next Year</option>');
+        });
+    }
+    function getSelectedOption() {
+        $(".dateFilterSelect").val('This Year');
+        $("#ddlDateFilterVoucher").trigger('change');
+    }
+
+    $('input[type=radio][name=dateFormat]').change(function () {
+        var dateFormat = $('input[name=dateFormat]:checked').val();
+        DateFilter.init(dateFormat, getSelectedOption)
+    });
+    $('input[name=radio2]:radio').on('change', function () {
+        var treeview = $('#productTreeView').data('kendoTreeView');
+        var nodeElement = $('#productTreeView').find('li[data-id="RM8675"]');
+        var node = treeview.dataItem(nodeElement);
+        treeview.select(nodeElement);
+        treeview.expandTo(node);
+    });
+
+    $('#addplan').on('click', function () {
+        $('#controlbuttons').show();
+        $("#addplan").hide();
+    });
+    $('#resetplan').on('click', function () {
+        clearfield();
+    });
+    $('#cancelBudgetplan').on('click', function () {
+        clearfield();
+        window.location = "/Planning/Home/Setup#!Planning/LedgerBudgetPlan";
+    });
+
+    function BindFrequency() {
+        var mainurl = window.location.protocol + "//" + window.location.host + "/api/PlanApi/GetAllFrequencyByFilters";
+        $("#frequency").kendoDropDownList({
+            optionLabel: "--Select Frequency--",
+            filter: "contains",
+            dataTextField: "TIME_FRAME_EDESC",
+            dataValueField: "TIME_FRAME_CODE",
+            suggest: true,
+            dataSource: {
+                type: "json",
+                serverFiltering: true,
+                transport: {
+                    read: {
+                        url: mainurl,
+                    },
+                    parameterMap: function (data, action) {
+
+                        if (data.filter != undefined) {
+                            if (data.filter.filters[0] != undefined) {
+                                var newParams = {
+                                    filter: data.filter.filters[0].value
+                                };
+                                return newParams;
+                            }
+                            else {
+                                var newParams = {
+                                    filter: ""
+                                };
+                                return newParams;
+                            }
+                        }
+                        else {
+                            var newParams = {
+                                filter: ""
+                            };
+                            return newParams;
+                        }
+                    }
+                }
+            },
+            dataBound: function (e) {
+                
+                var datalist = e.sender.dataSource.data();
+                this.select(3);
+            }
+        });
+    }
+
+    var parentLevetItems_toPush = [];
+    function pushinChildernItems(childernItems_push) {
+        $.each(childernItems_push, function (i, v) {
+            if (v.hasChildren) {
+                parentLevetItems_toPush.push(v.items);
+            }
+            else {
+                var isPresent = parentItemCode.filter(function (e) {
+                    return e.ITEM_CODE == v.ItemCode;
+                });
+                if (v.ItemCode != undefined && isPresent.length == 0) {
+                    var obj = {
+                        ITEM_EDESC: v.ItemName,
+                        ITEM_CODE: v.ItemCode,
+                        MASTER_ITEM_CODE: v.MasterItemCode,
+                        PRE_ITEM_CODE: v.PreItemCode,
+                        GROUP_SKU_FLAG: '',
+                        IS_CHILD_SELECTED: ''
+                    }
+                    parentItemCode.push(obj);
+                }
+            }
+        });
+
+        $.each(parentLevetItems_toPush, function (i, v) {
+            pushinChildernItems(v);
+        })
+    }
+
+    var parentLevelItems_toPop = [];
+    function popOutChildernItems(childernItems_remove) {
+        $.each(childernItems_remove, function (i, v) {
+            if (v.hasChildren) {
+                parentLevelItems_toPop.push(v.items);
+            }
+            else {
+                if (parentItemCode.filter(function (e) { return e.ITEM_CODE == v.ItemCode; }).length > 0) {
+                    var elementIndex = parentItemCode.map(function (x) { return x.ITEM_CODE; }).indexOf(v.ItemCode);
+                    parentItemCode.splice(elementIndex, 1);
+                }
+            }
+        });
+
+        $.each(parentLevelItems_toPop, function (i, v) {
+            popOutChildernItems(v);
+        })
+    }
+    var finalData = [];
+    var parentItemCode = [];
+    var checkedNodeOnly = [];
+    var checkedOnly = [];
+    var treeview = $('#COALedgerTreeview').data('kendoTreeView');
+
+    treeview.bind("check", tree_check);
+    function tree_check(e) {
+        var $this = this;
+        parentItemCode = [];
+        checkedNodeOnly = [];
+        treeView = $("#COALedgerTreeview").data("kendoTreeView");
+        productDataSource = treeView.dataSource.view();
+        getCheckedItems();
+        getGroupOfItem();
+        parentItemCode = _.uniq(parentItemCode, 'ITEM_CODE');
+        parentItemCode.sort(function (a, b) {
+            var a1 = parseInt(a.PRE_ITEM_CODE.split('.')[0]), b1 = parseInt(b.PRE_ITEM_CODE.split('.')[0]);
+            if (a1 == b1) return 0;
+            return a1 > b1 ? 1 : -1;
+        });
+
+        var productMultiselect = $("#productMultiselect").data("kendoMultiSelect");
+        var mvalue = productMultiselect.value();
+
+        if (e != undefined) {
+            var dataItemCustomerID = this.dataItem(e.node).ItemCode;
+            if (this.dataItem(e.node).checked == true) {
+                var res = [];
+                res.push(dataItemCustomerID);
+                res.forEach(function (dataItem) {
+                    var temp = $.merge($.merge([], mvalue), [dataItem]);
+                    temp = $.unique(temp);
+                    productMultiselect.value(temp);
+                    productMultiselect._savedOld = temp.slice(0)
+                });
+            }
+            if (this.dataItem(e.node).checked == false) {
+                mvalue.forEach(function (dataItem) {
+                    var temp = $.grep(mvalue, function (a) { return a == dataItemCustomerID });
+                    if (temp.length == 1) {
+                        var index = mvalue.indexOf(dataItemCustomerID);
+                        mvalue.splice(index, 1);
+                    }
+                    temp = $.unique(temp);
+                    productMultiselect.value(mvalue);
+                });
+            }
+        }
+        else {
+            if (checkedNodeOnly.length > 0) {
+                var res = [];
+                $.each(checkedNodeOnly, function (i, v) {
+                    res.push(v.ITEM_CODE);
+                })
+                //var temp = $.merge($.merge([], mvalue), [dataItem]);
+                var temp = $.unique(res);
+                productMultiselect.value(temp);
+                productMultiselect._savedOld = temp.slice(0);
+            }
+        }
+    };
+
+    function getGroupOfItem() {
+
+        var arrayTreeList = [];
+        var array = $("#COALedgerTreeview").data("kendoTreeView").dataItems();
+        createAllList(array);
+
+        function createAllList(arr) {
+            $.each(arr, function (i, val) {
+                if (arrayTreeList.indexOf(val) == -1) {
+                    arrayTreeList.push(val);
+                    if (val.items != undefined) {
+                        if (val.items.length > 0) {
+                            if (val.items) {
+                                createAllList(val.items)
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        var parentArr = [];
+        var getItem = function (allTreeData, preItemCode, ItemCode) {
+            _.each(arrayTreeList, function (i, e) {
+                if (ItemCode == i.ItemCode) {
+                    _.each(allTreeData, function (it, et) {
+                        if (i.PreItemCode == it.MasterItemCode) {
+                            if (parentArr.indexOf(it.ItemCode + '_X') == -1) {
+                                parentArr.push(it);
+                                if (it.PreItemCode != '999999')
+                                    getItem(arrayTreeList, it.PreItemCode, it.ItemCode);
+                            }
+                        }
+                    });
+                }
+            });
+        }
+        var productMultiselect = $("#productMultiselect").data("kendoMultiSelect");
+        var multi = productMultiselect.value();
+        _.each(parentItemCode, function (i, e) {
+            getItem(arrayTreeList, '999999', i.ITEM_CODE.toString());
+        });
+        _.each(parentArr.reverse(), function (i, e) {
+            parentItemCode.push({
+                ITEM_EDESC: i.ItemName,
+                ITEM_CODE: i.ItemCode,
+                MASTER_ITEM_CODE: i.MasterItemCode,
+                PRE_ITEM_CODE: i.PreItemCode,
+                GROUP_SKU_FLAG: '',
+                IS_CHILD_SELECTED: ''
+            });
+        })
+    }
+
+    function getCheckedItems() {
+        var treeView = $("#COALedgerTreeview").data("kendoTreeView");
+        var nodes = treeView.dataSource.view();
+        getCheckedNodes(nodes);
+    }
+    var cn = null;
+    function getCheckedNodes(nodes) {
+        var node, childCheckedNodes;
+        var checkedNodes = [];
+        for (var i = 0; i < nodes.length; i++) {
+            node = nodes[i];
+            if (node.checked) {
+                checkedNodes.push(node);
+                parentItemCode.push({
+                    ITEM_EDESC: node.ItemName,
+                    ITEM_CODE: node.ItemCode,
+                    MASTER_ITEM_CODE: node.MasterItemCode,
+                    PRE_ITEM_CODE: node.PreItemCode,
+                    GROUP_SKU_FLAG: '',
+                    IS_CHILD_SELECTED: ''
+                });
+                checkedNodeOnly.push({
+                    ITEM_EDESC: node.ItemName,
+                    ITEM_CODE: node.ItemCode,
+                    MASTER_ITEM_CODE: node.MasterItemCode,
+                    PRE_ITEM_CODE: node.PreItemCode,
+                    GROUP_SKU_FLAG: '',
+                    IS_CHILD_SELECTED: ''
+                })
+            }
+            if (node.hasChildren) {
+                childCheckedNodes = getCheckedNodes(node.children.view());
+                if (childCheckedNodes.length > 0) {
+                    checkedNodes = checkedNodes.concat(childCheckedNodes);
+                }
+            }
+        }
+        checkedNodeOnly = _.uniq(checkedNodeOnly, function (d) { return d.ITEM_CODE });
+        cn = checkedNodes;
+        return checkedNodes;
+    }
+
+    function SelectedItemTree(productDataSource, parentItemCode) {
+        $.each(productDataSource, function (i, e) {
+            var hasChecked = true;
+            if (e.dirty && e.hasChildren) {
+                var status;
+                hasChecked = checkMyNodeIsChecked(e, status);
+
+                if (hasChecked == 'checked')
+                    hasChecked = true;
+            }
+            else if (!e.checked) {
+                hasChecked = false;
+            }
+            if (hasChecked) {
+                if (productDataSource[i].dirty == true || productDataSource[i].checked == true) {
+                    var parentId = productDataSource[i].PreItemCode == "00" ? null : productDataSource[i].PreItemCode;
+                    if (productDataSource[i].items == null || productDataSource[i].items.length != 0) {
+                        checkedOnly.push({
+                            ITEM_EDESC: productDataSource[i].ItemName,
+                            ITEM_CODE: productDataSource[i].ItemCode,
+                            MASTER_ITEM_CODE: productDataSource[i].MasterItemCode,
+                            PRE_ITEM_CODE: productDataSource[i].PreItemCode,
+                            GROUP_SKU_FLAG: '',
+                            IS_CHILD_SELECTED: ''
+                        });
+                        parentItemCode.push({
+                            ITEM_EDESC: productDataSource[i].ItemName,
+                            ITEM_CODE: productDataSource[i].ItemCode,
+                            MASTER_ITEM_CODE: productDataSource[i].MasterItemCode,
+                            PRE_ITEM_CODE: productDataSource[i].PreItemCode,
+                            GROUP_SKU_FLAG: '',
+                            IS_CHILD_SELECTED: '',
+                        })
+                    }
+                    else {
+                        parentItemCode.push({
+                            ITEM_EDESC: productDataSource[i].ItemName,
+                            ITEM_CODE: productDataSource[i].ItemCode,
+                            MASTER_ITEM_CODE: productDataSource[i].MasterItemCode,
+                            PRE_ITEM_CODE: productDataSource[i].PreItemCode,
+                            GROUP_SKU_FLAG: '',
+                            IS_CHILD_SELECTED: ''
+                        })
+                    }
+                    SelectedItemTree(productDataSource[i].items, parentItemCode);
+                }
+            }
+        });
+    }
+
+    function checkedNodeIds(nodes, checkedNodes) {
+        for (var i = 0; i < nodes.length; i++) {
+            if (nodes[i].checked) {
+                checkedNodes.push(nodes[i].id);
+            }
+
+            if (nodes[i].hasChildren) {
+                checkedNodeIds(nodes[i].children.view(), checkedNodes);
+            }
+        }
+    }
+    function checkMyNodeIsChecked(nodeData, status) {
+        if (nodeData.checked == undefined && nodeData.hasChildren) {
+            for (var i = 0; i < nodeData.items.length; i++) {
+                if (status == 'checked') {
+                    return status;
+                    break;
+                }
+
+                if (nodeData.items[i].checked == undefined && nodeData.items[i].hasChildren) {
+                    if (nodeData.items[i].dirty && nodeData.items[i].hasChildren) {
+                        var statusNow = '';
+                        status = check_on_child(nodeData.items[i].items, nodeData.items[i], status);
+                        //
+                    }
+                }
+                else if (nodeData.items[i].checked) {
+                    status = 'checked';
+                    return status;
+                    break;
+                }
+            }
+        }
+        else if (nodeData.checked) {
+            status = 'checked';
+            return status;
+        }
+    }
+
+    function check_on_child(item, parent, status) {
+        for (var i = 0; i < item.length; i++) {
+            if (item[i].dirty && item[i].hasChildren) {
+                check_on_child(item[i].items, item[i], status);
+            } else {
+                status = 'checked';
+                return status;
+                break;
+            }
+        }
+    }
+
+    var allTreeData = [];
+    function createList(arr) {
+        $.each(arr, function (i, val) {
+            if (allTreeData.indexOf(val) == -1) {
+                allTreeData.push(val);
+                if (val.Items != undefined) {
+                    if (val.Items.length > 0) {
+                        if (val.Items) {
+                            createList(val.Items)
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function IsFormValid() {
+        
+        var message = "";
+        var pnameSelect = $('#planName').val();
+        var frequencySelected = $('#frequency').val();
+        var plantypeSelected = $('#plantype').val();
+        var planforSelected = $('#planfor').val();
+        var IsCustomerSelected = $('input[name=customer_product_option]:checked').val();
+        var customerSelected = $('#customers').val();
+        //var productMultiselect = $("#productMultiselect").data("kendoMultiSelect");
+        getCheckedItems();
+        if (checkedNodeOnly.length === 0) {
+            $("#productMultiselect").data("kendoMultiSelect").value('');
+        }
+        if (pnameSelect == "") {
+            message += " Plan Name, ";
+        }
+        if (pnameSelect.includes("\"") || pnameSelect.includes("'")) {
+            message += " Plan name includes ' or \" character. please remove these characters.";
+            $('#planName').focus();
+            //return false;
+        }
+        if (frequencySelected == "") {
+            message += " Frequency, ";
+        }
+        if (planforSelected == "") {
+            message += " Plan for, ";
+        }
+        if (IsCustomerSelected == "customer_product" && customerSelected == "") {
+            message += " Customer, ";
+        }
+        if (pnameSelect.length > 200) {
+            displayPopupNotification("Budget Plan name is too long." + message + ".", "error");
+            $('#planName').focus();
+            return false;
+        }
+        var remark = $('#remarks').val();
+        if (remark.length > 400) {
+            displayPopupNotification("Remarks is too long." + message + ".", "error");
+            $('#remarks').focus();
+            return false;
+        }
+        if (remark.includes("\"") || remark.includes("'")) {
+            message += " Remark includes ' or \" character. please remove these characters.";
+            $('#remarks').focus();
+            //return false;
+        }
+        if (message != "") {
+            displayPopupNotification("Please fill up the fields of " + message + ".", "error");
+            return false;
+        }
+        else {
+            return true;
+        }
+
+        var count = productMultiselect.value().length;
+        if (count < 1) {
+            displayPopupNotification("Plese select item .", "error");
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
+
+
+    $('#btngenerateplan').on('click', function () {
+        var checkForm = IsFormValid();
+        if (checkForm) {
+            showloader();
+            var hasItemChild = "";
+            if ($("#allItemGroups").is(":checked"))
+                hasItemChild = "Y";
+            else
+                hasItemChild = "N";
+            var fromdate = $('#FromDateVoucher').val();
+            var todate = $('#ToDateVoucher').val();
+            if ($.datepicker.parseDate("yy-M-dd", todate) < $.datepicker.parseDate("yy-M-dd", fromdate)) {
+                displayPopupNotification("End Date is Greater than Start Date.", "warning");
+                hideloader();
+                return;
+            }
+
+            var productMultiselect = $("#productMultiselect").data("kendoMultiSelect");
+            var arr = $("#COALedgerTreeview").data("kendoTreeView").dataItems();
+            allTreeData = [];
+            createList(arr);
+            var parentArr = [];
+            var getItem = function (allTreeData, preItemCode, ItemCode) {
+                _.each(allTreeData, function (i, e) {
+                    if (ItemCode == i.ItemCode) {
+                        _.each(allTreeData, function (it, et) {
+                            if (i.PreItemCode == it.MasterItemCode) {
+                                if (parentArr.indexOf(it.ItemCode + '_X') == -1) {
+                                    parentArr.push(it.ItemCode + '_X');
+                                    if (it.PreItemCode != '999999')
+                                        getItem(allTreeData, it.PreItemCode, it.ItemCode);
+                                }
+                            }
+                        });
+                    }
+                });
+            }
+            var multi = productMultiselect.value();
+            _.each(multi, function (i, e) {
+                getItem(allTreeData, '999999', i.toString());
+            });
+
+            var count = productMultiselect.value().length;
+            if (count < 1) {
+                displayPopupNotification("Plese select item .", "warning");
+                hideloader();
+                return false;
+            }
+            else {
+                var filterdata = ReportFilter.filterAdditionalData();
+                var productMultiselect = $("#productMultiselect").data("kendoMultiSelect");
+                parentItemCode = [];
+                getCheckedItems();
+                getGroupOfItem();
+                parentItemCode = _.uniq(parentItemCode, 'ITEM_CODE');
+                parentItemCode.sort(function (a, b) {
+                    var a1 = parseInt(a.ITEM_CODE), b1 = parseInt(b.ITEM_CODE);
+                    if (a1 == b1) return 0;
+                    return a1 > b1 ? 1 : -1;
+                });
+                //if (parentItemCode.length <= 0) {
+                //    getCheckedItems();
+                //    getGroupOfItem();
+                //    parentItemCode = _.uniq(parentItemCode, 'ITEM_CODE');
+                //    parentItemCode.sort(function (a, b) {
+                //        var a1 = parseInt(a.ITEM_CODE), b1 = parseInt(b.ITEM_CODE);
+                //        //var a1 = parseInt(a.PRE_ITEM_CODE.split('.')[0]), b1 = parseInt(b.PRE_ITEM_CODE.split('.')[0]);
+                //        if (a1 == b1) return 0;
+                //        return a1 > b1 ? 1 : -1;
+                //    });
+                //}
+                checkedNodeOnly = _.uniq(checkedNodeOnly, function (d) { return d.ITEM_CODE });
+                var plandetail_temp = {
+                    PLAN_CODE: $('#plancode').val(),
+                    PLAN_EDESC: $('#planName').val(),
+                    ITEM_CODE: filterdata.ReportFilters.ProductFilter.toString() + ',' + parentArr,
+                    START_DATE: filterdata.ReportFilters.FromDate,
+                    END_DATE: filterdata.ReportFilters.ToDate,
+                    REMARKS: $('#remarks').val(),
+                    //PLAN_TYPE: $("#plantype").data("kendoDropDownList").value(),
+                    //PLAN_FOR: $("#planfor").data("kendoDropDownList").value(),
+                    TIME_FRAME_CODE: $("#frequency").data("kendoDropDownList").value(),
+                    TIME_FRAME_EDESC: $("#frequency").data("kendoDropDownList").text(),
+                    IS_ITEMS_VISIBLE_ONLY: hasItemChild,
+                    dateFormat: $('input[name=dateFormat]:checked').val(),
+                    //IsCustomerProduct: $('input[name=customer_product_option]:checked').val(),
+                    customerCode: $('#customers').val(),
+                    customerName: $('#customers option:selected').text(),
+                    selectedItemsList: parentItemCode,
+                    acccode: $("#account").val(),
+                    accName: $("#account").val() == "" ? "" : $('#account option:selected').text(),
+                    branchcode: $("#account").val(),
+                    branchName: $("#account").val() == "" ? "" : $('#account option:selected').text(),
+                    //branchcode: $("#branchs").val(),
+                    //branchName: $("#branchs").val() == "" ? "" : $('#branchs option:selected').text(),
+                    divisioncode: $("#divisions").val(),
+                    divisionName: $("#divisions").val() == "" ? "" : $('#divisions option:selected').text(),
+                    //employeecode: $("#employees").val(),
+                    //employeeName: $("#employees").val() == "" ? "" : $('#employees option:selected').text(),
+                    dateFilter: $(".dateFilterSelect").val(),
+                    checkeOnlyDataTemp: checkedNodeOnly,
+                    multiselectValue: productMultiselect.value(),
+                    //salesRateType: $(".salesRateType").val(),
+                }
+
+                var elem = angular.element(document.querySelector('[ng-app]'));
+                var injector = elem.injector();
+                var $rootScope = injector.get('$rootScope');
+                $rootScope.$apply(function () {
+                    showloader();
+                    $rootScope.reservedBudgetData = plandetail_temp;
+                    nextDiffer.resolve(plandetail_temp);
+                });
+            }
+        }
+    });
+
+    function clearfield() {
+        $('#plancode').val('');
+        $('#planName').val('');
+        $('#remarks').val('');
+        $('#fromInputDateVoucher').val(getNepaliDate());
+        $('#toInputDateVoucher').val(getNepaliDate());
+        $("#ToDateVoucher").val(moment(new Date()).format("YYYY-MMM-DD"));
+        $("#FromDateVoucher").val(moment(new Date()).format("YYYY-MMM-DD"));
+        //$("#plantype").val("").data("kendoDropDownList").text("");
+        $("#frequency").val("").data("kendoDropDownList").text("");
+        var multiSelect = $('#productMultiselect').data("kendoMultiSelect");
+        multiSelect.value([]);
+    }
+
+    function BindGrid() {
+        var mainurl = window.location.protocol + "//" + window.location.host + "/api/PlanApi/GetPlanList";
+        var dataSource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: {
+                    url: mainurl, // <-- Get data from here.
+                    dataType: "json", // <-- The default was "jsonp".
+                    type: "get",
+                    contentType: "application/json; charset=utf-8"
+                },
+            },
+            schema: {
+                model: {
+                    fields: {
+                        START_DATE: { type: "date" },
+                        END_DATE: { type: "date" },
+
+                    }
+                }
+            },
+            serverPaging: false,
+            pageSize: 10,
+        });
+
+        var temp = dataSource.read();
+        var grid = $("#grid").kendoGrid({
+            dataSource: dataSource,
+            sortable: true,
+            pageable: {
+                refresh: true,
+                pageSizes: true,
+                buttonCount: 5
+            },
+            reorderable: true,
+            groupable: false,
+            resizable: true,
+            filterable: {    // filter for the null and is not null etc
+                extra: false,// extra false means there is 2 different filter inside the filter
+                operators: {   // the number is data type for the net sales column , and string for the MITI
+                    number: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "is greater than or equal to	",
+                        gt: "is greater than",
+                        lte: "is less than or equal",
+                        lt: "is less than",
+                    },
+                    string: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        startswith: "Starts with	",
+                        contains: "Contains",
+                        doesnotcontain: "Does not contain",
+                        endswith: "Ends with",
+                    },
+                    date: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "Is after or equal to",
+                        gt: "Is after",
+                        lte: "Is before or equal to",
+                        lt: "Is before",
+                    }
+                }
+            },
+            columnMenu: true,
+            pageable: true,
+            dataBinding: function () {
+                record = (this.dataSource.page() - 1) * this.dataSource.pageSize();
+            },
+            scrollable: {
+                virtual: true
+            },
+            dataBound: function (o) {
+                var grid = o.sender;
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.length;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    displayPopupNotification("No Data Found Given Date Filter.", "Info");
+                }
+                else {
+                    var g = $("#grid").data("kendoGrid");
+                    for (var i = 0; i < g.columns.length; i++) {
+                        g.showColumn(i);
+                    }
+                    $("div.k-group-indicator").each(function (i, v) {
+                        g.hideColumn($(v).data("field"));
+                    });
+                }
+            },
+            columns: [
+                { title: "SN", template: "#= ++record #", width: "15px" },
+                {
+                    field: "PLAN_EDESC",
+                    title: "Plan Name",
+                    width: "70px",
+                },
+                {
+                    field: "START_DATE",
+                    title: "Start Date",
+                    format: "{0:yyyy-MMM-dd}",
+                    width: "35px",
+                },
+                {
+                    field: "END_DATE",
+                    title: "End Date",
+                    format: "{0:yyyy-MMM-dd}",
+                    width: "35px",
+                },
+                {
+                    field: "ITEM_EDESC",
+                    title: "Item Name",
+                    width: "110px",
+
+                },
+                {
+                    field: "PLAN_TYPE",
+                    title: "Plan Type",
+                    width: "40px",
+                },
+                {
+                    field: "PLAN_FOR",
+                    title: "Plan For",
+                    width: "40px",
+                },
+                {
+                    field: "TIME_FRAME_EDESC",
+                    title: "Time Frame",
+                    width: "30px",
+                },
+                {
+                    field: "REMARKS",
+                    hidden: true,
+                },
+                {
+                    field: "ID", title: "Action", sortable: false, filterable: false, width: "60px",
+                    template: '<a class="edit glyphicon glyphicon-edit" style="color:orange;"><span class="sr-only"></span> </a> <a style="color:red;" class="delete glyphicon glyphicon-trash "><span class="sr-only"></span> </a> <a style="color:green;" title="go to Plan setup" class="goto_planSetup icon icon-share-alt "><span class="sr-only"></span> </a>'
+                },
+            ],
+
+            dataBound: function (event) {
+                $(".edit").click(function (e) {
+                    e.preventDefault();
+                    $("#showFormPanel").show();
+                    $('#controlbuttons').show();
+                    $("#addplan").hide();
+                    var grid = $("#grid").data("kendoGrid");
+                    var dataItem = grid.dataItem($(this).closest("tr"));
+                    $('#plancode').val(dataItem.PLAN_CODE);
+                    $('#planName').val(dataItem.PLAN_EDESC);
+                    $("#frequency").data("kendoDropDownList").value(dataItem.TIME_FRAME_CODE);
+                    $("#plantype").data("kendoDropDownList").value(dataItem.PLAN_TYPE);
+                    $("#planfor").data("kendoDropDownList").value(dataItem.PLAN_FOR);
+                    $("#ToDateVoucher").val(moment(dataItem.END_DATE).format("YYYY-MMM-DD"));
+                    $("#FromDateVoucher").val(moment(dataItem.START_DATE).format("YYYY-MMM-DD"));
+                    $("#FromDateVoucher").trigger("change");
+                    $("#ToDateVoucher").trigger("change");
+                    $("#remarks").val(dataItem.REMARKS);
+                    var multiSelect = $('#productMultiselect').data("kendoMultiSelect");
+                    multiSelect.value(dataItem.ITEM_CODE);
+                });
+                $(".delete").click(function (e) {
+                    e.preventDefault();
+                    var grid = $("#grid").data("kendoGrid");
+                    var dataItem = grid.dataItem($(this).closest("tr"));
+                    var planCode = dataItem.PLAN_CODE;
+                    bootbox.confirm("Are you sure you want to delete?", function (result) {
+                        if (result) {
+                            $.ajax({
+                                type: "GET",
+                                url: "/api/PlanApi/DeletePlane/?planCode=" + dataItem.PLAN_CODE,
+                                contentType: "application/json; charset=utf-8",
+                                dataType: "json",
+                                success: successFunc,
+                                error: errorFunc
+                            });
+                            function successFunc(data, status) {
+                                var dataSource = $("#grid").data("kendoGrid").dataSource;
+                                dataSource.remove(dataItem);
+                                displayPopupNotification("Succesfully Deleted LC Status.", "success");
+                            }
+
+                            function errorFunc() {
+                                displayPopupNotification(data.MESSAGE, "error");
+                            }
+                            hideloader();
+                        }
+                    });
+                });
+                $(".goto_planSetup").click(function (e) {
+                    e.preventDefault();
+                    var grid = $("#grid").data("kendoGrid");
+                    var dataItem = grid.dataItem($(this).closest("tr"));
+                    var planCode = dataItem.PLAN_CODE;
+                    window.location = "/Planning/Home/Index#!Planning/PlanSetup/" + planCode;
+                    update_wizard(1);
+                })
+            }
+        });
+    }
+
+    function RefreshGrid() {
+        $('#grid').data("kendoGrid").dataSource.read();
+    }
+
+    //setTimeout(function () {
+    //    if (branchCode != null && p_code == '')
+    //        $('#account').data('kendoDropDownList').value(branchCode);
+    //}, 1000);
+</script>
+<script src="@Scripts.Url(" ~/Areas/NeoERP.Planning/js/controller/PlanningMenuNavigation.js")"></script>

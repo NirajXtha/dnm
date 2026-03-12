@@ -1,0 +1,613 @@
+﻿@using NeoErp.Core.Models;
+@using NeoErp.Core.Models.CustomModels
+@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+@model List<NeoErp.Sales.Modules.Services.Models.LocationsHeader>
+@{
+    ViewBag.Title = "Location Vs WareHouse";
+    var itemcount = 1;
+}
+
+<style>
+    .btn-group {
+        margin-right: 7px;
+    }
+
+    a#RunQuery {
+        margin-right: 5px;
+    }
+
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+
+    /*.k-grid td {
+        white-space: nowrap !important;
+        text-overflow: ellipsis;
+    }*/
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .nowrap {
+        white-space: nowrap !important;
+    }
+
+    .wrap {
+        white-space: normal !important;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+</style>
+<div class="page-content">
+
+
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+            @*<li>
+            <i class="fa fa-home"></i>
+            <a href="/sales/SalesHome/Dashboard">Home</a>
+            <i class="fa fa-angle-right"></i>
+            </li>*@
+            @*<li>
+            <a href="#/StockReport/LocationVsBranchWiseStockReport">Product vs Location wise Stock</a>
+            <i class="fa fa-angle-right"></i>
+            </li>*@
+            @*<li>
+            <a href="sales/saleshome/dashboard/Dashboard">Organiser</a>
+            <i class="fa fa-angle-right"></i>
+            </li>*@
+        </ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+                <div class="actions">
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                    </div>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new
+                                 AdvancedFilterSettingsModel()
+                   {
+                       ShowCustomerFilter = false,
+                       ShowProductFilter = true,
+                       ShowCategoryFilter = true,
+                       ShowPartyTypeFilter = false,
+                       ShowLocationFilter = false,
+                       ShowDocumentFilter = false,
+                       ShowCompanyFilter = false,
+                       ShowBranchFilter = false
+                   })
+                    </div>
+                    @*@Html.Partial("~/Views/Shared/Controls/_reportFilterSettings.cshtml", new
+                    ReportFilterSettingsModel()
+                    {
+                    ShowAmountFigureFilter = true,
+                    ShowAmountFilter = true,
+                    ShowAmountRoundUpFilter = true,
+                    ShowRangeAmountFilter = true
+
+                    })*@
+                    @Html.Partial("~/Views/Shared/Controls/ComposeMail.cshtml", new FileMailAttachment() { })
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                        <i class="icon-control-play"></i>
+                    </a>
+
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "LocationVsBranchWiseStockReport")
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+
+
+                <div class="portlet-body form">
+                    <div class="row">
+
+
+                        <div id="grid"></div>
+                        @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                        <script id="rowTemplate" type="text/x-kendo-tmpl">
+                            <tr class="k-master-row" data-uid="#: uid #" role="row"> #= new Array(this.group().length + 1).join('<td class="k-group-cell"></td>') #
+
+                                <td role="gridcell">
+                                    <span>#:ItemName# </span>
+
+                                </td>
+                                <td role="gridcell">
+                                    #:MuCode#
+                                </td>
+
+                            @foreach (var item in Model)
+                            {
+                                <text>
+
+                                                            <td role="gridcell">
+                                        @*#= myCustomFunction(data.charges,'@item.ChargesHeaderNo')#*@
+                                        @*<span style="float:right">#= kendo.format("{0:n}", myCustomFunction(data.charges,'@item.ChargesHeaderNo'))# </span>*@
+                                                                <span style="float:right">#=kendo.format("{0:n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()+"}", myCustomFunction(data.WareHouseList,'@item.LocationNo'))# </span>
+                                                            </td>
+                                </text>
+                            }
+                            @*<td role="gridcell">
+
+                                    <span style="float:right">#=kendo.format("{0:n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()+"}",NetAmount) # </span>
+
+                                </td>*@
+
+
+                            @*<td role="gridcell">
+
+                                    <span style="float:right">#=kendo.format("{0:n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()+"}",InvoiceAmount) # </span>
+
+                                </td>*@
+                            </tr>
+                        </script>
+                        <script id="altRowTemplate" type="text/x-kendo-tmpl">
+                            <tr class="k-alt k-master-row" data-uid="#: uid #" role="row">
+                                #= new Array(this.group().length + 1).join('<td class="k-group-cell"></td>')#
+
+                                <td role="gridcell">
+                                    <span>#:ItemName# </span>
+
+                                </td>
+                                <td role="gridcell">
+                                    #:MuCode#
+                                </td>
+
+                            @foreach (var item in Model)
+                            {
+                                <text>
+
+                                                            <td role="gridcell">
+                                        @*#= myCustomFunction(data.charges,'@item.ChargesHeaderNo')#*@
+                                        @*<span style="float:right">#= kendo.format("{0:n}", myCustomFunction(data.charges,'@item.ChargesHeaderNo'))# </span>*@
+                                                                <span style="float:right">#=kendo.format("{0:n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()+"}", myCustomFunction(data.WareHouseList,'@item.LocationNo'))# </span>
+                                                            </td>
+                                </text>
+                            }
+                            @*<td role="gridcell">
+
+                <span style="float:right">#=kendo.format("{0:n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()+"}",NetAmount) # </span>
+
+            </td>*@
+
+
+                            @*<td role="gridcell">
+
+                <span style="float:right">#=kendo.format("{0:n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()+"}",InvoiceAmount) # </span>
+
+            </td>*@
+                            </tr>
+                        </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+
+
+<script src="@Scripts.Url("~/JS/DateFilter.js?V5")" type="text/javascript"></script>
+<script src="@Scripts.Url("~/JS/dynamicReport.js?V2")" type="text/javascript"></script>
+
+<script type="text/javascript">
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+
+</script>
+<script type="text/javascript">
+    // fileMailSender is initialised inside BindGrid (after buildWorkbook is defined)
+    // so that exportFunction can reference the correct dataSource closure.
+    var fileMailSender;
+</script>
+<script>
+
+    var reportConfig = GetReportSetting("LocationVsBranchWiseStockReport");
+    function getDateFormat(date) {
+        return kendo.format("{0:" + reportConfig.dateFormat + "}", date)
+    }
+
+    function myCustomFunction(arrey, header) {
+        //console.log(arrey);
+        //console.log(header);
+        var result = $.grep(arrey, function (e) { return e.LocationCode === header; });
+        //    console.log(result);
+        var value = "-";
+        if (result.length == 0) {
+            value = "-";
+        } else if (result.length == 1) {
+            if (result[0].AvilableStock === 0) {
+                value = "-";
+            }
+            else {
+                value = result[0].AvilableStock
+            }
+
+        }
+        return value;
+    }
+
+    //function GetDecimalPlaces()
+    //{
+    //    var filters = ReportFilter.filterAdditionalData();
+    //    var decimalPlaces = ReportFilter.parseDecimalPlace(filters.ReportFilters.AmountRoundUpFilter);
+    //    return decimalPlaces;
+    //}
+    $(".applydp").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    })
+
+    $("#loadAdvancedFilters").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    })
+
+    $(document).ready(function () {
+
+        DateFilter.init(function () {
+            BindGrid(urltest);
+        });
+
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/Stock/GetLocationWiseReport";
+
+        $("#RunQuery").click(function (evt) {
+            evt.preventDefault();
+            urltest = window.location.protocol + "//" + window.location.host + "/api/Stock/GetLocationWiseReport";
+            KendoGridRefresh(urltest);
+        });
+
+        //BindGrid(urltest);
+    });
+
+    function BindGrid(readurl) {
+
+        reportConfig = GetReportSetting("LocationVsBranchWiseStockReport");
+        var dataSource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: {
+                    url: readurl, // <-- Get data from here.
+                    dataType: "json", // <-- The default was "jsonp".
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8"
+                },
+                parameterMap: function (options, type) {
+
+                    var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+                    //  paramMap.formDate = $("#FromDateVoucher").val();
+                    delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                    delete paramMap.$format; // <-- remove format parameter.
+                    return paramMap;
+
+                }
+            },
+            error: function (e) {
+                displayPopupNotification("Sorry error occured while processing data", "error");
+            },
+            serverFiltering: false,
+            serverGrouping: false,
+            serverAggregates: true,
+            schema: {
+                data: "LocationWiseStockModel", // records are returned in the "data" field of the response
+                total: "total", // total number of records is in the "total" field of the response
+                aggregates: "AggregationResult",//
+                model: {
+                    fields: {
+                        ItemName: { type: "string" },
+                        MuCode: { type: "string" },
+                        ItemCode: { type: "number" },
+
+                        // InvoiceAmount: { type: "number" },
+                    }
+                }
+            },
+
+
+            aggregate: [
+
+                //{ field: "NetAmount", aggregate: "sum" },
+                //{ field: "InvoiceAmount", aggregate: "sum" },
+                //{ field: "GrossAmount", aggregate: "sum" },
+                //{ field: "Quantity", aggregate: "sum" },
+    @foreach (var item in Model)
+    {
+        <text>
+                        {
+                            field: '@item.LocationNo',
+                        aggregate: "sum"
+                                               },
+        </text>
+    }
+
+            ],
+            serverPaging: false,
+            serverSorting: false,
+
+            pageSize: reportConfig.defaultPageSize,
+        });
+        var grid = $("#grid").kendoGrid({
+            dataSource: dataSource,
+            toolbar: kendo.template($("#toolbar-template").html()),
+            excel: {
+                fileName: "Location Vs Branch wise Stock Report",
+                allPages: true
+            },
+
+            pdf: {
+                allPages: true,
+                avoidLinks: true,
+                paperSize: "A4",
+                margin: { top: "2cm", left: "1cm", right: "1cm", bottom: "1cm" },
+                landscape: true,
+                repeatHeaders: true,
+                width: "500px",
+                scale: 0.8
+            },
+            height: window.innerHeight - 50,
+            sortable: true,
+            reorderable: true,
+            groupable: true,
+            resizable: true,
+            filterable: {
+                extra: false,
+                operators: {
+                    number: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "is greater than or equal to	",
+                        gt: "is greater than",
+                        lte: "is less than or equal",
+                        lt: "is less than",
+                    },
+                    string: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        startswith: "Starts with	",
+                        contains: "Contains",
+                        doesnotcontain: "Does not contain",
+                        endswith: "Ends with",
+                    },
+                    date: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "Is after or equal to",
+                        gt: "Is after",
+                        lte: "Is before or equal to",
+                        lt: "Is before",
+                    }
+                }
+            },
+
+            columnMenu: true,
+            columnMenuInit: function (e) {
+                wordwrapmenu(e);
+                checkboxItem = $(e.container).find('input[type="checkbox"]');
+            },
+            columnShow: function (e) {
+                if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                    SaveReportSetting('LocationVsBranchWiseStockReport', 'grid');
+            },
+            columnHide: function (e) {
+                if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                    SaveReportSetting('LocationVsBranchWiseStockReport', 'grid');
+            },
+            pageable: {
+                refresh: true,
+                pageSizes: reportConfig.itemPerPage,
+                buttonCount: 5
+            },
+            scrollable: {
+                virtual: true
+            },
+            rowTemplate: $.proxy(kendo.template($("#rowTemplate").html()), dataSource),
+            altRowTemplate: $.proxy(kendo.template($("#altRowTemplate").html()), dataSource),
+            dataBound: function (o) {
+                var grid = o.sender;
+                //$(o.sender.wrapper).find('tbody')
+                //       .find('.k-footer-template')
+                //       .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="5" class="no-data">Total Amount(</td></tr>');
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.length;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                }
+                else {
+                    var g = $("#grid").data("kendoGrid");
+                    for (var i = 0; i < g.columns.length; i++) {
+                        g.showColumn(i);
+                    }
+                    $("div.k-group-indicator").each(function (i, v) {
+                        g.hideColumn($(v).data("field"));
+                    });
+                }
+                $('div').removeClass('.k-header k-grid-toolbar');
+                UpdateReportUsingSetting("LocationVsBranchWiseStockReport", "grid");
+            },
+            columns: [
+                {
+                    field: "ItemName",
+                    title: "Item Name",
+                    width: "200px"
+
+                },
+                {
+                    field: "MuCode",
+                    title: "Unit",
+                    footerTemplate: '<span style="float:right">#= "Grand Total" #</span>',
+                },
+
+    @foreach (var item in Model)
+    {
+        itemcount++;
+
+        <text>
+                        {
+                            field: '@item.LocationNo',
+                        title: '@item.LocationTitle',
+                        width:"100px",
+                        attributes: {
+                            style: "text-align: right;"
+                                       },
+                        groupable: false,
+                        format: "{0:n5}",
+                                       //footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>'
+                                   },
+        </text>
+    }
+
+                           //{
+                           //    field: "InvoiceAmount",
+                           //    title: "Invoice Amount",
+                           //    attributes: {
+                           //        style: "text-align: center;"
+                           //    },
+                           //    aggregates: ["sum"],
+                           //    //   groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n")#</span>',
+                           //    //  footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                           //    format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString() + "}",
+                           //    footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>'
+                           //}
+
+            ]
+
+        });
+        var companyName = @Html.Raw(Json.Encode(workingContent.CurrentUserinformation.company_name));
+        var branchName = @Html.Raw(Json.Encode(workingContent.CurrentUserinformation.branch_name));
+
+        UniversalGridPrint.init({
+            reportName: "LocationVsBranchWiseStockReport",
+            companyName: companyName,
+            branchName: branchName
+        });
+
+        // ── SHARED WORKBOOK BUILDER ───────────────────────────────────────────────
+        // Called both by the direct download click and by ManualEmailSender's
+        // exportFunction (email path).  Returns a kendo.ooxml.Workbook.
+        // This completely bypasses the excelExport event which is unreliable
+        // when using custom rowTemplate + virtual scrolling.
+        function buildWorkbook() {
+            var locationHeaders = @Html.Raw(Json.Encode(Model));
+            var fromADdate = $("#FromDateVoucher").val();
+            var toADdate = $("#ToDateVoucher").val();
+            var fromBSdate = $("#fromInputDateVoucher").val();
+            var toBSdate = $("#toInputDateVoucher").val();
+            var totalCols = 2 + locationHeaders.length;
+
+            var headerCells = [
+                { value: "Item Name", background: "#7a7a7a", color: "#ffffff", bold: true },
+                { value: "Unit", background: "#7a7a7a", color: "#ffffff", bold: true }
+            ];
+            $.each(locationHeaders, function (i, loc) {
+                headerCells.push({ value: loc.LocationTitle, background: "#7a7a7a", color: "#ffffff", bold: true });
+            });
+
+            var dataRows = [];
+            $.each(dataSource.data(), function (idx, item) {
+                var cells = [
+                    { value: item.ItemName },
+                    { value: item.MuCode }
+                ];
+                $.each(locationHeaders, function (i, loc) {
+                    var stock = myCustomFunction(item.WareHouseList, loc.LocationNo);
+                    cells.push({ value: (stock === "-" ? 0 : stock), format: "#,##0.00" });
+                });
+                dataRows.push({ cells: cells });
+            });
+
+            var allRows = [];
+            allRows.push({ cells: [{ value: "Company Name :- " + companyName, colSpan: totalCols }] });
+            allRows.push({ cells: [{ value: "Branch Name :- " + branchName, colSpan: totalCols }] });
+            allRows.push({ cells: [{ value: "Report Name :- Location Vs Branch Wise Stock Report", colSpan: totalCols }] });
+            allRows.push({ cells: [{ value: "Date Range: " + fromADdate + " (" + fromBSdate + ") to " + toADdate + " (" + toBSdate + ")", colSpan: totalCols }] });
+            allRows.push({ height: 20, cells: [{ value: "Location Vs Branch Wise Stock Report", background: "#3fd5c0", bold: true, fontSize: 15, colSpan: totalCols }] });
+            allRows.push({ cells: headerCells });
+            allRows = allRows.concat(dataRows);
+
+            var colWidths = [{ width: 200 }, { width: 80 }];
+            for (var i = 0; i < locationHeaders.length; i++) colWidths.push({ width: 100 });
+
+            return new kendo.ooxml.Workbook({
+                sheets: [{ columns: colWidths, title: "Stock Report", rows: allRows }]
+            });
+        }
+
+        // ── DIRECT DOWNLOAD — intercept the toolbar Excel button click ─────────
+        // We intercept .k-grid-excel inside the grid wrapper so the excelExport
+        // event is never fired for the download path.
+        $("#grid").off("click.excelDownload").on("click.excelDownload", ".k-grid-excel", function (e) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            try {
+                var wb = buildWorkbook();
+                var result = wb.toDataURL();
+                function doDownload(dataURI) {
+                    var link = document.createElement("a");
+                    link.href = dataURI;
+                    link.download = "Location Vs Branch wise Stock Report.xlsx";
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+                if (result && typeof result.then === "function") {
+                    result.then(function (dataURI) { doDownload(dataURI); });
+                } else {
+                    doDownload(result);
+                }
+            } catch (err) {
+                alert("Excel export error: " + err.message);
+            }
+        });
+
+        // ── EMAIL PATH — (re)initialise ManualEmailSender with exportFunction ──
+        fileMailSender = new ManualEmailSender({
+            GridName: "grid",
+            GridRefreshTriggerName: "RunQuery",
+            reportName: "LocationVsBranchWiseStockReport",
+            exportFunction: buildWorkbook
+        });
+        fileMailSender.init();
+
+    };
+
+    function KendoGridRefresh(readUrl) {
+        $('#grid').val('');
+        $('#grid').html('');
+        BindGrid(readUrl)
+    }
+</script>

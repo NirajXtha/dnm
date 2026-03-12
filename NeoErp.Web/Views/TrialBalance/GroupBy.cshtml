@@ -1,0 +1,130 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row">
+    <div class="col-lg-12" style="background-color: #f5f5f5; height:38px;">
+        <div style="float:left">
+            <ol class="breadcrumb">
+                <li class="active">
+                    <i class="fa fa-home"></i>
+                    <a href="@Url.Action("Index","Home")">Home </a> <i class="fa fa-angle-double-right"></i>
+                    <a href="@Url.Action("Index", "TrialBalance")">TrailBalance </a> <i class="fa fa-angle-double-right"></i>
+                    Group Report
+                </li>
+            </ol>
+        </div>
+        <div class="btn-group" role="group" style="float: right; padding-top:6px;">
+            @Html.Partial("~/Views/TrialBalance/Search.cshtml")
+        </div>
+        <div style="clear:both"></div>
+    </div>
+    <!-- /.col-lg-12 -->
+</div>
+<!-- /.row -->
+<div class="row">
+    @Html.Partial("~/Views/TrialBalance/SearchContent.cshtml")
+    <table id="jqgTreeGrid"></table>
+    <div id="jqgpTreeGrid"></div>
+    @*<div id="footerData"></div>*@
+    <div class="clear-both small-vertical-spacing"></div>
+    <div class="page-content-offset"></div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#jqgTreeGrid').jqGrid({
+            //enable TreeGrid
+            url: '/TrialBalance/TrialBalanceGroupByGridData/',
+            //type of data
+            datatype: 'json',
+            //url access method type
+            mtype: 'GET',
+            ExpandColumn: 'label',
+            rowNum: 30,
+            loadonce: true,
+            footerrow: true,
+            loadComplete: function () {
+                var $self = $(this),
+                    localData = $self.jqGrid("getGridParam", "data"),
+                    itemCount = localData.length,
+                    totalCredit = 0,
+                    totalDebit = 0,
+                    i,
+                    item;
+
+                for (i = 0; i < itemCount; i++) {
+                    item = localData[i];
+                    totalCredit += parseFloat(item.CR_AMOUNT);
+                    totalDebit += parseFloat(item.DR_AMOUNT);
+                }
+
+
+                $self.jqGrid("footerData", "set", {
+                    ACC_EDESC: "Total:",
+                    DR_AMOUNT: totalDebit,
+                    CR_AMOUNT: totalCredit
+                });
+            },
+            //columns names
+            colNames: ['Account Code', 'Group', 'Sub Group', 'Account Name', 'DR', 'Cr'],
+            //columns model
+            colModel: [
+                        { name: 'ACC_CODE', index: 'ACC_CODE', align: 'left', hideen: true },
+                        { name: 'GROUP_EDESC', index: 'GROUP_EDESC', align: 'left' },
+                        { name: 'SUB_GROUP_EDESC', index: 'SUB_GROUP_EDESC', align: 'left' },
+                        { name: 'ACC_EDESC', index: 'ACC_EDESC', align: 'left' },
+                        { name: 'DR_AMOUNT', index: 'DR_AMOUNT', align: 'right' },
+                        { name: 'CR_AMOUNT', index: 'CR_AMOUNT', align: 'right' }
+            ],
+            grouping: true,
+            groupingView: {
+                groupField: ['GROUP_EDESC'],
+                groupColumnShow: [false],
+                groupText: ['<b>{0} - {1} Item(s)</b>']
+            },
+            //pager for grid
+            pager: $('#jqgpTreeGrid'),
+            //grid width
+            width: null,
+            shrinkToFit: false,
+            //grid height
+            height: 'auto'
+                }).navGrid(
+                '#jqgpTreeGrid',
+                //enabling buttons
+                { add: false, del: false, edit: false, search: true },
+                //edit option
+                {},
+                //add options
+                {},
+                //delete options
+                {},
+                {
+                    // search options
+                    multipleSearch: true,
+                    closeOnEscape: true,
+                    closeAfterSearch: true,
+                    ignoreCase: true,
+                    sopt: ['eq', 'ne', 'lt', 'le', 'gt', 'ge', 'bw', 'bn', 'in', 'ni', 'ew', 'en', 'cn', 'nc']
+                }).jqGrid('navButtonAdd', '#jqgpTreeGrid', {
+                    caption: "", buttonicon: "ui-icon-print", title: "Export to Excel",
+                    onClickButton: function () {
+                        $("#jqgTreeGrid").jqGrid('excelExport', { url: '@Url.Action("ExportExcel", "TrialBalance")' });
+                    }
+                });
+    });
+            jQuery("#chngroup").change(function () {
+            var vl = $(this).val();
+            if (vl) {
+                if (vl == "clear") {
+                    jQuery("#jqgTreeGrid").jqGrid('groupingRemove', true);
+                } else {
+                    jQuery("#jqgTreeGrid").jqGrid('groupingGroupBy', vl);
+                }
+            }
+        });
+        $(document).ready(function () {
+            $(".nav li a").removeClass("active");//this will remove the active class from previously active menu item 
+            $('#TrialBalance').addClass('active');
+        });
+    </script>

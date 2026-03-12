@@ -1,0 +1,256 @@
+﻿
+<style type="text/css">
+    .dynamicforms label {
+        font-size: 13px !important;
+        color: #333;
+    }
+
+    .summary-table th {
+        font-size: 10px !important;
+    }
+
+    .summary-table td, .summary-table input.form-control, .summary-table td label {
+        font-size: 10px !important;
+    }
+</style>
+<link href="@Styles.Url("~/Areas/NeoERP.DocumentTemplate/Content/PrintStylesheet.css")" rel="stylesheet" media="print" />
+<link href="@Styles.Url("~/Areas/NeoERP.DocumentTemplate/Content/PrintStylesheet.css")" rel="stylesheet" />
+<div class="printable-modal">
+    <h1>{{printCompanyInfo.formName}}</h1>
+    <div class="company_div">
+        <div class="logo_box">
+            <div class="company-logo">
+                <img src="http://localhost:22395/Pictures/background/company- logo.png" class="img-responsive" />
+            </div>
+        </div>
+        <div class="company_head">
+
+
+            <h3>{{printCompanyInfo.companyName}}</h3>
+
+            <h4>{{printCompanyInfo.address}}</h4>
+
+            <div class="company_details">
+                <p>
+                    <span>Phone No :{{printCompanyInfo.phoneNo}}</span><br />
+                    <span>Email:{{printCompanyInfo.email}}</span><br>
+                    <span>Pan No:{{printCompanyInfo.tPinVatNo}}</span>
+
+                </p>
+            </div>
+        </div>
+        <table class="print_table consigneetable table table-bordered">
+            <thead>
+
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <span>Consignee: {{masterModels.CUSTOMER_EDESC}}</span>
+                        <span>Address: {{masterModels.REGD_OFFICE_EADDRESS}}</span>
+                        <span>Party Type: {{masterModels.TEL_MOBILE_NO1}}</span>
+                        <span>Pan No:{{masterModels.TPIN_VAT_NO}}</span>
+                    </td>
+                </tr>
+            </tbody>
+
+        </table>
+    </div>
+
+    <div class="print_div">
+        <table class="print_table table table-bordered">
+            <thead>
+
+            </thead>
+
+            <tbody>
+                <tr ng-repeat="element in MasterFormElement | orderBy: 'SERIAL_NO'">
+                    <td ng-if="element.COLUMN_NAME.indexOf('CUSTOMER_CODE') == -1 && element.COLUMN_NAME.indexOf('MANUAL_NO') == -1 && element.COLUMN_NAME.indexOf('REMARKS') == -1 ">
+                        <span>{{element.COLUMN_HEADER}}:</span>
+                        <span>{{masterModels[element.COLUMN_NAME]}}</span>
+                    </td>
+
+                </tr>
+            </tbody>
+
+        </table>
+        <table class="print_table table table-bordered">
+            <thead>
+
+            </thead>
+            <tbody>
+                <tr ng-repeat="element in CustomFormElement | orderBy: 'SERIAL_NO'">
+
+                    <td>
+                        <span>{{element.FIELD_NAME}}:</span>
+                        <span>{{customModels[element.FIELD_NAME]}}</span>
+                    </td>
+
+                </tr>
+            </tbody>
+
+        </table>
+    </div>
+
+
+
+
+    <table class="document_child_table dynamic-table dynamicforms table-fixed">
+        <thead class="child-table-head">
+            <tr>
+                
+                <th ng-repeat="item in ChildFormElement[0].element | orderBy: 'SERIAL_NO'" class="{{item.COLUMN_NAME}} {{item.COLUMN_NAME}}-child">{{item.COLUMN_HEADER}}</th>
+            </tr>
+        </thead>
+        <tbody class="table_body">
+
+            <tr ng-repeat="(key,row) in ChildFormElement">
+                <td ng-repeat="item in row.element | orderBy: 'SERIAL_NO'" class="{{item.COLUMN_NAME}}_div">
+
+                    <div ng-if="item.COLUMN_NAME.indexOf('CODE') !== -1">
+                      
+                           
+                            <div ng-if="item.COLUMN_NAME.indexOf('ITEM') !== -1">
+                                <span>{{childModels[key][item.COLUMN_NAME]}}</span>
+                            </div>
+                            <div ng-if="item.COLUMN_NAME.indexOf('ACC') !== -1">
+                                <span>{{childModels[key][item.COLUMN_NAME]}}</span>
+                            </div>
+                            <div ng-if="item.COLUMN_NAME.indexOf('MU') !== -1">
+                                <span>{{childModels[key][item.COLUMN_NAME]}}</span>
+                            </div>
+                           
+                        </div>
+                        <div style="text-align:right" ng-if="item.COLUMN_NAME.indexOf('CODE') === -1 || item.COLUMN_NAME==='QUANTITY' || item.COLUMN_NAME === 'UNIT_PRICE' ||  item.COLUMN_NAME==='TOTAL_PRICE'">
+
+                            <span>{{childModels[key][item.COLUMN_NAME]}}</span>
+                        </div>
+</td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <div class="summary-table">
+        <div class="row">
+            <div ng-if="data.length!='0'" class="col-xs-12 col-sm-8 col-md-6 tbl_charge">
+                <div class="table-responsive">
+                    <table class="table table-bordered charge-table">
+
+                        <thead class="font-black">
+                            <tr>
+                                <th width="20%">Charge On</th>
+                                <th width="10%;">Type</th>
+                                <th width="20%;">Charge Rate</th>
+                                <th width="20%">Charge Amount</th>
+                                <th width="30%">Acc Code</th>
+
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="(chargeIndex,item) in data">
+
+                                <td>{{item.CHARGE_EDESC}}  <label ng-if="item.VALUE_PERCENT_FLAG ==='P'">%</label></td>
+                                <td width="10%;">
+                                    <label ng-if="item.CHARGE_TYPE_FLAG ==='D'">Deduction</label>
+                                    <label ng-if="item.CHARGE_TYPE_FLAG ==='A'">Addition</label>
+                                </td>
+
+                                <td width="15%;">
+                                    <label>{{item.VALUE_PERCENT_AMOUNT}}</label>
+                                </td>
+
+                                <td width="15%" ng-if="item.VALUE_PERCENT_FLAG ==='P'">
+                                    <label>{{item.CHARGE_AMOUNT}}</label>
+
+                                </td>
+                                <td width="15%" ng-if="item.VALUE_PERCENT_FLAG !=='P'">
+                                    <label>{{item.CHARGE_AMOUNT}}</label>
+
+                                </td>
+                                <td width="40%;">
+                                    <div ng-if="item.ACC_CODE!== ''">
+                                        <label>{{item.ACC_EDESC}}</label>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col-xs-12 col-sm-2 col-md-3 tbl_amount_summary">
+                <table class="table table-bordered">
+                    <thead class="font-black">
+                        <tr>
+                            <th colspan="2">Amount Summary</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Total:</td>
+                            <td ng-bind="summary.grandTotal">0</td>
+                        </tr>
+                        <tr>
+                            <td>Addition:</td>
+                            <td ng-bind="addition">0</td>
+                        </tr>
+                        <tr>
+                            <td>Deduction:</td>
+                            <td ng-bind="deduction">0</td>
+                        </tr>
+                        <tr>
+                            <td>Grand Total:</td>
+                            <td class="ng-binding" ng-bind="adtotal">0</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-xs-12 col-sm-2 col-md-3 tbl_unit_total">
+                <table class="table table-bordered">
+                    <thead class="font-black">
+                        <tr>
+                            <th colspan="2">Unit Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="unit in units">
+                            <td>Total {{unit.mu_name}}</td>
+                            <td class="ng-binding">{{unit.mu_code_value}}</td>
+                        </tr>
+                        <tr>
+                            <td>Grand Total</td>
+                            <td ng-bind="totalQty">0</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div ng-repeat="element in MasterFormElement | orderBy: 'SERIAL_NO'" ng-if="element.COLUMN_NAME.indexOf('REMARKS') !== -1">
+                    <label class="control-label" for="element">{{element.COLUMN_HEADER}}</label>
+                    <label> {{masterModels[element.COLUMN_NAME]}}</label>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="invoice_footer">
+        <div class="row">
+            <div class="col-md-6 declare">
+               
+                    <p>Freight@@/per Qtl Total Freight Rs./-so balance Freight Rs. 10 Pay Only.</p>
+                    <p><b>Declaration:</b> We Declare that this invoice Shows the actual Price of the goods described and that all particulars are true and correct.</p>
+                    <p><b>Note:</b>Goods onece Sold not be Return</p>
+                    <div class="signature">
+                        <span class="receiver">Receiver's Signature</span>
+                        <span class="creditedby">Credited By</span>
+                    </div>
+                </div>
+            
+            <div class="col-md-6 comapany_autorized">
+            
+                    <h5>For Bhudeko Khadya Udyogpvt.Ltd</h5>
+                    <span class="authorized_sign">Authorized Signature</span>
+                 
+            </div>
+        </div>
+    </div>
+</div>
+ 

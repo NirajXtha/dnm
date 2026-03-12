@@ -1,0 +1,547 @@
+﻿
+@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+<style>
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+    }
+
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+         font-size:11px;
+    }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-content-locked {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .k-grid-header {
+        font-size: 11px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    .red {
+        color: green !important;
+    }
+</style>
+<div class="page-content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+            @*<li>
+                <i class="fa fa-home"></i>
+                <a href="/sales/SalesHome/Dashboard">Home</a>
+                <i class="fa fa-angle-right"></i>
+            </li>*@
+            @*<li>
+                <a href="#/Purchase/PurchaseVatRegister">Consumption Issue Register</a>
+                <i class="fa fa-angle-right"></i>
+            </li>*@
+            @*<li>
+                <a href="sales/saleshome/dashboard/Dashboard">Organiser</a>
+                <i class="fa fa-angle-right"></i>
+            </li>*@
+
+        </ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+                <div class="actions">
+                    <a class="btn btn-circle btn-icon-only btn-default" id="liveData" href="#" title="ashok" data-placement="left" data-html="true" data-container="body" data-toggle="tooltip">
+                        <i class="fa fa-circle red" aria-hidden="true"></i>
+                    </a>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                    </div>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+                    </div>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                       {
+                           ShowSupplierFilter = true,
+                           ShowProductFilter = true,
+                           //ShowDocumentFilter = true,
+                           ShowCategoryFilter = true,
+                           //ShowPartyTypeFilter = true,
+                       })
+                    </div>
+
+                    @Html.Partial("~/Views/Shared/Controls/_reportFilterSettings.cshtml", new ReportFilterSettingsModel()
+                   {
+                       ShowAmountFigureFilter = true,
+                       ShowAmountFilter = true,
+                       ShowAmountRoundUpFilter = true,
+                       ShowRangeAmountFilter = true,
+                   })
+
+                    @Html.Partial("~/Views/Shared/Controls/ComposeMail.cshtml")
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                        <i class="icon-control-play"></i>
+                    </a>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "ConsumptionIssueRegister")
+                    </div>
+                </div>
+
+
+
+                @*@Html.Partial("~/Views/Shared/Controls/DateField.cshtml",false)*@
+
+                @*<button type="button" class="btn btn-fit-height grey-salt dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-delay="1000" data-close-others="true">
+                        Actions <i class="fa fa-angle-down"></i>
+                    </button>
+                    <ul class="dropdown-menu pull-right" role="menu">
+                        <li>
+                            <a href="#">Action</a>
+                        </li>
+                        <li>
+                            <a href="#">Another action</a>
+                        </li>
+                        <li>
+                            <a href="#">Something else here</a>
+                        </li>
+                        <li class="divider">
+                        </li>
+                        <li>
+                            <a href="#">Separated link</a>
+                        </li>
+                    </ul>*@
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+
+
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div id="grid"></div>
+                        @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+<script src="@Scripts.Url("~/JS/DateFilter.js?V5")" type="text/javascript"></script>
+<script src="@Scripts.Url("~/JS/dynamicReport.js?V2")" type="text/javascript"></script>
+<script type="text/javascript">
+    var fileMailSender = new ManualEmailSender({
+        GridName: "grid",
+        GridRefreshTriggerName: "RunQuery",
+        reportName: "ConsumptionIssueRegister",
+    });
+</script>
+<script type="text/javascript">
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+
+</script>
+
+<script>
+
+    var reportConfig = GetReportSetting("ConsumptionIssueRegister");
+    function getDateFormat(date) {
+        return kendo.format("{0:" + reportConfig.dateFormat + "}", date);
+    }
+
+    $(".applydp").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    })
+
+    $("#loadAdvancedFilters").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    });
+
+
+
+    $(document).ready(function () {
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/Consumption/ConsumptionIssueRegister";
+        DateFilter.init(function () {
+            consolidate.init(function () {
+                BindGrid(urltest);
+            });
+        });
+
+        fileMailSender.init();
+        updateLiveDataIcon();
+
+
+
+
+
+
+
+        $("#RunQuery").click(function (evt) {
+            evt.preventDefault();
+            urltest = window.location.protocol + "//" + window.location.host + "/api/Consumption/ConsumptionIssueRegister";
+            KendoGridRefresh(urltest);
+        });
+
+        //BindGrid(urltest);
+    });
+
+    var liveDataIconInterval = '';
+
+    function updateLiveDataIcon() {
+        var xhr = $.ajax({
+            url: window.location.protocol + "//" + window.location.host + '/api/SalesHome/GetJsonReportLastUpdatedDate?reportName=ConsumptionIssueRegister',
+            success: function (response) {
+
+                var message = "<span class='pull-left'><b>Last Updated on: </b></span><br /> " + response;
+                $("#liveData").attr("data-original-title", message)
+               .tooltip()
+                .bind("click", function (evt) {
+                    evt.preventDefault();
+                    urltest = window.location.protocol + "//" + window.location.host + "/api/Consumption/ConsumptionIssueRegister?liveData=true";
+                    KendoGridRefresh(urltest);
+                });
+                if (liveDataIconInterval === '') {
+                    liveDataIconInterval = setInterval(function () {
+                        $('#liveData > .fa-circle').fadeOut(1000).fadeIn(1000, blink);
+                    });
+                }
+
+            }
+        });
+    }
+
+    function BindGrid(readurl) {
+        var companyName = ('@workingContent.CurrentUserinformation.company_name');
+        var fromADdate = $("#FromDateVoucher").val()
+        var toADdate = $("#ToDateVoucher").val();
+        var fromBSdate = $("#fromInputDateVoucher").val();
+        var toBSdate = $("#toInputDateVoucher").val();
+        var branches = ReportFilter.getBranchs();
+        reportConfig = GetReportSetting("ConsumptionIssueRegister");
+        var dataSource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: {
+                    url: readurl, // <-- Get data from here.
+                    dataType: "json", // <-- The default was "jsonp".
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8"
+                },
+                parameterMap: function (options, type) {
+                    var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+                    //  paramMap.formDate = $("#FromDateVoucher").val();
+                    delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                    delete paramMap.$format; // <-- remove format parameter.
+                    return paramMap;
+                }
+            },
+
+            error: function (e) {
+                displayPopupNotification("Sorry error occured while processing data", "error");
+            },
+            serverFiltering: false,
+            serverAggregates: false,
+            schema: {
+                data: "ConsumptionIssueRegisterDetailModel", // records are returned in the "data" field of the response
+                total: "total", // total number of records is in the "total" field of the response
+                model: {
+                    fields: {
+                        //string field no need to add
+                        ISSUE_DATE: { type: "date" },
+                        EXCHANGE_RATE: { type: "number" },
+                        REQ_QUANTITY: { type: "number" },
+                        QUANTITY: { type: "number" },
+                        UNIT_PRICE: { type: "number",nullable:true },
+                        TOTAL_PRICE: { type: "number" },
+                        CALC_QUANTITY: { type: "number" },
+                        CALC_UNIT_PRICE: { type: "number",nullable:true },
+                        CALC_TOTAL_PRICE: { type: "number" },
+                        COMPLETED_QUANTITY: { type: "number",nullable:true },
+                    }
+                }
+            },
+            aggregate: [
+            { field: "REQ_QUANTITY", aggregate: "sum" },
+                      { field: "QUANTITY", aggregate: "sum" },
+                    { field: "TOTAL_PRICE", aggregate: "sum" },
+                    { field: "CALC_QUANTITY", aggregate: "sum" },
+                     { field: "CALC_UNIT_PRICE", aggregate: "sum" },
+                    { field: "CALC_TOTAL_PRICE", aggregate: "sum" },
+                     { field: "COMPLETED_QUANTITY", aggregate: "sum" },
+            ],
+            serverPaging: false,
+            serverSorting: false,
+            pageSize: reportConfig.defaultPageSize,
+        });
+
+        var grid = $("#grid").kendoGrid({
+            dataSource: dataSource,
+            toolbar: kendo.template($("#toolbar-template").html()),
+            excel: {
+                fileName: "Consumption Issue Register",
+                //proxyURL: "//demos.telerik.com/kendo-ui/service/export",
+                allPages: true
+            },
+            height: window.innerHeight - 50,
+            sortable: true,
+            reorderable: true,
+            groupable: true,
+            resizable: true,
+            filterable: {
+                extra: false,
+                operators: {
+                    number: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "is greater than or equal to	",
+                        gt: "is greater than",
+                        lte: "is less than or equal",
+                        lt: "is less than",
+                    },
+                    string: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        startswith: "Starts with	",
+                        contains: "Contains",
+                        doesnotcontain: "Does not contain",
+                        endswith: "Ends with",
+                    },
+                    date: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "Is after or equal to",
+                        gt: "Is after",
+                        lte: "Is before or equal to",
+                        lt: "Is before",
+                    }
+                }
+            },
+            columnMenu: true,
+            columnMenuInit: function (e) {
+                wordwrapmenu(e);
+                checkboxItem = $(e.container).find('input[type="checkbox"]');
+            },
+            columnShow: function (e) {
+                if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                    SaveReportSetting('ConsumptionIssueRegister', 'grid');
+            },
+            columnHide: function (e) {
+                if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                    SaveReportSetting('ConsumptionIssueRegister', 'grid');
+            },
+            pageable: {
+                refresh: true,
+                pageSizes: reportConfig.itemPerPage,
+                buttonCount: 5
+            },
+            scrollable: {
+                virtual: true
+            },
+            dataBound: function (o) {
+                var grid = o.sender;
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.length + 1;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    displayPopupNotification("No Data Found Given Date Filter.", "info");
+                }
+
+                $('div').removeClass('.k-header k-grid-toolbar');
+                UpdateReportUsingSetting("ConsumptionIssueRegister", "grid");
+                updateLiveDataIcon();
+            },
+            columns: [
+                {
+                    field: "ISSUE_NO",
+                    title: "ISSUE_NO",
+                },
+                {
+                    field: "ISSUE_DATE",
+                    title: "ISSUE_DATE",
+                    format: "{0:" + reportConfig.dateFormat + "}",
+                },
+                {
+                    field: "MANUAL_NO",
+                    title: "MANUAL_NO",
+                },
+                {
+                    field: "ISSUE_TYPE_CODE",
+                    title: "ISSUE_TYPE_CODE",
+                    hidden:true
+                },
+                {
+                    field: "ITEM_EDESC",
+                    title: "ITEM_EDESC",
+
+                },
+                 {
+                     field: "MU_CODE",
+                     title: "MU_CODE",
+
+                 },
+                 {
+                     field: "REQ_QUANTITY",
+                     title: "REQ_QUANTITY",
+                     aggregates: ["sum"],
+                     template: '<span style="float:right">#= kendo.toString(REQ_QUANTITY, "n0")#</span>',
+                     groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum/ReportFilter.parseAmountFigure(), "n"+ ReportFilter.parseDecimalPlace("AmountRoundUpFilter"))#</span>',
+                     footerTemplate: '<span style="float:right">#= kendo.toString(sum/ReportFilter.parseAmountFigure(), "n"+ ReportFilter.parseDecimalPlace("AmountRoundUpFilter"))#</span>',
+
+                 },
+                   {
+                       field: "QUANTITY",
+                       title: "QUANTITY",
+                       aggregates: ["sum"],
+                       template: '<span style="float:right">#= kendo.toString(QUANTITY, "n0")#</span>',
+                       groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum/ReportFilter.parseAmountFigure(), "n"+ ReportFilter.parseDecimalPlace("AmountRoundUpFilter"))#</span>',
+                       footerTemplate: '<span style="float:right">#= kendo.toString(sum/ReportFilter.parseAmountFigure(), "n"+ ReportFilter.parseDecimalPlace("AmountRoundUpFilter"))#</span>',
+                   },
+                   {
+                       field: "UNIT_PRICE",
+                       title: "UNIT_PRICE",
+                       aggregates: ["sum"],
+                       template: '<span style="float:right">#= kendo.toString(UNIT_PRICE, "n"+ ReportFilter.parseDecimalPlace("AmountRoundUpFilter"))#</span>',
+
+                   },
+
+                   {
+                       field: "TOTAL_PRICE",
+                       title: "TOTAL_PRICE",
+                       aggregates: ["sum"],
+                       template: '<span style="float:right">#= kendo.toString(TOTAL_PRICE, "n"+ ReportFilter.parseDecimalPlace("AmountRoundUpFilter"))#</span>',
+                       groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum/ReportFilter.parseAmountFigure(), "n"+ ReportFilter.parseDecimalPlace("AmountRoundUpFilter"))#</span>',
+                       footerTemplate: '<span style="float:right">#= kendo.toString(sum/ReportFilter.parseAmountFigure(), "n"+ ReportFilter.parseDecimalPlace("AmountRoundUpFilter"))#</span>',
+                   },
+                    {
+                        field: "CALC_QUANTITY",
+                        title: "CALC_QUANTITY",
+                        aggregates: ["sum"],
+                        template: '<span style="float:right">#= kendo.toString(CALC_QUANTITY, "n0")#</span>',
+                        groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum/ReportFilter.parseAmountFigure(), "n"+ ReportFilter.parseDecimalPlace("AmountRoundUpFilter"))#</span>',
+                        footerTemplate: '<span style="float:right">#= kendo.toString(sum/ReportFilter.parseAmountFigure(), "n"+ ReportFilter.parseDecimalPlace("AmountRoundUpFilter"))#</span>',
+                    },
+                       {
+                           field: "CALC_UNIT_PRICE",
+                           title: "CALC_UNIT_PRICE",
+                           aggregates: ["sum"],
+                           template: '<span style="float:right">#= kendo.toString(CALC_UNIT_PRICE, "n"+ ReportFilter.parseDecimalPlace("AmountRoundUpFilter"))#</span>',
+                       },
+                        {
+                            field: "CALC_TOTAL_PRICE",
+                            title: "CALC_TOTAL_PRICE",
+                            aggregates: ["sum"],
+                            template: '<span style="float:right">#= kendo.toString(CALC_TOTAL_PRICE, "n"+ ReportFilter.parseDecimalPlace("AmountRoundUpFilter"))#</span>',
+                            groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum/ReportFilter.parseAmountFigure(), "n"+ ReportFilter.parseDecimalPlace("AmountRoundUpFilter"))#</span>',
+                            footerTemplate: '<span style="float:right">#= kendo.toString(sum/ReportFilter.parseAmountFigure(), "n"+ ReportFilter.parseDecimalPlace("AmountRoundUpFilter"))#</span>',
+                        },
+                         {
+                             field: "COMPLETED_QUANTITY",
+                             title: "COMPLETED_QUANTITY",
+                             aggregates: ["sum"],
+                             template: '<span style="float:right">#= kendo.toString(COMPLETED_QUANTITY, "n0")#</span>',
+                             groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum/ReportFilter.parseAmountFigure(), "n"+ ReportFilter.parseDecimalPlace("AmountRoundUpFilter"))#</span>',
+                             footerTemplate: '<span style="float:right">#= kendo.toString(sum/ReportFilter.parseAmountFigure(), "n"+ ReportFilter.parseDecimalPlace("AmountRoundUpFilter"))#</span>',
+                         },
+                   {
+                       field: "REMARKS",
+                       title: "REMARKS",
+                       hidden: true,
+                   },
+                    {
+                        field: "CURRENCY_CODE",
+                        title: "CURRENCY_CODE",
+                        hidden: true,
+                    },
+
+             {
+                 field: "DEPARTMENT_EDESC",
+                 title: "DEPARTMENT",
+                 hidden:true
+             },
+            {
+                field: "DIVISION_EDESC",
+                title: "DIVISION",
+                hidden:true
+            }, {
+                field: "ITEM_GROUP_EDESC",
+                title: "ITEM GROUP",
+                hidden: true
+            }, {
+                field: "ITEM_SUBGROUP_EDESC",
+                title: "ITEM SUBGROUP",
+                hidden: true
+            }, {
+                field: "CATEGORY_EDESC",
+                title: "CATEGORY",
+                hidden: true
+            },
+            {
+                field: "COMPANY_EDESC",
+                title: "COMPANY",
+                hidden: true,
+            },
+            {
+                field: "BRANCH_EDESC",
+                title: "BRANCH",
+                hidden: true
+            }
+            ]
+
+        });
+       var companyName = @Html.Raw(Json.Encode(workingContent.CurrentUserinformation.company_name));
+         var branchName = @Html.Raw(Json.Encode(workingContent.CurrentUserinformation.branch_name));
+
+        UniversalGridPrint.init({
+            reportName: "Consumption Issue Register",
+            companyName: companyName,
+            branchName: branchName
+        });
+
+
+    };
+
+    function KendoGridRefresh(readUrl) {
+        $('#grid').val('');
+        $('#grid').html('');
+        BindGrid(readUrl)
+    }
+</script>

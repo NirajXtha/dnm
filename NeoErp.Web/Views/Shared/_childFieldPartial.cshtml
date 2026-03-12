@@ -1,0 +1,150 @@
+﻿<style>
+    .borderRed {
+        border: 1px solid rgb(255, 0, 0);
+    }
+
+    .FROM_LOCATION_CODE-child, .FROM_LOCATION_CODE_div {
+        width: 150px !important;
+    }
+
+    .qty::-webkit-input-placeholder {
+        color: red;
+        opacity: 0.5;
+    }
+
+    .document_child_table tbody.table_body {
+        min-height: 220px;
+        overflow-y: visible;
+    }
+
+    input[type=checkbox], input[type=radio] {
+        margin: -3px 7px 0;
+    }
+
+    .custom-form-check {
+        display: flex;
+        align-items: center;
+    }
+
+    .form-check-input {
+        margin-right: 0.5rem;
+    }
+</style>
+
+<table class="document_child_table dynamic-table table-fixed dynamic_child_table dynamic_child_table6">
+    <thead class="child-table-head">
+        <tr>
+            <th ng-repeat="item in ChildFormElement[0].element | orderBy: 'SERIAL_NO'"
+                class="{{item.COLUMN_NAME}} {{item.COLUMN_NAME}}-child"
+                ng-style="{'width': item.COLUMN_WIDTH ? item.COLUMN_WIDTH + 'px' : 'auto'}" ng-if="item.COLUMN_NAME !== 'ID'">
+                {{item.COLUMN_HEADER}}
+                <span ng-if="item.COLUMN_NAME == 'SPECIFICATION'">
+                    <a class="btn btn-sm btn-theme" style="float:right; margin:5px 0px 0px 0px"
+                       data-toggle="modal" data-target="#myModal">
+                        <i class="fa fa-plus-circle" aria-hidden="true"></i>
+                    </a>
+                </span>
+            </th>
+        </tr>
+    </thead>
+    <tbody class="table_body">
+        <tr ng-repeat="(key,row) in ChildFormElement">
+            <td ng-repeat="item in row.element | orderBy: 'SERIAL_NO'" class="{{item.COLUMN_NAME}}_div" ng-style="{'width': item.COLUMN_WIDTH ? item.COLUMN_WIDTH + 'px' : 'auto'}" ng-if="item.COLUMN_NAME !== 'ID'">
+                <input type="hidden" class="childrow" name="index" value="{{key}}" ng-model="childRow">
+                <div ng-if="item.COLUMN_NAME.indexOf('DATE') !== -1">
+                    <input type="text" id="englishDate5__{{element.COLUMN_NAME}}" ng-model="childModels[key][item.COLUMN_NAME]" class="form-control maskdate" />
+                </div>
+
+                <div ng-if="item.COLUMN_NAME.indexOf('CODE') !== -1">
+
+                    <div ng-if="item.COLUMN_NAME.indexOf('ITEM') !== -1">
+                        @Html.Partial("~/Areas/NeoERP.QuotationManagement/Views/Shared/PartialView/_productCodeChildPartial.cshtml")
+                    </div>
+                    <div ng-if="item.COLUMN_NAME.indexOf('MU') !== -1">
+                        <input type="text" id="item.COLUMN_NAME" name="item.COLUMN_NAME" ng-model="childModels[key][item.COLUMN_NAME]" class="form-control mutextbox" disabled />
+                    </div>
+
+
+                </div>
+
+                <div ng-if="item.COLUMN_NAME ==='QUANTITY'">
+                    <input type="number" id="item.COLUMN_NAME" min="0" placeholder="Enter quantity" ng-change="ChildSumOperations(key)" name="item.COLUMN_NAME" ng-model="childModels[key][item.COLUMN_NAME]" class="form-control {{item.COLUMN_NAME}}_{{key}} textbox qty" />
+                </div>
+
+                <div ng-if="item.COLUMN_NAME.indexOf('CALC_QUANTITY') !== -1">
+                    <input type="number" id="item.COLUMN_NAME" min="0" placeholder="Enter calc_quantity" ng-change="ChildCalcSum(key)" name="item.COLUMN_NAME" ng-model="childModels[key][item.COLUMN_NAME]" class="form-control {{item.COLUMN_NAME}}_{{key}} textbox" />
+                </div>
+
+                <div ng-if="item.COLUMN_NAME =='COMPLETED_QUANTITY'">
+                    <input type="number" id="item.COLUMN_NAME" min="0" placeholder="Enter completed quantity" name="item.COLUMN_NAME" ng-model="childModels[key][item.COLUMN_NAME]" class="form-control {{item.COLUMN_NAME}} textbox qty" />
+                </div>
+
+                <div ng-if="item.COLUMN_NAME==='UNIT_PRICE'">
+
+                    <input type="number" id="item.COLUMN_NAME" min="0" @*placeholder="Enter unit price"*@ ng-change="ChildSumOperations(key)" name="item.COLUMN_NAME" ng-model="childModels[key][item.COLUMN_NAME]" class="form-control {{item.COLUMN_NAME}}_{{key}} textbox qty " />
+                </div>
+
+                <div ng-if="item.COLUMN_NAME.indexOf('CALC_UNIT_PRICE') !== -1">
+
+                    <input type="number" id="item.COLUMN_NAME" min="0" placeholder="Enter calc_unit_price" ng-change="ChildCalcSum(key)" name="item.COLUMN_NAME" ng-model="childModels[key][item.COLUMN_NAME]" class="form-control {{item.COLUMN_NAME}}_{{key}} textbox" />
+                </div>
+                <div ng-if="item.COLUMN_NAME.indexOf('TOTAL') !== -1">
+                    <input type="number" id="item.COLUMN_NAME" min="0" name="item.COLUMN_NAME" ng-model="childModels[key][item.COLUMN_NAME]" class="form-control textbox" disabled />
+                </div>
+
+                <div ng-if="item.COLUMN_NAME.indexOf('REMARKS') !== -1">
+                    <input type="text" id="item.COLUMN_NAME" name="item.COLUMN_NAME" placeholder="Enter remarks" ng-model="childModels[key][item.COLUMN_NAME]" class="form-control" />
+                </div>
+                <div ng-if="item.COLUMN_NAME.indexOf('IMAGE') !== -1">
+                    <input type="file" id="image_{{key}}" name="item.COLUMN_NAME" ng-model="childModels[key][item.COLUMN_NAME]" class="form-control" />
+                    @*<input type="file" id="item.COLUMN_NAME" name="item.COLUMN_NAME" placeholder="Enter remarks" ng-model="childModels[key][item.COLUMN_NAME]" class="form-control" />*@
+                </div>
+
+                <div style="border:none" ng-if="item.COLUMN_NAME.indexOf('AMOUNT') !== -1">
+                    <input type="number" id="item.COLUMN_NAME" ng-change="validaccsum(key)" min="0" name="item.COLUMN_NAME" placeholder="0.00" value="0.00" ng-model="childModels[key][item.COLUMN_NAME]" class="form-control textbox {{item.COLUMN_NAME}}_{{key}}" next-on-tab />
+                </div>
+                <div ng-if="item.COLUMN_NAME.indexOf('CATEGORY') !== -1">
+                    <select id="item.COLUMN_NAME" ng-model="childModels[key].CATEGORY" class="form-control" ng-options="category.CATEGORY as category.CATEGORY_EDESC for category in categoryList">
+                        <option value="">Select Category</option>
+                    </select>
+                </div>
+                <div ng-if="item.COLUMN_NAME.indexOf('DATE') == -1 && item.COLUMN_NAME.indexOf('REMARKS') == -1 &&   item.COLUMN_NAME.indexOf('CODE') == -1 && item.COLUMN_NAME.indexOf('QUANTITY') == -1 && item.COLUMN_NAME.indexOf('COMPLETED_QUANTITY') == -1 && item.COLUMN_NAME.indexOf('PRICE') == -1 && item.COLUMN_NAME.indexOf('FLAG') == -1 && item.COLUMN_NAME.indexOf('AMOUNT') == -1 && item.COLUMN_NAME.indexOf('IMAGE') == -1 && item.COLUMN_NAME.indexOf('CATEGORY') == -1" " >
+                    <input type="text" id="item.COLUMN_NAME" name="item.COLUMN_NAME" placeholder="Enter data" ng-model="childModels[key][item.COLUMN_NAME]" class="form-control texttextbox" />
+                </div>
+
+                <div ng-if="item.COLUMN_NAME.indexOf('FLAG') !== -1">
+                    <input type="text" id="item.COLUMN_NAME" ng-keyup="flagKyeDown(key,$event)" placeholder="L" value="L" maxlength="1" ng-model="childModels[key][item.COLUMN_NAME]" class="form-control textbox flag" />
+                </div>
+                <div ng-if="item.COLUMN_NAME ==='REQ_QUANTITY'">
+                    <input type="number" id="item.COLUMN_NAME" min="0" placeholder="Enter required quantity" name="item.COLUMN_NAME" ng-model="childModels[key][item.COLUMN_NAME]" class="form-control {{item.COLUMN_NAME}}_{{key}} textbox" />
+                </div>
+            </td>
+        </tr>
+    </tbody>
+</table>
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <!-- Use modal-lg class to make the modal large -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="myModalLabel">More Specification</h4>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-sm-6 mb-3 d-flex justify-content-center align-items-center" ng-repeat="element in aditionalElement">
+                        <div class="form-check custom-form-check">
+                            <input type="checkbox" class="form-check-input" id="checkbox-{{$index}}" ng-model="element.selected">
+                            <label class="form-check-label" for="checkbox-{{$index}}">{{ element.COLUMN_HEADER }}</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" ng-click="cancelSelection()">Close</button>
+                <button type="button" class="btn btn-primary" ng-click="saveSelection()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+

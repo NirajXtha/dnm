@@ -1,0 +1,140 @@
+﻿@using NeoErp.Core.Models;
+@using NeoErp.Core.Domain;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    ViewBag.Title = "Home Page";
+    Layout = "~/Areas/NeoERP.Planning/Views/Shared/_Layout.cshtml";
+}
+
+<div ng-view>
+
+</div>
+
+@section scripts{
+    <!-- angular scripts for planning-->
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/module/planningModule.js")"></script>
+
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/editPlanCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/planningCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/planningBudgetCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/budgetPlanSetupCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/planSetupCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/masterPlanCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/subPlanCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/planningCopyCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/frequencySetupCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/setupCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/MaterialPlanCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/MaterialPlanSetupCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/MaterialPlanReferenceCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/MaterialFromProductionCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/BrandingPlanCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/BrandingPlanSetupCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/ProcurementPlanCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/ProcureFromMaterialCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/ProcurementPlanSetupCtrl.js")"></script>
+
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/CollectionPlanCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/CollectionPlanSetupCtrl.js")"></script>
+
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/BrandingPlanCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/BrandingPlanSetupCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/LedgerBudgetCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/ledgerBudgetPlanSetupCtrl.js")"></script>
+
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/ProductionPlanCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/ProductionPlanSetupCtrl.js")"></script>
+
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/services/PlanServices.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/services/PlanSetupService.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/services/PlanSubPlanService.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/services/FrequencySetupService.js")"></script>
+    <script src="@Scripts.Url("~/Content/MainTheme/keymaster.js")"></script>
+
+
+
+    <script>
+        var listlength = 0;
+        var progresswidth = 0;
+        var each_percent = 0;
+        $(document).ready(function () {
+            listlenght = $(".form-wizard").find('li').length;
+            each_percent = (100 / listlenght)
+            progresswidth = (each_percent * 1);
+            $('.progress-bar').width(progresswidth + '%');
+
+            key('ctrl+h', function () { $('.setting').hide(); return false });
+            key('ctrl+v', function () { $('.setting').show(); return false });
+
+            $(".nav-tabs a").on('click', function (e) {
+                e.preventDefault();
+            });
+        })
+
+        $(".step").click(function () {
+            showloader();
+            $this = $(this);
+            $(".form-wizard").find('li').removeClass('active');
+            $this.closest('li').addClass('active');
+            var activeindex = $('.form-wizard').find('li.active').index();
+            progresswidth = (each_percent * (activeindex + 1));
+            $('.progress-bar').width(progresswidth + '%');
+            hideloader();
+        })
+
+        function update_wizard(activeindex) {
+            showloader();
+            $(".form-wizard").find('li').removeClass('active');
+            $(".form-wizard li:eq(" + activeindex + ")").addClass('active');
+            progresswidth = (each_percent * (activeindex + 1));
+            $('.progress-bar').width(progresswidth + '%');
+            hideloader();
+        }
+        function CollapseAll() {
+            var elementsA = document.querySelectorAll("#grid a.k-icon.k-minus");
+            if (elementsA.length > 0) {
+
+                for (var i = 0; i < elementsA.length; i++) {
+                    $(elementsA[i]).trigger("click");
+                }
+                return;
+            }
+            var elementsB = document.querySelectorAll("#grid a.k-icon.k-i-collapse");
+            for (var i = 0; i < elementsB.length; i++) {
+                $(elementsB[i]).trigger("click");
+            }
+        }
+
+        function ExpandAll() {
+            var elementsB = document.querySelectorAll("#grid a.k-icon.k-i-expand");
+            if (elementsB.length > 0) {
+
+                for (var i = 0; i < elementsB.length; i++) {
+                    $(elementsB[i]).trigger("click");
+                }
+                return;
+            }
+            var elementsA = document.querySelectorAll("#grid a.k-icon.k-plus");
+            for (var i = 0; i < elementsA.length; i++) {
+                $(elementsA[i]).trigger("click");
+            }
+        }
+        $.urlParam = function (name) {
+            var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+            if (results == null) {
+                return null;
+            }
+            else {
+                return decodeURI(results[1]) || 0;
+            }
+        }
+    </script>
+}
+
+
+
+
+
+
+

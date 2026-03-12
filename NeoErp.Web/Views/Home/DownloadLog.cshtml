@@ -1,0 +1,72 @@
+﻿@using PagedList;
+@*@using PagedList.Mvc*@
+@model IPagedList<NeoErp.Models.FileNames>
+
+@{
+    ViewBag.Title = "Download Log";
+}
+
+<script>
+    function filterLog() {
+        $("filterForm").submit();
+    }
+</script>
+<h2>Download Log</h2>
+
+<fieldset>
+    <legend>Search</legend>
+    @using (Html.BeginForm(null, null, FormMethod.Post, new { id = "filterForm" }))
+    {
+    <p>
+        Keyword :
+        @*<input type="text" name="keyword" required value="@ViewBag.Keyword" />*@
+        <input type="text" name="keyword" id="keyword" onkeyup="filterLog()" value="@ViewBag.Keyword" title="Enter to Search"/>
+        <input type="submit" value="Search">
+    </p>
+    }
+</fieldset>
+
+<table class="table">
+    <tr>
+        <th>
+            S.No.
+        </th>
+        <th>
+            @Html.ActionLink("FileName", "DownloadLog", new {sortOn= "FileName",orderBy = ViewBag.OrderBy,pSortOn = ViewBag.SortOn,keyword =ViewBag.Keyword})
+    </th>
+        <th>Created Date</th>
+        <th>Action</th>
+    </tr>
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>
+                &nbsp;@Html.DisplayFor(modelItem => item.FileId)
+            </td>
+            <td>
+                &nbsp; @item.FolderName/@Html.DisplayFor(modelItem => item.FileName)
+            </td>
+            <td>
+                @*&nbsp; @item.FileName.Replace("errorLOG","").Replace(".txt","").PadLeft(2,' ')*@
+                &nbsp; @Html.DisplayFor(modelItem =>item.CreatedDate)
+            </td>
+            <td>
+                &nbsp; @Html.ActionLink("Download", "Download", new { id = item.FileId,isLog=false })
+
+            </td>
+        </tr>
+    }
+</table>
+<div class="pagedList">
+    @Html.PagedListPager(Model, page => Url.Action("DownloadLog", new
+   {
+       page,
+       sortOn = ViewBag.SortOn,
+       orderBy = ViewBag.OrderBy,
+       pSortOn =
+    ViewBag.SortOn,
+       keyword = ViewBag.Keyword
+   }),
+PagedListRenderOptions.ClassicPlusFirstAndLast)
+</div>
+

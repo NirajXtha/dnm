@@ -1,0 +1,593 @@
+﻿<style>
+    legend {
+        width: auto;
+    }
+
+    .dropzone-download {
+        font-size: 17px !important;
+        position: absolute;
+        top: 112px;
+        right: 9px;
+    }
+
+    .btn-xs {
+        padding: 0px 5px;
+    }
+
+    .portlet.light.bordered.main {
+        min-height: 550px !important;
+    }
+
+    a.btn.btn-xs {
+        color: grey;
+    }
+
+    .k-grid-content.k-auto-scrollable {
+        height: 400px !important;
+    }
+
+    #LCPlanForm input[type="text"] {
+        height: 23px;
+        width: 100%;
+        font-size: 11px !important;
+    }
+
+    #LCPlanForm input [type="checkbox"] {
+        height: auto !important;
+    }
+
+    div#grid {
+        height: 500px;
+    }
+
+    .required {
+        color: #b94a48;
+    }
+
+    i.fa.fa-file-image-o.image {
+        margin: 1px;
+    }
+
+    .image-placeholder > img {
+        display: inline;
+        margin: 1px;
+        height: 40px;
+        width: 40px;
+    }
+
+    #shipmentitemsok {
+        float: right;
+    }
+
+    /*.btn {
+        height: 28px !important;
+    }*/
+
+    #LCPlanForm .k-widget input {
+        height: 16px !important;
+    }
+
+
+    .form-group.image-placeholder > div {
+        display: inline-block;
+        float: left;
+        width: 78px;
+    }
+
+    .dropzone.dz-started .dz-message {
+        display: table-column;
+        opacity: 0;
+    }
+
+    .main .k-dropdown-wrap {
+        height: 22px;
+        font-size: 12px;
+    }
+    /*.form-control {
+        height: 28px !important;
+    }*/
+    .actionbutton {
+        color: white !important;
+    }
+
+    .k-clear-value {
+        display: none;
+    }
+
+    span.k-icon.k-i-loading {
+        display: none;
+    }
+
+    .addbuttonmargin {
+        margin-bottom: 22px;
+    }
+
+    .dropzone .dz-preview .dz-image {
+        width: 50px !important;
+        height: 50px !important;
+    }
+
+    .dz-message {
+        font-weight: 600 !important;
+        text-align: center !important;
+        margin: 2em 0;
+        font-size: 16px;
+    }
+
+    .dropzone .dz-preview, .dropzone-previews .dz-preview {
+        margin-top: -15px !important;
+    }
+
+    .top-gap {
+        margin-top: 18px;
+    }
+
+    .bottom-gap {
+        margin-bottom: 30px;
+    }
+
+    .main fieldset {
+        margin-bottom: 10px;
+    }
+
+    .k-dropdown-wrap.k-state-default {
+        /*height: 22px !important;*/
+        background-image: none !important;
+        background-color: #fff !important;
+        font-size: 11px !important;
+    }
+
+    #LogisticPlanCtrl .form-group .control-label {
+        display: block;
+    }
+
+    #LogisticPlanCtrl .form-group .input {
+        width: 100% !important;
+        height: 22px;
+    }
+</style>
+<div ng-app="myApp">
+    <div ng-controller="LogisticPlanCtrl" id="LogisticPlanCtrl">
+        <div class="portlet light bordered main">
+
+            <div class="portlet-title titleheading">
+                <i class="fa fa-list-alt fontgreen"></i>
+                <span class="caption-subject fontgreen bold uppercase">
+                    Logistic Plan
+                </span>
+                <span class="pull-right" ng-show="!showFormPanel">
+                <button type="button" id="addTarget" name="addTarget" ng-click="AddLogistics()" class="btn buttongreen btn-sm">[+] Add</button>
+                </span>
+
+                <span class="pull-right" ng-show="showFormPanel">
+                    <button type="submit" id="EditContent" name="EditContent" ng-hide="ContentModal" ng-click="EditContent()" class="btn btn-default btn-sm" data-toggle="modal" data-target="#ContentModal"> Edit Content</button>
+                    <button type="button" id="cancelsi" name="cancelsi" class="btn btn-default btn-sm" ng-click="cancelLCPlan();">Cancel</button>
+                    <button type="submit" id="saveshipment" name="saveshipment" ng-disabled="disablesave" ng-click="createLCPlan(LCPlanForm.$valid,'save')" class="btn buttongreen btn-sm">{{saveAction}}</button>
+
+                </span>
+
+            </div>
+            <div class="portlet-body">
+                <div class="row">
+
+                    <form id="LCPlanForm" name="LCPlanForm" novalidate>
+                        <div ng-show="showFormPanel">
+
+                            <div class="col-sm-6 col-md-3">
+                                <div class="form-group">
+                                    <input type="hidden" id="invoicecode" />
+                                    <label class="control-label">
+                                        Lc Number(LC#)<span style="color:red" ng-show="LCPlanForm.lcnumber.$invalid">
+                                            <span ng-show="LCPlanForm.lcnumber.$error.required">*</span>
+                                        </span>
+                                    </label>
+                                    <input id="lcnumberautocomplete" ng-model="ci.lcnumber" name="lcnumber" kendo-auto-complete
+                                           k-data-text-field="'LC_NUMBER'"
+                                           k-data-value-field="'LC_NUMBERS'"
+                                           k-data-source="ipPurchaseOrder"
+                                           k-min-length="1"
+                                           k-on-select="ItemsOnChange(kendoEvent)"
+                                           k-value-primitive="true"
+                                           k-placeholder="'Select Lc Number...'"
+                                           style="width: 100%" ng-disabled="disablelcnumber" required />
+
+                                </div>
+                            </div>
+
+                     
+                            <div class="col-sm-6 col-md-3">
+                                <div class="form-group">
+                                    <label class="control-label">
+                                        Consinee Name
+                                    </label>
+                                    <input type="text" id="CONSIGNEE_NAME" name="CONSIGNEE_NAME" ng-model="LC_LOGISTIC_PLAN.CONSIGNEE_NAME" />
+
+                                </div>
+                            </div>
+
+                            <div class="col-sm-6 col-md-3">
+                                <div class="form-group">
+                                    <label class="control-label">
+                                        Consinee Address
+                                    </label>
+                                    <input type="text" id="CONSIGNEE_ADDRESS" name="CONSIGNEE_ADDRESS" ng-model="LC_LOGISTIC_PLAN.CONSIGNEE_ADDRESS" />
+
+                                </div>
+                            </div>
+
+                            <div class="col-sm-6 col-md-3">
+                                <div class="form-group">
+                                    <label class="control-label">
+                                        Notify Application Name
+                                    </label>
+                                    <input type="text" id="NOTIFY_APPLICANT_NAME" name="NOTIFY_APPLICANT_NAME" ng-model="LC_LOGISTIC_PLAN.NOTIFY_APPLICANT_NAME" />
+
+                                </div>
+                            </div>
+
+                            <div class="col-sm-6 col-md-3">
+                                <div class="form-group">
+                                    <label class="control-label">
+                                        Notify Applicant Address
+                                    </label>
+                                    <input type="text" id="NOTIFY_APPLICANT_ADDRESS" name="NOTIFY_APPLICANT_ADDRESS" ng-model="LC_LOGISTIC_PLAN.NOTIFY_APPLICANT_ADDRESS" />
+
+                                </div>
+                            </div>
+
+                            <div class="col-sm-6 col-md-3">
+                                <div class="form-group">
+                                    <label class="control-label">
+                                        Remarks
+                                    </label>
+                                    <input type="text" id="REMARKS" name="REMARKS" ng-model="LC_LOGISTIC_PLAN.REMARKS" />
+
+                                </div>
+                            </div>
+                           
+                            
+
+                        </div>
+
+
+
+
+                        <div ng-show="itemview">
+                           
+                            <div class="col-sm-12 col-md-12">
+                                <fieldset>
+                                    <legend>Item Details</legend>
+                                    <div class="tblresponsive">
+                                        <table class="table table-striped  table-hover ctable" id="items">
+                                            <thead>
+                                                <tr>
+                                                    <th width="3%">S.N.</th>
+
+                                                    <th>Item Name </th>
+                                                    <th width="7%">Tot. Qty.</th>
+                                                    <th width="6%">Rate</th>
+                                                    <th width="7%">Total</th>
+                                                    <th width="9%">HS Code</th>
+                                                    <th width="12%">Country</th>
+                                                   
+                                                </tr>
+                                            </thead>
+
+                                            <tbody>
+                                                <tr style="font-size:10px;" ng-if="itemlist.length==0"><td colspan="10">No Items To Display..</td></tr>
+                                                <tr style="font-size:10px;" ng-if="itemlist.length!=0" ng-repeat="items in itemlist">
+                                                    <td style="text-align:right;">{{$index +1}}</td>
+                                                    <td><label ng-model="tableitems[$index].ITEM_CODE">{{items.ITEM_EDESC}}</label></td>
+                                                    <td style="text-align:right"><label ng-model="tableitems[$index].QUANTITY">{{tableitems[$index].QUANTITY | number:fractionSize}}</label></td>
+                                                    <td style="text-align:right"><label ng-model="tableitems[$index].AMOUNT"> {{tableitems[$index].AMOUNT | number:fractionSize}} </label> </td>
+                                                    <td style="text-align:right"><label ng-model="tableitems[$index].VALUE"> {{tableitems[$index].QUANTITY * tableitems[$index].AMOUNT | number:fractionSize}} </label> </td>
+
+                                                    <td style="width:15px;">
+
+                                                        <p ng-model="tableitems[$index].HS_CODE">{{items.HS_CODE}}</p>
+
+                                                    </td>
+                                                    <td style="width:30px;">
+
+                                                        <p ng-model="tableitems[$index].COUNTRY_CODE">{{items.COUNTRY_EDESC}}</p>
+                                                    </td>
+                                                   
+                                                </tr>
+
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </fieldset>
+                            </div>
+
+                            <div ng-hide="AirView">
+                       
+                                <div class="col-sm-12 col-md-12">
+
+                                    <!-- Trigger route modal with a button -->
+
+                                    <fieldset>
+                                        <legend>Route Details</legend>
+                                        <div class="tblresponsive">
+                                            <table class="table table-striped  table-hover ctable" id="items">
+                                                <thead>
+                                                    <tr>
+                                                        <th width="2%">S.N.</th>
+                                                        <th>Shippment Type<span style="color:red" ng-show="LCPlanForm.RouteshipmentType.$invalid">
+                                                        <span ng-show="LCPlanForm.RouteshipmentType.$error.required">*</span></span></th>
+                                                        <th>EST Booking Date <span style="color:red" ng-show="LCPlanForm.etdBookingDate.$invalid">
+                                                        <span ng-show="LCPlanForm.etdBookingDate.$error.required">*</span></span></th>
+                                                        <th>EST Loading Date<span style="color:red" ng-show="LCPlanForm.etdLoadingingDate.$invalid">
+                                                        <span ng-show="LCPlanForm.etdLoadingingDate.$error.required">*</span></span></th>
+                                                       <th>Actual Booking Date</th>
+                                                        <th>Actual Loading Date</th>
+                                                        <th>From Location<span style="color:red" ng-show="LCPlanForm.fromLocation.$invalid">
+                                                        <span ng-show="LCPlanForm.fromLocation.$error.required">*</span></span></th>
+                                                        <th>To Location<span style="color:red" ng-show="LCPlanForm.toLocation.$invalid">
+                                                        <span ng-show="LCPlanForm.toLocation.$error.required">*</span></span></th>
+                                                       
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr style="font-size:10px;" ng-repeat="Data in Route track by $index">
+                                                        <td> {{$index +1}}</td>
+                                                        <td>
+                                                            <select id="shipmentType" k-value-primitive="true" k-on-change="OnChangeShipmentType(kendoEvent)" name="RouteshipmentType" ng-model="Route[$index].SHIPPING_TYPE" kendo-drop-down-list style="width: 100%"
+                                                                    k-on-select="ShippingOnChange(kendoEvent)" k-options="shipmentType" required ng-required ng-disabled="!check_SHIPPING_TYPE"></select>
+                                                        </td>
+                                                        <td width="15%">
+                                                            <input type="text" name="etdBookingDate" autocomplete="off" id="etdBookingDate_{{$index}}" class="form-control maskdate" ng-model="Route[$index].EST_BOOKING_DATE" ng-change="OnEtdBookingDateChange($index)" ng-disabled="!check_EST_BOOKING_DATE" required/>
+                                                        </td>
+                                                        <td width="15%">
+                                                            <input type="text" name="etdLoadingingDate" autocomplete="off" id="etdLoadingingDate_{{$index}}" class="form-control maskdate" ng-model="Route[$index].EST_LOADING_DATE" ng-change="OnEtdLoadingDateChange($index)" ng-disabled="!check_EST_LOADING_DATE" required/>
+                                                        </td>
+                                                        <td width="15%"><input type="text" id="ACT_BOOKING_DATE " name="ACT_BOOKING_DATE" autocomplete="off" class="form-control maskdate" ng-model="Route[$index].ACT_BOOKING_DATE" ng-disabled="!check_ACT_BOOKING_DATE"/></td>
+                                                        <td width="15%"><input type="text" id="ACT_LOADING_DATE" name="ACT_LOADING_DATE" autocomplete="off" class="form-control maskdate" ng-model="Route[$index].ACT_LOADING_DATE" ng-disabled="!check_ACT_LOADING_DATE" /></td>
+                                                        <td width="11%">
+                                                            <select id="fromlocation" k-value-primitive="true" name="fromLocation" k-data-text-field="'LOCATION_EDESC'" k-data-value-field="'LOCATION_CODE'"ng-model="Route[$index].FROM_LOCATION_CODE" kendo-drop-down-list style="width: 100%"
+                                                                    k-data-source="locationDatasource" k-option-label="'--Select Location--'"  ng-disabled="!check_FROM_LOCATION_CODE" required></select>
+                                                        </td>
+
+                                                        <td width="11%">
+                                                            <select id="tolocation" k-value-primitive="true" name="toLocation" k-data-text-field="'LOCATION_EDESC'" k-data-value-field="'LOCATION_CODE'" ng-model="Route[$index].TO_LOCATION_CODE" kendo-drop-down-list style="width: 100%"
+                                                                    k-data-source="locationDatasource" k-option-label="'--Select Location--'"   ng-disabled="!check_TO_LOCATION_CODE" required></select>   
+                                                        </td>
+
+                                                     
+
+
+                                                    </tr>
+
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                    </fieldset>
+                                </div>
+
+                                <div class="col-sm-6 col-md-6" >
+
+                                    <!-- Trigger route modal with a button  id="CARRIER_NUMBER" -->
+
+                                    <fieldset>
+                                        <legend>Carrier Details</legend>
+                                        <div class="tblresponsive">
+                                            <table class="table table-striped  table-hover ctable" id="items">
+                                                <thead>
+                                                    <tr>
+                                                        <th width="5%">S.N.</th>
+                                                        <th>Carrier</th>
+                                                        <th>Load Type</th>
+                                                        <th>Carrier Number</th>
+                                                        <th>Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr style="font-size:10px;" ng-repeat="Data in RouteContainer track by $index">
+                                                        <td> {{$index +1}}</td>
+                                                        <td width="14%">
+                                                            <select id="container" k-value-primitive="true" name="container" k-data-text-field="'CONTAINER_EDESC'" k-data-value-field="'CONTAINER_CODE'" k-ng-model="Data.CONTAINER_CODE" ng-model="Data.CONTAINER_CODE" kendo-drop-down-list style="width: 100%" k-on-select="OnCarrierTypeChange(kendoEvent,$index)"
+                                                                  class="container_{{$index}}"  k-data-source="containerDatasource" k-option-label="'--Select Container--'" ng-disabled="!editcontainer"></select>
+                                                        </td>
+                                                  
+                                                        <td width="14%">
+                                                            <select id="shipmentload" k-value-primitive="true"  class="shipmentload_{{$index}}" name="shipmentload" k-ng-model="Data.LOAD_TYPE" ng-model="Data.LOAD_TYPE" kendo-drop-down-list style="width: 100%"
+                                                                    k-options="shipmentLoad" ng-disabled="LoadType||!editcontainer"></select>
+                                                        </td>
+                                                        <td width="18%">
+                                                            <input type="text" id="carrierNumber_{{$index}}" name="CARRIER_NUMBER" k-ng-model="Data.CARRIER_NUMBER" ng-model="Data.CARRIER_NUMBER" class="form-control" ng-change="OnCarrierNumberChange($index)" ng-disabled="!editcontainer">
+                                                        </td>
+                                                        <td width="14%">
+                                                            <a href="" id="add_child_subledger" name="add_child_subledger" class="buttonadd" ng-click="add_childRouteContainer_element($index)"><i class="fa fa-plus"></i></a>
+                                                            <a href="javascript:void(0)" class="buttondelete" style="padding-top:0px !important;">
+                                                                <i class="fa fa-trash text-danger" data-tooltip="Remove item" ng-click="remove_childRouteContainer_element($index)"></i>
+                                                            </a>
+
+                                                        </td>
+
+                                                    </tr>
+
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    
+                                    </fieldset>
+                                </div>
+
+                             
+
+                            </div>
+
+
+                        </div>
+
+                    </form>
+
+
+                    <div class="clearfix">
+                    </div>
+                    <kendo-grid id="grid" class="logisticplangrid" options="mainGridOptions" k-rebind="mainGridOptions">
+                        <div k-detail-template>
+                            <kendo-tabstrip>
+                                <ul>
+                                  
+                                    <li class="k-state-active">Carrier Details</li>
+                                  
+                                </ul>
+                               
+                                <div>
+                                    <div id="containergrid" class="containergrid" kendo-grid k-options="containerGridOptions(dataItem)"></div>
+                                </div>
+                            </kendo-tabstrip>
+                        </div>
+                    </kendo-grid>
+                    @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                    <div class="modal fade" id="FilterModal" role="dialog">
+                        <div class="modal-dialog">
+
+                            <!-- Filter Modal content-->
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                    <h4 class="modal-title">Filter</h4>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row">
+                                        <div class="col-sm-12 col-md-12">
+                                            <div class="form-group">
+                                                <label class="control-label">
+                                                    Lc Number(LC#)
+                                                </label>
+                                                <input id="filterDatalcnumber" ng-model="filterData.lcnumber" name="lcnumber"  kendo-auto-complete
+                                                       k-data-text-field="'LC_NUMBER'"
+                                                       k-data-value-field="'LC_NUMBERS'"
+                                                       k-data-source="ipPurchaseOrderfilter"
+                                                       k-min-length="1"
+                                                       k-value-primitive="true"
+                                                       k-placeholder="'Select Lc Number...'"
+                                                       style="width: 100%" />
+                                             </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="submit" ng-click="Filter()" class="btn buttongreen btn-sm">Filter</button>
+                                    <button type="button" class="btn btn-default" ng-click="CancelFilter()" data-dismiss="modal">Cancel</button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="modal fade" id="ContentModal" role="dialog">
+                        <div class="modal-dialog inputcontent">
+
+                            <!-- Modal content-->
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                    <h4 class="modal-title">Enable/Disable</h4>
+                                </div>
+                                <div class="modal-body">
+                                    <!------------------------------------------For All Enable/Disable------------------------------------>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <input type="checkbox" ng-change='AllcheckboxEnableDisable()' id="Allcheckbox" ng-model="Allcheckbox" />
+                                            All
+                                        </div>
+                                    </div>
+                                    <!------------------------------------------For Plan shippment-------------------------------------->
+                                    <div>
+                                               
+                                        <input type="checkbox" ng-model="check_SHIPPING_TYPE" class="enabledisable" />
+                                        Shipment Type <br>
+                                     
+                                        <input type="checkbox" ng-model="check_EST_BOOKING_DATE" class="enabledisable" />
+                                        Estimated Booking Date <br>
+
+                                        <input type="checkbox" ng-model="check_EST_LOADING_DATE" class="enabledisable" />
+                                        Estimated Loading Date <br>
+
+                                        <input type="checkbox" ng-model="check_ACT_BOOKING_DATE" class="enabledisable" />
+                                       Actual Booking Date <br>
+
+                                        <input type="checkbox" ng-model="check_ACT_LOADING_DATE" class="enabledisable" />
+                                       Actual Loading Date <br>
+                                        <input type="checkbox" ng-model="check_FROM_LOCATION_CODE" class="enabledisable" />
+                                        From Location <br>
+                                      
+                                        <input type="checkbox" ng-model="check_TO_LOCATION_CODE" class="enabledisable" />
+                                       To Location <br>
+                                      
+                                    </div>
+                                    <!------------------------------------------For Container------------------------------------>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <input type="checkbox" ng-model="editcontainer" class="enabledisable" />
+                                            Container
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-primary" data-dismiss="modal">Ok</button>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                        <!--container end -->
+                    </div>
+                </div>
+            </div><!--/portlet-body-->
+        </div><!-- /portlet-->
+
+    </div>
+</div>
+
+
+<script type="text/javascript">
+
+    $("#check").click(function () {
+        alert("yes");
+    });
+    $('.nav-tabs a').on('click', function (e) {
+
+        e.preventDefault();
+
+    });
+
+    function RefreshGrid() {
+        $("#grid").data("kendoGrid").dataSource.read();
+    }
+    $(document).on('click', '.maskdate', function () {
+        var me = $(this);
+
+        me.datepicker({
+            showOn: 'focus',
+            altFormat: "mm/dd/yy",
+            dateFormat: "mm/dd/yy",
+            changeMonth: true,
+            changeYear: true,
+            showButtonPanel: true
+
+        }).focus();
+    }).on('focus', '.maskdate', function () {
+        var me = $(this);
+        me.mask('99/99/9999');
+    }).on('change', '.maskdate', function () {
+        var date = $(this).val();
+        var arr = date.split('/');
+        var month = (arr[0]);
+        var day = (arr[1]);
+        if (month > 12 || day > 32) {
+
+            $(this).val(new Date('mm/dd/yy'));
+        }
+
+
+    });
+
+</script>
+
+
+
+
+

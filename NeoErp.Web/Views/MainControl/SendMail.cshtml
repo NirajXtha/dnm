@@ -1,0 +1,364 @@
+﻿@model string
+<style>
+    .gappingbottom {
+        margin-bottom: 0px !important;
+    }
+
+    #details-container .form-control {
+        width: 457px !important;
+        max-width: 100% !important;
+    }
+
+    #details {
+        /*overflow: hidden !important;*/
+        overflow:visible;
+    }
+
+    #details-container #details-container {
+        padding-top: 25px !important;
+        padding-bottom: 25px !important;
+    }
+   .custom-sendmail ul.dropdown-menu 
+   {
+        /*min-width: 361px !important;*/
+    /*height: 199px !important;*/
+    }
+
+   .note-popover .popover .popover-content .note-color .dropdown-menu, .note-toolbar .note-color .dropdown-menu {
+    min-width: 360px !important;
+    margin-left:31px;
+}
+
+    .k-widget.k-window {
+        height: auto !important;
+    }
+
+    /*.note-editable {
+        height: 120px !important;
+    }*/
+    #details {
+        /*width: 571px !important;*/
+    }
+    #details-container input[type="text"] {
+        margin-bottom: 10px !important;
+        height: 15px !important;
+        font-size: 13px;
+    }
+    #Message_custom {
+        padding-top: 25px;
+        padding-bottom: 25px;
+    }
+    #sendMail {
+        margin-left: 517px;
+    }
+
+    .buttom_custom {
+        text-align: right;
+    }
+
+    .nogapbottomline {
+        margin-bottom: 5px !important;
+    }
+
+    .k-widget.k-window {
+        /*top:46px !important;*/
+        margin-top: -80px !important;
+        max-width: 100% !important;
+    }
+
+</style>
+
+    <div id="example" class="col-md-12">
+        <div class="page-content">
+            <div class="page-bar page-bar-gap">
+                <ul class="page-breadcrumb custom-breadcrum">
+                    <li>
+                        <i class="fa fa-home"></i>
+                        <a href="#">Home</a>
+                        <i class="fa fa-angle-right"></i>
+                    </li>
+                    <li>
+                        <a href="#">Mail List</a>
+                        <i class="fa fa-angle-right"></i>
+                    </li>
+                </ul>
+
+            </div>
+            <div class="main-contain-box clearfix">
+                <div id="grid"></div></div>
+                <div id="details"></div>
+                <script>
+                    var wnd,
+                    detailsTemplate;
+
+                    $(document).ready(function () {
+                        var urltest = window.location.protocol + "//" + window.location.host + "/MainControl/AllMailList";
+                        $("#grid").kendoGrid({
+                            toolbar: ["excel"],
+                            excel: {
+                                fileName: "Mail List",
+                                filterable: true
+                            },
+                            dataSource: {
+                                dataType: "json",
+                                //type: "POST",
+                                transport: {
+                                    read: urltest
+                                },
+                                pageSize: 20
+                            },
+
+                            height: 500,
+                            sortable: true,
+                            filterable: {
+                                extra: false,
+                                operators: {
+
+                                    string: {
+                                        contains: "Contains",
+                                    },
+                                }
+                            },
+                            resizable: true,
+                            pageable: true,
+                            groupable: true,
+                            pageable: {
+                                refresh: true,
+                                pageSizes: true,
+                                buttonCount: 5
+                            },
+                            columns: [
+
+                                {
+                                    //template: "<div class='customer-photo'" +
+                                    //                "style='background-image: url(../content/web/Customers/#:data.CustomerID#.jpg);'></div>" +
+                                    //            "<div class='customer-name'>#: ContactName #</div>",
+                                    field: "MESSAGE_QUEUE_CODE",
+                                    title: "SN",
+                                },
+                                {
+                                    field: "EMAIL_TO",
+                                    title: "To",
+                                    width: "200px"
+                                },
+                                {
+                                    field: "EMAIL_CC",
+                                    title: "CC",
+                                },
+                                {
+                                    field: "EMAIL_BCC",
+                                    title: "BCC",
+                                },
+
+                                {
+                                    field: "ATTACHMENT_FLAG",
+                                    title: "Attachment",
+                                },
+                                {
+                                    field: "MESSAGE_FLAG",
+                                    title: "Status",
+                                },
+                                {
+                                    field: "CREATED_BY",
+                                    title: "From Login User",
+                                },
+                                {
+                                    field: "MODIFY_BY",
+                                    title: "Modify By",
+                                },
+                                  // {
+                                      // field: "MESSAGE",
+                                      // title: "Message",
+                                       //encoded: false,
+                                      // template: "#if(MESSAGE.length>50){# # var myContent =MESSAGE; #  # var dcontent = myContent.substring(10,50) + ' ...'; # <span>#=kendo.toString(dcontent)#</span> #}else{# <span>#=MESSAGE#</span> #}#",
+                                       // width: "90px",
+                               {
+                                   field: "SUBJECT",
+                                   title: "Subject",
+                               },
+
+                              {
+                                  command:
+                                      {
+                                          text: "Resend",
+                                          click: showDetails
+                                      },
+                                  title: ""
+                              },
+                            ],
+
+                        }).data("kendoGrid");
+                        wnd = $("#details")
+                    .kendoWindow({
+                        title: "Mail Details",
+                        modal: true,
+                        visible: false,
+                        resizable: false,
+                        width: 500,
+                        height: 300,
+
+                    }).data("kendoWindow");
+
+                        detailsTemplate = kendo.template($("#template").html());
+                    });
+
+                    function showDetails(e) {
+                        e.preventDefault();
+
+                        var dataItem = this.dataItem($(e.currentTarget).closest("tr"));
+                        wnd.content(detailsTemplate(dataItem));
+                        wnd.center().open();
+                        $('#summernote').summernote({
+
+                            height: 300,
+                            codemirror: { theme: 'monokai' },
+                            toolbar: [
+                                       ["style", ["style"]],
+                                       ["font", ["bold", "underline", "clear"]],
+                                       ["fontname", ["fontname"]],
+                                       ["color", ["color"]],
+                                       ["view", ["codeview", "fullscreen"]],
+                                        ['table', ['table']],
+                                       ["para", ["paragraph", "ol", "ul"]],
+                            ],
+                        });
+                    }
+                </script>
+                <script type="text/x-kendo-template" id="template">
+                    <div id="details-container">
+
+                        <form id="sendMailForm" class="custom-sendmail" method="post">
+                            <div class="form-group">
+                                <input type="hidden" id="queuecode" value="#=MESSAGE_QUEUE_CODE#" class="form-control" name="to">
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">To</label>
+                                <input type="text" id="CustomerEmail" value="#=EMAIL_TO#" class="form-control" name="to" placeholder="Email Address">
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">Subject</label>
+                                <input type="text" id="subject" value="#=SUBJECT#" class="form-control" name="to" placeholder="Subject">
+                            </div>
+                            <div class="form-group">
+                                <input type="hidden" id="guid" value="#=UniqueKey#" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <input type="hidden" id="attachmentFlag" value="#=ATTACHMENT_FLAG#" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">Message</label>
+                                <div id="summernote" class="summernote">
+                                    <p>#=MESSAGE#</p>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <input type="hidden" id="attachDoc" value="#=ATTACHMENT_FILE#" class="form-control" name="to" placeholder="Email Address">
+                            </div>
+                            <div class="row">
+                                <div class="form-group col-md-5 nogapbottomline">
+                                    @*<i class="fa fa-file-excel-o"></i>
+                                <label class="control-label">Attached</label>
+                                <div id="attachment" class="summernote">
+                                    <a href="#= (ATTACHMENT_FILE).replace('~', window.location.protocol + '//' + window.location.host) #" download>Download</a>
+                                </div>*@
+                                    <label class="Form-label--tick">
+                                        <input type="checkbox" disabled checked, value="xlsx" name="SomeRadio" class="Form-label-radio" checked>
+                                        <span class="Form-label-text">Excel</span>
+                                    </label>
+                                </div>
+                                <div class="form-group buttom_custom col-md-5 pull-right nogapbottomline">
+                                    <button type="button" id="customClose" class="btn dark btn-outline" onclick='$(this).closest("[data-role=window]").kendoWindow("close");' data-dismiss="modal">Close</button>
+                                    @*<button type="button" class="btn green" id="sendMail_custom">Send</button>*@
+                                    <button type="button" class="btn green" id="sendMail_custom">Send</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </script>
+            </div>
+    </div>
+    </div>
+    <script>
+        $(function () {
+
+            function displayLoading(target) {
+                var element = $(target);
+                kendo.ui.progress(element, true);
+            }
+            function hideLoading(target) {
+                var element = $(target);
+                kendo.ui.progress(element, false);
+
+
+            }
+            $("#details").on('click', "#sendMail_custom", function () {
+                $(this).closest("[data-role=window]").kendoWindow("close"); //close the kendo windows
+                displayLoading("#example"); //displayLoading function is called
+                //Loading start
+                var EMAIL_TO = $("#CustomerEmail").val();
+                var SUBJECT = $("#subject").val();
+                var MESSAGE = $('.note-editable').html();
+                var MESSAGE_QUEUE_CODE = $("#queuecode").val();
+
+                var value = {
+                    EMAIL_TO: EMAIL_TO,
+                    SUBJECT: SUBJECT,
+                    MESSAGE: MESSAGE,
+                    MESSAGE_QUEUE_CODE: MESSAGE_QUEUE_CODE,
+                }
+
+                $.ajax({
+                    type: 'POST',
+                    data: value,
+                    dataType: "html",
+                    //contentType: false,
+                    //processData: false,
+                    url: window.location.protocol + "//" + window.location.host + "/MainControl/UpdateMailList",
+                    success: function (data) {
+                        MailData()
+                        //update grid data
+                        $("#grid").data("kendoGrid").dataSource.read();
+                        displayPopupNotification("Update success", "success");
+                    }
+                });
+                //when all the data loaded and mailing operation done then hideLoading function called
+                hideLoading("#example");
+            });
+        });
+
+    </script>
+    <script src="//cdn.bootcss.com/summernote/0.5.0/summernote.js"></script>
+    <script>
+        function MailData() {
+            var EMAIL_TO = $("#CustomerEmail").val();
+            var SUBJECT = $("#subject").val();
+            var MESSAGE = $('.note-editable').html();
+            var ATTACHMENT_FILE = $('#attachDoc').val();
+            var UniqueKey = $("#guid").val();
+            var ATTACHMENT_FLAG = $("#attachmentFlag").val();
+
+            var value = {
+                EMAIL_TO: EMAIL_TO,
+                SUBJECT: SUBJECT,
+                MESSAGE: MESSAGE,
+                ATTACHMENT_FILE: ATTACHMENT_FILE,
+                UniqueKey: UniqueKey,
+                ATTACHMENT_FLAG: ATTACHMENT_FLAG,
+            }
+            $.ajax({
+                type: 'POST',
+                data: value,
+                dataType: "html",
+                url: window.location.protocol + "//" + window.location.host + "/MainControl/SendMailNew",
+                success: function (data) {
+                    displayPopupNotification("Mail Send", "success");
+                }
+            });
+        }
+    </script>
+
+
+
+
+
+

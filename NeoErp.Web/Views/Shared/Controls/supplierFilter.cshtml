@@ -1,0 +1,266 @@
+﻿
+
+<div>
+    <div id="supplierTreeView" style="max-height:400px;"></div>
+</div>
+
+
+<script>
+
+    $(document).ready(function () {
+        var autoCompleteurl = window.location.protocol + "//" + window.location.host + "/api/SalesHome/GetSalesRegisterSupplier";
+        var autoCompletedataSource = new kendo.data.DataSource({
+            transport: {
+                read: {
+                    url: autoCompleteurl,
+                    dataType: "json"
+                }
+            }
+            //serverFiltering: true
+        });
+
+        function OnMultiSelect(e) {
+            var dataItem = this.dataItem(e.item.index());
+            //Make the selected product checked in treeView here...
+            var treeView = $("#supplierTreeView").data('kendoTreeView');
+            var dataSource = treeView.dataSource;
+            //var dataItem = dataSource.get(e.items[0].ItemCode);
+            var mydataItem = dataSource.get(dataItem.SupplierCode);
+            //var isChecked = mydataItem.checked;
+            if (typeof mydataItem != 'undefined') {
+                $("#_" + mydataItem.uid).attr('checked', true);
+            }
+        };
+
+        $("#supplierMultiSelect").kendoMultiSelect({
+            dataSource: autoCompletedataSource,
+            dataTextField: "SupplierName",
+            dataValueField: "SupplierCode",
+            height: 600,
+            //scrollable: {
+            //    virtual: true
+            //},
+            headerTemplate: '<div class="col-md-offset-4"><strong>Suppliers...</strong></div>',
+            //filter: "startswith",
+            placeholder: "Select Supplier...",
+            autoClose: false,
+            select: OnMultiSelect,
+            dataBound: function () {
+                var current = this.value();
+                this._savedOld = current.slice(0);
+            },
+            change: OnMultiSelectChange
+        });
+
+        function OnMultiSelectChange(e) {
+            var previous = this._savedOld;
+            var current = this.value();
+            var diff = [];
+            if (previous) {
+                diff = $(previous).not(current).get();
+            }
+            this._savedOld = current.slice(0);
+            if (diff.length > 0) {
+                //Make the removed supplier unChecked in treeView here...
+                var treeView = $("#supplierTreeView").data('kendoTreeView');
+                var dataSource = treeView.dataSource;
+                var mydataItem = dataSource.get(diff);
+                if (typeof mydataItem != 'undefined') {
+                    $("#_" + mydataItem.uid).attr('checked', false);
+                }               
+            }
+            loadSupplierFilterTreeList();
+        }
+        
+        var loadAllSuppliersUrl = window.location.protocol + "//" + window.location.host + "/api/SalesHome/GetAllSupplierNodes";
+        var loadSupplierByNodeUrl = window.location.protocol + "//" + window.location.host + "/api/SalesHome/GetAllSupplierBySupId";
+
+        var localData;
+        var SupplierTreeDataSource = new kendo.data.HierarchicalDataSource({
+            transport: {
+                read: function (options) {
+                    if (typeof options.data.SupplierCode != 'undefined') {
+                        var id = options.data.SupplierCode;
+                        var data = getNextLevel(localData, id);
+                        if (data) {
+                            options.success(data);
+                        } else {
+                            var currentnode = get(localData, id);
+                            $.ajax({
+                                url: loadSupplierByNodeUrl,
+                                data: {
+                                    Supid: currentnode.SupplierCode,
+                                    level: currentnode.Level,
+                                    mastercode: currentnode.MasterSupplierCode
+                                },
+                                type: "GET",
+                                success: function (result) {
+                                    setTimeout(function () {
+                                        var res = result;
+                                        addToLocalData(localData, res, currentnode.SupplierCode);
+                                        options.success(res);
+                                    }, 1000);
+
+                                },
+                                error: function (result) {
+                                    options.error(result);
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        $.ajax({
+                            url: loadAllSuppliersUrl,
+                            type: "GET",
+                            success: function (result) {
+                                setTimeout(function () {
+                                    options.success(result);
+                                }, 1000);
+                                localData = result;
+                            },
+                            error: function (result) {
+                                options.error(result);
+                            }
+                        });
+                    }
+                }
+            },
+            schema: {
+                model: {
+                    id: "SupplierCode",
+                    hasChildren: "hasSuppliers",
+                    masterCustCode: "MasterSupplierCode"
+                }
+            }
+        });
+
+        $("#supplierTreeView").kendoTreeView({
+            checkboxes: {
+                checkChildren: true
+            },
+            autoScroll: true,
+            autoBind: false,
+            dataSource: SupplierTreeDataSource,
+            dataTextField: "SupplierName",
+            height: 400,
+            scrollable: {
+                virtual: true
+            },
+            check: onCheck,
+        });
+
+        $("#supplierTreeView").data("kendoTreeView").expand(".treeNode");
+        
+        function onCheck(e) {
+            // get the supplierMultiSelect values.
+            var supplierMultiSelect = $("#supplierMultiSelect").data("kendoMultiSelect");
+            var mvalue = supplierMultiSelect.value();
+            //get the ItemCode of the checked node
+            var dataItemCustomerID = this.dataItem(e.node).SupplierCode;
+            if (this.dataItem(e.node).checked == true) {
+                var res = [];
+                res.push(dataItemCustomerID);
+                res.forEach(function (dataItem) {
+                    var temp = $.merge($.merge([], mvalue), [dataItem]);
+                    temp = $.unique(temp);
+                    supplierMultiSelect.value(temp);
+                    supplierMultiSelect._savedOld = temp.slice(0)
+                });
+
+            }
+            if (this.dataItem(e.node).checked == false) {
+                //$("#txtSelectedSupplier").val('');
+                //remove value from supplierMultiSelect if the node is unchecked
+                mvalue.forEach(function (dataItem) {
+                    //var temp = $.grep($.grep(mvalue,[]), [dataItem]);
+                    var temp = $.grep(mvalue, function (a) { return a != dataItem });
+                    temp = $.unique(temp);
+                    supplierMultiSelect.value(temp);
+                });
+
+            }
+        }
+
+
+        //Checks if nodes are already in the tree and returns it if it does
+        function getNextLevel(data, id) {
+            if (!id) {
+                return data;
+            } else {
+                for (var i = 0; i < data.length; i++) {
+                    if (data[i].SupplierCode == id) {
+                        return data[i].Items;
+                    } else if (data[i].Items) {
+                        for (var j = 0; j < data[i].Items.length; j++) {
+                            if (data[i].Items[j].SupplierCode == id) {
+                                return data[i].Items[j].Items;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        //Get Tree object for a given ItemCode
+        function get(data, id) {
+            if (id) {
+                for (var i = 0; i < data.length; i++) {
+                    if (data[i].SupplierCode == id) {
+                        return data[i];
+                    }
+                    else if (data[i].Items) {
+                        for (var j = 0; j < data[i].Items.length; j++) {
+                            if (data[i].Items[j].SupplierCode == id) {
+                                return data[i].Items[j];
+                            }
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        //Add newly read nodes to cached tree
+        function addToLocalData(localdata, data, id) {
+            if (!id) {
+                return localdata;
+            } else {
+                for (var i = 0; i < localdata.length; i++) {
+                    if (localdata[i].SupplierCode == id) {
+                        localdata[i].Items = data;
+                        return;
+                    } else {
+                        if (localdata[i].Items) {
+                            for (var j = 0; j < localdata[i].Items.length; j++) {
+                                if (localdata[i].Items[j].SupplierCode == id) {
+                                    localdata[i].Items[j].Items = data;
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+    });
+
+   
+
+    $(function () {
+        $('#supplierTreeView').slimScroll({
+            // height: '20px'
+        });
+    });
+
+    var loadSupplierFilterTreeList = function () {
+        $(".supplierSlidebox").slideToggle();
+        activateTab('supplierTab');
+        $("#supplierTreeView").data("kendoTreeView").dataSource.bind("change",
+        $("#supplierTreeView").data("kendoTreeView").dataSource.read()
+        );
+    }
+    function activateTab(tab) {
+        $('.nav-tabs a[href="#' + tab + '"]').tab('show');
+    };
+</script>

@@ -1,0 +1,240 @@
+﻿@{
+    Layout =null;
+}
+<style>
+    .btnadd {
+        margin-top: 2px;
+        float: right;
+        margin-right: 5px !important;
+    }
+
+    div.k-treeview {
+        overflow: unset !important;
+    }
+    /*    .modal-header {
+        background-color: green !important;
+        color: white !important;
+    }*/
+    .addcolor {
+        color: #ffffff;
+    }
+
+    .popContainer {
+        text-align: right;
+    }
+
+    .popContent {
+        display: inline-block; /* Ensures the container only takes as much width as needed */
+    }
+
+    .popMessage {
+        text-align: center;
+        padding: 10px;
+        color: white;
+        border-radius: 5px !important;
+    }
+    .form {
+        margin-left: 3rem;
+        margin-top: 0.5rem;
+    }
+    /*.scrollable-table {
+        max-width: 500px;*/ /* Adjust the maximum width as needed */
+    /*overflow-x: auto;*/ /* Enable horizontal scrolling */
+    /*}*/
+
+</style>
+
+<div class="col-md-12">
+    <div id="projectSetupTreeCtrl"  ng-controller="projectSetupTreeCtrl">
+        <div class="portlet box green-box main">
+            <item></item>
+            <div class="portlet-title" style="padding:0.5rem;">
+                <div class="caption caption-title ng-binding">
+                    <a class="btn-back pull-left" data-toggle="tooltip" data-placement="top" title="Back To Dashboard" href="/ProjectManagement/Home/Dashboard">
+                        <i class="fa fa-arrow-circle-left"></i>
+                    </a>
+                    <i class="fa fa-gift"></i>
+                    <span class="caption-subject bold uppercase">Project Setup</span>
+                </div>
+
+            </div>
+
+            <div class="portlet-body light bg-inverse">
+                <div class="row" style="margin-top: 2rem; margin-bottom: 0.3rem;">
+                    <div class="col-md-6 d-flex justify-content-start">
+                        <!-- Adjusted column size and added flex utilities -->
+                        <div class="topsearch" style="display: block;">
+                            <input class="k-textbox txtSearchString" type="text" id="itemtxtSearchString" ng-model="txtSearchString" name="search" placeholder="Search...." />
+                        </div>
+                    </div>
+                    <div class="col-md-6 d-flex justify-content-end">
+                        <!-- Adjusted column size and added flex utilities -->
+                        <div class="actions text-right">
+                            <a class="btn dark-green btn-sm addcolor" id="createbtn" ng-disabled="treenodeselected" ng-click="showProjectModal()" data-loading-text="<i class='fa fa-spinner fa-spin'></i> Processing..." href="javascript:;">
+                                <i class="fa fa-plus"></i> NEW
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="kGrid"></div>
+                <div class="popContainer">
+                    <div class="popContent">
+                        <div class="popMessage">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade-out" id="projectModal" data-backdrop="static" tabindex="-1" data-width="760">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true" next-on-tab>&times;</button>
+                            <h4 class="modal-title">
+                                <span class="fa fa-file"></span>
+                                Project Setup
+                            </h4>
+
+                        </div>
+
+                        <div class="modal-body">
+                            <form name="projectForm" class="form" method="post" ng-submit="submitProject()" enctype="multipart/form-data" id="projectForm" novalidate>
+                                <input type="hidden" name="projectId" id="projectId" value="@ViewBag.Id">
+                                    <div class="form-group row">
+                                        <label for="projectName" class="col-sm-3 col-form-label">Project Name</label>
+                                        <div class="col-sm-7">
+                                            <input type="text" class="form-control" ng-model="PROJECT_NAME" required>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="startDate" class="col-sm-3 col-form-label">Start Date</label>
+                                        <div class="col-sm-7">
+                                            <input type="date" class="form-control" ng-model="START_DATE" required>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="endDate" class="col-sm-3 col-form-label">End Date</label>
+                                        <div class="col-sm-7">
+                                            <input type="date" class="form-control" ng-model="END_DATE">
+                                        </div>
+                                  </div>
+                                <input type="submit" class="hidden" id="btnProject" value="submit">
+                            </form>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-sm btn-green" id="savedocumentformdata" ng-click="saveNewitem()" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Processing..." href="javascript:;">
+                                <i class="fa fa-floppy-o"></i> Save
+                            </button>
+                            <button type="button" class="btn btn-sm btn-danger" ng-click="ItemCancel()" data-dismiss="modal">
+                                <i class="fa-solid fa-xmark"></i> Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @*To view Data*@
+        <div class="modal fade-out" id="viewProjectModal" data-backdrop="static" tabindex="-1" data-width="760">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content" >
+                    <div class="modal-header">
+
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" next-on-tab>&times;</button>
+                        <h4 class="modal-title">
+                            <span class="fa fa-file"></span>
+                            View Project
+                        </h4>
+
+                    </div>
+
+                    <div class="modal-body">
+                        <form name="projectForm" class="form" method="post" ng-submit="submitProject()" enctype="multipart/form-data" id="projectForm" novalidate>
+                            <input type="hidden" name="projectId" id="projectId" value="@ViewBag.Id">
+                            <div class="form-group row">
+                                <label for="projectName" class="col-sm-3 col-form-label">Project Name</label>
+                                <div class="col-sm-7">
+                                    <input type="text" class="form-control" ng-model="PROJECT_NAME" readonly>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="startDate" class="col-sm-3 col-form-label">Start Date</label>
+                                <div class="col-sm-7">
+                                    <input type="text" class="form-control" ng-model="START_DATE" readonly>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="endDate" class="col-sm-3 col-form-label">End Date</label>
+                                <div class="col-sm-7">
+                                    <input type="text" class="form-control" ng-model="END_DATE" readonly>
+                                </div>
+                            </div>
+                            <input type="submit" class="hidden" id="btnProject" value="submit">
+                        </form>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-danger" ng-click="ItemCancel(event)" data-dismiss="modal">
+                            <i class="fa-solid fa-xmark"></i> Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+            @*End of view modal*@
+        <div class="modal fade-out" id="editProjectModal" data-backdrop="static" tabindex="-1" data-width="760">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" next-on-tab>&times;</button>
+                        <h4 class="modal-title">
+                            <span class="fa fa-file"></span>
+                            Edit Project
+                        </h4>
+
+                    </div>
+
+                    <div class="modal-body">
+                        <form name="projectForm" class="form" method="post" ng-submit="submitProject()" enctype="multipart/form-data" id="projectForm" novalidate>
+                            <input type="hidden" name="projectId" id="projectId" ng-model="ID">
+                            <div class="form-group row">
+                                <label for="projectName" class="col-sm-3 col-form-label">Project Name</label>
+                                <div class="col-sm-7">
+                                    <input type="text" class="form-control" ng-model="PROJECT_NAME" required>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="startDate" class="col-sm-3 col-form-label">Start Date</label>
+                                <div class="col-sm-7">
+                                    <input type="date" class="form-control" ng-model="START_DATE" required>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="endDate" class="col-sm-3 col-form-label">End Date</label>
+                                <div class="col-sm-7">
+                                    <input type="date" class="form-control" ng-model="END_DATE">
+                                </div>
+                            </div>
+                            <input type="submit" class="hidden" id="btnProject" value="submit">
+                        </form>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-green" id="savedocumentformdata" ng-click="saveNewitem()" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Processing..." href="javascript:;">
+                            <i class="fa fa-floppy-o"></i> Save
+                        </button>
+                        <button type="button" class="btn btn-sm btn-danger" ng-click="ItemCancel(event)" data-dismiss="modal">
+                            <i class="fa-solid fa-xmark"></i> Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+
+    </div>
+</div>
+
+

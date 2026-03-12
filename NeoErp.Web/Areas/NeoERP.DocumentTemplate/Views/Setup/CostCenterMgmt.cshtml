@@ -1,0 +1,495 @@
+﻿@{
+    ViewBag.Title = "Sub Ledger Mgmt";
+    Layout = null;
+}
+
+<style>
+
+    /*TreeView css  S*/
+
+    #subLedgerTreeView .k-sprite {
+        background-image: url("../content/web/treeview/coloricons-sprite.png");
+    }
+
+
+
+    /*TreeView css E*/
+
+    .demo-section label {
+        margin-bottom: 5px !important;
+        font-weight: bold !important;
+        display: inline-block !important;
+    }
+
+    #example .demo-section {
+        max-width: none !important;
+        width: 515px !important;
+    }
+
+    #example .k-listbox {
+        width: 236px !important;
+        height: 285px !important;
+        /*overflow: auto !important;*/
+    }
+
+    .k-list-scroller {
+        height: 285px !important;
+        overflow: auto !important;
+    }
+
+    #example .k-listbox:first-of-type {
+        width: 270px !important;
+        margin-right: 1px !important;
+    }
+
+
+
+    /*-------------------------------*/
+    .k-splitbar.k-splitbar-horizontal {
+        width: 5px;
+    }
+
+
+    .k-splitter {
+        height: 490px !important;
+    }
+
+    .portlet-title.mingap {
+        min-height: auto !important;
+    }
+
+    .bottomspance {
+        padding: 2px 15px !important;
+    }
+
+    .portlet-title.mingap {
+        min-height: auto !important;
+    }
+
+    .bottomspance .portlet-body {
+        padding-top: 2px !important;
+    }
+
+    .portlet {
+        margin-top: 0px;
+        margin-bottom: 7px !important;
+    }
+
+
+    .bodyController {
+        margin-top: 4px;
+    }
+
+    /*.k-splitter .k-scrollable {
+        overflow: hidden !important;
+    }*/
+
+    /*.k-widget.k-treeview {
+        max-height: 442px !important;
+        overflow: auto !important;
+    }*/
+
+    #example .k-list.k-reset {
+        overflow: auto !important;
+    }
+</style>
+
+<div class="row">
+
+    <div class="col-md-12 col-sm-12" id="costCenterMgmtCtrl">
+
+        <div class="portlet light form-fit bordered bottomspance">
+
+            <div class="portlet mingap">
+
+                <div class="portlet-title">
+
+                    <div class="caption caption-title ng-binding">
+                        <a class="btn-back pull-left" data-toggle="tooltip" data-placement="top" title="Back To Dashboard" href="/DocumentTemplate/Home/Dashboard">
+                            <i class="fa fa-arrow-circle-left"></i>
+                        </a>
+                        <i class="fa fa-gift font-green-haze"></i>
+                        <span class="caption-subject font-green-haze bold uppercase">{{FormName}}</span>
+                    </div>
+
+                    <div class="actions">
+
+                        <a class="btn btn-success" data-toggle="tooltip" data-placement="top" title="(Alt + P)" ng-click="newSubledgerMap()" href="javascript:;">
+                            <i class="fa fa-plus-circle"></i> New
+                        </a>
+                        <a class="btn btn-success" data-toggle="tooltip" data-placement="top" title="(Alt + P)" ng-click="editSubLedgerMap()" href="javascript:;" disabled>
+                            <i class="fa fa-check-circle"></i> Edit
+                        </a>
+
+                        <a class="btn btn-success" data-toggle="tooltip" data-placement="top" title="Back To Dashboard" href="/DocumentTemplate/Home/Dashboard">
+                            Cancel
+                        </a>
+
+                        <a class="btn btn-success" data-toggle="tooltip" data-placement="top" title="(Alt + P)" ng-click="printSubledgerMap()" href="javascript:;">
+                            <i class="fa fa-print"></i> Print
+                        </a>
+                    </div>
+                </div>
+
+                <div class="portlet-body">
+                    <div class="row">
+
+                        <div id="splitter">
+                            <div id="pane1">
+                                <div class="portlet box green-box">
+                                    <div class="portlet-title">
+
+                                        <div class="caption">
+                                            <i class="icon-pin"></i>
+                                            <span class="caption-subject bold uppercase">Cost Center</span>
+                                        </div>
+                                    </div>
+                                    <div class="portlet-body">
+                                        <div class="row">
+                                            <div class="col-md-offset-8 col-md-11 search_box">
+                                                <div class="topsearch" style="display:block;">
+                                                    <a class="btn-linkicon fa fa-search" style="margin-right: -13px;" ng-click="filterWithChild()"></a>
+                                                    <input class="k-textbox txtSearchString" type="text" id="serachOnLedgerTree" name="serachOnLedgerTree" placeholder="Search ledger..." style="margin-left: 13px;" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        @*<input class="k-textbox" placeholder="Search ledger..." id="serachOnLedgerTree" />*@
+                                        <div id="subLedgerAccountTree"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="portlet box green-box main">
+
+                                    <div class="portlet-title">
+                                        <div class="caption">
+                                            <i class="fa fa-list-alt"></i>
+                                            <span class="caption-subject  bold uppercase">
+                                                Cost Center Management
+                                            </span>
+                                        </div>
+                                    </div>
+
+
+
+                                    <div class="portlet-body">
+                                        <div class="row">
+                                            <div class="col-md-offset-8 col-md-4 search_box">
+                                                <div class="topsearch" style="display:block;">
+                                                    <a class="btn-linkicon fa fa-search" style="margin-right: -13px;"></a> @*ng-click="BindGrid('All')"*@
+                                                    <input class="k-textbox txtSearchString" type="text" id="subLedgerSearchString" ng-model="txtSearchString" name="search" placeholder="Type to search..." style="margin-left: 13px;" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="tabbable">
+                                            <kendo-grid id="subLedgerMgmgGrid" options="subLedgerMgmgGridOptions" k-rebind="subLedgerMgmgGridOptions" class="kendo_gride_table" style="width:100%;">
+                                            </kendo-grid>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        @*NEW*@
+        <div class="modal fade-out" id="subLedgerSetupModal" data-backdrop="static" tabindex="-1" data-width="760">
+            <div class="modal-dialog" style="width:900px !important;">
+                <div class="modal-content">
+
+                    <div class="modal-header">
+                        <div type="button" class="close" data-dismiss="modal" aria-hidden="true" ng-click="closeSubLegerModal()" next-on-tab>&times;</div>
+                        <h4 class="modal-title">
+                            <span class="fa fa-file"></span>
+                            Sub Ledger Setup (Management)
+                        </h4>
+
+                    </div>
+
+                    <div id="subLedgerSetupDiv" class="modal-body OperaPrintModal main">
+
+                        <form id="subLedgerSetupForm" name="subLedgerSetupForm" novalidate>
+
+                            <div class="portlet light form-fit bordered bottomspance">
+                                <div class="portlet mingap">
+
+                                    <div class="portlet-title">
+                                        <div class="actions">
+
+                                            <div class="row">
+
+                                                <div class="col-md-12">
+                                                    <div class="col-md-6">
+
+                                                        <div class="col-md-5">
+                                                            <label for="element">
+                                                                Select Subledger Type:
+                                                            </label>
+                                                        </div>
+                                                        <div class="input-group">
+                                                            <select id="ledgerType" ng-model="selectedLedgerType" k-value-primitive="true" k-ng-model="selectedLedgerType" name="ledgerType" kendo-drop-down-list
+                                                                    k-options="selectedLedgerTypeOption" ng-change="ledgerTypeChange()"
+                                                                    style="width: 100%"></select>
+                                                            <span class="input-group-addon addon-iconbox" style="cursor:pointer" ng-click="BrowseRoutineTreeList()">
+                                                                <i class="fa fa-search" data-toggle="tooltip" title="Search Routine"></i>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+
+                                                        <div class="col-md-5">
+                                                            <label for="element">
+                                                                Accounts Map To:
+                                                            </label>
+                                                        </div>
+                                                        <div class="input-group">
+                                                            <input type="text" ng-model="selectedAccountToMap" class="" />
+                                                            <span class="input-group-addon addon-iconbox" style="cursor:pointer" ng-click="BrowseBelongsTreeList()">
+                                                                <i class="fa fa-search" data-toggle="tooltip" title="Search Customers"></i>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+
+                                        </div>
+                                    </div>
+
+                                    <div class="portlet-body">
+                                        <div class="tabbable">
+                                            <div class="col-md-12 col-sm-12 col-lg-12">
+
+                                                <div class="col-md-6 col-sm-6 col-lg-6">
+                                                    <label for="optional" id="employees">{{textForLegend}}</label>
+                                                    <a class="btn btn-sm btn-green" ng-click="mapFromTreeToList()">Map</a>
+                                                    <div id="subLedgerTreeView" style="padding:10px 10px 10px 10px;border:1px solid gray;margin-top:5px;" />
+                                                </div>
+
+                                                <div class="col-md-6 col-sm-6 col-lg-6" id="example">
+                                                    <label for="selected">List of Subledger</label> &nbsp;&nbsp;
+                                                    <input type="checkbox" id="selectAllListItem" disabled class="click" /> Select All
+                                                    <select id="selected" kendo-list-box k-options="selectedSubLedgerLstBoxOptions"></select>
+                                                </div>
+
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        </form>
+
+                    </div>
+
+                    <div class="modal-footer">
+                        @*<a class="btn btn-sm btn-green" id="savedocumentformdata" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Processing..." href="javascript:;">
+                            <i class="fa fa-floppy-o"></i> OK
+                        </a>*@
+                        <a class="btn btn-sm btn-green" id="btnSaveCategory" ng-click="closeSubLegerModal()" data-dismiss="modal">Cancel</a>
+                        <a class="btn btn-sm btn-green" id="btnSaveCategory" ng-click="applyLedgerMapping()" data-dismiss="modal">Apply</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+
+
+        @*OLD RUNNING MODAL PAGE*@
+        @*<div class="modal fade-out" id="subLedgerSetupModal" data-backdrop="static" tabindex="-1" data-width="760">
+                <div class="modal-dialog" style="width:900px !important;">
+                    <div class="modal-content">
+
+                        <div class="modal-header">
+                            <div type="button" class="close" data-dismiss="modal" aria-hidden="true" ng-click="closeSubLegerModal()" next-on-tab>&times;</div>
+                            <h4 class="modal-title">
+                                <span class="fa fa-file"></span>
+                                Sub Ledger Setup (Management)
+                            </h4>
+
+                        </div>
+
+                        <div id="subLedgerSetupDiv" class="modal-body OperaPrintModal main">
+
+                            <form id="subLedgerSetupForm" name="subLedgerSetupForm" novalidate>
+
+                                <div class="portlet light form-fit bordered bottomspance">
+                                    <div class="portlet mingap">
+
+                                        <div class="portlet-title">
+                                            <div class="actions">
+
+                                                <div class="row">
+
+                                                    <div class="col-md-12">
+                                                        <div class="col-md-6">
+
+                                                            <div class="col-md-5">
+                                                                <label for="element">
+                                                                    Select Subledger Type:
+                                                                </label>
+                                                            </div>
+                                                            <div class="input-group">
+                                                                <select id="ledgerType" ng-model="selectedLedgerType" k-value-primitive="true" k-ng-model="selectedLedgerType" name="ledgerType" kendo-drop-down-list
+                                                                        k-options="selectedLedgerTypeOption" ng-change="ledgerTypeChange()"
+                                                                        style="width: 100%"></select>
+                                                                <span class="input-group-addon addon-iconbox" style="cursor:pointer" ng-click="BrowseRoutineTreeList()">
+                                                                    <i class="fa fa-search" data-toggle="tooltip" title="Search Routine"></i>
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+
+                                                            <div class="col-md-5">
+                                                                <label for="element">
+                                                                    Accounts Map To:
+                                                                </label>
+                                                            </div>
+                                                            <div class="input-group">
+                                                                <input type="text" ng-model="selectedAccountToMap" class="" />
+                                                                <span class="input-group-addon addon-iconbox" style="cursor:pointer" ng-click="BrowseBelongsTreeList()">
+                                                                    <i class="fa fa-search" data-toggle="tooltip" title="Search Customers"></i>
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+                                        </div>
+
+                                        <div class="portlet-body">
+
+                                            <div class="tabbable">
+
+                                                <div id="example" role="application" align="center">
+                                                    <div class="demo-section k-content">
+                                                        <div>
+                                                            <label for="optional" id="employees">{{textForLegend}}</label>
+                                                            <label for="selected">List of Subledger</label> &nbsp;&nbsp;
+                                                            <input type="checkbox" id="selectAllListItem" disabled class="click" /> Select All
+                                                            <br />
+                                                            <select id="optional" k-options="subLedgerTypeOptions" kendo-list-box style="overflow-y:auto;"></select>
+                                                            <select id="selected" kendo-list-box k-options="selectedSubLedgerLstBoxOptions"></select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+
+                                            <div class="divider"></div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+                            </form>
+
+                        </div>
+
+                        <div class="modal-footer">
+
+                            <a class="btn btn-sm btn-green" id="savedocumentformdata" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Processing..." href="javascript:;">
+                                <i class="fa fa-floppy-o"></i> OK
+                            </a>
+                            <a class="btn btn-sm btn-green" id="btnSaveCategory" ng-click="closeSubLegerModal()" data-dismiss="modal">Cancel</a>
+                            <a class="btn btn-sm btn-green" id="btnSaveCategory" ng-click="applyLedgerMapping()" data-dismiss="modal">Apply</a>
+                        </div>
+                    </div>
+                </div>
+            </div>*@
+
+    </div>
+</div>
+
+<script>
+
+    $(document).ready(function () {
+        window.scrollTo(0, 0);
+
+        $("#subLedgerSearchString").keyup(function () {
+            var val = $('#subLedgerSearchString').val();
+            $("#subLedgerMgmgGrid").data("kendoGrid").dataSource.filter({
+                logic: "or",
+                filters: [
+                    {
+                        field: "DESCRIPTION",
+                        operator: "contains",
+                        value: val
+                    },
+                    {
+                        field: "SUB_CODE",
+                        operator: "contains",
+                        value: val
+                    },
+                    {
+                        field: "ACC_EDESC",
+                        operator: "contains",
+                        value: val
+                    },
+                    {
+                        field: "SUB_LEDGER_TYPE",
+                        operator: "contains",
+                        value: val
+                    }
+                ]
+            });
+        });
+
+    });
+
+    $("#splitter").kendoSplitter()
+    var splitter = $("#splitter").data("kendoSplitter");
+    splitter.size(".k-pane:first", "29%");
+
+    splitter.max("#pane1", "500px");
+
+
+    $('.tblresponsive').slimScroll({
+        height: '150px',
+    });
+
+    function selectCheckBoxRow(element) {
+        console.log("check box is checked" + element.checked);
+        if (element.checked) {
+            // element.parent().parent().addClass('k-state-selected');
+            $(element).closest('div').parent().addClass('k-state-selected');
+        } else {
+            //$('.item.click').parent().removeClass('k-state-selected');
+            $(element).closest('div').parent().removeClass('k-state-selected');
+        }
+    }
+
+</script>
+
+<script type="text/x-kendo-tmpl" id="checkBoxInListBoxTemplate">
+    <div class="item click" data="${TYPE_CODE}">
+        <input type="checkbox" class="click" onchange="selectCheckBoxRow(this)" />
+        <span class="checkbox" style="display:inline">#:TYPE_EDESC#</span>
+        <input type="hidden" value="${LINK_SUB_CODE}" />
+        <input type="hidden" value="${GROUP_SKU_FLAG}" />
+    </div>
+</script>
+
+<script id="treeview-template" type="text/kendo-ui-template">
+    <span spriteCssClass="folder"><i class="folder"> #: item.TYPE_EDESC #</i></span>
+    @*# if (!item.items) { #
+        <a class='k-icon k-i-close-outline' href='\#'></a>
+        # } #*@
+</script>
+

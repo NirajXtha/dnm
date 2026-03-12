@@ -1,0 +1,195 @@
+﻿
+    <div id="accChargeCtrl"  ng-controller="accChargeCtrl">
+        <div class="input-group" ng-if="freeze_manual_entry_flag==='Y'" style="pointer-events:none;">
+            <input kendo-combo-box ng-model="item.ACC_CODE" class="accCodeAutoComplete cacccode cacccode_{{chargeIndex}}" id="chargacccode_{{chargeIndex}}" chargeAcc-index="{{chargeIndex}}" k-options="chargeAccountCodeOption" k-placeholder="'Select Account Code'" />
+            <span class="input-group-addon addon-iconbox" style="cursor:pointer" ng-click="BrowseTreeListForChargeAccountCode(chargeIndex)">
+                <i class="fa fa-search" title="Search account code"></i>
+                @*<i class="fa fa-user"></i>*@
+
+            </span>
+        </div>
+        <div class="input-group" ng-if="freeze_manual_entry_flag==='N'">
+            <input kendo-combo-box ng-model="item.ACC_CODE" class="accCodeAutoComplete cacccode cacccode_{{chargeIndex}}" id="chargacccode_{{chargeIndex}}" chargeAcc-index="{{chargeIndex}}" k-options="chargeAccountCodeOption" k-placeholder="'Select Account Code'" />
+            <span class="input-group-addon addon-iconbox" style="cursor:pointer" ng-click="BrowseTreeListForChargeAccountCode(chargeIndex)">
+                <i class="fa fa-search" title="Search account code"></i>
+                @*<i class="fa fa-user"></i>*@
+
+            </span>
+        </div>
+        <div class="modal fade-out" id="chargeAccountModel_{{chargeIndex}}" data-backdrop="static" tabindex="-1" data-width="760">
+            <div class="modal-dialog modal-dialog-box">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div>
+                            <b>Account Code TreeView</b>
+                            <div type="button" class="close" data-dismiss="modal" aria-hidden="true" next-on-tab title="Close">&times;</div>
+                        </div>
+
+                    </div>
+
+                    <div class="modal-body modal-dialogbox-body">
+                        <div class="row">
+                            <div class="col-md-5 mingapright customcolumn-one columnbg">
+                                <input id="chargefilterText_{{chargeIndex}}" class="form-control chargefilterText filterText" type="text" name="search" placeholder="Search categories" />
+                                <div id="chargeAccountTree_{{chargeIndex}}" kendo-tree-view="tree"
+                                     k-data-source="chargeAcctreeData"
+                                     k-options="chargeAccoptions">
+
+                                    <span k-template>
+                                        {{dataItem.AccountName}}
+                                    </span>
+                                </div>
+
+                            </div>
+                            <div class="col-md-7 customcolumn-two mingapleft">
+                                <div class="expand verticalLine">
+                                    <div class="row">
+                                        <div class="col-md-offset-8 col-md-4 search_box">
+                                            <div class="topsearch">
+                                                <a class="btn-linkicon fa fa-search" ng-click="BindSearchGrid()" title="Search list"></a>
+                                                <input class="k-textbox chargeSearchString" type="text" id="chargeSearchString_{{chargeIndex}}" ng-model="chargeSearchString" name="search" placeholder="enter search text..." />
+
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <kendo-grid id="chargeAccountGrid_{{chargeIndex}}" options="AccountCodeGridOptions" k-rebind="AccountCodeGridOptions" class="search-grid">
+
+                                    </kendo-grid>
+                                </div>
+
+                            </div>
+                        </div>
+
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-default" data-dismiss="modal" title="Cancel">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+<script>
+    //$(".chargefilterText").keyup(function (e) {
+    //    var mi = document.chargeAccIndex;
+    //    var FilterValue = $(this).val();
+    //    var value = FilterValue.substring(0, 1).toUpperCase() + FilterValue.substring(1);
+
+    //    if (filterText !== "") {
+    //        $(".selectAll").css("visibility", "hidden");
+
+    //        $("#chargeAccountTree_" + mi + " .k-group .k-group .k-in").closest("li").hide();
+    //        $("#chargeAccountTree_" + mi + " .k-group").closest("li").hide();
+    //        $("#chargeAccountTree_" + mi + " .k-group .k-group .k-in:contains(" + value + ")").each(function () {
+    //            $(this).parents("ul, li").each(function () {
+    //                var treeView = $("#chargeAccountTree_" + mi).data("kendoTreeView");
+    //                treeView.expand($(this).parents("li"));
+    //                $(this).show();
+    //            });
+    //        });
+    //        $("#chargeAccountTree_" + mi + " .k-group .k-in:contains(" + filterText + ")").each(function () {
+    //            $(this).parents("ul, li").each(function () {
+    //                $(this).show();
+    //            });
+    //        });
+    //    }
+    //    else {
+    //        $("#chargeAccountTree_" + mi + " .k-group").find("li").show();
+    //        var nodes = $("#chargeAccountTree_" + mi + " > .k-group > li");
+
+    //        $.each(nodes, function (i, val) {
+    //                if (nodes[i].getAttribute("data-expanded") == null) {
+    //                    $(nodes[i]).find("li").hide();
+    //                }
+    //            });
+    //        $(".selectAll").css("visibility", "visible");
+    //    }
+    //});
+     $(".chargefilterText").keyup(function (e) {
+         debugger;
+        var mi = document.chargeAccIndex;
+        var FilterValue = $(this).val();
+        var value = FilterValue.substring(0, 1).toUpperCase() + FilterValue.substring(1);
+
+        if (value !== "") {
+            $(".selectAll").css("visibility", "hidden");
+
+            $("#chargeAccountTree_" + mi + " .k-group .k-group .k-in").closest("li").hide();
+            $("#chargeAccountTree_" + mi + " .k-group").closest("li").hide();
+            $("#chargeAccountTree_" + mi + " .k-group .k-group .k-in:contains(" + value + ")").each(function () {
+                $(this).parents("ul, li").each(function () {
+                    var treeView = $("#chargeAccountTree_" + mi).data("kendoTreeView");
+                    treeView.expand($(this).parents("li"));
+                    $(this).show();
+                });
+            });
+            $("#chargeAccountTree_" + mi + " .k-group .k-in:contains(" + value + ")").each(function () {
+                $(this).parents("ul, li").each(function () {
+                    $(this).show();
+                });
+            });
+        }
+        else {
+            $("#chargeAccountTree_" + mi + " .k-group").find("li").show();
+            var nodes = $("#chargeAccountTreee > .k-group > li");
+
+            $.each(nodes, function (i, val) {
+                if (nodes[i].getAttribute("data-expanded") == null) {
+                    $(nodes[i]).find("li").hide();
+                }
+            });
+            $(".selectAll").css("visibility", "visible");
+        }
+    });
+
+    $(".chargeSearchString").keyup(function () {
+        var mi = document.chargeAccIndex;
+        var val = $(this).val();
+        var grid = $("#chargeAccountGrid_"+mi).data("kendoGrid");
+        if (grid != undefined) {
+            var tempServerFilter = grid.dataSource.options.serverFiltering;
+            grid.dataSource.options.serverFiltering = false;
+            var filter = [];
+            $.each(grid.columns, function (i, v) {
+                if (v.field != undefined) {
+                    var searchText = $.trim($("#chargeSearchString_" + mi).val());
+                    var model = grid.dataSource.options.schema.model.fields[v.field];
+                    var type = "string";
+                    if (model != undefined)
+                        type = model.type;
+                    if (type === "string")
+                        filter.push({ field: v.field, operator: "contains", value: searchText });
+                    else if (type === "number")
+                        filter.push({ field: v.field, operator: "eq", value: searchText });
+                    else if (type === "date") {
+                        var dateValue = new Date(searchText);
+                        searchText = dateValue == "Invalid Date" ? searchText : dateValue;
+                        filter.push({ field: v.field, operator: "eq", value: searchText });
+                    }
+                }
+
+            });
+            var filter = {
+                logic: "or",
+                filters: filter,
+            }
+
+            grid.dataSource.filter(filter);
+
+            if ($("#chargeSearchString_" + mi).val().length == 0)
+                grid.dataSource.filter([]);
+            grid.bind("dataBound", function () {
+                grid.dataSource.options.serverFiltering = tempServerFilter;
+            });
+        }
+    });
+    //function formatValue(value, text) {
+    //    if (text.indexOf("#") > -1)
+    //        text = text.split("#")[1];
+    //    var textMatcher = new RegExp(text, "ig");
+    //    return value.replace(textMatcher, function (match) {
+    //        return "<u><strong>" + match + "</strong></u>";
+    //    });
+    //}
+</script>

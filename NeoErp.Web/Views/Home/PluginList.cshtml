@@ -1,0 +1,71 @@
+﻿
+@{
+ 
+    ViewBag.Title = "PluginList";
+}
+
+
+@model List<NeoErp.Core.Plugins.PluginDescriptor>
+
+
+<div id="loadinga" style="display:none;">
+    <span style="color:red;">Loading </span>
+</div>
+@foreach (var plugindescriptor in Model)
+{
+    <div>
+        @plugindescriptor.FriendlyName<br />
+        @plugindescriptor.Group<br />
+        @plugindescriptor.PluginType<br />
+        @plugindescriptor.PluginFileName<br />
+
+    </div>
+    if (plugindescriptor.Installed)
+    {
+        <input type="submit" value="Uninstall" class="unstall btn btn-danger" data-systemname="@plugindescriptor.SystemName" />
+    }
+    else
+    {
+        <input type="submit" value="install" class="install btn btn-success" data-systemname="@plugindescriptor.SystemName" />
+    }
+
+
+}
+
+<script>
+    $(function () {
+
+        $(document).ajaxStart(function () {
+            //show a progress modal of your choosing
+            $("#loadinga").show();
+        });
+        $(document).ajaxStop(function () {
+            //hide it
+            $("#loadinga").hide();
+        });
+        $(".unstall").on("click", function () {
+            var systemname = $(this).data("systemname");
+            console.log(systemname);
+            $.ajax({
+                url: '@Html.Raw(Url.Action("Uninstall", "Home"))',
+                data: { systemname :systemname},
+                success: function (data) {
+
+                }
+            });
+        });
+        $(".install").on("click", function () {
+            var systemname = $(this).data("systemname");
+            console.log(systemname);
+            $.ajax({
+                url: '@Html.Raw(Url.Action("install", "Home"))',
+                data: { systemname: systemname },
+                success: function (data) {
+
+                }
+            });
+        });
+
+    });
+
+</script>

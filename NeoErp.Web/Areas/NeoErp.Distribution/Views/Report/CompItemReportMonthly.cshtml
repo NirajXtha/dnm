@@ -1,0 +1,167 @@
+﻿@model List<NeoErp.Distribution.Service.Model.CustomerModel>
+@{
+    ViewBag.Title = "Competitor field Setup";
+    Layout = null;
+}
+
+<style>
+    #CompFieldForm h4 {
+        margin-top: 0px !important;
+    }
+
+    #NotificationSetup .k-auto-scrollable {
+        overflow: hidden !important;
+    }
+
+    .k-splitter {
+        min-height: 404px;
+    }
+
+    .form-control {
+        width: 97% !important;
+    }
+
+    .custom-panel-body {
+        padding: 7px 30px 0px 10px !important;
+        height: 182px;
+    }
+
+        .custom-panel-body .caption {
+            font-size: 12px !important;
+            padding: 5px 0 6px 0 !important;
+        }
+
+        .custom-panel-body .portlet-title {
+            min-height: auto !important;
+        }
+
+    .tblresponsive {
+        border: 1px solid #e1e1e1 !important;
+    }
+
+    .table thead tr th {
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    input#NotificationCode {
+        font-size: 12px;
+    }
+
+    input#NotificationName {
+        font-size: 12px;
+    }
+
+    #NotificationSetup .k-grid-header {
+        padding-right: 0px !important
+    }
+
+    .titleheading {
+        padding: 5px 0px 5px !important
+    }
+</style>
+
+<div class="modal fade" id="monthModal" tabindex="-1" role="dialog" aria-labelledby="ModalLabel" aria-hidden="true">
+    <div class="modal-dialog custom-chart">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                <h4>Select the months</h4>
+            </div>
+            <div class="modal-body">
+                <select id="months" name="months">
+                    <option value="Shrawan">Shrawan</option>
+                    <option value="Bhadra">Bhadra</option>
+                    <option value="Ashoj">Ashoj</option>
+                    <option value="Kartik">Kartik</option>
+                    <option value="Mangsir">Mangsir</option>
+                    <option value="Poush">Poush</option>
+                    <option value="Magh">Magh</option>
+                    <option value="Falgun">Falgun</option>
+                    <option value="Chaitra">Chaitra</option>
+                    <option value="Baisakh">Baisakh</option>
+                    <option value="Jestha">Jestha</option>
+                    <option value="Ashadh">Ashadh</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <div class="pull-right">
+                    <a class="btn btn-primary" id="applyDate">Apply</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb"></ul>
+        <div class="btn-group pull-right">
+            <a data-toggle="modal" data-target="#monthModal" title="Month Filter" id="filterApply">
+                <div class="pull-right btn btn-circle btn-icon-only btn-default">
+                    <i class="fa fa-filter"></i>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+
+<div class="panel-body custom-panel-body clearfix">
+    <div class="row">
+        @foreach (var item in Model)
+            {
+            <div class="col-md-12 col-sm-12">
+                @Html.Partial("_ItemwiseCompetitorMonthlyChartPartial", item)
+            </div>
+        }
+    </div>
+</div>
+<script>
+
+    $("#months").kendoMultiSelect({
+        autoClose: false,
+        value: [],
+        placeholder: "Select Months",
+        dataBound: function (e) {
+            var current = this.value();
+            this._savedOld = current.slice(0);
+            $("#" + e.sender.element[0].id + "_listbox").slimScroll({ 'height': '179px', 'scroll': 'scroll' });
+        },
+    });
+
+    $("#applyDate").on("click", function (e) {
+        var months = $("#months").data("kendoMultiSelect").value();
+        var allCharts = $("[id^=ItemWiseComp_chartMonthly]");
+        if (months.length > 0) {
+            for (var i = 0; i < allCharts.length; i++) {
+                chart = $(allCharts[i]).data("kendoChart");
+                for (var j = 0; j < chart.options.series.length; j++) {
+                    if (months.includes(chart.options.series[j].name))
+                        chart.options.series[j].visible = true;
+                    else
+                        chart.options.series[j].visible = false;
+                }
+                chart.redraw();
+            }
+        }
+        else {
+            for (var i = 0; i < allCharts.length; i++) {
+                chart = $(allCharts[i]).data("kendoChart");
+                for (var j = 0; j < chart.options.series.length; j++) {
+                    chart.options.series[j].visible = true;
+                }
+                chart.redraw();
+            }
+        }
+        $("#monthModal").modal("hide");
+    });
+
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+</script>
+<script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js?V2")"></script>

@@ -1,0 +1,182 @@
+﻿@model  NeoErp.Sales.Modules.Services.Models.Voucher.VoucherDetailReportModal
+@{ 
+    string vn = Model.VoucherNumber.Split('-')[0].Replace('/','_').ToString();
+}
+<input type="hidden" id="divid" value="@vn" />
+@Html.HiddenFor(a => a.uid)
+@Html.HiddenFor(a => a.VoucherNumber)
+<style>
+    .panel-body {
+        padding: unset;
+    }
+
+        .panel-body > div {
+            padding-bottom: 10px;
+        }
+
+    .bank-payment-title {
+        height: 30px;
+        display: block;
+        background-color: cornflowerblue;
+        padding-top:5px;
+    }
+</style>
+<div id="voucherGridTop">
+    <div class="panel-body ">
+        <div class="col-md-12 text-center bank-payment-title">
+            <strong>Bank Payment</strong>
+        </div>
+        <div class="col-md-6 voucherNo_@vn"></div>
+        <div class="col-md-6 mannualNo_@vn" style="text-align:right"></div>
+        <br />
+        <div class="col-md-6 voucherDate_@vn"></div>
+    </div>
+</div>
+<div class="voucherGrid">
+    <div id="@vn"></div>
+</div>
+
+<script type="text/x-kendo-template" class="CrTotalTemplate">
+    <div style="float:right">
+        #: kendo.format("{0:n}", data["cr_amount"].sum)# <br />
+    </div>
+    <span style="float: right;">
+
+        #if(data["cr_amount"].sum>data["dr_amount"].sum){#
+        #: kendo.format("{0:n}", data["cr_amount"].sum-data["dr_amount"].sum)#
+        #}else{#
+        <br />
+        #}#
+    </span>
+</script>
+<script type="text/x-kendo-template" class="DrTotalTemplate">
+    <div style="float:right;">
+        #: kendo.format("{0:n}", data["dr_amount"].sum)# <br />
+    </div>
+    <span style="float: right;">
+
+        #if(data["dr_amount"].sum>data["cr_amount"].sum){#
+        #: kendo.format("{0:n}", data["dr_amount"].sum-data["cr_amount"].sum)#
+        #}else{#
+        <br />
+        #}#
+    </span>
+</script>
+<script>
+    var headData = [];
+    $(document).ready(function () {
+        var service = Arg.url(window.location.protocol + "//" + window.location.host + "/api/Ledger/GetVouchersDetails", { uid: "@Model.uid", voucherNo: "@Model.VoucherNumber" });
+        //BindMe(service);
+        KendoGridRefresh(service);
+    })
+
+    function BindMe(readurl) {
+        $.ajax(
+         {
+             type: 'POST',
+             url: readurl,
+             dataType: 'json',
+             contentType: "application/json; charset=utf-8",
+             success: function (result) {
+                 var vdate = result['0']['voucher_date'];
+                 var vNumber = result['0']['Voucher_no'];
+                 var vManulaNo = result['0']['manual_no'];
+                 //var div = "<div>Voucher No:" + vNumber + "<span style='float:right'> Manual No:" + vManulaNo + "</span></div><div><br/><br/> Voucher Date:" + vdate + "</div>";
+                 $(".voucherNo_@vn").html("<strong>Voucher No: </strong>" + vNumber);
+                 $(".voucherDate_@vn").html("<strong>Voucher Date: </strong>" + vdate);
+                 $(".mannualNo_@vn").html("<strong>Mannual No: </strong>" + vManulaNo);
+                 BindGridHere(result);
+                 //KendoGridRefresh(result);
+             }
+         });
+    }
+
+    function BindGridHere(result) {
+        var dataSource = new kendo.data.DataSource({
+            data: result,
+            type: "json",
+            schema: {               
+                total: "total",
+                model: {
+                    fields: {
+                        sno:{type:"string"},
+                        ACC_EDESC: { type: "string" },
+                        TRANSACTION_TYPE: { type: "string" },
+                        PARTICULARS: { type: "string" },
+                        CHEQUE_NO: { type: "string" },
+                        dr_amount: { type: "number" },
+                        cr_amount: { type: "number" }
+                    }
+                }
+            },
+            aggregate: [{ field: "dr_amount", aggregate: "sum" },
+                        { field: "cr_amount", aggregate: "sum" }],
+            serverFiltering: true,
+            serverAggregates: false,
+            serverPaging: false,
+            pageSize: 10,
+        });       
+       
+        var grid = $('#'+'@vn').kendoGrid({
+            dataSource: dataSource,
+            groupable: false,
+            resizable: false,
+            filterable: false,
+            scrollable: false,
+            columns: [
+                {
+                    field:"sno",
+                    title: "S.No.",
+                    width: 39
+                },
+                {
+                    field: "ACC_EDESC",
+                    title: "Accounts Description",
+                },
+                {
+                    field: "TRANSACTION_TYPE",
+                    title: "Type",
+                    width: 50,
+                },
+                {
+                    field: "PARTICULARS",
+                    title: "Particulars",
+                },
+                {
+                    field: "CHEQUE_NO",
+                    title: "Cheque No.",
+                    footerTemplate: "<div style='float:right;'>Total Amount</div><br/><!--<div style='float:right;' class='closing-amount'>Closing Amount</div>-->",
+                },
+                {
+                    field: "dr_amount",
+                    title: "Dr Amount",
+                    attributes: {
+                        style: "text-align: right;"
+                    },
+                    format: "{0:n}",
+                    width: "100px",
+                    footerTemplate: kendo.template($(".DrTotalTemplate").html()),
+                },
+                {
+                    field: "cr_amount",
+                    title: "Cr Amount",
+                    attributes: {
+                        style: "text-align: right;"
+                    },
+                    format: "{0:n}",
+                    width: "100px",
+                    footerTemplate: kendo.template($(".CrTotalTemplate").html()),
+
+                },
+            ],
+        });
+    }
+
+
+    function KendoGridRefresh(result) {
+        $('#@vn').val('');
+        $('#@vn').html('');
+        BindMe(result);       
+        //BindGridHere(result);
+    }
+</script>

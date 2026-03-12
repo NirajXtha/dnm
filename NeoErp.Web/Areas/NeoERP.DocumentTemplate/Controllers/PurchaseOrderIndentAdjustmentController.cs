@@ -1,0 +1,27 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+
+namespace NeoERP.DocumentTemplate.Controllers
+{
+    public class PurchaseOrderIndentAdjustmentController : Controller
+    {
+        // GET: PurchaseOrderIndentAdjustment
+        public ActionResult Index()
+        {
+            return View();
+        }
+
+        public ActionResult IndentIndex()
+        {
+            return View();
+        }
+
+        public ActionResult OrderIndex()
+        {
+            return View();
+        }
+    }
+}

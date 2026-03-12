@@ -1,0 +1,440 @@
+﻿
+@{
+    ViewBag.Title = "Home Page";
+}
+<style>
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+    text-align: center;
+}
+      /*.page-bar {
+          margin-bottom: 0px !important;
+      }*/
+
+      .k-grid table {
+          table-layout: fixed;
+      }
+
+      .no-data {
+          background-color: red;
+      }
+      /*#grid thead{
+         font-size:11px;
+    }*/
+      .k-grid td {
+          white-space: nowrap;
+          text-overflow: ellipsis;
+      }
+
+      .k-grid-content {
+          font-size: 10px;
+      }
+
+      .k-grid-footer {
+          font-size: 10px;
+      }
+</style>
+<div class="page-content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+            @*<li>
+                <i class="fa fa-home"></i>
+                <a href="index.html">Home</a>
+                <i class="fa fa-angle-right"></i>
+            </li>*@
+            @*<li>
+                <a href="#">Sales Register Analysis</a>
+                <i class="fa fa-angle-right"></i>
+            </li>*@
+            @*<li>
+                <a href="sales/saleshome/dashboard/Dashboard">Organiser</a>
+                <i class="fa fa-angle-right"></i>
+            </li>*@
+
+        </ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+                <a class="btn btn-circle btn-icon-only btn-default" data-toggle="collapse" href="#demo">
+                    <i class="fa fa-angle-down"></i>
+                </a>
+                @{ 
+
+                    
+                }
+
+                @*@Html.Partial("~/Views/Shared/Controls/DateField.cshtml",false)*@
+
+                @*<button type="button" class="btn btn-fit-height grey-salt dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-delay="1000" data-close-others="true">
+                        Actions <i class="fa fa-angle-down"></i>
+                    </button>
+                    <ul class="dropdown-menu pull-right" role="menu">
+                        <li>
+                            <a href="#">Action</a>
+                        </li>
+                        <li>
+                            <a href="#">Another action</a>
+                        </li>
+                        <li>
+                            <a href="#">Something else here</a>
+                        </li>
+                        <li class="divider">
+                        </li>
+                        <li>
+                            <a href="#">Separated link</a>
+                        </li>
+                    </ul>*@
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-title">
+                    <div class="caption font-green">
+                        <i class="icon-pin font-green"></i>
+                        <span class="caption-subject bold uppercase">Sales Register Analysis</span>
+                    </div>
+                    <div class="actions">
+                        <div class="btn-group">
+                            @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", true)
+                        </div>
+                        <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                            <i class="icon-control-play"></i>
+                        </a>
+                        <a class="btn btn-circle btn-icon-only btn-default fullscreen" href="javascript:;">
+                        </a>
+                        @*<button id="test">test</button>*@
+
+                    </div>
+                </div>
+                <div class="portlet-body form">
+                    <div class="row">
+
+
+                        <div id="grid"></div>
+                        <script type="text/x-kendo-template" id="template">
+                            <div class="tabstrip">
+
+                                <div>
+                                    <div class="orders"></div>
+                                </div>
+
+                            </div>
+
+                        </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+<script src="@Scripts.Url("~/JS/dynamicReport.js?V2")" type="text/javascript"></script>
+@section Scripts{
+    <script>
+
+        $("#applydp").on("click", function (evt) {
+            evt.preventDefault();
+            $("#RunQuery").trigger("click");
+        })
+
+        $(document).ready(function () {
+          
+            var formEnglishDate = $("#FromDateVoucher").val();
+            var toEnglishDate = $("#ToDateVoucher").val();
+            var urltest = Arg.url(window.location.protocol + "//" + window.location.host + "/api/SalesHome/GetSalesRegisterMasterReport", { formDate: formEnglishDate, toDate: toEnglishDate });
+            $("#RunQuery").click(function (evt) {
+                evt.preventDefault();
+                var ddvalue = $("#ddlDateFilterVoucher").val();
+                var formNepalDate = $("#fromInputDateVoucher").val();
+                var toNepalDate = $("#toInputDateVoucher").val();
+                var formEnglishDate = $("#FromDateVoucher").val();
+                var toEnglishDate = $("#ToDateVoucher").val();
+                urltest = Arg.url(window.location.protocol + "//" + window.location.host + "/api/SalesHome/GetSalesRegisterMasterReport", { formDate: formEnglishDate, toDate: toEnglishDate });
+                KendoGridRefresh(urltest);
+            });
+
+            BindGrid(urltest);
+        });
+
+        function BindGrid(readurl) {
+
+            var dataSource = new kendo.data.DataSource({
+                type: "json",
+                transport: {
+                    read: {
+                        url: readurl, // <-- Get data from here.
+                        dataType: "json", // <-- The default was "jsonp".
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8"
+                    },
+                    parameterMap: function (options, type) {
+                        var paramMap = JSON.stringify(options);
+                        //  paramMap.formDate = $("#FromDateVoucher").val();
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+
+                    }
+                },
+                serverFiltering: true,
+                serverGrouping: false,
+                serverAggregates: true,
+                serverPaging: true,
+                schema: {
+                    data: "gridSalesRegReport", // records are returned in the "data" field of the response
+                    total: "total", // total number of records is in the "total" field of the response
+                    aggregates: "Aggrationresult",
+                    model: {
+                        fields: {
+                            SalesDate: { type: "date" },
+                            MITI: { type: "string" },
+                            InvoiceNumber: { type: "string" },
+                            CustomerName: { type: "string" },
+                            GrossAmount: { type: "number" },
+                            Discount: { type: "number" },
+                            NetAmount: { type: "number" },
+                            Vat: { type: "number" },
+                            InvoiceAmount: { type: "number" },
+
+                        }
+                    }
+                },
+                aggregate: [
+           { field: "GrossAmount", aggregate: "sum" },
+                        { field: "Discount", aggregate: "sum" },
+                         { field: "NetAmount", aggregate: "sum" },
+                           { field: "Vat", aggregate: "sum" },
+                             { field: "InvoiceAmount", aggregate: "sum" },
+                ],
+                pageSize: 100,
+            });
+            var grid = $("#grid").kendoGrid({
+                dataSource: dataSource,
+                allowCopy: true,
+                height: 600,
+                sortable: true,
+                reorderable: true,
+                groupable: true,
+                resizable: true,
+                filterable: {
+                    extra: false
+                },
+                columnMenu: true,
+                pageable: true,
+                detailTemplate: kendo.template($("#template").html()),
+                detailInit: detailInit,
+                scrollable: {
+                    virtual: true
+                },
+                dataBound: function (o) {
+                    var grid = o.sender;
+                    if (grid.dataSource.total() == 0) {
+                        var colCount = grid.columns.length;
+                        $(o.sender.wrapper)
+                            .find('tbody')
+                            .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                        displayPopupNotification("No Data Found Given Date Filter.", "info");
+                    }
+                    else {
+                        var g = $("#grid").data("kendoGrid");
+                        for (var i = 0; i < g.columns.length; i++) {
+                            g.showColumn(i);
+                        }
+                        $("div.k-group-indicator").each(function (i, v) {
+                            g.hideColumn($(v).data("field"));
+                        });
+                    }
+
+                },
+                columns: [
+                                {
+                                    field: "SalesDate",
+                                    title: "Date",
+                                    width: "90",
+                                    format: "{0:dd-MMM-yyyy}",
+                                },
+                              {
+                                  field: "Miti",
+                                  title: "Miti",
+                              },
+                              {
+                                  field: "InvoiceNumber",
+                                  title: "Invoice No",
+
+                                  //title: "Group1",
+                                  //headerTemplate: "Contact Name HT"
+                                  // template: '<span style="float:right">#= kendo.toString(DR_OPENING, "n") #</span>'
+                                  //aggregates: "sum",
+                                  //footerTemplate: "<div style='float: right'>#= sum #</div>"
+                              },
+                              {
+                                  field: "CustomerName",
+                                  title: "Customer Name",
+                                  width: "150",
+
+                                  //template: '<span style="float:right">#= kendo.toString(CR_OPENING, "n") #</span>'
+                              },
+                               {
+                                   field: "GrossAmount",
+                                   title: "Gross Amount",
+                                   width: "70",
+                                   attributes: {
+                                       style: "text-align: right;"
+                                   },
+                                   format: "{0:n}",
+                                   aggregates: ["count", "min", "sum"],
+                                   groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                                   // footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                                   //footerTemplate: "Sum: #=CALC_TOTAL_PRICE.sum#",
+                                   //  groupFooterTemplate: '<span style="float:right">#= kendo.toString(CALC_TOTAL_PRICE.sum, "n")#',
+                                   // groupFooterTemplate: "Average: #=CALC_TOTAL_PRICE.sum#"
+                                   // template: '<span style="float:right">#= kendo.toString(GrossAmount, "n") #</span>'
+                               },
+
+                               {
+                                   field: "Discount",
+                                   title: "Discount",
+                                   width: "70",
+                                   attributes: {
+                                       style: "text-align: right;"
+                                   },
+                                   format: "{0:n}",
+                                   aggregates: ["count", "min", "sum"],
+                                   groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                                   //  groupFooterTemplate: '<span style="float:right">#= kendo.toString(DISCOUNT.sum, "n")#',
+                                   //   footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                                  
+                               },
+                               {
+                                   field: "NetAmount",
+                                   title: "Net Amount",
+                                   width: "100",
+                                   attributes: {
+                                       style: "text-align: right;"
+                                   },
+                                   format: "{0:n}",
+                                   aggregates: ["count", "min", "sum"],
+                                   groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                                   //footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                                   //   groupFooterTemplate: '<span style="float:right">#= kendo.toString(NetAmount.sum, "n")#',
+                                 
+                               },
+                               {
+                                   field: "Vat",
+                                   title: "Vat",
+                                   width: "70",
+                                   attributes: {
+                                       style: "text-align: right;"
+                                   },
+                                   format: "{0:n}",
+                                   aggregates: ["count", "min", "sum"],
+                                   groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                                   // footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                                   //  groupFooterTemplate: '<span style="float:right">#= kendo.toString(VAT.sum, "n")#',
+                                
+                               },
+                                {
+                                    field: "InvoiceAmount",
+                                    title: "Invoice Total",
+                                    width: "100",
+                                    attributes: {
+                                        style: "text-align: right;"
+                                    },
+                                    format: "{0:n}",
+                                    aggregates: ["count", "min", "sum"],
+                                    groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                                    //  footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                                    //  groupFooterTemplate: '<span style="float:right">#= kendo.toString(InvoiceAmount.sum, "n")#',
+                                  
+                                },
+
+                ]
+
+            });
+
+
+        };
+
+        function KendoGridRefresh(readUrl) {
+            $('#grid').val('');
+            $('#grid').html('');
+            BindGrid(readUrl)
+        }
+        function detailInit(e) {
+            var detailRow = e.detailRow;
+            var Rowdata = e.data;
+            var id = Rowdata.InvoiceNumber;
+            detailRow.find(".orders").kendoGrid({
+                dataSource: {
+                    type: "json",
+                    transport: {
+                        read: window.location.protocol + "//" + window.location.host + "/" + "api/SalesHome/GetSalesRegisterChilds?SalesNo=" + id
+                    },
+                    
+                    aggregate: [
+        { field: "NetAmount", aggregate: "sum" },
+        { field: "Quanity", aggregate: "sum" }]
+                },
+               
+                sortable: true,
+                pageable: false,
+                sortable: true,
+                reorderable: true,
+                columns: [
+                    {
+                        field: "ProductName",
+                        title: "Product Name",
+                       
+                        footerTemplate: '<span style="float:right">Total Amount</span>',
+                    },
+                    {
+                        field: "UNIT",
+                        title: "Unit",
+                        width: "5%",
+                        attributes: {
+                            style: "text-align: center;"
+                        },
+                    },
+                    {
+                        field: "Quanity",
+                        title: "Quanity",
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                        width: "15%",
+                        footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                    },
+                    {
+                        field: "Rate",
+                        title: "Rate",
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                        width: "15%"
+                    },
+                    {
+                        field: "NetAmount",
+                        title: "Net Amount",
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                        width: "15%",
+                        footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                    },
+                    
+
+                ]
+            });
+            //if (hasChild) {
+            //var grid = $(".orders").data("kendoGrid");
+            //grid.bind("detailInit", detailInit);
+            //  }
+
+            //$("#contextmenu").css({ "top": event.pageY + "px", "left": event.pageX + "px" })
+          
+        };
+    </script>
+}

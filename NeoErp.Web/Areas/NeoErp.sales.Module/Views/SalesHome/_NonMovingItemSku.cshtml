@@ -1,0 +1,362 @@
+﻿@using NeoErp.Core.Models;
+@{
+    var actionPageId = "NonMovingItemSku";
+    var chartID = "NonMovingItemchart";
+    var headerName = "Non Moving Items";
+    var screenSize = "portlet-fullscreen";
+}
+<style>
+    .slimScrollBar {
+        border-radius: 5px !important;
+        background-color: #333 !important;
+    }
+
+    .slimScrollDiv, #customerMultiSelect {
+        height: auto !important;
+    }
+
+    ul.dropdown-menu.custom {
+        margin-top: 8px !important;
+        border: none;
+        box-shadow: none !important;
+    }
+
+    .dropdown-menu.custom:before {
+        left: 58px !important;
+    }
+
+    .download-btn {
+        margin: 0px !important;
+        padding-top: -2px !important;
+        padding-left: 0px;
+        padding-right: 0px;
+        margin-top: -5px !important;
+        margin-left: 5px !important;
+    }
+
+    .dropdown-menu.custom {
+        left: -27px !important;
+        top: 20px !important;
+    }
+
+    .dropdown > .dropdown-menu:before, .dropdown-toggle > .dropdown-menu:before, .btn-group > .dropdown-menu:before {
+        position: absolute;
+        top: -8px;
+        left: 30px;
+        right: auto;
+        display: inline-block !important;
+        border-right: 8px solid transparent;
+        border-bottom: 8px solid #e0e0e0;
+        border-left: 8px solid transparent;
+        content: '';
+    }
+
+    i.icon-arrow-down {
+        color: #acacac;
+    }
+
+    .btn-group-custom button.btn {
+        padding: 7px 7px !important;
+        float: left;
+    }
+
+    .dropdown-menu.custom {
+        left: -55px !important;
+    }
+
+    .k-grid-toolbar .k-button {
+        float: right;
+    }
+
+    #SalesAnalysisgrid {
+        font-size: 8px;
+        margin: -15px;
+    }
+
+        #SalesAnalysisgrid thead, #SalesAnalysisgrid tbody {
+            font-size: 8px !important;
+        }
+
+            #SalesAnalysisgrid thead th {
+                text-align: center !important;
+            }
+
+        #SalesAnalysisgrid > tr {
+            font-size: 8px;
+        }
+
+    .portlet.portlet-sortable {
+        min-height: 0px;
+        padding-bottom: 20px;
+    }
+
+    #HigherSelling table {
+        font-size: 10px;
+    }
+
+    #HigherSelling .k-pager-wrap.k-grid-pager.k-widget.k-floatwrap {
+        font-size: 10px;
+    }
+</style>
+
+<div class="modal fade" id="Model_@actionPageId" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog custom-chart">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                <h4 class="modal-title"><span class="fa fa-bar-chart"></span> Non Moving Item Sales</h4>
+            </div>
+            <div class="modal-body bottom-gappingtwo">
+                <div class="row">
+                    <div class="chart_button clearfix">
+                        <div class="col-sm-6 col-md-6">
+                            <div class="ftitle">
+                                <h5>Display Top Items</h5>
+                            </div>
+                            <input type="number" value="10" name="customInput" class="form-control customInput" placeholder="ie. Top 10 Items" onchange="handleChange(this);" />
+                        </div>
+                        <div class="col-sm-6 col-md-6"style="margin-top:20px;">
+                            <div class="input-group chart-option">
+                                <div class="icheck-inline">
+                                    <label>
+                                        <input id="showlables_NonMovingChart" type="checkbox" autocomplete="off" /> Show Labels
+                                    </label>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-green applydp" data-dismiss="modal" id="apply_@actionPageId">Apply</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="portlet portlet-sortable  light bordered" id="NonMovingItemSku">
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="icon-bar-chart font-green-haze"></i>
+            <span class="caption-subject bold uppercase font-green-haze custom-modal">@headerName</span>
+        </div>
+        <div class="tools">
+            <a class="btnGrid btnCategoryDatagrid" href="javascript:;" data-type="@chartID" data-title="Grid">
+                <i class="fa fa-table"></i>
+            </a>
+            <a href="#Model_@actionPageId" data-toggle="modal" class="config"></a>
+            <a href="javascript:;" class="reload">
+            </a>
+            <a href="javascript:;" class="collapse">
+            </a>
+            <a href="javascript:;" class="fullscreen">
+            </a>
+            <a href="javascript:;" class="remove">
+            </a>
+        </div>
+    </div>
+    <div class="portlet-body">
+        <div class="k-content wide">
+            <div id="@actionPageId"></div>
+            <script type="text/x-kendo-template" id="toolbar-template">
+                <div class="k-header k-grid-toolbar">
+
+                    <a class="k-button k-button-icontext k-grid-excel" href="javascript:">
+                        <i class="fa fa-file-excel-o"></i>
+                    </a>
+                </div>
+            </script>
+            <div id="@chartID"></div>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function () {
+            chartRefresh();
+        });
+
+        function BindGrid(gridUrl) {
+            var dataSource = new kendo.data.DataSource({
+                transport: {
+                    read: {
+                        url: gridUrl,
+                    },
+                },
+                error: function (e) {
+                    displayPopupNotification("Sorry error occured while processing data", "error");
+                },
+                serverFiltering: false,
+                serverPaging: false,
+                pageSize: 100,
+            });
+            $("#@actionPageId").kendoGrid({
+                height: $("#@actionPageId").hasClass("@screenSize") ? 550 : 350,
+                dataSource: dataSource,
+                //  height: 380,
+                sortable: true,
+                reorderable: true,
+                groupable: false,
+                resizable: true,
+                columnMenu: true,
+                pageable: true,
+                autoBind: true,
+                columns: [{
+                    field: "ITEM_EDESC",
+                    title: "Item Name"
+                }, {
+                    field: "QUANTITY",
+                    title: "Quantity"
+                },],
+            });
+        }
+
+        function KendoChart(urlPath) {
+
+            var MasterTemp = {
+                field: "ITEM_EDESC",
+                dir: "asc",
+
+            };
+
+
+            $("#@chartID").kendoChart({
+                height: $("#@chartID").hasClass("@screenSize") ? 550 : 350,
+                dataSource: {
+                    transport: {
+                        read: {
+                            url: urlPath,
+                            dataType: "json",
+                            contentType: "application/json; charset=utf-8"
+                        }
+                    },
+                    sort: {
+                        field: MasterTemp.field,
+                        dir: MasterTemp.dir,
+                    }
+                },
+                legend: {
+                    position: "top"
+                },
+                seriesDefaults: {
+                    type: "column",
+
+                    labels: {
+                        visible: $("#showlables_NonMovingChart").prop("checked"),
+                        template: "#=(value)#",
+                        rotation: '270',
+                        padding: {
+                            left: -5
+                        },
+                    },
+                    style: "smooth",
+                },
+
+                chartArea: {
+                    //  width: 500,
+                    height: ($("#@chartID").hasClass("@screenSize")) ? 550 : 350,
+                },
+                legend: {
+                    position: "bottom"
+                },
+                series:
+                [{
+                    field: MasterTemp.field,
+                    name: "Quantity",
+
+                },],
+                categoryAxis: {
+                    field: "ITEM_EDESC",
+                    labels: {
+                        rotation: -20
+                    },
+                    majorGridLines: {
+                        visible: false
+                    }
+                },
+                valueAxis: {
+                    labels: {
+                        format: "N0"
+                    },
+                    line: {
+                        visible: false
+                    }
+                },
+                pannable: {
+                    lock: "y"
+                },
+                zoomable: {
+                    mousewheel: {
+                        lock: "y"
+                    },
+                    selection: {
+                        lock: "y"
+                    },
+                },
+                tooltip: {
+                    visible: true,
+                    template: "Quantity: #=(value)#",
+                }
+            });
+
+        }
+        $(".fullscreen").click(function () {
+            clearData();
+            chartRefresh();
+        });
+        $('.btnCategoryDatagrid').click(function () {
+            
+
+            var isGrid = $('.btnCategoryDatagrid').data("type");
+            if ($("#@chartID").hasClass('meGrid')) {
+                clearData();
+                chartRefresh();
+            }
+            else {
+                if (isGrid == "@chartID") {
+                    $('#@chartID').height('0px')
+                    $('#@chartID').val('');
+                    $('#@chartID').html('');
+                    $("#@chartID").addClass('meGrid')
+                    gridRefresh();
+                }
+            }
+        })
+        $("#apply_NonMovingItemSku").click(function () {
+            chartRefresh();
+        })
+        //reload chart
+        $('.reload').click(function () {
+            clearData();
+            chartRefresh();
+        })
+
+        function chartRefresh() {
+            var selectedItem = parseInt($('.customInput').val());
+            var urlPath = window.location.protocol + "//" + window.location.host + "/api/SalesSummaryReportApi/GetNonMovingItem?selectedItem=" + selectedItem;
+            KendoChart(urlPath);
+        }
+
+        function gridRefresh() {
+            var selectedItem = parseInt($('.customInput').val());
+            var gridUrl = window.location.protocol + "//" + window.location.host + "/api/SalesSummaryReportApi/GetNonMovingItem?selectedItem=" + selectedItem;
+            BindGrid(gridUrl);
+        }
+
+        function clearData() {
+            $('#@actionPageId').height('0px')
+            $('#@actionPageId').val('');
+            $('#@actionPageId').html('');
+            $("#@actionPageId").removeClass('k-grid k-widget k-display-block k-reorderable')
+            $("#@chartID").removeClass('meGrid')
+        }
+
+        function handleChange(input) {
+            
+            if (input.value > 2000) {
+               displayPopupNotification('Input value exceeded', 'warning')
+               
+            }
+        }
+    </script>
+</div>

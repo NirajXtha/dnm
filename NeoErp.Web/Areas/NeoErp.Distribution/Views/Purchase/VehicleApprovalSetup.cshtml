@@ -1,0 +1,192 @@
+@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    ViewBag.Title = "Home Page";
+    Layout = null;
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>
+        ();
+}
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+            @*<li>
+                    <i class="fa fa-home"></i>
+                    <a href="/sales/SalesHome/Dashboard">Home</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>
+                <li>
+                    <a href="#/Sales/FinalSalesReport">Purchase Order</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>*@
+
+        </ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+
+                <div class="actions">
+                    @*<div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                    </div>
+                    @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                   {
+                       ShowSalesPersonFilter = true,
+                       ShowCustomerFilter = true,
+                   })
+                    </div>
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                        <i class="icon-control-play"></i>
+                    </a>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "DistPoIndex")
+                    </div>*@
+                        <input type="text" id="vehicleSearch" class="k-textbox" placeholder="Search..." style="margin-bottom:10px; width:300px;" />
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <div class="busy-loader">
+        <div id="preloader" class="loader"></div>
+    </div>
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-body form">
+                    <div id="aletmsg">
+                    </div>
+                    <div id="CreditLimitmsg">
+                    </div>
+
+                    <div class="row">
+                        <div id="vehicleGrid"></div>
+                        @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        var grid = $("#vehicleGrid").kendoGrid({
+            dataSource: {
+                transport: {
+                    read: {
+                        url: "/api/DistributionPurchase/GetVehicleSetup",
+                        dataType: "json"
+                    }
+                },
+                schema: {
+                    data: "data" // <-- crucial: tells Kendo where the array is
+                }
+            },
+            pageable: {
+                refresh: true,
+                pageSizes: 15,
+                buttonCount: 5
+            },
+            sortable: true,
+            scrollable: true,
+            columns: [
+                { field: "ID", title: "ID", width: 60 },
+                { field: "USERNAME", title: "Employee Name", width: 100 },
+                { field: "VEHICLE_CODE", title: "Vehicle", width: 100 },
+                { field: "VEHICLE_NO", title: "Vehicle No", width: 120 },
+                { field: "MODEL", title: "Model", width: 100 },
+                { field: "MILAGE", title: "Mileage", width: 100 },
+                { field: "FUEL_PRICE", title: "Fuel Price", width: 100 },
+                { field: "YEAR_MADE", title: "Year Made", width: 100 },
+                //{
+                //    field: "IMAGE",
+                //    title: "Image",
+                //    width: 120,
+                //    template: "<img src='#= IMAGE #' alt='Vehicle' width='80' />"
+                //},
+                {
+                    title: "Status",
+                    width: 120,
+                    template:
+                        "# if(APPROVE_FLAG === 'Y'){ #" +
+                        "<span class='badge badge-success'>Approved</span>" +
+                        "# } else if(RECOMMEND_FLAG === 'Y'){ #" +
+                        "<span class='badge badge-info'>Recommended</span>" +
+                        "# } else { #" +
+                        "<span class='badge badge-warning'>Pending</span>" +
+                        "# } #"
+                },
+                {
+                    title: "Action",
+                    width: 280,
+                    template:
+                        "<button class='k-button k-success approve-btn' data-id='#=ID#' # if(APPROVE_FLAG === 'Y'){ # disabled # } #>Approve</button>" +
+                        "# if(APPROVE_FLAG !== 'Y'){ #" +
+                        "<button class='k-button k-danger reject-btn' data-id='#=ID#'>Reject</button>" +
+                        "# } #"
+                    //template:
+                    //    "<button class='k-button k-primary recommend-btn' data-id='#=ID#' # if(RECOMMEND_FLAG === 'Y' || APPROVE_FLAG === 'Y'){ # disabled # } #>Recommend</button>" +
+                    //    "<button class='k-button k-success approve-btn' data-id='#=ID#' # if(APPROVE_FLAG === 'Y'){ # disabled # } #>Approve</button>" +
+                    //    "# if(APPROVE_FLAG !== 'Y'){ #" +
+                    //    "<button class='k-button k-danger reject-btn' data-id='#=ID#'>Reject</button>" +
+                    //    "# } #"
+                }
+            ]
+        }).data("kendoGrid");
+
+        // --- Search functionality ---
+        $("#vehicleSearch").on("keyup", function () {
+            var value = $(this).val();
+            if (value) {
+                grid.dataSource.filter({
+                    logic: "or",
+                    filters: [
+                        { field: "VEHICLE_CODE", operator: "contains", value: value },
+                        { field: "VEHICLE_NO", operator: "contains", value: value },
+                        { field: "MODEL", operator: "contains", value: value },
+                        { field: "USERNAME", operator: "contains", value: value }
+                    ]
+                });
+            } else {
+                grid.dataSource.filter({}); // reset
+            }
+        });
+
+        // --- Button actions ---
+        $(document).on("click", ".recommend-btn", function () {
+            var id = $(this).data("id");
+            $.post(`/api/DistributionPurchase/UpdateVehicleSetup?status=recommend&id=${id}`, function () {
+                displayPopupNotification("Recommended successfully!", "success");
+                grid.dataSource.read();
+            });
+        });
+
+        $(document).on("click", ".approve-btn", function () {
+            var id = $(this).data("id");
+            $.post(`/api/DistributionPurchase/UpdateVehicleSetup?status=approve&id=${id}`, function () {
+                displayPopupNotification("Approved successfully!", "success");
+                grid.dataSource.read();
+            });
+        });
+
+        $(document).on("click", ".reject-btn", function () {
+            var id = $(this).data("id");
+            if (confirm("Are you sure you want to reject this vehicle?")) {
+                $.ajax({
+                    url: `/api/DistributionPurchase/UpdateVehicleSetup?status=reject&id=${id}`,
+                    type: "POST",
+                    success: function () {
+                        displayPopupNotification("Rejected and deleted successfully!", "success");
+                        grid.dataSource.read();
+                    },
+                    error: function () {
+                        displayPopupNotification("Error rejecting vehicle.", "error");
+                    }
+                });
+            }
+        });
+    });
+
+</script>

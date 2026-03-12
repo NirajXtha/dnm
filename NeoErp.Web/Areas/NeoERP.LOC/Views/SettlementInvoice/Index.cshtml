@@ -1,0 +1,797 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+    //Layout = "~/Views/Shared/_LayoutNew.cshtml";
+    var myAreaName = string.Empty;
+    object areaObj;
+    if (ViewContext.RouteData.Values.TryGetValue("area", out areaObj))
+    {
+        myAreaName = areaObj.ToString();
+    }
+    var appurl = string.Format("~/areas /{0}/JS/App.js", myAreaName);
+}
+<style>
+    legend {
+        width: 17%;
+    }
+
+    /*#ShipmentInvoiceForm label {
+        padding-bottom: 5px;
+        font-size: 11px !important;
+    }*/
+
+    #ShipmentInvoiceForm input {
+        height: 24px !important;
+        /*width: 98%;*/
+        font-size: 11px !important;
+    }
+
+    .required {
+        color: #b94a48;
+    }
+
+    i.fa.fa-file-image-o.image {
+        margin: 1px;
+    }
+
+    .image-placeholder > img {
+        display: inline;
+        margin: 1px;
+        height: 40px;
+        width: 40px;
+    }
+
+    .btn {
+        height: 28px !important;
+    }
+
+  
+
+    .form-group.image-placeholder > div {
+        display: inline-block;
+        float: left;
+        width: 78px;
+    }
+    /*.form-control {
+        height: 28px !important;
+    }*/
+</style>
+<div ng-app="myApp">
+    <div ng-controller="SettlementInvoiceCtrl" id="SettlementInvoiceCtrl">
+        <div class="portlet light bordered main">
+            <div class="portlet-title titleheading">
+                <span class="caption-subject font-green bold uppercase text-center" style="text-align:center">
+                    <i class="fa fa-list-alt"></i>
+                    Shipment Invoice Entry
+                </span>
+
+                <span class="pull-right">
+                    <button type="button" id="cancelTarget" name="cancelTarget" class="btn btn-default btn-sm" ng-click="Cancel();">Cancel</button>
+
+                    <button type="submit" id="saveSettlementInvoice" name="saveSettlementInvoice" ng-click="AddUpdateSettlementInvoice(SettlementInvoiceForm.$valid)" class="btn btn-success btn-sm">{{saveAction}}</button>
+                </span>
+
+            </div><!-- /portlet-title-->
+            <div class="portlet-body">
+                <div class="row">
+
+                    <form id="ShipmentInvoiceForm" name="ShipmentInvoiceForm" novalidate>
+
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Reference(Ref#)
+                                </label>
+                                <input type="text" id="reference" name="reference" ng-blur="ItemsOnChange();" class="form-control input-sm" ng-model="pi.purchaseOrder" required />
+
+                            </div>
+                        </div>
+                        <input type="hidden" id="LocCode" ng-model="pi.LocCode" />
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Performa Invoice(PI#)<span style="color:red" ng-show="ShipmentInvoiceForm.pininvoice.$invalid">
+                                        <span ng-show="ShipmentInvoiceForm.pininvoice.$error.required">*</span>
+                                    </span>
+                                </label>
+                                <input type="text" id="pininvoice" name="pininvoice" ng-model="pi.pininvoice" class="form-control input-sm" required />
+
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label class="control-label">Date<small>(mm/dd/yyyy)</small></label>
+                                <input type="text" id="date" name="date" autocomplete="off" class="form-control maskdate" ng-model="pi.date" />
+
+                            </div>
+                        </div>
+
+
+                        <div class="col-sm-12 col-md-12">
+                            <div class="portlet-body">
+                                <div class="tblresponsive">
+                                    <table class="table table-striped  table-hover ctable" id="items">
+                                        <thead>
+                                            <tr>
+                                                <th width="5%">S.N.</th>
+                                                <th>Name</th>
+                                                <th>Quantity</th>
+                                                <th>Weight</th>
+                                                <th>No Of Pack</th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            <tr style="font-size:10px;" ng-if="itemlist.length==0"><td colspan="7">No Items To Display..</td></tr>
+                                            <tr style="font-size:10px;" ng-if="itemlist.length!=0" ng-repeat="items in itemlist">
+                                                <td>{{$index +1}}</td>
+                                                <td>{{items.ITEM_EDESC}}</td>
+                                                <td>{{items.CALC_QUANTITY}}</td>
+                                                <td>{{items.CALC_UNIT_PRICE}}</td>
+                                                <td>{{items.CALC_TOTAL_PRICE}}</td>
+                                            </tr>
+
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="col-sm-12 col-md-12 bottom_gapping">
+                            <fieldset>
+                                <legend>Shipment Details</legend>
+                                <div class="row">
+                                    <div class="col-sm-6 col-md-3">
+                                        <div class="form-group">
+                                            <label class="control-label">
+                                                Airway Bill No<span style="color:red" ng-show="ShipmentInvoiceForm.awb.$invalid">
+                                                    <span ng-show="ShipmentInvoiceForm.awb.$error.required">*</span>
+                                                </span>
+                                            </label>
+                                            <input type="text" id="awb" name="awb" ng-model="si.awb" class="form-control input-sm" required />
+
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6 col-md-3">
+                                        <div class="form-group">
+                                            <label class="control-label">
+                                                Invoice<span style="color:red" ng-show="ShipmentInvoiceForm.invoice.$invalid">
+                                                    <span ng-show="ShipmentInvoiceForm.invoice.$error.required">*</span>
+                                                </span>
+                                            </label>
+                                            <input type="text" id="invoice" name="invoice" ng-model="si.invoice" class="form-control input-sm" required />
+
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6 col-md-3">
+                                        <div class="form-group">
+                                            <label class="control-label">
+                                                Vessel No<span style="color:red" ng-show="ShipmentInvoiceForm.vesselno.$invalid">
+                                                    <span ng-show="ShipmentInvoiceForm.vesselno.$error.required">*</span>
+                                                </span>
+                                            </label>
+                                            <input type="text" id="vesselno" name="vesselno" ng-model="si.vesselno" class="form-control input-sm" required />
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6 col-md-3">
+                                        <div class="form-group">
+                                            <label class="control-label">
+                                                Truck<span style="color:red" ng-show="ShipmentInvoiceForm.truck.$invalid">
+                                                    <span ng-show="ShipmentInvoiceForm.truck.$error.required">*</span>
+                                                </span>
+                                            </label>
+                                            <input type="text" id="truck" name="truck" ng-model="si.truck" class="form-control input-sm" required />
+                                        </div>
+                                    </div>
+
+
+                                    <div class="col-sm-6 col-md-3">
+                                        <div class="form-group">
+                                            <label class="control-label">
+                                                Transporter Name <span style="color:red" ng-show="ShipmentInvoiceForm.transname.$invalid">
+                                                    <span ng-show="ShipmentInvoiceForm.transname.$error.required">*</span>
+                                                </span>
+                                            </label>
+                                            <input type="text" id="transname" name="transname" ng-model="si.transname" class="form-control input-sm" required />
+
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6 col-md-3">
+                                        <div class="form-group">
+                                            <label class="control-label">
+                                                Transporter Address <span style="color:red" ng-show="ShipmentInvoiceForm.transaddress.$invalid">
+                                                    <span ng-show="ShipmentInvoiceForm.transaddress.$error.required">*</span>
+                                                </span>
+                                            </label>
+                                            <input type="text" id="transaddress" name="transaddress" ng-model="si.transaddress" class="form-control input-sm" required />
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </fieldset>
+                        </div>
+
+
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Shipment Status<span style="color:red" ng-show="ShipmentInvoiceForm.shipmentstatus.$invalid">
+                                        <span ng-show="ShipmentInvoiceForm.shipmentstatus.$error.required">*</span>
+                                    </span>
+                                </label>
+                                <input type="text" id="shipmentstatus" name="shipmentstatus" ng-model="si.shipmentstatus" class="form-control input-sm" required />
+
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    From<span style="color:red" ng-show="ShipmentInvoiceForm.from.$invalid">
+                                        <span ng-show="ShipmentInvoiceForm.from.$error.required">*</span>
+                                    </span>
+                                </label>
+                                <input type="text" id="from" name="from" ng-model="si.from" class="form-control input-sm" required />
+
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    To<span style="color:red" ng-show="ShipmentInvoiceForm.to.$invalid">
+                                        <span ng-show="ShipmentInvoiceForm.to.$error.required">*</span>
+                                    </span>
+                                </label>
+                                <input type="text" id="to" name="to" ng-model="si.deliveryplace" class="form-control input-sm" required />
+
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Type<span style="color:red" ng-show="PerformaInvoiceForm.shipmentType.$invalid">
+                                        <span ng-show="PerformaInvoiceForm.shipmentType.$error.required">*</span>
+                                    </span>
+                                </label>
+                                <select id="shipmentType" ng-model="si.shipmentType" kendo-drop-down-list style="width: 100%"
+                                        k-options="shipmentType" required></select>
+                            </div>
+                        </div>
+
+
+
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Load Type<span style="color:red" ng-show="PerformaInvoiceForm.shipmentload.$invalid">
+                                        <span ng-show="PerformaInvoiceForm.shipmentload.$error.required">*</span>
+                                    </span>
+                                </label>
+                                <select id="shipmentload" ng-model="pi.shipmentload" kendo-drop-down-list style="width: 100%"
+                                        k-options="shipmentLoad" required></select>
+
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Container Size<span style="color:red" ng-show="ShipmentInvoiceForm.containersize.$invalid">
+                                        <span ng-show="ShipmentInvoiceForm.containersize.$error.required">*</span>
+                                    </span>
+                                </label>
+                                <input type="text" id="containersize" name="containersize" ng-model="si.containersize" class="form-control input-sm" required />
+
+                            </div>
+
+                        </div>
+
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Container Number/Seal No<span style="color:red" ng-show="ShipmentInvoiceForm.containernumber.$invalid">
+                                        <span ng-show="ShipmentInvoiceForm.containernumber.$error.required">*</span>
+                                    </span>
+                                </label>
+                                <input type="text" id="containernumber" name="containernumber" ng-model="si.containernumber" class="form-control input-sm" required />
+
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Gross Weight Sea<span style="color:red" ng-show="ShipmentInvoiceForm.grossweightsea.$invalid">
+                                        <span ng-show="ShipmentInvoiceForm.grossweightsea.$error.required">*</span>
+                                    </span>
+                                </label>
+                                <input type="text" id="grossweightsea" name="grossweightsea" ng-model="si.containernumber" class="form-control input-sm" required />
+
+                            </div>
+                        </div>
+
+
+
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Measurement weight (CBM for sea)<span style="color:red" ng-show="ShipmentInvoiceForm.cbmsea.$invalid">
+                                        <span ng-show="ShipmentInvoiceForm.cbmsea.$error.required">*</span>
+                                    </span>
+                                </label>
+                                <input type="text" id="cbmsea" name="cbmsea" ng-model="si.cbmsea" class="form-control input-sm" required />
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Gross Weight Air<span style="color:red" ng-show="ShipmentInvoiceForm.grosswhtair.$invalid">
+                                        <span ng-show="ShipmentInvoiceForm.grosswhtair.$error.required">*</span>
+                                    </span>
+                                </label>
+                                <input type="text" id="grosswhtair" name="grosswhtair" ng-model="si.grosswhtair" class="form-control input-sm" required />
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Chargeable Weight Air<span style="color:red" ng-show="ShipmentInvoiceForm.chargeablewhtair.$invalid">
+                                        <span ng-show="ShipmentInvoiceForm.chargeablewhtair.$error.required">*</span>
+                                    </span>
+                                </label>
+                                <input type="text" id="chargeablewhtair" name="chargeablewhtair" ng-model="si.chargeablewhtair" class="form-control input-sm" required />
+                            </div>
+
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label class="control-label">AWB Date<small>(mm/dd/yyyy)</small></label>
+                                <input type="text" id="awbdate" name="awbdate" autocomplete="off" class="form-control maskdate" ng-model="si.awbdate" />
+
+                            </div>
+                        </div>
+
+
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Estimated Day<span style="color:red" ng-show="ShipmentInvoiceForm.estimateday.$invalid">
+                                        <span ng-show="ShipmentInvoiceForm.estimateday.$error.required">*</span>
+                                    </span>
+                                </label>
+                                <input type="text" id="estimateday" name="estimateday" ng-model="si.estimateday" class="form-control input-sm" required />
+                            </div>
+
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Remarks
+                                </label>
+                                <input type="text" id="remarks" name="remarks" ng-model="si.remarks" class="form-control input-sm" required />
+                            </div>
+
+                        </div>
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label class="control-label block">Uploads</label>
+                                <button type="button" data-toggle="modal" data-target="#itemimages" class="btn btn-default cbtn upload">
+                                    <i class="fa fa-upload iconupload" aria-hidden="true"></i>
+                                    Upload
+                                </button>
+                            </div>
+                        </div>
+
+                        @*<div class="col-md-12">
+
+                            </div>*@
+                    </form>
+
+                    <div class="modal fade" id="itemimages" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <div class="form-inline">
+                                    </div>
+                                    <h4 class="modal-title">Image Upload</h4>
+                                </div>
+
+                                <form action="~/LOC/ProformaInvoice/FileUpload" method="post" enctype="multipart/form-data" class="dropzone form-horizontal form-bordered" id="myAwesomeDropzone">
+                                    <div class="form-group form-actions">
+                                        <div class="col-md-9 col-md-offset-4">
+                                            <input type="hidden" ng-model="PerformaInvoice.PFI_CODE" name="PFI_CODE" id="hPFI_CODE" />
+                                        </div>
+                                    </div>
+                                </form>
+
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-success pull-right" data-dismiss="modal" aria-hidden="true">Ok</button>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div><!--/portlet-body-->
+        </div><!-- /portlet-->
+
+    </div>
+</div>
+
+<script>
+    var settlementDropzone;
+    (function () {
+        $(document).ready(function () {
+            //BindGrid();
+
+            $("input[name=settlementDate]").datepicker({
+                dateFormat: 'dd/mm/yy',
+                changeMonth: true,
+                changeYear: true,
+                showButtonPanel: true,
+                onSelect: function () {
+                    
+                    angular.element('#SettlementInvoiceCtrl').scope().SettlementInvoice.SETTLEMENT_DATE = $('#settlementDate').val();
+                }
+            });
+
+
+            //    settlementDropzone = new Dropzone('#settlementDropzone', { // Make the whole body a dropzone
+            //        thumbnailWidth: 200,
+            //        thumbnailHeight: 75,
+            //        autoDiscover: false,
+            //        autoProcessQueue: false,
+            //        addRemoveLinks: true,
+            //        paramName: "inputFiles",
+            //        uploadMultiple: true,
+            //        parallelUploads: 100,
+            //        maxFiles: 100
+            //    });
+
+            //    settlementDropzone.on("addedfile", function (file) {
+            //        console.log("file is ", file);
+            //    });
+
+            //    settlementDropzone.on("thumbnail", function (file) {
+            //        console.log("file is ", file);
+            //    });
+            //    settlementDropzone.on("error", function (file) {
+            //        displayPopupNotification("There is error while uploading files.", "error");
+            //    });
+            //    settlementDropzone.on("complete", function (file) {
+            //        RefreshGrid();
+            //        settlementDropzone.removeFile(file);
+            //    });
+            //});
+
+            //BindInvoice();
+        });
+    })();
+
+
+    function BindInvoice() {
+        $("#invoiceNo").kendoDropDownList({
+            optionLabel: "--Select Invoice No--",
+            filter: "contains",
+            dataTextField: "INVOICE_NUMBER",
+            dataValueField: "INVOICE_CODE",
+            suggest: true,
+            dataSource: {
+                type: "json",
+                serverFiltering: true,
+                transport: {
+                    read: {
+                        url: "/api/SettlementInvoice/getInvoiceTypeByFilter"
+                    },
+                    parameterMap: function (data, action) {
+                        var newParams;
+                        if (data.filter != undefined) {
+                            if (data.filter.filters[0] != undefined) {
+                                newParams = {
+                                    filter: data.filter.filters[0].value
+                                };
+                                return newParams;
+                            }
+                            else {
+                                newParams = {
+                                    filter: ""
+                                };
+                                return newParams;
+                            }
+                        }
+                        else {
+                            newParams = {
+                                filter: ""
+                            };
+                            return newParams;
+                        }
+
+                    }
+
+                }
+            }
+        });
+
+    }
+
+    function RefreshGrid() {
+        $("#grid").data("kendoGrid").dataSource.read();
+    }
+
+    function BindGrid() {
+        var dataSource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: {
+                    url: "/api/SettlementInvoice/getAllSettlementInvoice", // <-- Get data from here.
+                    dataType: "json", // <-- The default was "jsonp".
+                    type: "get",
+                    contentType: "application/json; charset=utf-8"
+                }
+            },
+            serverPaging: false,
+            pageSize: 10
+        });
+
+        var temp = dataSource.read();
+        var grid = $("#grid").kendoGrid({
+            dataSource: dataSource,
+            sortable: true,
+            pageable: {
+                refresh: true,
+                pageSizes: true,
+                buttonCount: 5
+            },
+            reorderable: true,
+            groupable: false,
+            resizable: true,
+            filterable: {    // filter for the null and is not null etc
+                extra: false,// extra false means there is 2 different filter inside the filter
+                operators: {   // the number is data type for the net sales column , and string for the MITI
+                    number: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "is greater than or equal to	",
+                        gt: "is greater than",
+                        lte: "is less than or equal",
+                        lt: "is less than",
+
+                    },
+                    string: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        startswith: "Starts with	",
+                        contains: "Contains",
+                        doesnotcontain: "Does not contain",
+                        endswith: "Ends with",
+                    },
+                    date: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "Is after or equal to",
+                        gt: "Is after",
+                        lte: "Is before or equal to",
+                        lt: "Is before",
+                    }
+                }
+            },
+            columnMenu: true,
+            pageable: true,
+            scrollable: {
+                virtual: true
+            },
+            dataBound: function (o) {
+                var grid = o.sender;
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.length;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    displayPopupNotification("No Data Found Given Date Filter.", "Info");
+                }
+
+            },
+            columns: [
+                { field: "SETTLEMENT_CODE", title: "Settlement Code" },
+                { field: "SETTLEMENT_DATE", title: "Settlement Date" },
+                {
+                    field: "INVOICE_NUMBER",
+                    title: "Invoice No"
+                },
+                {
+                    field: "mylist",
+                    title: "Doc",
+                    template: "#= getImage(mylist,ATTACH_DOC) #",
+                },
+                {
+                    field: "ID", title: "Action", sortable: false, filterable: false, width: "70px",
+                    template: '<a class="edit glyphicon glyphicon-edit" style="color:gray"><span class="sr-only"></span> </a> <a class="delete glyphicon glyphicon-trash" style="color:gray"><span class="sr-only"></span> </a>'
+                }
+
+            ],
+            dataBound: function (event) {
+                $(".edit").click(function (e) {
+                    e.preventDefault();
+                    var grid = $("#grid").data("kendoGrid");
+                    var dataItem = grid.dataItem($(this).closest("tr"));
+                    $("#hSETTLEMENT_CODE").val(dataItem.SETTLEMENT_CODE);
+                    $("#invoiceNo").data("kendoDropDownList").value(dataItem.INVOICE_CODE);
+                    angular.element('#SettlementInvoiceCtrl').scope().EditSettlementInvoice(dataItem);
+                    var images = "";
+                    
+                    if (dataItem.ATTACH_DOC != null) {
+                        
+                        var extension = dataItem.ATTACH_DOC.substr((dataItem.ATTACH_DOC.lastIndexOf('.') + 1));
+                        extension = extension.toLowerCase();
+                        switch (extension) {
+                            case 'jpg':
+                                images += "<div class='col-md-4'><img class='img img-responsive img-thumbnail' style='height:57px' src='" + dataItem.ATTACH_DOC + "'/><input type='button' data-src='" + dataItem.ATTACH_DOC + "' class='RemoveImage btn red btn-xs' value='Remove'> </div>";
+                                break;
+                            case 'pdf':
+                                images += "<div class='col-md-4'><i class='fa fa-file-pdf-o fa-4x' style='padding-top:25px' /></i><input type='button' data-src='" + dataItem.ATTACH_DOC + "' class='RemoveImage btn red btn-xs' value='Remove'></div>";
+                                break;
+                            case 'docx':
+                                images += "<div class='col-md-4'><i class='fa fa-file-word-o fa-4x' style='padding-top:25px'/></i><input data-src='" + dataItem.ATTACH_DOC + "' type='button' class='RemoveImage btn red btn-xs' value='Remove'></div>";
+                                break;
+                            case 'xls':
+                            case 'xlsx':
+                                images += "<div class='col-md-4'><i class='fa fa-file-excel-o fa-4x' style='padding-top:25px' /></i><input type='button' data-src='" + dataItem.ATTACH_DOC + "' class='RemoveImage btn red btn-xs' value='Remove'></div>";
+                                break;
+                            default:
+                                images += "<div class='col-md-4'><i class='fa fa-file-text-o fa-4x' style='padding-top:25px' /></i><input type='button' data-src='" + dataItem.ATTACH_DOC + "' class='RemoveImage btn red btn-xs' value='Remove'> </div>";
+                        }
+
+                    }
+                    else {
+                        $.each(dataItem.mylist, function (index, value) {
+                            
+                            var extension = value.substr((value.lastIndexOf('.') + 1));
+                            extension = extension.toLowerCase();
+                            switch (extension) {
+                                case 'jpg':
+                                    images += "<div class='col-md-4'><img class='img img-responsive img-thumbnail' style='height:57px' src='" + value + "' /> <input type='button' data-src='" + value + "' class='RemoveImage btn red btn-xs' value='Remove'></div>";
+                                    break;
+                                case 'pdf':
+                                    images += "<div class='col-md-4'><i class='fa fa-file-pdf-o fa-4x' style='padding-top:25px' /></i> <input  data-src='" + value + "' type='button' class='RemoveImage btn red btn-xs' value='Remove' ></div>";
+                                    break;
+                                case 'docx':
+                                    images += "<div class='col-md-4'><i class='fa fa-file-word-o fa-4x' style='padding-top:25px'/></i> <input type='button' data-src='" + value + "' class='RemoveImage btn red btn-xs' value='Remove'></div>";
+                                    break;
+                                case 'xls':
+                                case 'xlsx':
+                                    images += "<div class='col-md-4'><i class='fa fa-file-excel-o fa-4x' style='padding-top:25px' /></i> <input type='button'  data-src='" + value + "' class='RemoveImage btn red btn-xs' value='Remove'></div>";
+                                    break;
+                                default:
+                                    images += "<div class='col-md-4'><i class='fa fa-file-text-o fa-4x' style='padding-top:25px' /></i><input type='button' data-src='" + value + "' class='RemoveImage btn red btn-xs' value='Remove'></div>";
+                            }
+                        });
+                    }
+                    $('.image-placeholder').html(images);
+                });
+                $(".delete").click(function (e) {
+                    e.preventDefault();
+                    var grid = $("#grid").data("kendoGrid");
+                    var dataItem = grid.dataItem($(this).closest("tr"));
+                    bootbox.confirm("Are you sure you want to delete?", function (result) {
+                        if (result) {
+                            angular.element('#SettlementInvoiceCtrl').scope().deleteSettlementInvoice(dataItem);
+
+                        }
+                    });
+                });
+            }
+
+        });
+    }
+
+    function getImage(mylist, ATTACH_DOC) {
+        var extension;
+        var img;
+        var il;
+        if (mylist != null) {
+            img = "";
+            il = "";
+            for (var i = 0; i < mylist.length; i++) {
+                img = img + "<img src='" + mylist[i] + "' height=20 />";
+                extension = mylist[i].substr((mylist[i].lastIndexOf('.') + 1));
+                extension = extension.toLowerCase();
+                switch (extension) {
+                    case 'jpg':
+                        il = il + "<a target='_self' href='" + mylist[i] + "' download><i class='fa fa-file-image-o image'/></i></a>";
+                        break;
+                    case 'png':
+                        il = il + "<a target='_self' href='" + mylist[i] + "' download><i class='fa fa-file-image-o image' /></i></a>";
+                        break;
+                    case 'pdf':
+                        il = il + "<a target='_self' href='" + mylist[i] + "' download><i class='fa fa-file-pdf-o image' /></i></a>";
+                        break;
+                    case 'docx':
+                        il = il + "<a target='_self' href='" + mylist[i] + "' download><i class='fa fa-file-word-o image' /></i></a>";
+                        break;
+                    case 'xls':
+                    case 'xlsx':
+                        il = il + "<a target='_self' href='" + mylist[i] + "' download><i class='fa fa-file-excel-o image' /></i></a>";
+                        break;
+                    default:
+                        il = il + "<a target='_self' href='" + mylist[i] + "' download><i class='fa fa-file-text-o image'/></i></a>";
+                }
+
+            }
+            return il;
+        }
+        else if (ATTACH_DOC != null) {
+
+            img = "<img src='" + ATTACH_DOC + "' height=20/>";
+            extension = ATTACH_DOC.substr((ATTACH_DOC.lastIndexOf('.') + 1));
+            extension = extension.toLowerCase();
+            switch (extension) {
+                case 'jpg':
+                    il = "<a target='_self' href='" + ATTACH_DOC + "' download><i class='fa fa-file-image-o'/></i></a>";
+                    break;
+                case 'png':
+                    il = "<a target='_self' href='" + ATTACH_DOC + "' download><i class='fa fa-file-image-o' /></i></a>";
+                    break;
+                case 'pdf':
+                    il = "<a target='_self' href='" + ATTACH_DOC + "' download><i class='fa fa-file-pdf-o' /></i></a>";
+                    break;
+                case 'docx':
+                    il = "<a target='_self' href='" + ATTACH_DOC + "' download><i class='fa fa-file-word-o' /></i></a>";
+                    break;
+                case 'xls':
+                case 'xlsx':
+                    il = "<a target='_self' href='" + ATTACH_DOC + "' download><i class='fa fa-file-excel-o' /></i></a>";
+                    break;
+                default:
+                    il = "<a target='_self' href='" + ATTACH_DOC + "' download><i class='fa fa-file-text-o'/></i></a>";
+            }
+            return il;
+        }
+        else {
+            il = "";
+            return il;
+        }
+    }
+
+    $("#cancelSettlementInvoice, #saveNcontinueeInvoice")
+        .on('click',
+            function () {
+                $('.image-placeholder').html('');
+            });
+
+    $(".RemoveImage").live("click", function () {
+        var $this = $(this);
+        
+        bootbox.confirm("Are you sure you want to delete?", function (result) {
+
+            if (result) {
+                var imageremovedetails = {
+                    Path: $this.data('src'),
+                    Code: parseInt($("#hSETTLEMENT_CODE").val())
+                };
+                $.ajax({
+                    url: '/api/SettlementInvoice/Removefile',
+                    data: imageremovedetails,
+                    error: function (xhr, status, error) {
+                        
+                        displayPopupNotification("Error caused by " + error, "warning");
+                    },
+                    //dataType: 'json',
+                    success: function (data, status, xhr) {
+                        
+                        RefreshGrid();
+                        $this.closest('div').remove();
+                        displayPopupNotification("Succefully deleted.", "warning");
+                    },
+                    type: 'POST'
+                });
+            }
+        });
+    });
+    $(function () {
+        $('.k-list.k-reset').slimScroll({
+
+        });
+    });
+
+</script>

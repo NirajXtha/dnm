@@ -1,0 +1,793 @@
+﻿@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{ var workingContent = EngineContext.Current.Resolve<IWorkContext>(); }
+<style>
+	* {
+		box-sizing: border-box;
+	}
+
+	body {
+		font-family: Arial, sans-serif;
+		font-size: 9px;
+		margin: 0;
+		padding: 0;
+	}
+
+	.companylogo img,
+	.compLogo img {
+		max-width: 100% !important;
+		max-height: 50px !important;
+	}
+
+	/* Outer table (printable-modal) with no borders */
+	.printable-modal > table {
+		border: none !important;
+		border-collapse: collapse;
+		width: 100%;
+	}
+
+		.printable-modal > table th,
+		.printable-modal > table td {
+			border: none !important;
+			padding: 0;
+		}
+
+	/* Inner table base styles */
+	table.print_table,
+	table.noPageBreakTable,
+	table.print_table_details {
+		border: 1px solid #000 !important;
+		border-collapse: collapse;
+		width: 100%;
+		margin-bottom: 5px;
+	}
+
+		table.print_table th,
+		table.print_table td,
+		table.noPageBreakTable th,
+		table.noPageBreakTable td,
+		table.print_table_details th,
+		table.print_table_details td {
+			border: 1px solid #000 !important;
+			padding: 6px 8px;
+			text-align: left;
+			vertical-align: top;
+			font-size: 12px;
+		}
+
+	th {
+		background-color: #f2f2f2;
+		font-weight: bold;
+		font-size: 12px !important;
+		text-align: center;
+	}
+
+	.print_table.consignee {
+		border: 1px solid #000 !important;
+	}
+
+		.print_table.consignee td {
+			border: 1px solid #000 !important;
+			font-size: 10px !important;
+		}
+
+	.print_table td:empty,
+	.noPageBreakTable td:empty,
+	.print_table_details td:empty {
+		border: 1px solid #000 !important;
+		background-color: transparent;
+	}
+
+	.pon_table {
+		border: none !important;
+	}
+
+		.pon_table td {
+			border: none !important;
+			font-size: 10px !important;
+		}
+
+			.pon_table td:empty {
+				border: none !important;
+				background-color: transparent;
+			}
+
+	/* Grid row styles with typography adjustments */
+	.grid-tr {
+		border-top: 1px solid #000 !important;
+	}
+
+	table.print_table .grid-tr td,
+	table.print_table .grid-tr th {
+		font-family: Arial, sans-serif;
+		font-size: 10px;
+		font-weight: normal;
+		line-height: 1.2;
+		color: #000;
+	}
+
+	/* Stamp box */
+	div[style*="border: 1px solid black; margin-left: 445px; height: 85px"] {
+		border: 1px solid #000 !important;
+	}
+</style>
+<div class="printable-modal">
+	<table>
+		<thead class="p_header">
+			<tr>
+				<td>
+					<div class="header-space">
+						<div class="company-header" style="display: flex; align-items: center; width: 100%;">
+							<div class="compLogo" style="width: 20%; flex-shrink: 0;">
+								<img alt="Company Logo" src="~/Images/Global.Jpeg"
+									 style="max-width: 115%; max-height: 70px;">
+							</div>
+							<div class="info"
+								 style="display: flex; flex-direction: column; justify-content: center; text-align: center; padding-left: 20px;">
+								<h4 style="padding: 0; margin: 0 0 2px 0; font-size: 17px !important; font-weight: 700;"
+									class="ng-binding">
+									{{printCompanyInfo.companyName}}<br>{{printCompanyInfo.form_edesc}}
+								</h4>
+								<p style="padding: 0; margin: 0; color: #868686;" class="ng-binding">
+									{{printCompanyInfo.address}}
+								</p>
+								<p style="padding: 0; margin: 0; color: #868686;" class="ng-binding">
+									<span>
+										Ph.No. :
+										{{printCompanyInfo.phoneNo}}
+									</span>
+									<span style="padding-left:30px;">
+										Pan No. :
+										{{printCompanyInfo.tPinVatNo}}
+									</span>
+								</p>
+								<p style="padding: 0; margin: 0; color: #868686;" class="ng-binding">
+									Unload / Entry Records
+								</p>
+								@*<p style="padding: 0; margin: 0; color: #868686;" class="ng-binding">
+									Ph.No. :
+									{{printCompanyInfo.phoneNo}}
+									Pan No. :
+									{{printCompanyInfo.tPinVatNo}}
+								</p>*@
+								@*<p style="padding: 0; margin: 0; color: #868686;" class="ng-binding">
+									Pan No. :
+									{{printCompanyInfo.TPIN_VAT_NO}}
+								</p>*@
+							</div>
+						</div>
+						<div style="background-color: #e5e5e5; margin: 5px 0px; height: 1px; width: 100%;"></div>
+						<div style="padding-top: 0px !important;">
+							<table class="pon_table" style="width:100%; margin-bottom:5px;">
+								<tbody>
+									<tr>
+										<td style="width: 20%; text-align: left; font-size: 11px !important; font-weight: 600;">
+											PON No
+										</td>
+										<td style="width:30%; text-align:left; font-weight: normal; font-size: 11px !important;"
+											class="ng-binding">
+											 <span style="margin-left:-7px !important;">: {{TRANSACTION_NO}}</span>
+										</td>
+										<td style="width: 20%; text-align: left; font-size: 11px !important; font-weight: 600;">
+											Vehicle No
+										</td>
+										<td style="width: 30%; text-align: left; font-weight: normal; font-size: 11px !important;"
+											class="ng-binding">
+											<span style="margin-left:-7px !important;">: {{VEHICLE_NO}}</span>
+										</td>
+									</tr>
+									<tr>
+										<td style="text-align: left; font-size: 11px !important; font-weight: 600;">
+											Date/Miti
+										</td>
+										<td style="text-align: left; font-weight: normal; font-size: 11px !important;"
+											class="ng-binding">
+											<span style="margin-left:-7px !important;">: {{CREATED_DATE}}</span>
+										</td>
+										<td style="text-align: left; font-size: 11px !important; font-weight: 600;">
+											Party Name
+										</td>
+										<td style="text-align: left; font-weight: normal; font-size: 11px !important;"
+											class="ng-binding">
+											<span style="margin-left:-7px !important;">: {{PARTY_NAME}}</span>
+										</td>
+									</tr>
+									<tr>
+										<td style="text-align: left; font-size: 11px !important; font-weight: 600;">
+											Item
+										</td>
+										<td style="text-align: left; font-weight: normal; font-size: 11px !important;"
+											class="ng-binding">
+											<span style="margin-left:-7px !important;">: {{ITEM_EDESC}}</span>
+</td>
+										<td style="text-align: left; font-size: 11px !important; font-weight: 600;">
+											Address
+										</td>
+										<td style="text-align: left; font-weight: normal; font-size: 11px !important;"
+											class="ng-binding">
+											<span style="margin-left:-7px !important;">: {{ADDRESS}}</span>
+</td>
+									</tr>
+									<tr>
+										<td style="text-align: left; font-size: 11px !important; font-weight: 600;">
+											Gate/GRN No
+										</td>
+										<td style="text-align:left; font-weight: normal; font-size: 11px !important;"
+											class="ng-binding">
+											<span style="margin-left:-7px !important;">: {{GATE_OR_GRN_NO}}</span>
+</td>
+										<td style="text-align: left; font-size: 11px !important; font-weight: 600;">
+											Bill No
+										</td>
+										<td style="text-align: left; font-weight: normal; font-size: 11px !important;"
+											class="ng-binding">
+											<span style="margin-left:-7px !important;">: {{BILL_NO}}</span>
+</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+						<div style="padding-top: 0px !important; float: left; width:100% !important">
+							<table class="print_table consignee"
+								   style="width:98%; margin-bottom:5px; border: 1px solid #000 !important;">
+								<tbody>
+									<tr>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Physical Tests of raw material (in %)
+										</td>
+										<td style="text-align: left; padding-right: 20px; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{PHYSICAL_TEST_RAWMATERIAL}}
+										</td>
+										<td style="text-align: left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Weight: 100 grams no. of grains
+										</td>
+										<td style="text-align: left; padding-right: 20px; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{WEIGHT}}
+										</td>
+										<td style="text-align: left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Moisture %
+										</td>
+										<td style="text-align: left; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{MOISTURE}}
+										</td>
+									</tr>
+									<tr>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Wet
+										</td>
+										<td style="text-align:left; padding-right: 20px; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{WET}}
+										</td>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Temperature
+										</td>
+										<td style="text-align:left; padding-right: 20px; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{TEMPERATURE}}
+										</td>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Dust
+										</td>
+										<td style="text-align:left; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{DUST}}
+										</td>
+									</tr>
+									<tr>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Smell
+										</td>
+										<td style="text-align:left; padding-right: 20px; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{SMELL}}
+										</td>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Fungus %
+										</td>
+										<td style="text-align:left; padding-right: 20px; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{FUNGUS}}
+										</td>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Dana Futeko %
+										</td>
+										<td style="text-align:left; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{PIECES}}
+										</td>
+									</tr>
+									<tr>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Foreign Material (Anya Bastu)
+										</td>
+										<td style="text-align:left; padding-right: 20px; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{OTHER_ITEMS}}
+										</td>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Grading
+										</td>
+										<td style="text-align:left; padding-right: 20px; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{GRADING}}
+										</td>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Damaged (Dalla Pareko)
+										</td>
+										<td style="text-align:left; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{DAMAGED}}
+										</td>
+									</tr>
+									<tr>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Husk (Dadalno)
+										</td>
+										<td style="text-align:left; padding-right: 20px; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{HUSK}}
+										</td>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Color
+										</td>
+										<td style="text-align:left; padding-right: 20px; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{COLOR}}
+										</td>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Useable
+										</td>
+										<td style="text-align:left; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{USEABLE}}
+										</td>
+									</tr>
+									<tr>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Fat %
+										</td>
+										<td style="text-align:left; padding-right: 20px; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{FAT}}
+										</td>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Immaturity of grains
+										</td>
+										<td style="text-align:left; padding-right: 20px; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{IMMATURITY_OF_GRAINS}}
+										</td>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Excellent
+										</td>
+										<td style="text-align:left; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{EXCELLENT}}
+										</td>
+									</tr>
+									<tr>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Normal
+										</td>
+										<td style="text-align:left; padding-right: 20px; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{GOODS_NORMAL}}
+										</td>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Rotten Holed % (Kuhiyeko/Pwal Pareko)
+										</td>
+										<td style="text-align:left; padding-right: 20px; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{ROTTEN_HOLED}}
+										</td>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Silo
+										</td>
+										<td style="text-align:left; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{SILO}}
+										</td>
+									</tr>
+									<tr>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Size
+										</td>
+										<td style="text-align:left; padding-right: 20px; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{PRODUCT_SIZE}}
+										</td>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Dana Tukriyeko %
+										</td>
+										<td style="text-align:left; padding-right: 20px; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{BROKEN}}
+										</td>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Overtoasted
+										</td>
+										<td style="text-align:left; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{OVERTOASTED}}
+										</td>
+									</tr>
+									<tr>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Unusable
+										</td>
+										<td style="text-align:left; padding-right: 20px; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{UNUSEABLE}}
+										</td>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Quality of Goods
+										</td>
+										<td style="text-align:left; padding-right: 20px; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{QUALITY_OF_GOODS}}
+										</td>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Great
+										</td>
+										<td style="text-align:left; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{GREAT}}
+										</td>
+									</tr>
+									<tr>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Warehouse
+										</td>
+										<td style="text-align:left; padding-right: 20px; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{WAREHOUSE}}
+										</td>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Ghan
+										</td>
+										<td style="text-align:left; padding-right: 20px; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{GHAN}}
+										</td>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Quality of Firewood
+										</td>
+										<td style="text-align:left; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{QUALITY_OF_FIREWOOD}}
+										</td>
+									</tr>
+									<tr>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Type
+										</td>
+										<td style="text-align:left; padding-right: 20px; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{PRODUCT_TYPE}}
+										</td>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+											Protein %
+										</td>
+										<td style="text-align:left; padding-right: 20px; font-weight: normal; font-size: 10px !important; border: 1px solid #000 !important;"
+											class="ng-binding">
+											{{PROTEIN}}
+										</td>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+										</td>
+										<td style="text-align:left; font-size: 10px !important; font-weight: 600; border: 1px solid #000 !important;">
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</td>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td style="text-align: left; font-weight: bold;">Remarks : {{PRODUCT_REMARKS}}</td>
+			</tr>
+			<tr>
+				<td>
+					<table class="noPageBreakTable"
+						   style="width:98%;border:1px solid #000 !important; margin-bottom: 5px;">
+						<tbody>
+							<tr>
+								<th style="border: 1px solid #000 !important;">S.No.</th>
+								<th style="border: 1px solid #000 !important;">First weight</th>
+								<th style="border: 1px solid #000 !important;">Second Weight</th>
+								<th style="border: 1px solid #000 !important;">Net Weight</th>
+								<th style="border: 1px solid #000 !important;">Challan Weight</th>
+								<th style="border: 1px solid #000 !important;">Weight Difference</th>
+								<th style="border: 1px solid #000 !important;">Remarks</th>
+							</tr>
+							<tr class="grid-tr" ng-repeat="(key1,row) in WeightDetailsData">
+								<td style="border: 1px solid #000 !important;">
+									<span>{{key1 + 1}}</span>
+								</td>
+								<td style="border: 1px solid #000 !important;">
+									<span>{{childWeightDetailsModels[key1]['FIRST_WEIGHT']}}</span>
+								</td>
+								<td style="border: 1px solid #000 !important;">
+									<div>
+										<span>{{childWeightDetailsModels[key1]['SECOND_WEIGHT']}}</span>
+									</div>
+								</td>
+								<td style="border: 1px solid #000 !important;">
+									<div>
+										<span>{{childWeightDetailsModels[key1]['NET_WEIGHT']}}</span>
+									</div>
+								</td>
+								<td style="border: 1px solid #000 !important;">
+									<div>
+										<span>{{childWeightDetailsModels[key1]['CHALLAN_WEIGHT']}}</span>
+									</div>
+								</td>
+								<td style="border: 1px solid #000 !important;">
+									<div>
+										<span>{{childWeightDetailsModels[key1]['WEIGHT_DIFFERENCE']}}</span>
+									</div>
+								</td>
+								<td style="border: 1px solid #000 !important;">
+									<div>
+										<span>{{childWeightDetailsModels[key1]['REMARKS']}}</span>
+									</div>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+					<table class="noPageBreakTable"
+						   style="width: 98%; border: 1px solid #000 !important; margin-bottom: 5px;">
+						<tbody>
+							<tr>
+								<th style="border: 1px solid #000 !important;">S.No.</th>
+								<th style="border: 1px solid #000 !important;">1</th>
+								<th style="border: 1px solid #000 !important;">2</th>
+								<th style="border: 1px solid #000 !important;">3</th>
+								<th style="border: 1px solid #000 !important;">4</th>
+								<th style="border: 1px solid #000 !important;">5</th>
+								<th style="border: 1px solid #000 !important;">6</th>
+								<th style="border: 1px solid #000 !important;">7</th>
+								<th style="border: 1px solid #000 !important;">8</th>
+								<th style="border: 1px solid #000 !important;">9</th>
+								<th style="border: 1px solid #000 !important;">10</th>
+								<th style="border: 1px solid #000 !important;">11</th>
+								<th style="border: 1px solid #000 !important;">12</th>
+								<th style="border: 1px solid #000 !important;">Total</th>
+							</tr>
+							<tr class="grid-tr" ng-repeat="(key1,row) in UNLOADEDCHHALLIList">
+								<td style="border: 1px solid #000 !important;">
+									<span>{{key1 + 1}}</span>
+								</td>
+								<td style="border: 1px solid #000 !important;">
+									<span>{{childUnloadedChalliModels[key1]['FIRST_CHHALLI']}}</span>
+								</td>
+								<td style="border: 1px solid #000 !important;">
+									<div>
+										<span>{{childUnloadedChalliModels[key1]['SECOND_CHHALLI']}}</span>
+									</div>
+								</td>
+								<td style="border: 1px solid #000 !important;">
+									<div>
+										<span>{{childUnloadedChalliModels[key1]['THIRD_CHHALLI']}}</span>
+									</div>
+								</td>
+								<td style="border: 1px solid #000 !important;">
+									<div>
+										<span>{{childUnloadedChalliModels[key1]['FOURTH_CHHALLI']}}</span>
+									</div>
+								</td>
+								<td style="border: 1px solid #000 !important;">
+									<div>
+										<span>{{childUnloadedChalliModels[key1]['FIFTH_CHHALLI']}}</span>
+									</div>
+								</td>
+								<td style="border: 1px solid #000 !important;">
+									<div>
+										<span>{{childUnloadedChalliModels[key1]['SIXTH_CHHALLI']}}</span>
+									</div>
+								</td>
+								<td style="border: 1px solid #000 !important;">
+									<div>
+										<span>{{childUnloadedChalliModels[key1]['SEVENTH_CHHALLI']}}</span>
+									</div>
+								</td>
+								<td style="border: 1px solid #000 !important;">
+									<div>
+										<span>{{childUnloadedChalliModels[key1]['EIGHTH_CHHALLI']}}</span>
+									</div>
+								</td>
+								<td style="border: 1px solid #000 !important;">
+									<div>
+										<span>{{childUnloadedChalliModels[key1]['NINETH_CHHALLI']}}</span>
+									</div>
+								</td>
+								<td style="border: 1px solid #000 !important;">
+									<div>
+										<span>{{childUnloadedChalliModels[key1]['TENTH_CHHALLI']}}</span>
+									</div>
+								</td>
+								<td style="border: 1px solid #000 !important;">
+									<div>
+										<span>{{childUnloadedChalliModels[key1]['ELEVEN_CHHALLI']}}</span>
+									</div>
+								</td>
+								<td style="border: 1px solid #000 !important;">
+									<div>
+										<span>{{childUnloadedChalliModels[key1]['TWELVE_CHHALLI']}}</span>
+									</div>
+								</td>
+								<td style="border: 1px solid #000 !important;">
+									<div>
+										<span>{{childUnloadedChalliModels[key1]['TOTAL']}}</span>
+									</div>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+					<table class="print_table_details noPageBreakTable"
+						   style="width: 98%; border: 1px solid #000 !important; margin-bottom: 5px;">
+						<tbody>
+							<tr>
+								<th style="border: 1px solid #000 !important;">S.No.</th>
+								<th style="border: 1px solid #000 !important;">Entry No</th>
+								<th style="border: 1px solid #000 !important;">Bill No.</th>
+								<th style="border: 1px solid #000 !important;">Chalan No.</th>
+								<th style="border: 1px solid #000 !important;">Item</th>
+								<th style="border: 1px solid #000 !important;">Total Bag</th>
+								<th style="border: 1px solid #000 !important;">Weight Kg</th>
+								<th style="border: 1px solid #000 !important;">Remarks</th>
+							</tr>
+							<tr class="grid-tr" ng-repeat="(key1,row) in DAKHILADETAILSList">
+								<td style="border: 1px solid #000 !important;">
+									<span>{{key1 + 1}}</span>
+								</td>
+								<td style="border: 1px solid #000 !important;" class="abc">
+									<span>{{childDakhilaDetailsModels[key1]['ENTRY_NO']}}</span>
+								</td>
+								<td style="border: 1px solid #000 !important;">
+									<div>
+										<span>{{childDakhilaDetailsModels[key1]['BILL_NO']}}</span>
+									</div>
+								</td>
+								<td style="border: 1px solid #000 !important;">
+									<div>
+										<span>{{childDakhilaDetailsModels[key1]['CHALAN_NO']}}</span>
+									</div>
+								</td>
+								<td style="border: 1px solid #000 !important;">
+									<div>
+										<span>{{childDakhilaDetailsModels[key1]['ITEM']}}</span>
+									</div>
+								</td>
+								<td style="border: 1px solid #000 !important;">
+									<div>
+										<span>{{childDakhilaDetailsModels[key1]['TOTAL_BAG']}}</span>
+									</div>
+								</td>
+								<td style="border: 1px solid #000 !important;">
+									<div>
+										<span>{{childDakhilaDetailsModels[key1]['WEIGHT']}}</span>
+									</div>
+								</td>
+								<td style="border: 1px solid #000 !important;">
+									<div>
+										<span>{{childDakhilaDetailsModels[key1]['REMARKS']}}</span>
+									</div>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+					@*<div style="padding-top: 10px !important;">
+			<table>
+				<tr>
+					<td style="width: 19%; text-align: left; font-weight: bold;">Deduct in Bag (Plastic) </td>
+					<td style="width:7%; text-align:left;">{{DEDUCT_IN_PLASTIC}}</td>
+				</tr>
+
+			</table>
+		</div>*@
+					@*<table style="border-collapse: separate; border-spacing: 30px 0;">
+			<tr>
+				<td style="text-align: left; font-weight: bold;">Deduct in Bag (Plastic)</td>
+				<td style="text-align:left;">12</td>
+			</tr>
+		</table>*@
+					<div style="padding-top: 10px !important;">
+						<table style="width:100%; table-layout: fixed; border-collapse: separate;">
+							<tr>
+								<td style="width:80%; text-align: left; font-weight: bold;">
+									Deduct in Bag (Plastic)
+								</td>
+								<td style="width:30%; text-align:left;">
+									12
+								</td>
+							</tr>
+						</table>
+					</div>
+					<div style="padding-top: 10px !important;">
+							<table style="width:100%; table-layout: fixed; border-collapse: separate;">
+								<tr>
+									<td style="width:80%; text-align: left; font-weight: bold;">Deduct in Bag (Jute) </td>
+									<td style="width:30%; text-align:left;">{{DEDUCT_IN_JUTE}}</td>
+								</tr>
+							</table>
+						</div>
+						<div style="padding-top: 10px !important;">
+							<table style="width:100%; table-layout: fixed; border-collapse: separate;">
+								<tr>
+									<td style="width:80%; text-align: left; font-weight: bold;">Deduct in weight (Moisture, Dirt/Dust, Sand, Plastic, Stone) : </td>
+									<td style="width:30%; text-align:left;">{{DEDUCT_IN_WT}}</td>
+								</tr>
+							</table>
+						</div>
+						<div style="padding-top: 10px !important;">
+							<table style="width:100%; table-layout: fixed; border-collapse: separate;">
+								<tr>
+									<td style="width:80%; text-align: left; font-weight: bold;">Net weight Kg : </td>
+									<td style="width:30%; text-align:left;">{{NET_WEIGHT}}</td>
+								</tr>
+							</table>
+						</div>
+						<div style="padding-top: 10px !important;">
+							<table>
+								<tr>
+									<td style="width: 1%; text-align: left; font-weight: bold;">Remarks : </td>
+									<td style="width:20%; text-align:left;">{{REMARKS}}</td>
+								</tr>
+							</table>
+						</div>
+						@*<div style="padding-top: 10px !important;">
+				<table>
+					<tr>
+						<td style="width: 1%; text-align: left; font-weight: bold;">Unload : </td>
+						<td style="width: 2%; text-align:left;">{{ISUNLOAD == 'Y' ? 'Yes' : 'No'}}</td>
+						<td style="width: 1%; text-align: left; font-weight: bold;">Protein : </td>
+						<td style="width: 2%; text-align:left;">{{ISPROTEIN == 'Y' ? 'Yes' : 'No'}}</td>
+						<td style="width: 1%; text-align: left; font-weight: bold;">PT : </td>
+						<td style="width: 2%; text-align:left;">{{ISPT == 'Y' ? 'Yes' : 'No'}}</td>
+						<td style="width: 1%; text-align: left; font-weight: bold;">Out : </td>
+						<td style="width: 10%; text-align:left;">{{ISOUT == 'Y' ? 'Yes' : 'No'}}</td>
+					</tr>
+				</table>
+			</div>
+			<div class="col-sm-12 col-md-12 col-lg-12 stamp-details">
+				<div style="padding:10px;"></div>
+			</div>
+			<div style="text-align: center; width: 22%; border: 1px solid #000 !important; margin: 0 auto; margin-right: 18px; height: 85px; display: block; ">
+				Gate Pass (Stamp)
+			</div>*@
+				</td>
+			</tr>
+		</tbody>
+		<tfoot>
+			<tr>
+				<td>
+					<div style="display: flex; justify-content: space-between; text-align: center; padding-top: 10px !important; border: none;">
+						<div style="width: 25%;">
+							<p style="border: none;">-----------------------------</p>
+							<p>Checked By</p>
+						</div>
+						<div style="width: 25%;">
+							<p style="border: none;">-----------------------------</p>
+							<p>QC Assistant</p>
+						</div>
+						<div style="width: 25%;">
+							<p style="border: none;">-----------------------------</p>
+							<p>Verified By</p>
+						</div>
+						<div style="width: 25%;">
+							<p style="border: none;">-----------------------------</p>
+							<p>QC Head</p>
+						</div>
+					</div>
+				</td>
+			</tr>
+		</tfoot>
+	</table>
+</div>

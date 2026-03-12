@@ -1,0 +1,1842 @@
+﻿@using System.Globalization;
+@{
+    ViewBag.Title = "Overview";
+    Layout = "~/Views/Common/Master.cshtml";
+    ViewBag.DemoSettings = true;
+}
+<link href="~/Content/JGrid/JQGridDemo.css" rel="stylesheet" media="screen">
+<style>
+    #PopupHeader {
+        position: absolute;
+        top: 0;
+        margin-top: 14px;
+        right: 30px;
+        font-size: 12px;
+    }
+
+    #PopupHeader input {
+        max-width: 120px;
+        height: auto;
+        padding: 2px 6px;
+        font-size: 12px;
+        border: 1px solid #e1e1e1;
+        margin-left: 5px;
+        border-radius: 4px;
+    }
+
+    #DetailScreen {
+        background: rgb(245, 245, 245) none repeat scroll 0 0;
+        border: 2px solid #e1e1e1;
+        display: none;
+        height: 530px;
+        position: fixed;
+        top: 86px;
+        width: 600px;
+        z-index: 1000;
+    }
+
+    #VoucherScreen {
+        background: rgb(245, 245, 245) none repeat scroll 0 0;
+        border: 5px solid #cccccc;
+        border-radius: 10px;
+        display: none;
+        height: 530px;
+        position: fixed;
+        top: 120px;
+        width: 695px;
+        z-index: 1000;
+    }
+
+    .cancel {
+        display: block;
+        font-size: 15px;
+        text-decoration: none;
+        text-align: center;
+        cursor: pointer;
+        border: 1px solid #e1e1e1;
+        height: 24px;
+        width: 24px;
+    }
+
+    .cancela {
+        margin-left: 96.5%;
+        display: block;
+        font-size: 15px;
+        text-decoration: none;
+        text-align: center;
+        cursor: pointer;
+        border: 1px solid #e1e1e1;
+        height: 24px;
+        width: 24px;
+    }
+
+    .Maximize {
+        display: block;
+        font-size: 15px;
+        text-decoration: none;
+        text-align: center;
+        cursor: pointer;
+        border: 1px solid #e1e1e1;
+        height: 24px;
+        width: 24px;
+    }
+
+    .popup_bar {
+        margin: 5px 0px;
+        position: relative;
+        display: table;
+        width: 100%;
+        padding: 0 12px;
+    }
+
+    .right {
+        float: right;
+    }
+
+    .viewFunction {
+        float: left;
+    }
+
+    .Maximize, .cancel {
+        float: left;
+        margin-right: 5px;
+    }
+
+        .cancel:hover, .Maximize:hover {
+            background-color: #333;
+            color: #f7f7f7;
+        }
+
+    .divScreen-Cpopup-body {
+        float: left;
+        width: 100%;
+    }
+
+    .filterTree .ui-jqgrid, .filterTree .ui-jqgrid-view, .filterTree #pager, .filterTree .ui-jqgrid-bdiv, .filterTree .ui-jqgrid-hdiv, .filterTree .ui-jqgrid-btable {
+        width: 100% !important;
+    }
+
+    .adddiv {
+        display: table;
+        width: 100%;
+    }
+
+    #roundSlider1, #roundSlider, #Slider1, #Slider {
+        margin-bottom: 20px;
+    }
+
+    .myclass {
+        font-weight: bold !important;
+    }
+
+    #DetailScreen1 {
+        background: rgb(245, 245, 245) none repeat scroll 0 0;
+        border: 5px solid #cccccc;
+        border-radius: 10px;
+        display: none;
+        height: 530px;
+        position: fixed;
+        top: 86px;
+        width: 900px;
+        z-index: 1000;
+    }
+
+    #VoucherScreen1 {
+        background: rgb(245, 245, 245) none repeat scroll 0 0;
+        border: 5px solid #cccccc;
+        border-radius: 10px;
+        display: none;
+        height: 530px;
+        position: fixed;
+        top: 120px;
+        width: 695px;
+        z-index: 1000;
+    }
+</style>
+<div id="DetailScreen" class="custom-popup-divScreen" style="position: fixed; left: 40%;">
+    <div id="popup_bar" class="popup_bar">
+        <div class="right">
+            <div onclick="Maximize()" class="Maximize"><span class="fa fa-expand"></span></div>
+            <div onclick='$("#DetailScreen").hide();' class="cancel">
+                <span class="fa fa-times"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="divScreen-Cpopup-body modal-body">
+        <table id="LoadTransactions" style="width: 100%;"></table>
+    </div>
+</div>
+<div class="row">
+    <div class="col-lg-12" style="background-color: #f5f5f5; height: 38px;">
+        <div class="btn-group" role="group" style="float: right; padding-top: 6px;">
+            @Html.Partial("~/Views/Report/Search.cshtml")
+        </div>
+    </div>
+</div>
+<div class="window-load" id="Loading">
+    <img src="~/Images/Loading.gif" />
+</div>
+<div class="container-fluid wrapper">
+    <div class="row">
+        <div class="col-md-12" style="padding-left: 0px; padding-right: 0px;">
+            @{
+                    string Shows = null;
+                    int Show = 0;
+                    int FigureAmount = 0;
+                    if (Convert.ToInt32(ViewData["figureAmount"]) == 1000) { Shows = "Thousand"; Show = 1; }
+                    if (Convert.ToInt32(ViewData["figureAmount"]) == 1) { Shows = "Actual"; Show = 0; }
+                    if (Convert.ToInt32(ViewData["figureAmount"]) == 100000) { Shows = "Lakh"; Show = 2; }
+                    if (Convert.ToInt32(ViewData["figureAmount"]) == 10000000) { Shows = "Crore"; Show = 3; }
+                    if (Convert.ToString(ViewData["roundupAmount"]) == "0") { FigureAmount = 0; }
+                    if (Convert.ToString(ViewData["roundupAmount"]) == "0.0") { FigureAmount = 1; }
+                    if (Convert.ToString(ViewData["roundupAmount"]) == "0.00") { FigureAmount = 2; }
+                    if (Convert.ToString(ViewData["roundupAmount"]) == "0.000") { FigureAmount = 3; }
+                    if (Convert.ToString(ViewData["roundupAmount"]) == "0.0000") { FigureAmount = 4; }
+                }                
+                <div class="bdpnl" style="display:table;width:100%;border-bottom: 1px solid #e1e1e1;">
+                    <div id="ExpanCollapse" style="display: none;display:table;float:left;">
+                    As of:&nbsp;&nbsp;<input type="text"  id="toInputDateP"><input type="text" id="ToDateP">
+                    <button class="btn btn-default" style="width:auto" id="SecondarySubmitButton"><i class="fa fa-play"></i></button>
+                        <span id="InsideExpanCollapse" style="display: none">
+                            <span>
+                                <input type="radio" id="CollapseAll" name="ExpanCollapse">Collapse All
+                            </span>
+                            <span>
+                                <input type="radio" id="ExpandAll" checked="true" name="ExpanCollapse">Expand All
+                            </span>
+                        </span>
+                    </div>
+                    @if (Shows != "Actual")
+                    {
+                        <span style="font-size: 10px; color: indianred; float:right;line-height:28px;">Figure in: @Shows </span>
+                    }
+                    </div>
+            <div class="panel-heading" id="sambhoo" style="width: 100%;display:table;padding:0;">    
+                <table id="jqGrid" class="table" style="width: 100%;"></table>
+                <div id='pager'></div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="test">@ViewData["tlineData"]</div>
+<div class="row">
+    <div class="col-md-12">
+        <!-- Modal -->
+        <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+            <form class="form-horizontal" action="~/Report/CustomerDebtor" onsubmit="return validateArrY();" method="post" id="SubmitThisForm">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header" style="position: relative;">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close" id="SubmitCloseModal">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                            <h4 class="modal-title" id="myModalLabel">Preference Setup </h4>
+                            <div id="PopupHeader">
+                                As of:
+                                <input type="text" id="fromInputDate"><input type="text" id="FromDate" value='@ViewData["FDATE"]' name="FromDate" required>
+                            </div>
+                        </div>
+                        <input type="hidden" name="ViewPrefName" id="ViewPrefName">
+                        <!--####   PREFERENCE SETUP   ####-->
+                        <div class="modal-body">
+                            <div class="panel-body">
+                                <div class="row">
+                                    <!--####   LEFT-HAND SIDE PREFERENCE SETUP   ####-->
+                                    <div class="col-md-6">
+                                        <div style="display:table;width:100%;">
+                                            <label>Filter:</label>
+                                            <select name="yaxis" class="form-control" style="padding: 2px;width:88%;float:left;">
+                                                <option value="T" @if (ViewData["ViewType"] == "T")
+                                                                  { <text> selected </text> }>Customer Tree</option>
+                                                <option value="A" @if (ViewData["ViewType"] == "A")
+                                                                  { <text> selected </text> }>Customer List</option>
+                                            </select>
+                                            <div class="right">
+                                                <!--####   RIGHT-HAND SIDE FILTER TREE JQGRID TABLE   ####-->
+                                                <button onclick="$('#FilterTreeModal').modal('toggle');return false;" class="btn btn-primary">...</button>
+                                            </div>
+                                        </div>
+                                        <div style="margin-top: 15px; width: 100%; max-height: 220px; overflow-y: auto; margin-bottom: 15px;">
+                                            <label>Days:</label>
+                                            <button id="btnAdd" class="btn-preference btn-pref-add"><span class="fa fa-plus"></span></button>
+                                            <div class="adddiv" style="border: 1px;">
+                                                @{
+                                                    var ArrayNames = ViewData["ArrayNames"] as int[];
+                                                    int LengthForId = ArrayNames.Length - 1; for (int i = 0; i < ArrayNames.Length; i++)
+                                                    {
+                                                        string Newid = i.ToString() + i.ToString();
+                                                        string NewIdId = i.ToString() + i.ToString() + i.ToString() + i.ToString();
+                                                        int ValueShouldBe = 0; if (i == 0) { ValueShouldBe = 0; } else { ValueShouldBe = ArrayNames[i - 1] + 1; }
+                                                    <div>
+                                                        <input type="text" id="@NewIdId" readonly="true" value="@ValueShouldBe" style="width:30%;">
+                                                        <input type="text" id="@Newid" value="@ArrayNames[i]" onblur="ModifyNextId(this.id);" style="width:30%;">
+                                                        @if (i != 0)
+                                                        {
+                                                            <button id="@i" onclick='return DeleteThis(this.id);' class="btn-preference btn-pref-rem"><span class="fa fa-close"></span></button>
+                                                        }
+                                                    </div>
+                                                    }
+                                                }
+                                            </div>
+                                            <div class="ActualAddDiv" style="display: none;"></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="pref-slide">
+                                            <p>
+                                                <input type="text" name="figureAmount" id="figure1" value='@ViewData["figureAmount"]' readonly="" style="font-size: 10px; border: 0; color: #009999; font-weight: bold;">
+                                            </p>
+                                            <div id="slider1">
+                                                <label for="figure" style="font-size: 12px; font-weight: normal">Figure in</label>
+                                            </div>
+                                        </div>
+                                        <div class="pref-slide">
+                                            <p>
+                                                <input type="text" id="round1" name="roundupAmount" readonly="" value="@ViewData["roundupAmount"]" style="font-size: 10px; border: 0; color: #009999; font-weight: bold ; margin-top: 28px;">
+                                            </p>
+                                            <div id="roundSlider1">
+                                                <label for="round" style="font-size: 12px; font-weight: normal">Round up</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">                            
+                            <button type="submit" id="btnOk" class="btn btn-primary">OK</button>
+                            <button type="button" id="btnLoad" class="btn btn-primary" onclick="return false;" data-toggle="modal" data-target="#MyPrefernces">Load</button>
+                            <button type="submit" id="btnSave" onclick="return btnSaveClick();" class="btn btn-primary" data-toggle="modal" data-target="#mysave">Save</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal fade" id="mysave" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                    <div class="modal-content modal-inner-popup">
+                        <div class="modal-header">
+                            <button type="button" class="close DiaableInput" onclick=" $('#mysave').modal('toggle'); " aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                            Save As
+                        </div>
+                        <div class="modal-body">
+                            <span id="MsgPrefName" style="font-size: 10px; color: indianred;"></span>
+                            <table id="ShowWhenSave"></table>
+                        </div>
+                        <div class="modal-footer">
+                            <div class="pref-input-div">
+                                <label>Preference Name:</label>
+                                <input id="PreferenceName" type="text" name="PreferenceName" disabled required /><input type="checkbox"  name="SetDefault" id="SetDefault" style="width: 22px; height: 16px;display:none;"><span id="SetDefaultMsg" style="font-size: 11px; color: indianred;"></span>
+                            </div>
+                            <button type="submit" class="btn btn-primary"><span class="fa fa-floppy-o" aria-hidden="true"></span></button>
+                            <button type="button" class="btn btn-danger DiaableInput" onclick=" $('#mysave').modal('toggle'); "><span class="glyphicon glyphicon-remove"></span></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal fade" id="MyPrefernces" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                    <div class="modal-content modal-inner-popup">
+                        <div class="modal-header">
+                            <button type="button" class="close" onclick=" $('#MyPrefernces').modal('toggle'); " aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                            Load
+                        </div>
+                        <div class="modal-body">
+                            <div id="LoadPreferncesWidth">
+                                <table id="LoadPrefernces"></table>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <div class="pref-input-div">
+                                <span id="ShowHideThisSpan" style="font-size: 11px; color: indianred; display: none">No rows are selected</span>
+                            </div>
+                            <button onclick="return getSelectedRow();" style="float: right;" class="btn btn-success"><span class="fa fa-refresh"></span></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal fade" id="FilterTreeModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                    <div class="modal-content modal-inner-popup">
+                        <div class="modal-header">
+                            <button type="button" class="close" onclick=" $('#FilterTreeModal').modal('toggle'); " aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                            Filter
+                        </div>
+                        <div class="modal-body">
+                            <div class="col-md-6 filterTree">
+                                <table id="FilterTree"></table>
+                            </div>
+                            <div class="col-md-6">
+                                <table id="FilterTreeCustomerList"></table>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button id="InsertEmployeeList" style="float: right;display:none;" class="btn btn-success">OK</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div id="VoucherScreen">
+    <div onclick="document.getElementById('VoucherScreen').style.display = 'none';" class="cancela">
+        <span class="fa fa-times"></span>
+    </div>
+    <table id="LoadItems"></table>
+</div>
+
+
+
+<div class="contextMenu" id="myMenu1" style="display: none">
+    <ul style="width: 200px">
+        <li id="BillDetail">
+            <span style="font-size: 11px; font-family: Verdana">Bill Detail</span>
+        </li>
+        <li id="VoucherDetail">
+            <span style="font-size: 11px; font-family: Verdana">Voucher Detail</span>
+        </li>
+    </ul>
+</div>
+
+<div id="DetailScreen1" style="position: fixed; left: 10%;">
+    <div id="popup_bar1" class="popup_bar">
+        <div id="hello" class="viewFunction" style="left: 8px; width: 52px">
+            <img src="../Images/print.png" width="19" height="21" onclick="PrintStatement()">
+            <img src="../Images/export.png" width="18" height="17" onclick="ExportStatement()">
+        </div>
+        <div class="right">
+            <div onclick="Maximize()" class="Maximize"><span class="fa fa-expand"></span></div>
+            <div onclick="$('#DetailScreen1').hide();" class="cancel">
+                <span class="fa fa-times"></span>
+            </div>
+        </div>
+    </div>
+    <div>
+        @*            <table style="width: 663px; margin-top: 0px; margin-left: 107px;">
+                <tr>
+                    <td>
+                        <div class="filterDateOption">
+                            <label>Date Filter</label>
+                            <select class="dateFilterSelect" id="ddlDateFilterVoucher" name="DateStep" style="width: 50%;">
+                                <option value="TD" selected="selected">Today</option>
+                                <option value="TM">This Month</option>
+                                <option value="LM">Last Month</option>
+                                <option value="TQ">This Quater</option>
+                                <option value="LQ">Last Quarter</option>
+                                <option value="TH">This Half Year</option>
+                                <option value="LH">Last Half Year</option>
+                                <option value="TY">This Year</option>
+                                <option value="LY">Last Year</option>
+                            </select>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="frmCol">
+                            <label>From Date</label>
+                            <input type="text" id="fromInputDateVoucher" class="frmDataInput" placeholder="From Date" style="width: 30%;" />
+                            <input type="text" name="FromDateVoucher" id="FromDateVoucher" class="readOnlyInput" readonly="readonly" placeholder="From Date" style="width: 30%;" />
+                        </div>
+                    </td>
+                    <td>
+                        <div class="ToCol">
+                            <label>To Date</label>
+                            <input type="text" class="frmDataInput" id="toInputDateVoucher" placeholder="To Date" style="width: 30%;">
+                            <input type="text" name="ToDateVoucher" class="readOnlyInput" readonly="readonly" id="ToDateVoucher" placeholder="To Date" style="width: 30%;">
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn btn-primary" id="btnCommonSearchVoucher" style="background-color: #f7f7f7; border-color: #e1e1e1; color: #808080; height: 30px; line-height: 1px;"><span class="fa fa-play"></span></button>
+                    </td>
+                </tr>
+            </table>*@
+    </div>
+    <div id="divJQGridDetails" class="page-content" style="display: block; width: 869px; margin-top: 0px !important; position: fixed; margin-left: 11px;">
+        <table id="JQGridDetails" style="width: 100%;"></table>
+        <div id="JQGridDetails_pager"></div>
+    </div>
+</div>
+<div id="cover">
+</div>
+<div id="VoucherScreen1" style="position: fixed;">
+    <div id="popup_bar2" class="popup_bar">
+        <div id="hello1" class="viewFunction" style="left: 8px; width: 52px">
+            <img src="../Images/print.png" width="19" height="21" onclick="PrintVoucher()">
+            @*<img src="../Images/export.png" width="18" height="17">*@
+        </div>
+        <div class="right">
+            <div onclick="document.getElementById('VoucherScreen1').style.display = 'none';" class="cancel">
+                <span class="fa fa-times"></span>
+            </div>
+        </div>
+    </div>
+    <div id="divJQGridVoucher" class="page-content" style="display: block; width: 663px; margin-top: 40px; margin-left: 11px;">
+        <table style="width: 663px">
+            <tr>
+                <td style="width: 36%; text-align: center;"></td>
+                <td style="width: 50%; text-align: left;"><b><span style="font-size: large; text-align: center">Neoteric Nepal Pvt. Ltd.</span></b></td>
+                <td style="width: 15%; text-align: center;"></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td style="text-align: left; padding-left: 33px;"><b><span style="text-align: center">Jawalakhel, Lalitput</span></b></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td style="text-align: left; padding-left: 13px;"><b><span style="text-align: center">Ph: 01-542547845, 54795247</span></b></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><b><span style="text-align: center"></span></b></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>
+                    <div id="dvVoucherDate"></div>
+                </td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>
+                    <div id="dvVoucherNo" style="width: 252px"></div>
+                </td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td colspan="3">
+                    <table id="JQGridVoucher" class="table-bordered" style="width: 663px"></table>
+                    <div id="JQGridVoucher_pager" style="display: none"></div>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="3">
+                    <div id="dvNiration" style="margin-top: 12px;"></div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div id="dvCreatedBy" style="margin-top: 12px;"></div>
+                </td>
+                <td></td>
+                <td>
+                    <div id="dvPostedBy" style="width: 204px; margin-top: 12px;"></div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div id="CheckDiv" style="display: none;">@LengthForId</div>
+<link href="~/Content/multi-select-master/css/multi-select.css" rel="stylesheet" />
+<script src="~/Content/multi-select-master/js/jquery.multi-select.js"></script>
+<script src="~/Sales/Content/jquery.ba-throttle-debounce.min.js"></script>
+<script src="~/Sales/Content/jquery.stickyheader.js"></script>
+<link href="~/Sales/Content/nepali.datepicker.v2.1.min.css" rel="stylesheet" />
+<script src="~/Sales/Content/nepali.datepicker.v2.1.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#Loading').show()
+    });
+    function addCommas(nStr) {
+        nStr += '';
+        x = nStr.split('.');
+        x1 = x[0];
+        x2 = x.length > 1 ? '.' + x[1] : '';
+        var rgx = /(\d+)(\d{3})/;
+        while (rgx.test(x1)) {
+            x1 = x1.replace(rgx, '$1' + ',' + '$2');
+        }
+        return x1 + x2;
+    }
+    function validateArrY() {
+        var Status = true;
+        var id = document.getElementById("CheckDiv").innerHTML;
+        var counter = 0;
+        for (var i = 0; i <= parseInt(id) ; i++) {
+
+            if (document.getElementById(i.toString() + i.toString()) != null) {
+                var RealValue = document.getElementById(i.toString() + i.toString()).value;
+                $('.ActualAddDiv').append("<div class='NewDivision'><input type='text' name='Steps[" + counter + "]' value='" + RealValue + "' readonly='true' style='width:30%;'></div>");
+
+                if (document.getElementById(i.toString()) != null) {
+                    document.getElementById(i.toString()).remove();
+                }
+                if (document.getElementById(i.toString() + i.toString()) != null) {
+                    document.getElementById(i.toString() + i.toString()).remove();
+                }
+                if (document.getElementById(i.toString() + i.toString() + i.toString()) != null) {
+                    document.getElementById(i.toString() + i.toString() + i.toString()).remove();
+                }
+                if (document.getElementById(i.toString() + i.toString() + i.toString() + i.toString()) != null) {
+                    document.getElementById(i.toString() + i.toString() + i.toString() + i.toString()).remove();
+                }
+                counter = counter + 1;
+            }
+        }
+        $('#Loading').show();
+        $('#sambhoo').hide();
+        $('#myModal').hide();
+        return Status;
+    }
+    $("#btnAdd").click(function () {
+        var id = $(".adddiv button:last").attr("id");
+        if (id == null) {
+            id = document.getElementById("CheckDiv").innerHTML;
+        }
+        if (document.getElementById(id + id) != null) {
+            var value = document.getElementById(id + id).value;
+            var RealValue = parseInt(value) + 1;
+        } else {
+            for (var l = parseInt(id) - 1; l >= 0; l--) {
+                if (document.getElementById(l.toString() + l.toString()) != null) {
+                    var value = document.getElementById(l.toString() + l.toString()).value;
+                    var RealValue = parseInt(value) + 1;
+                    break;
+                }
+            }
+        }
+
+        var NewId = parseInt(id) + 1;
+        document.getElementById("CheckDiv").innerHTML = NewId;
+        $('.adddiv').append("<div class='newbox' id='" + NewId + NewId + NewId + "'><input type='text' id='" + NewId + NewId + NewId + NewId + "' value='" + RealValue + "' readonly='true' style='width:30%;'><input type='text' id='" + NewId + NewId + "' name='Steps[" + NewId + "]'  style='width:30%;margin-left:0.5px;' onblur='ModifyNextId(this.id);' /><button id=" + NewId + " onclick='return DeleteThis(this.id);'  class='btn-preference btn-pref-rem'><span class='fa fa-close'></span></button></div>");
+        return false;
+    });
+    function DeleteThis(id) {
+        document.getElementById(id).remove();
+        document.getElementById(id + id).remove();
+        if (document.getElementById(id + id + id) != null) {
+            document.getElementById(id + id + id).remove();
+        }
+        if (document.getElementById(id + id + id + id) != null) {
+            document.getElementById(id + id + id + id).remove();
+        }
+        var TotalId = parseInt(document.getElementById("CheckDiv").innerHTML);
+        var NextVal = 0;
+        for (var j = 0 ; j <= TotalId ; j++) {
+
+            if (document.getElementById(j.toString() + j.toString()) != null) {
+                NextVal = document.getElementById(j.toString() + j.toString()).value;
+            }
+            for (var k = j ; k <= TotalId; k++) {
+                var NextId = parseInt(k) + 1;
+                if (document.getElementById(NextId.toString() + NextId.toString() + NextId.toString() + NextId.toString()) != null) {
+                    document.getElementById(NextId.toString() + NextId.toString() + NextId.toString() + NextId.toString()).value = parseInt(NextVal) + 1;
+                    break;
+                }
+            }
+        }
+        return false;
+    }
+    function ModifyNextId(id) {
+        var NextVal = parseInt($('#' + id).val()) + 1;
+        $('#' + id).next('input').val(NextVal);
+        $('#' + id).next('button').next('input').val(NextVal);
+    }
+
+
+</script>
+<script>
+    var i = parseInt(@Show);
+    var j = parseInt(@FigureAmount);
+    var rsteps = [
+    "0",
+    "0.0",
+    "0.00",
+    "0.000",
+    "0.0000"
+    ];
+    var fsteps = [
+    "Actual",
+    "thousand",
+    "lakh",
+    "crore",
+    ];
+    $(function () {
+        $("#slider1").slider({
+            value: i,
+            min: 0,
+            max: 3,
+            slide: function (event, ui) {
+                $("#figure1").val(fsteps[ui.value]);
+            }
+        });
+        $("#figure1").val(fsteps[$("#slider1").slider("value")]);
+        $("#roundSlider1").slider({
+            value: j,
+            min: 0,
+            max: 4,
+            slide: function (event, ui) {
+                $("#round1").val(rsteps[ui.value]);
+            }
+        });
+        $("#round1").val(rsteps[$("#roundSlider1").slider("value")]);
+        $("#Amount").click(function () {
+            if (this.checked) {
+                $("#slider1").slider("option", "disabled", false);
+                $("#roundSlider1").slider("option", "disabled", false);
+                var trial = true;
+            }
+            else {
+                $("#slider1").slider("option", "disabled", true);
+                $("#roundSlider1").slider("option", "disabled", true);
+                trial = false;
+            }
+        });
+
+        $("#slider").slider({
+            value: 0,
+            min: 0,
+            max: 2,
+            slide: function (event, ui) {
+                $("#figure").val(fsteps[ui.value]);
+            }
+        });
+        $("#figure").val(fsteps[$("#slider").slider("value")]);
+        $("#roundSlider").slider({
+            value: 0,
+            min: 0,
+            max: 4,
+            slide: function (event, ui) {
+                $("#round").val(rsteps[ui.value]);
+            }
+        });
+        $("#round").val(rsteps[$("#roundSlider").slider("value")]);
+        $("#Quantity").click(function () {
+            if (this.checked) {
+                $("#slider").slider("option", "disabled", false);
+                $("#roundSlider").slider("option", "disabled", false);
+            }
+            else {
+                $("#slider").slider("option", "disabled", true);
+                $("#roundSlider").slider("option", "disabled", true);
+            }
+        });
+    });
+</script>
+<script>
+    function jqGridwidth() {
+        setInterval(function () {
+            width = $("#sambhoo").width();
+            jQuery("#jqGrid").setGridWidth(width);
+        });
+    }
+    $(document).ready(function () {
+        $("#menu-toggle").click(function () {
+            jqGridwidth();
+        });
+
+    });
+</script>
+<script type="text/javascript">
+    var trial = 'on';
+    var decimalPlacesAmount = '@ViewData["roundupAmount"]';
+    decimalPlacesAmount = decimalPlacesAmount.split(".");
+    if (decimalPlacesAmount == 0) {
+        decimalPlacesAmount = 0;
+    }
+    else {
+        decimalPlacesAmount = decimalPlacesAmount[1].length;
+    }
+    Amount = false;
+    $('#Amount').prop('checked', true);
+    if (trial == 'on') {
+        var Amount = false;
+        $('#Amount').prop('checked', true);
+    }
+    else {
+        Amount = true;
+        $('#Amount').prop('checked', false);
+
+    }
+    @if (ViewData["ViewType"] == "T")
+    {<text>
+    jQuery(document).ready(function ($) {
+        $.ajax({
+            datatype: "json",
+            url: "getColModals", success: function (result) {
+                var result = JSON.stringify(result);
+                var result = JSON.parse(result)
+                jQuery('#jqGrid').jqGrid({
+                    "url": "../Report/getTline",
+                    "datatype": "json",
+                    "colModel": result,
+                    "width": "100%",
+                    "autowidth": true,
+                    "hoverrows": true,
+                    "viewrecords": false,
+                    "gridview": true,
+                    "height": 450,
+                    "autoencode": true,
+                    "sortname": "CustomerCode",
+                    "scrollrows": true,
+                    "treeGrid": true,
+                    "ExpandColumn": "CustomerName",
+                    "treedatatype": "json",
+                    "treeGridModel": "adjacency",
+                    "loadonce": true,
+                    "rowNum": 10000,
+                    "treeReader": {
+                        "parent_id_field": "ParentCode",
+                        "level_field": "Level",
+                        "leaf_field": "IsLeaf",
+                        //"expanded_field": "EXPANDED",
+                        //"loaded": "LOADED",
+                        "icon_field": "icon"
+                    },
+                    ondblClickRow: function (rowid) {
+                        if ($("#" + rowid + " td span").hasClass("cell-wrapperleaf")) {
+                            var CustomerCode = rowid.slice(0, -1);
+                            $("#DetailScreen").show();
+                            $("#LoadTransactions").jqGrid('GridUnload');
+                            $("#LoadTransactions").jqGrid({
+                                url: '../Report/GetCustomerTransactions?CustomerCode=' + CustomerCode,
+                                mtype: "GET",
+                                datatype: "json",
+                                colModel: [
+                                    { label: 'CustomerCode', name: 'CUSTOMER_CODE', autowidth: true, hidden: true },
+                                    { label: 'DATE', name: 'SALES_DATE', autowidth: true },
+                                    { label: 'SALES NO.', key: true, name: 'SALES_NO', index: 'Default', align: 'left', autowidth: true, sortable: false },
+                                    { name: 'AMOUNT', index: 'AMOUNT', align: 'right', autowidth: true, sortable: false }
+                                ],
+                                viewrecords: true,
+                                autowidth: true,
+                                shrinkToFit: true,
+                                rowNum: 20,
+                                ondblClickRow: function (rowid) {
+                                    $("#VoucherScreen").show();
+                                    $("#LoadItems").jqGrid('GridUnload');
+                                    $("#LoadItems").jqGrid({
+                                        url: '../Report/GetCustomerItems?SalesNo=' + rowid,
+                                        mtype: "GET",
+                                        datatype: "json",
+                                        colModel: [
+                                            { label: 'Item Description', name: 'ITEM_EDESC', index: 'Default', align: 'left', autowidth: true, sortable: false },
+                                            { label: 'Quantity', name: 'QUANTITY', index: '', align: 'right', autowidth: true, formatter: 'integer', sortable: false },
+                                            { label: 'Unit Price', name: 'UNIT_PRICE', index: 'UNIT_PRICE', align: 'right', formatter: 'number', autowidth: true, sortable: false },
+                                            { label: 'Total', name: 'TOTAL_PRICE', index: 'TOTAL_PRICE', align: 'right', formatter: 'number', autowidth: true, sortable: false }
+                                        ],
+                                        viewrecords: true,
+                                        autowidth: true,
+                                        shrinkToFit: true,
+                                    });
+                                }
+                            });
+                        }
+                    },
+                    gridComplete: function () {
+                        $("#ExpanCollapse").show();
+                        $("#InsideExpanCollapse").show();
+                        // alert(this);
+                        $("tr.jqgrow", this).contextMenu('myMenu1', {
+                            bindings: {
+                                'BillDetail': function (trigger) {
+                                    rowid = trigger.id;
+                                    var CustomerCode = rowid.slice(0, -1);
+                                    $("#DetailScreen").show();
+                                    $("#LoadTransactions").jqGrid('GridUnload');
+                                    $("#LoadTransactions").jqGrid({
+                                        url: '../Report/GetCustomerTransactions?CustomerCode=' + CustomerCode,
+                                        mtype: "GET",
+                                        datatype: "json",
+                                        colModel: [
+                                            { label: 'CustomerCode', name: 'CUSTOMER_CODE', autowidth: true, hidden: true },
+                                            { label: 'DATE', name: 'SALES_DATE', autowidth: true },
+                                            { label: 'SALES NO.', key: true, name: 'SALES_NO', index: 'Default', align: 'left', autowidth: true, sortable: false },
+                                            { name: 'AMOUNT', index: 'AMOUNT', align: 'right', autowidth: true, sortable: false }
+                                        ],
+                                        viewrecords: true,
+                                        autowidth: true,
+                                        shrinkToFit: true,
+                                        rowNum: 20,
+                                        ondblClickRow: function (rowid) {
+                                            $("#VoucherScreen").show();
+                                            $("#LoadItems").jqGrid('GridUnload');
+                                            $("#LoadItems").jqGrid({
+                                                url: '../Report/GetCustomerItems?SalesNo=' + rowid,
+                                                mtype: "GET",
+                                                datatype: "json",
+                                                colModel: [
+                                                    { label: 'Item Description', name: 'ITEM_EDESC', index: 'Default', align: 'left', autowidth: true, sortable: false },
+                                                    { label: 'Quantity', name: 'QUANTITY', index: '', align: 'right', autowidth: true, formatter: 'integer', sortable: false },
+                                                    { label: 'Unit Price', name: 'UNIT_PRICE', index: 'UNIT_PRICE', align: 'right', formatter: 'number', autowidth: true, sortable: false },
+                                                    { label: 'Total', name: 'TOTAL_PRICE', index: 'TOTAL_PRICE', align: 'right', formatter: 'number', autowidth: true, sortable: false }
+                                                ],
+                                                viewrecords: true,
+                                                autowidth: true,
+                                                shrinkToFit: true,
+                                            });
+                                        }
+                                    });
+                                },
+                                'VoucherDetail': function (trigger) {
+                                    var CustomerCode = "C" + trigger.id.slice(0, -1);
+                                    var ToDate = $("#FromDate").val();
+                                    $.ajax({
+                                        url: "GetAllParamsLedger?Todate=" + ToDate,
+                                        datatype: "string",
+                                        type: "get",
+                                        success: function (Response) {
+                                            var FromDate = Response;
+                                            $("#divJQGridDetails").show();
+                                            var paramsJQGridDetails = {};
+                                            paramsJQGridDetails.originalColumnWidths = [100, 150, 380, 110, 110];
+                                            paramsJQGridDetails.initialized = false;
+                                            $("#JQGridDetails").jqGrid({
+                                                url: "../TrialBalance/OnSubLedgerDetailRequested?Id=" + CustomerCode + "&From=" + FromDate + "&To=" + ToDate + "&figureAmount=1&roundupAmount=0.00",
+                                                mtype: "GET",
+                                                datatype: "json",
+                                                jsonReader: { id: "VoucherNO" },
+                                                prmNames: { id: "VoucherNO", From: $('#FromDateVoucher').val(), To: $('#ToDateVoucher').val() },
+                                                colNames: ["Count", "Voucher Date", "Voucher No.", "Particulars", "Debit", "Credit"],
+                                                colModel: [
+                                                    { width: 100, search: true, sortable: false, name: "Count", hidden: true, cellattr: function () { return ' title="Double Click to view Voucher."'; } },
+                                                    { width: 100, search: true, sortable: false, name: "VoucherDate", cellattr: function () { return ' title="Double Click to view Voucher."'; } },
+                                                    { key: true, search: true, sortable: false, width: 150, name: "VoucherNO", cellattr: function () { return ' title="Double Click to view Voucher."'; } },
+                                                    { width: 380, search: true, sortable: false, name: "Particulars", align: "justify", cellattr: function () { return ' title="Double Click to view Voucher."'; } },
+                                                    { width: 110, name: "DR_AMOUNT", formatter: "number", sorttype: "number", align: "right", sortable: false, resizable: true, search: true, cellattr: function () { return ' title="Double Click to view Voucher."'; } },
+                                                    { width: 110, name: "CR_AMOUNT", formatter: "number", sorttype: "number", align: "right", sortable: false, resizable: true, search: true, cellattr: function () { return ' title="Double Click to view Voucher."'; } },
+                                                ],
+                                                caption: "Detail",
+                                                pager: "#JQGridDetails_pager",
+                                                ondblClickRow: function (rowId, iRow, iCol, e) {
+                                                    var rowData = jQuery("#JQGridDetails").getRowData(rowId);
+                                                    var VoucherDate = rowData['VoucherDate'];
+                                                    document.getElementById('VoucherScreen1').style.display = 'block';
+                                                    $("#divJQGridVoucher").show();
+                                                    jQuery("#JQGridVoucher")
+                                                        .setGridParam({ url: "../TrialBalance/OnSubLedgerDateWiseDetailsRequested?id=" + rowId.replace("&", "__"), page: 1 })
+                                                        .trigger('reloadGrid');
+                                                    var grid = $("#JQGridVoucher");
+                                                    var gview = grid.parents("div.ui-jqgrid-view");
+                                                    gview.children("div.ui-jqgrid-hdiv").hide();
+                                                    $("#dvVoucherNo").html('<b>Voucher No: </b>' + rowId);
+                                                    $("#dvVoucherDate").html('<b>Voucher Date: </b>' + VoucherDate);
+                                                },
+                                                gridComplete: function () {
+                                                    $("#gview_JQGridDetails .ui-jqgrid-bdiv").css("height", "");
+                                                    $("#gview_JQGridDetails .ui-jqgrid-bdiv").css("max-height", "372px");
+                                                    var JQGridDetailscount = jQuery("#JQGridDetails").jqGrid('getGridParam', 'records');
+                                                    if (JQGridDetailscount == 0) {
+                                                        jQuery("#divJQGridDetails").show();
+                                                    }
+                                                    else {
+                                                        jQuery("#divJQGridDetails").show();
+                                                    }
+                                                },
+                                                scroll: false,
+                                                width: 868,
+                                                shrinkToFit: false,
+                                                rowList: [10, 20, 50, 100, 200, 500, 1000],
+                                                rowNum: 50,
+                                                height: "372px",
+                                                viewrecords: true,
+                                                loadError: JQGridDemo.jqGrid_aspnet_loadErrorHandler,
+                                            });
+                                            jQuery('#JQGridDetails').bindKeys();
+                                            jQuery("#JQGridDetails").jqGrid('filterToolbar', { searchOnEnter: false, defaultSearch: "cn" });
+                                            var paramsJQGridVoucher = {};
+                                            paramsJQGridVoucher.initialized = false;
+                                            $("#JQGridVoucher").jqGrid({
+                                                url: "../TrialBalance/OnSubLedgerDateWiseDetailsRequested",
+                                                mtype: "GET",
+                                                datatype: "json",
+                                                page: 1,
+                                                jsonReader: { id: "VoucherNO" },
+                                                prmNames: { id: "VoucherNO" },
+                                                colNames: ["Voucher No.", "SNo.", "Account Head", "Niration", "Debit", "Credit", "CREATED_BY", "POSTED_BY"],
+                                                colModel: [
+                                                    { key: true, width: 50, name: "VoucherNO", hidden: true },
+                                                    { width: 50, name: "SNo" },
+                                                    { width: 463, name: "Particulars", align: "justify", resizable: false },
+                                                    { width: 50, name: "Niration", hidden: true },
+                                                    { width: 100, name: "DRAMOUNT", align: "right", sortable: false, resizable: false, search: false },
+                                                    { width: 100, name: "CRAMOUNT", align: "right", sortable: false, resizable: false, search: false },
+                                                    { width: 50, name: "CREATED_BY", hidden: true },
+                                                    { width: 50, name: "POSTED_BY", hidden: true },
+                                                ],
+                                                pager: "#JQGridVoucher_pager",
+                                                gridComplete: function () {
+                                                    $("#gview_JQGridVoucher .ui-jqgrid-bdiv").css("height", "");
+                                                    $("#gview_JQGridVoucher .ui-jqgrid-bdiv").css("max-height", "370px");
+                                                    var JQGridVouchercount = jQuery("#JQGridVoucher").jqGrid('getGridParam', 'records');
+                                                    if (JQGridVouchercount == 0) {
+                                                        jQuery("#divJQGridVoucher").show();
+                                                    }
+                                                    else {
+                                                        jQuery("#divJQGridVoucher").show();
+                                                    }
+                                                    var ids = jQuery("#JQGridVoucher").jqGrid('getDataIDs');
+                                                    for (var i = 1; i < 2; i++) {
+                                                        var rowId = ids[i];
+                                                        var rowData = jQuery("#JQGridVoucher").getRowData(rowId);
+                                                        var Niration = rowData['Niration'];
+                                                        var CreatedBy = rowData['CREATED_BY'];
+                                                        var PostedBy = rowData['POSTED_BY'];
+                                                        $("#dvNiration").html('<b>Narration: </b>' + Niration);
+                                                        $("#dvPostedBy").html('<b>Posted By: </b>' + CreatedBy);
+                                                        $("#dvCreatedBy").html('<b>CreatedBy: </b>' + PostedBy);
+                                                    }
+                                                },
+                                                scroll: false,
+                                                width: 659,
+                                                shrinkToFit: true,
+                                                height: "370px",
+                                                viewrecords: true,
+                                                loadError: JQGridDemo.jqGrid_aspnet_loadErrorHandler,
+                                            });
+                                        }
+                                    });
+                                    document.getElementById('DetailScreen1').style.display = 'block';
+                                },
+                            },
+                            onContextMenu: function (event) {
+                                var rowId = $(event.target).closest("tr.jqgrow").attr("id");
+                                $('#del').attr("disabled", Number(rowId) % 2 === 0);
+                                if (Number(rowId) % 2 === 0) {
+                                    $('#del').attr("disabled", "disabled").addClass('ui-state-disabled');
+                                } else {
+                                    $('#del').removeAttr("disabled").removeClass('ui-state-disabled');
+                                }
+                                return true;
+                            }
+                        });
+                        var Count = $('#jqGrid tr').length + 1;
+                        var i = 1; var Group = 0; var GroupAmt = 0; var Amount = '0'; var Group4 = 0; var GroupAmt4 = 0; var Amount4 = '0'; var Group5 = 0; var GroupAmt5 = 0; var Amount5 = '0'; var Group6 = 0; var GroupAmt6 = 0; var Amount6 = '0'; var Group7 = 0; var GroupAmt7 = 0; var Amount7 = '0'; var Group8 = 0; var GroupAmt8 = 0; var Amount8 = '0'; var Group9 = 0; var GroupAmt9 = 0; var Amount9 = '0'; var Group10 = 0; var GroupAmt10 = 0; var Amount10 = '0';
+                        while (i < Count) {
+                            i = i + 1;
+                            Amount = $('tr:eq(' + i + ')', "#jqGrid").find('td:eq(3)').text();
+                            if (Amount.trim() == '') {
+                                if (GroupAmt != '0') {
+                                    $('tr:eq(' + Group + ')', "#jqGrid").find('td:eq(3)').text(addCommas(Number(GroupAmt).toFixed(2)));
+                                    $('tr:eq(' + Group + ')', "#jqGrid").find('td:eq(3)').addClass('myclass');
+                                    GroupAmt = 0;
+                                }
+                                Group = i;
+                            }
+                            else {
+                                GroupAmt = Number(GroupAmt) + Number(Amount);
+                                $('tr:eq(' + i + ')', "#jqGrid").find('td:eq(3)').text(addCommas(Number($('tr:eq(' + i + ')', "#jqGrid").find('td:eq(3)').text()).toFixed(2)));
+                            }
+
+                            Amount4 = $('tr:eq(' + i + ')', "#jqGrid").find('td:eq(4)').text();
+                            if (Amount4.trim() == '') {
+                                if (GroupAmt4 != '0') {
+                                    $('tr:eq(' + Group4 + ')', "#jqGrid").find('td:eq(4)').text(addCommas(Number(GroupAmt4).toFixed(2)));
+                                    $('tr:eq(' + Group4 + ')', "#jqGrid").find('td:eq(4)').addClass('myclass');
+                                    GroupAmt4 = 0;
+                                }
+                                Group4 = i;
+                            }
+                            else {
+                                GroupAmt4 = Number(GroupAmt4) + Number(Amount4);
+                                $('tr:eq(' + i + ')', "#jqGrid").find('td:eq(4)').text(addCommas(Number($('tr:eq(' + i + ')', "#jqGrid").find('td:eq(4)').text()).toFixed(2)));
+                            }
+
+                            Amount5 = $('tr:eq(' + i + ')', "#jqGrid").find('td:eq(5)').text();
+                            if (Amount5.trim() == '') {
+                                if (GroupAmt5 != '0') {
+                                    $('tr:eq(' + Group5 + ')', "#jqGrid").find('td:eq(5)').text(addCommas(Number(GroupAmt5).toFixed(2)));
+                                    $('tr:eq(' + Group5 + ')', "#jqGrid").find('td:eq(5)').addClass('myclass');
+                                    GroupAmt5 = 0;
+                                }
+                                Group5 = i;
+                            }
+                            else {
+                                GroupAmt5 = Number(GroupAmt5) + Number(Amount5);
+                                $('tr:eq(' + i + ')', "#jqGrid").find('td:eq(5)').text(addCommas(Number($('tr:eq(' + i + ')', "#jqGrid").find('td:eq(5)').text()).toFixed(2)));
+                            }
+
+                            Amount6 = $('tr:eq(' + i + ')', "#jqGrid").find('td:eq(6)').text();
+                            if (Amount6.trim() == '') {
+                                if (GroupAmt6 != '0') {
+                                    $('tr:eq(' + Group6 + ')', "#jqGrid").find('td:eq(6)').text(addCommas(Number(GroupAmt6).toFixed(2)));
+                                    $('tr:eq(' + Group6 + ')', "#jqGrid").find('td:eq(6)').addClass('myclass');
+                                    GroupAmt6 = 0;
+                                }
+                                Group6 = i;
+                            }
+                            else {
+                                GroupAmt6 = Number(GroupAmt6) + Number(Amount6);
+                                $('tr:eq(' + i + ')', "#jqGrid").find('td:eq(6)').text(addCommas(Number($('tr:eq(' + i + ')', "#jqGrid").find('td:eq(6)').text()).toFixed(2)));
+                            }
+
+                            Amount7 = $('tr:eq(' + i + ')', "#jqGrid").find('td:eq(7)').text();
+                            if (Amount7.trim() == '') {
+                                if (GroupAmt7 != '0') {
+                                    $('tr:eq(' + Group7 + ')', "#jqGrid").find('td:eq(7)').text(addCommas(Number(GroupAmt7).toFixed(2)));
+                                    $('tr:eq(' + Group7 + ')', "#jqGrid").find('td:eq(7)').addClass('myclass');
+                                    GroupAmt7 = 0;
+                                }
+                                Group7 = i;
+                            }
+                            else {
+                                GroupAmt7 = Number(GroupAmt7) + Number(Amount7);
+                                $('tr:eq(' + i + ')', "#jqGrid").find('td:eq(7)').text(addCommas(Number($('tr:eq(' + i + ')', "#jqGrid").find('td:eq(7)').text()).toFixed(2)));
+                            }
+
+                            Amount8 = $('tr:eq(' + i + ')', "#jqGrid").find('td:eq(8)').text();
+                            if (Amount8.trim() == '') {
+                                if (GroupAmt8 != '0') {
+                                    $('tr:eq(' + Group8 + ')', "#jqGrid").find('td:eq(8)').text(addCommas(Number(GroupAmt8).toFixed(2)));
+                                    $('tr:eq(' + Group8 + ')', "#jqGrid").find('td:eq(8)').addClass('myclass');
+                                    GroupAmt8 = 0;
+                                }
+                                Group8 = i;
+                            }
+                            else {
+                                GroupAmt8 = Number(GroupAmt8) + Number(Amount8);
+                                $('tr:eq(' + i + ')', "#jqGrid").find('td:eq(8)').text(addCommas(Number($('tr:eq(' + i + ')', "#jqGrid").find('td:eq(8)').text()).toFixed(2)));
+                            }
+
+                            Amount9 = $('tr:eq(' + i + ')', "#jqGrid").find('td:eq(9)').text();
+                            if (Amount9.trim() == '') {
+                                if (GroupAmt9 != '0') {
+                                    $('tr:eq(' + Group9 + ')', "#jqGrid").find('td:eq(9)').text(addCommas(Number(GroupAmt9).toFixed(2)));
+                                    $('tr:eq(' + Group9 + ')', "#jqGrid").find('td:eq(9)').addClass('myclass');
+                                    GroupAmt9 = 0;
+                                }
+                                Group9 = i;
+                            }
+                            else {
+                                GroupAmt9 = Number(GroupAmt9) + Number(Amount9);
+                                $('tr:eq(' + i + ')', "#jqGrid").find('td:eq(9)').text(addCommas(Number($('tr:eq(' + i + ')', "#jqGrid").find('td:eq(9)').text()).toFixed(2)));
+                            }
+
+                            Amount10 = $('tr:eq(' + i + ')', "#jqGrid").find('td:eq(10)').text();
+                            if (Amount10.trim() == '') {
+                                if (GroupAmt10 != '0') {
+                                    $('tr:eq(' + Group10 + ')', "#jqGrid").find('td:eq(10)').text(addCommas(Number(GroupAmt10).toFixed(2)));
+                                    $('tr:eq(' + Group10 + ')', "#jqGrid").find('td:eq(10)').addClass('myclass');
+                                    GroupAmt10 = 0;
+                                }
+                                Group10 = i;
+                            }
+                            else {
+                                GroupAmt10 = Number(GroupAmt10) + Number(Amount10);
+                                $('tr:eq(' + i + ')', "#jqGrid").find('td:eq(10)').text(addCommas(Number($('tr:eq(' + i + ')', "#jqGrid").find('td:eq(10)').text()).toFixed(2)));
+                            }
+                        }
+
+                    },
+                    "caption": "Customer Ageing Report",
+                    "ExpandColClick": true,
+                    "treeIcons": { leaf: 'ui-icon-blank' },
+                    "jsonReader": { repeatitems: false, root: "data" },
+                    "pager": "#pager",
+
+
+                });
+                $('#Loading').hide();
+                $('#sambhoo').show();
+                $("#VoucherScreen").draggable();
+
+                $("#DetailScreen").draggable();
+                $('#sambhoo thead th:last-child .ui-jqgrid-sortable').html(Number($('#sambhoo thead th:last-child .ui-jqgrid-sortable').text()) - 1 + "+");
+            }
+        });
+    });
+    </text>}
+   @if (ViewData["ViewType"] == "A")
+   {<text>
+    jQuery(document).ready(function () {
+        jQuery("#jqGrid").jqGrid('jqPivot',
+        [@if (ViewData.Model != null)
+         {
+             var roundupAmount = Convert.ToString(ViewData["roundupAmount"]);
+             var figureAmount = Convert.ToDouble(ViewData["figureAmount"]);
+             foreach (var item in ViewData.Model)
+             {<text>{
+            Customer: "@Convert.ToString(item["CUSTOMER"])<span class='hidden CustomerCodes'>@Convert.ToString(item["MCODE"])</span>",
+            quantity: @{double a = (Convert.ToDouble(item["AMOUNT"]) / Convert.ToDouble(ViewData["figureAmount"]));
+                        string value = a.ToString(@Convert.ToString(ViewData["roundupAmount"]));}"@value",
+            mydate: "@Convert.ToString(item["STEP"])"
+        },</text>}
+         }
+         else
+         {<text>{ name: "", month: "", quantity: "", price: "" }</text>}
+        ],
+      {
+          xDimension: [{ dataName: 'Customer', width: 50 }],
+          yDimension: [{ dataName: 'mydate', sortable: true, sorttype: "int" }],
+          aggregates: [
+              {
+                  member: 'quantity',
+                  aggregator: 'sum',
+                  width: 20,
+                  formatter: "decimal",
+                  label: 'Sum Price',
+                  formatter: 'number',
+                  align: 'right',
+                  hidden: Amount,
+                  formatoptions: { decimalSeparator: ".", thousandsSeparator: ",", decimalPlaces: decimalPlacesAmount, defaultValue: '0.00' },
+              }
+          ],
+          colTotals: false,
+      },
+      {
+          width: $("#sambhoo").width(),
+          height: ($('#page-wrapper').height() - 38 - $('.btn-group').outerHeight() - 31 - 18 - 21 - 26 - 15),
+          rowNum: 10000,
+          pager: "#jqGridPager",
+          caption: "Customer Ageing Report",
+          pager: "#pager",
+          rowList: [20, 100, 200, "10000:All"],
+          afterInsertRow: function (rowid) {
+              $("tr.jqgrow", this).contextMenu('myMenu1', {
+                  bindings: {
+                      'BillDetail': function (trigger) {
+                          var rowid = trigger.id;
+                          rowid = $("#" + rowid + " td span").text();
+                          var CustomerCode = rowid;
+                          $("#DetailScreen").show();
+                          $("#LoadTransactions").jqGrid('GridUnload');
+                          $("#LoadTransactions").jqGrid({
+                              url: '../Report/GetCustomerTransactions?CustomerCode=' + CustomerCode,
+                              mtype: "GET",
+                              datatype: "json",
+                              colModel: [
+                                  { label: 'CustomerCode', name: 'CUSTOMER_CODE', autowidth: true, hidden: true },
+                                  { label: 'DATE', name: 'SALES_DATE', autowidth: true },
+                                  { label: 'SALES NO.', key: true, name: 'SALES_NO', index: 'Default', align: 'left', autowidth: true, sortable: false },
+                                  { name: 'AMOUNT', index: 'AMOUNT', align: 'right', autowidth: true, sortable: false }
+                              ],
+                              viewrecords: true,
+                              autowidth: true,
+                              shrinkToFit: true,
+                              rowNum: 20,
+                              ondblClickRow: function (rowid) {
+                                  $("#VoucherScreen").show();
+                                  $("#LoadItems").jqGrid('GridUnload');
+                                  $("#LoadItems").jqGrid({
+                                      url: '../Report/GetCustomerItems?SalesNo=' + rowid,
+                                      mtype: "GET",
+                                      datatype: "json",
+                                      colModel: [
+                                          { label: 'Item Description', name: 'ITEM_EDESC', index: 'Default', align: 'left', autowidth: true, sortable: false },
+                                          { label: 'Quantity', name: 'QUANTITY', index: '', align: 'right', autowidth: true, formatter: 'integer', sortable: false },
+                                          { label: 'Unit Price', name: 'UNIT_PRICE', index: 'UNIT_PRICE', align: 'right', formatter: 'number', autowidth: true, sortable: false },
+                                          { label: 'Total', name: 'TOTAL_PRICE', index: 'TOTAL_PRICE', align: 'right', formatter: 'number', autowidth: true, sortable: false }
+                                      ],
+                                      viewrecords: true,
+                                      autowidth: true,
+                                      shrinkToFit: true,
+                                  });
+                              }
+                          });
+                      },
+                      'VoucherDetail': function (trigger) {
+                          var rowid = trigger.id;
+                          rowid = $("#" + rowid + " td span").text();
+                          var CustomerCode = rowid;
+                          var CustomerCode = "C" + CustomerCode;
+                          var ToDate = $("#FromDate").val();
+                          $.ajax({
+                              url: "GetAllParamsLedger?Todate=" + ToDate,
+                              datatype: "string",
+                              type: "get",
+                              success: function (Response) {
+                                  $("#JQGridDetails").jqGrid('GridUnload');
+                                  var FromDate = Response;
+                                  $("#divJQGridDetails").show();
+                                  var paramsJQGridDetails = {};
+                                  paramsJQGridDetails.originalColumnWidths = [100, 150, 380, 110, 110];
+                                  paramsJQGridDetails.initialized = false;
+                                  $("#JQGridDetails").jqGrid({
+                                      url: "../TrialBalance/OnSubLedgerDetailRequested?Id=" + CustomerCode + "&From=" + FromDate + "&To=" + ToDate + "&figureAmount=1&roundupAmount=0.00",
+                                      mtype: "GET",
+                                      datatype: "json",
+                                      jsonReader: { id: "VoucherNO" },
+                                      prmNames: { id: "VoucherNO", From: $('#FromDateVoucher').val(), To: $('#ToDateVoucher').val() },
+                                      colNames: ["Count", "Voucher Date", "Voucher No.", "Particulars", "Debit", "Credit"],
+                                      colModel: [
+                                          { width: 100, search: true, sortable: false, name: "Count", hidden: true, cellattr: function () { return ' title="Double Click to view Voucher."'; } },
+                                          { width: 100, search: true, sortable: false, name: "VoucherDate", cellattr: function () { return ' title="Double Click to view Voucher."'; } },
+                                          { key: true, search: true, sortable: false, width: 150, name: "VoucherNO", cellattr: function () { return ' title="Double Click to view Voucher."'; } },
+                                          { width: 380, search: true, sortable: false, name: "Particulars", align: "justify", cellattr: function () { return ' title="Double Click to view Voucher."'; } },
+                                          { width: 110, name: "DR_AMOUNT", formatter: "number", sorttype: "number", align: "right", sortable: false, resizable: true, search: true, cellattr: function () { return ' title="Double Click to view Voucher."'; } },
+                                          { width: 110, name: "CR_AMOUNT", formatter: "number", sorttype: "number", align: "right", sortable: false, resizable: true, search: true, cellattr: function () { return ' title="Double Click to view Voucher."'; } },
+                                      ],
+                                      caption: "Detail",
+                                      pager: "#JQGridDetails_pager",
+                                      ondblClickRow: function (rowId, iRow, iCol, e) {
+                                          var rowData = jQuery("#JQGridDetails").getRowData(rowId);
+                                          var VoucherDate = rowData['VoucherDate'];
+                                          document.getElementById('VoucherScreen1').style.display = 'block';
+                                          $("#divJQGridVoucher").show();
+                                          jQuery("#JQGridVoucher")
+                                              .setGridParam({ url: "../TrialBalance/OnSubLedgerDateWiseDetailsRequested?id=" + rowId.replace("&", "__"), page: 1 })
+                                              .trigger('reloadGrid');
+                                          var grid = $("#JQGridVoucher");
+                                          var gview = grid.parents("div.ui-jqgrid-view");
+                                          gview.children("div.ui-jqgrid-hdiv").hide();
+                                          $("#dvVoucherNo").html('<b>Voucher No: </b>' + rowId);
+                                          $("#dvVoucherDate").html('<b>Voucher Date: </b>' + VoucherDate);
+                                      },
+                                      gridComplete: function () {
+                                          $("#gview_JQGridDetails .ui-jqgrid-bdiv").css("height", "");
+                                          $("#gview_JQGridDetails .ui-jqgrid-bdiv").css("max-height", "372px");
+                                          var JQGridDetailscount = jQuery("#JQGridDetails").jqGrid('getGridParam', 'records');
+                                          if (JQGridDetailscount == 0) {
+                                              jQuery("#divJQGridDetails").show();
+                                          }
+                                          else {
+                                              jQuery("#divJQGridDetails").show();
+                                          }
+                                      },
+                                      scroll: false,
+                                      width: 868,
+                                      shrinkToFit: false,
+                                      rowList: [10, 20, 50, 100, 200, 500, 1000],
+                                      rowNum: 50,
+                                      height: "372px",
+                                      viewrecords: true,
+                                      loadError: JQGridDemo.jqGrid_aspnet_loadErrorHandler,
+                                  });
+                                  jQuery('#JQGridDetails').bindKeys();
+                                  jQuery("#JQGridDetails").jqGrid('filterToolbar', { searchOnEnter: false, defaultSearch: "cn" });
+                                  var paramsJQGridVoucher = {};
+                                  paramsJQGridVoucher.initialized = false;
+                                  $("#JQGridVoucher").jqGrid({
+                                      url: "../TrialBalance/OnSubLedgerDateWiseDetailsRequested",
+                                      mtype: "GET",
+                                      datatype: "json",
+                                      page: 1,
+                                      jsonReader: { id: "VoucherNO" },
+                                      prmNames: { id: "VoucherNO" },
+                                      colNames: ["Voucher No.", "SNo.", "Account Head", "Niration", "Debit", "Credit", "CREATED_BY", "POSTED_BY"],
+                                      colModel: [
+                                          { key: true, width: 50, name: "VoucherNO", hidden: true },
+                                          { width: 50, name: "SNo" },
+                                          { width: 463, name: "Particulars", align: "justify", resizable: false },
+                                          { width: 50, name: "Niration", hidden: true },
+                                          { width: 100, name: "DRAMOUNT", align: "right", sortable: false, resizable: false, search: false },
+                                          { width: 100, name: "CRAMOUNT", align: "right", sortable: false, resizable: false, search: false },
+                                          { width: 50, name: "CREATED_BY", hidden: true },
+                                          { width: 50, name: "POSTED_BY", hidden: true },
+                                      ],
+                                      pager: "#JQGridVoucher_pager",
+                                      gridComplete: function () {
+                                          $("#gview_JQGridVoucher .ui-jqgrid-bdiv").css("height", "");
+                                          $("#gview_JQGridVoucher .ui-jqgrid-bdiv").css("max-height", "370px");
+                                          var JQGridVouchercount = jQuery("#JQGridVoucher").jqGrid('getGridParam', 'records');
+                                          if (JQGridVouchercount == 0) {
+                                              jQuery("#divJQGridVoucher").show();
+                                          }
+                                          else {
+                                              jQuery("#divJQGridVoucher").show();
+                                          }
+                                          var ids = jQuery("#JQGridVoucher").jqGrid('getDataIDs');
+                                          for (var i = 1; i < 2; i++) {
+                                              var rowId = ids[i];
+                                              var rowData = jQuery("#JQGridVoucher").getRowData(rowId);
+                                              var Niration = rowData['Niration'];
+                                              var CreatedBy = rowData['CREATED_BY'];
+                                              var PostedBy = rowData['POSTED_BY'];
+                                              $("#dvNiration").html('<b>Narration: </b>' + Niration);
+                                              $("#dvPostedBy").html('<b>Posted By: </b>' + CreatedBy);
+                                              $("#dvCreatedBy").html('<b>CreatedBy: </b>' + PostedBy);
+                                          }
+                                      },
+                                      scroll: false,
+                                      width: 659,
+                                      shrinkToFit: true,
+                                      height: "370px",
+                                      viewrecords: true,
+                                      loadError: JQGridDemo.jqGrid_aspnet_loadErrorHandler,
+                                  });
+                              }
+                          });
+                          document.getElementById('DetailScreen1').style.display = 'block';
+                      },
+                  },
+                  onContextMenu: function (event) {
+                      var rowId = $(event.target).closest("tr.jqgrow").attr("id");
+                      $('#del').attr("disabled", Number(rowId) % 2 === 0);
+                      if (Number(rowId) % 2 === 0) {
+                          $('#del').attr("disabled", "disabled").addClass('ui-state-disabled');
+                      } else {
+                          $('#del').removeAttr("disabled").removeClass('ui-state-disabled');
+                      }
+                      return true;
+                  }
+              });
+          },
+          ondblClickRow: function (rowid) {
+              rowid = $("#" + rowid + " td span").text();
+                var CustomerCode = rowid;
+                $("#DetailScreen").show();
+                $("#LoadTransactions").jqGrid('GridUnload');
+                $("#LoadTransactions").jqGrid({
+                    url: '../Report/GetCustomerTransactions?CustomerCode=' + CustomerCode,
+                    mtype: "GET",
+                    datatype: "json",
+                    colModel: [
+                        { label: 'CustomerCode', name: 'CUSTOMER_CODE', autowidth: true, hidden: true },
+                        { label: 'DATE', name: 'SALES_DATE', autowidth: true },
+                        { label: 'SALES NO.', key: true, name: 'SALES_NO', index: 'Default', align: 'left', autowidth: true, sortable: false },
+                        { name: 'AMOUNT', index: 'AMOUNT', align: 'right', autowidth: true, sortable: false }
+                    ],
+                    viewrecords: true,
+                    autowidth: true,
+                    shrinkToFit: true,
+                    rowNum: 20,
+                    ondblClickRow: function (rowid) {
+                        $("#VoucherScreen").show();
+                        $("#LoadItems").jqGrid('GridUnload');
+                        $("#LoadItems").jqGrid({
+                            url: '../Report/GetCustomerItems?SalesNo=' + rowid,
+                            mtype: "GET",
+                            datatype: "json",
+                            colModel: [
+                                { label: 'Item Description', name: 'ITEM_EDESC', index: 'Default', align: 'left', autowidth: true, sortable: false },
+                                { label: 'Quantity', name: 'QUANTITY', index: '', align: 'right', autowidth: true, formatter: 'integer', sortable: false },
+                                { label: 'Unit Price', name: 'UNIT_PRICE', index: 'UNIT_PRICE', align: 'right', formatter: 'number', autowidth: true, sortable: false },
+                                { label: 'Total', name: 'TOTAL_PRICE', index: 'TOTAL_PRICE', align: 'right', formatter: 'number', autowidth: true, sortable: false }
+                            ],
+                            viewrecords: true,
+                            autowidth: true,
+                            shrinkToFit: true,
+                        });
+                    }
+                });
+             
+          }
+
+      });
+        $('.ui-jqgrid-sortable:last').html(Number($('.ui-jqgrid-sortable:last').text()) - 1 + "+");
+        $("#ExpanCollapse").show();
+        $('#Loading').hide();
+        $('#sambhoo').show();
+    });
+    </text>}
+</script>
+<script></script>
+<script>
+    $(document).ready(function () {
+        var pageHeight = $('div#search').outerHeight() + $('div.pull-right').outerHeight();
+        $('.overflow-y').height($('.page-wrapper').height() - pageHeight);
+    });
+</script>
+<script>
+    $("#btnLoad").click(function () {
+        $(".HideMeOnLoad").remove();
+        $("#LoadPrefernces").jqGrid('setGridParam', { datatype: 'json' }).trigger('reloadGrid');
+        var $grid = $("#LoadPrefernces"),
+        emptyMsgDiv = $("<div class='HideMeOnLoad'><span style='font-size:12px;padding:5px;'> No records found...</span></div>");
+        $("#LoadPrefernces").jqGrid({
+            url: '../Report/CustomerDebtorAjax',
+            mtype: "GET",
+            datatype: "json",
+            colModel: [
+                { label: 'PrefernceId', name: 'PREF_CODE', key: true, autowidth: true, hidden: true },
+                { label: 'NAME', name: 'PREF_NAME', autowidth: true },
+                { label: 'Default', name: 'ISDEFAULT', index: 'Default', align: 'center', autowidth: true, sortable: false },
+                { name: 'Action', index: 'act', align: 'center', autowidth: true, sortable: false }
+            ],
+            emptyrecords: "prefernces are not saved",
+            viewrecords: true,
+            autowidth: true,
+            shrinkToFit: false,
+            width: $('.modal-inner-popup modal-body').width(),
+            rowNum: 20,
+            gridComplete: function () {
+                var ts = this;
+                if (ts.p.reccount === 0) {
+                    $(this).hide();
+                    emptyMsgDiv.show();
+                } else {
+                    $(this).show();
+                    emptyMsgDiv.hide();
+                }
+                var ids = jQuery("#LoadPrefernces").jqGrid('getDataIDs');
+                for (var i = 0; i < ids.length; i++) {
+                    var cl = ids[i];
+                    be = "<button class='btn-preference btn-pref-rem' onclick='return deleteSelectedRow(" + cl + ");'><span class='fa fa-close'></span></button>";
+                    jQuery("#LoadPrefernces").jqGrid('setRowData', ids[i], { Action: be });
+                }
+            }
+        });
+    });
+    function getSelectedRow() {
+        var rsteps = ["0", "0.0", "0.00", "0.000", "0.0000"];
+        var fsteps = ["Actual", "thousand", "lakh", "crore", ];
+        $("#ShowHideThisSpan").hide();
+        var grid = $("#LoadPrefernces");
+        var rowKey = grid.jqGrid('getGridParam', "selrow");
+        if (rowKey) {
+            $.ajax({
+                url: "../Report/CustomerDebtorAjaxComplete?rowKey=" + rowKey, success: function (result) {
+                    var res = result.split(",");
+                    var arrayLength = res.length;
+                    var i = 0;
+                    if (res[2] == "Actual") { var j = 0; }
+                    if (res[2] == "thousand") { var j = 1; }
+                    if (res[2] == "lakh") { var j = 2; }
+                    if (res[2] == "crore") { var j = 3; }
+                    $("#slider1").slider({
+                        value: j,
+                        min: 0,
+                        max: 3,
+                        slide: function (event, ui) {
+                            $("#figure1").val(fsteps[ui.value]);
+                        }
+                    });
+                    $("#figure1").val(fsteps[$("#slider1").slider("value")]);
+                    if (res[3] == '0') { var k = 0; }
+                    if (res[3] == '0.0') { var k = 1; }
+                    if (res[3] == '0.00') { var k = 2; }
+                    if (res[3] == '0.000') { var k = 3; }
+                    if (res[3] == '0.0000') { var k = 4; }
+                    $("#roundSlider1").slider({
+                        value: k,
+                        min: 0,
+                        max: 4,
+                        slide: function (event, ui) {
+                            $("#round1").val(rsteps[ui.value]);
+                        }
+                    });
+                    $("#round1").val(rsteps[j]);
+                    var test = res[4].toString();
+                    $('#multiYaxis').multiSelect('deselect_all');
+                    var aa = res[4].toString().trim();
+                    var bb = 'A';
+                    if (aa == bb) {
+                        $('#multiYaxis').multiSelect('select', 'A');
+                    } else {
+                        $('#multiYaxis').multiSelect('select', 'T');
+                    }
+                    $("#FromDate").val(res[5]);
+                    $('#fromInputDate').val(AD2BS($("#FromDate").val()));
+                                   
+                    var id = $(".adddiv button:last").attr("id");
+                    if ($(".adddiv button:last").attr("id") == null) {
+                        document.getElementById("00").remove();
+                        document.getElementById("0000").remove();
+                    } else {
+                        for (var l = 0 ; l <= id ; l++) {
+                            if (l == 0) {
+                                document.getElementById(l.toString() + l.toString()).remove();
+                                document.getElementById(l.toString() + l.toString() + l.toString() + l.toString()).remove();
+                            } else {
+                                document.getElementById(l.toString()).remove();
+                                document.getElementById(l.toString() + l.toString()).remove();
+                                document.getElementById(l.toString() + l.toString() + l.toString() + l.toString()).remove();
+                            }
+                        }
+                    }
+                    var SetId = 0;
+                    $('.adddiv').append("<div class='newbox' id='" + SetId.toString() + SetId.toString() + SetId.toString() + "'><input type='text' id='" + SetId.toString() + SetId.toString() + SetId.toString() + SetId.toString() + "' value='" + 0 + "' readonly='true' style='width:30%;'><input type='text' id='" + SetId.toString() + SetId.toString() + "' name='Steps[" + SetId + "]'  style='width:30%;margin-left:0.5px;' value='" + res[6] + "' onblur='ModifyNextId(this.id);' /></div>");
+                    SetId = 1;
+                    for (var i = 7; i < arrayLength; i++) {
+                        $('.adddiv').append("<div class='newbox' id='" + SetId.toString() + SetId.toString() + SetId.toString() + "'><input type='text' id='" + SetId.toString() + SetId.toString() + SetId.toString() + SetId.toString() + "' value='" + (parseInt(res[i - 1]) + 1) + "' readonly='true' style='width:30%;'><input type='text' id='" + SetId.toString() + SetId.toString() + "' name='Steps[" + SetId + "]'  style='width:30%;margin-left:0.5px;' value='" + res[i] + "' onblur='ModifyNextId(this.id);' /><button id=" + SetId.toString() + " onclick='return DeleteThis(this.id);' class='btn-preference btn-pref-rem'><span class='fa fa-close'></span></button></div>");
+                        SetId = SetId + 1;
+                    }
+                    $('#MyPrefernces').modal('toggle');
+                }
+            });
+        }
+        else {
+            $("#ShowHideThisSpan").show();
+        }
+        return false;
+    }
+    function deleteSelectedRow(rowKey) {
+        $("#ShowHideThisSpan").hide();
+        if (confirm('Are You Sure!')) {
+            if (rowKey) {
+                $.ajax({
+                    url: "../Report/CustomerDebtorAjaxRemoveRow?rowKey=" + rowKey, success: function () {
+                        $("#LoadPrefernces").jqGrid('setGridParam', { datatype: 'json' }).trigger('reloadGrid');
+                    }
+                });
+                $("#LoadPrefernces").jqGrid('setGridParam', { datatype: 'json' }).trigger('reloadGrid');
+            }
+            else {
+                $("#ShowHideThisSpan").show();
+            }
+        }
+        return false;
+    }
+
+    function btnSaveClick() {
+        $("#PreferenceName").prop('disabled', false);
+        $("#ShowWhenSave").jqGrid({
+            url: '../Report/CustomerDebtorAjax',
+            mtype: "GET",
+            datatype: "json",
+            colModel: [
+                { label: 'PrefernceId', name: 'PREF_CODE', key: true, width: 25, hidden: true },
+                { label: 'NAME', name: 'PREF_NAME', width: 100, index: 'NAME' },
+            ],
+            emptyrecords: "prefernces are not saved",
+            viewrecords: true,
+            width: 300,
+            rowNum: 20,
+            onSelectRow: function (ids) {
+                var rowData = jQuery('#ShowWhenSave').jqGrid('getRowData', ids);
+                var InputValue = rowData.PREF_NAME;
+                $("#PreferenceName").val(InputValue);
+            }
+        });
+        return false;
+    }
+    $(".DiaableInput").click(function () {
+        $("#PreferenceName").prop('disabled', true);
+    });
+    $("#PreferenceName").blur(function () {
+        $.ajax({
+            url: "../Report/GetPreferenceNameList", success: function (result) {
+                var res = result.split(",");
+                var arrayLength = res.length;
+                var Name = $("#PreferenceName").val();
+                for (var i = 0; i <= res.length - 1; i++) {
+                    if (res[i] == Name) {
+                        $("#MsgPrefName").html("<b>" + Name + "</b>" + " already exists and will be updated.");
+                    }
+                }
+            },
+        });
+    });
+    $("#SetDefault").change(function () {
+        if ($('#SetDefault').is(':checked')) {
+            $("#SetDefaultMsg").html("Default");
+        } else {
+            $("#SetDefaultMsg").html("");
+        }
+    });
+    $(".DiaableInput").click(function () {
+        $("#PreferenceName").prop('disabled', true);
+    });
+    $('#fromInputDate').nepaliDatePicker({
+        ndpEnglishInput: 'FromDate',
+    });
+    $('#fromInputDate').val(AD2BS($("#FromDate").val()));
+    $('#toInputDateP').val($('#fromInputDate').val());
+    $('#ToDateP').val($('#FromDate').val());
+    $('#FromDate').datepicker({ dateFormat: 'yy-mm-dd', onSelect: function (dateText, inst) { $('#fromInputDate').val(AD2BS(dateText)); $("#ToDateP").val(BS2AD($("#fromInputDate").val())); $("#toInputDateP").val($("#fromInputDate").val()); } });
+    $('#toInputDateP').nepaliDatePicker({
+        ndpEnglishInput: 'ToDateP'
+    });
+    $('#ToDateP').datepicker({ dateFormat: 'yy-mm-dd', onSelect: function (dateText, inst) { $('#toInputDateP').val(AD2BS(dateText)); $("#FromDate").val(BS2AD($("#toInputDateP").val())); $("#fromInputDate").val($("#toInputDateP").val()); } });
+    $(document).mouseover(function () {
+        $("#fromInputDate").val($('#toInputDateP').val());
+        $("#FromDate").val($("#ToDateP").val());
+    });
+    $(".modal-content").mouseover(function () {
+        $("#toInputDateP").val($('#fromInputDate').val());
+        $("#ToDateP").val($("#FromDate").val());
+    });
+</script>
+<script>
+    $(document).ready(function () {
+        $('#fakeInputDate').val(AD2BS($("#FromDate").val()));
+        $('#fakeInputDate1').val($("#FromDate").val());
+        jQuery('#FilterTree').jqGrid({
+            "url": "../Report/GetFilterTree",
+            "datatype": "json",
+            "colModel": [{ "name": "CUSTOMER_CODE", "index": "CUSTOMER_CODE", "sorttype": "int", "key": true, "hidden": true },
+                { "name": "PARRENT_CODE", "index": "PARRENT_CODE", "sorttype": "int", "hidden": true },
+                {
+                    "name": "CUSTOMER_EDESC", "index": "CUSTOMER_EDESC", "sorttype": "string", "label": "Customers", "width": 200,
+                    formatter: function (cellvalue, options, rowObject, key) {
+                        return "<input type='checkbox' class='itmchk " + rowObject.PARRENT_CODE + "' id='" + rowObject.CUSTOMER_CODE + 'FTCB' + "' name='FilterCheckTree' value='" + rowObject.CUSTOMER_CODE + "' style='background:red;' onchange='CheckBoxValues(this.id," + rowObject.PARRENT_CODE + ",this.className);' >" +
+                            $.jgrid.htmlEncode(cellvalue);
+                    }
+                }
+            ],
+            "width": "100%",
+            "autowidth": true,
+            "hoverrows": true,
+            "viewrecords": false,
+            "gridview": true,
+            "height": 300,
+            "autoencode": true,
+            "sortname": "CUSTOMER_CODE",
+            "scrollrows": true,
+            "treeGrid": true,
+            "ExpandColumn": "CUSTOMER_EDESC",
+            "treedatatype": "json",
+            "treeGridModel": "adjacency",
+            "loadonce": true,
+            "rowNum": 10000,
+            "treeReader": {
+                "parent_id_field": "PARRENT_CODE",
+                "level_field": "LEVEL",
+                "leaf_field": "ISLEAF",
+                "expanded_field": "EXPANDED",
+                "loaded": "LOADED",
+                "icon_field": "icon"
+            },
+            "ExpandColClick": true,
+            "treeIcons": { leaf: 'ui-icon-blank' },
+            "jsonReader": { repeatitems: false, root: "data" },
+            "pager": "#pager",
+            beforeSelectRow: function (rowid, e) {
+                var $this = $(this),
+                    isLeafName = $this.jqGrid("getGridParam", "treeReader").leaf_field,
+                    localIdName = $this.jqGrid("getGridParam", "localReader").id,
+                    localData,
+                    state,
+                    setChechedStateOfChildrenItems = function (children) {
+                        $.each(children, function () {
+                            $("#" + this[localIdName] + " input.itmchk").prop("checked", state);
+                            if (!this[isLeafName]) {
+                                setChechedStateOfChildrenItems($this.jqGrid("getNodeChildren", this));
+                            }
+                        });
+                    };
+                if (e.target.nodeName === "INPUT" && $(e.target).hasClass("itmchk")) {
+                    state = $(e.target).prop("checked");
+                    localData = $this.jqGrid("getLocalRow", rowid);
+                    setChechedStateOfChildrenItems($this.jqGrid("getNodeChildren", localData), state);
+                }
+                cellValue = $("#FilterTree").jqGrid('getCell', rowid, 'PRE_CUSTOMER_CODE');
+            }
+
+        });
+    });
+
+    function CheckBoxValues(id, pid, ClsNme) {
+        MainClass = ClsNme.slice(7);
+        if ($('#' + id).prop('checked') == false) {
+            $('#' + pid + 'FTCB').prop('checked', false);
+            if ($('#' + pid + 'FTCB').length != 0 && pid != null) {
+                ParentClass = $('#' + pid + 'FTCB').attr('class').slice(7);
+                if ($('.' + ParentClass + ':checked').length != $('.' + ParentClass).length) {
+                    $("#" + ParentClass + 'FTCB').prop('checked', false);
+                    if ($('#' + ParentClass + 'FTCB').length != 0 && ParentClass != null) {
+                        GrandParentClass = $('#' + ParentClass + 'FTCB').attr('class').slice(7);
+                        if ($('.' + GrandParentClass + ':checked').length != $('.' + GrandParentClass).length) {
+                            $("#" + GrandParentClass + 'FTCB').prop('checked', false);
+                            if ($('#' + GrandParentClass + 'FTCB').length != 0 && GrandParentClass != null) {
+                                GreatGrandParentClass = $('#' + GrandParentClass + 'FTCB').attr('class').slice(7);
+                                if ($('.' + GreatGrandParentClass + ':checked').length != $('.' + GreatGrandParentClass).length) {
+                                    $("#" + GreatGrandParentClass + 'FTCB').prop('checked', false);
+                                    if ($('#' + GreatGrandParentClass + 'FTCB').length != 0 && GreatGrandParentClass != null) {
+                                        GreatGreatGrandParentClass = $('#' + GreatGrandParentClass + 'FTCB').attr('class').slice(7);
+                                        if ($('.' + GreatGreatGrandParentClass + ':checked').length != $('.' + GreatGreatGrandParentClass).length) {
+                                            $("#" + GreatGreatGrandParentClass + 'FTCB').prop('checked', false);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if ($('.' + MainClass + ':checked').length == $('.' + MainClass).length) {
+            $('#' + pid + 'FTCB').prop('checked', true);
+            if ($('#' + pid + 'FTCB').length != 0 && pid != null) {
+                ParentClass = $('#' + pid + 'FTCB').attr('class').slice(7);
+                if ($('.' + ParentClass + ':checked').length == $('.' + ParentClass).length) {
+                    $("#" + ParentClass + 'FTCB').prop('checked', true);
+                    if ($('#' + ParentClass + 'FTCB').length != 0 && ParentClass != null) {
+                        GrandParentClass = $('#' + ParentClass + 'FTCB').attr('class').slice(7);
+                        if ($('.' + GrandParentClass + ':checked').length == $('.' + GrandParentClass).length) {
+                            $("#" + GrandParentClass + 'FTCB').prop('checked', true);
+                            if ($('#' + GrandParentClass + 'FTCB').length != 0 && GrandParentClass != null) {
+                                GreatGrandParentClass = $('#' + GrandParentClass + 'FTCB').attr('class').slice(7);
+                                if ($('.' + GreatGrandParentClass + ':checked').length == $('.' + GreatGrandParentClass).length) {
+                                    $("#" + GreatGrandParentClass + 'FTCB').prop('checked', true);
+                                    if ($('#' + GreatGrandParentClass + 'FTCB').length != 0 && GreatGrandParentClass != null) {
+                                        GreatGreatGrandParentClass = $('#' + GreatGrandParentClass + 'FTCB').attr('class').slice(7);
+                                        if ($('.' + GreatGreatGrandParentClass + ':checked').length == $('.' + GreatGreatGrandParentClass).length) {
+                                            $("#" + GreatGreatGrandParentClass + 'FTCB').prop('checked', true);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if ($('.itmchk:checked').length != 0) {
+            $("#InsertEmployeeList").show();
+        } else {
+            $("#InsertEmployeeList").hide();
+        }
+        var values = $('input:checkbox:checked.itmchk').map(function () {
+            return this.value;
+        }).get();
+        $("#FilterTreeCustomerList").jqGrid('GridUnload');
+        $.post("getFilteredCustomerList?values=" + values, function (data) {
+            jQuery("#FilterTreeCustomerList").jqGrid({
+                datatype: "jsonstring",
+                datastr: data,
+                colNames: ['CUSTOMER_CODE', 'Customer List'],
+                colModel: [
+                    { name: 'CUSTOMER_CODE', key: true, index: 'CustomerCode', width: 55, hidden: true },
+                    { name: 'CUSTOMER_EDESC', index: 'CustomerName', width: 90 },
+
+                ],
+                height: 300,
+                rowNum: 10,
+                rowList: [10, 20, 30],
+                pager: '#pager9',
+                autowidth: true,
+                sortname: 'id',
+                recordpos: 'left',
+                viewrecords: true,
+                sortorder: "desc",
+                multiselect: true,
+                caption: "Customer List"
+            });
+        });
+        //########  THIS PART OF JAVASCRIPT IS TO GET SELECTED EMPLOYEE    ##################//
+        //jQuery("#list9").jqGrid('navGrid', '#pager9', { add: false, del: false, edit: false, position: 'right' });
+        //jQuery("#m1").click(function () {
+        //    var s;
+        //    s = jQuery("#list9").jqGrid('getGridParam', 'selarrrow');
+        //    alert(s);
+        //});
+        //jQuery("#m1s").click(function () {
+        //    jQuery("#list9").jqGrid('setSelection', "13");
+        //});
+
+        if ($('#' + id).prop('checked') == true) {
+            // alert(id.slice(0, -4));
+        }
+
+    }
+
+</script>
+<script>
+    $("#InsertEmployeeList").click(function () {
+        if ($('.cbox:checked').length != 0) {
+            var SelectedCustomers = jQuery("#FilterTreeCustomerList").jqGrid('getGridParam', 'selarrrow');
+            SelectedCustomers = SelectedCustomers.toString();
+            $.ajax({
+                type: "post",
+                data: {
+                    id: SelectedCustomers,
+                },
+                dataType: "string",
+                url: "InsertSelectedCustomerList",
+                success: function (response) { },
+                error: function (err) { }
+            });
+            $('#FilterTreeModal').modal('toggle');
+        } else {
+            alert('No Cutomers Selected');
+        }
+        return false;
+    });
+</script>
+<script type="text/javascript">
+    $("#CollapseAll").click(function () {
+        $(".treeclick", "#jqGrid").each(function () {
+            if ($(this).hasClass("tree-minus")) { $(this).trigger('click'); }
+        });
+    });
+    $("#ExpandAll").click(function () {
+        $(".treeclick", "#jqGrid").each(function () {
+            if ($(this).hasClass("tree-plus")) { $(this).trigger('click'); }
+        });
+    });
+</script>
+<script>
+    $("#SecondarySubmitButton").click(function () {
+        //$("#btnOk").trigger('click');
+        //$("#SubmitCloseModal").trigger('click');
+        $("#SubmitThisForm").submit();
+    });
+</script>

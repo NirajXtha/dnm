@@ -1,0 +1,539 @@
+﻿@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+    ViewBag.Title = "Distributor Setup";
+    Layout = null;
+}
+
+
+<style>
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+    }
+
+    .k-grid tbody tr {
+        cursor: move;
+    }
+    /*.page-bar {
+            margin-bottom: 0px !important;
+        }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+             font-size:11px;
+        }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    a.k-button.k-button-icontext.k-grid-excel {
+        float: right;
+    }
+
+    .distributor-map-fullscreen {
+        display: none;
+        background-color: #fff;
+        text-align: center;
+        height: 35px;
+        width: 24px;
+        cursor: pointer;
+        background: url() -52px -86px no-repeat;
+        background-image: url('../../Content/map/asset/img/sv5.png');
+        margin-top: 12px;
+        margin-left: 20px;
+    }
+
+    #map-canvas {
+        height: 100%;
+        width: 100%;
+        background: #fff;
+    }
+
+    #distributor-map-panel {
+        width: 100%;
+        height: 430px;
+        margin: 0 auto;
+        /*border: solid #e1e1e1 1px;*/
+        padding: 10px;
+    }
+
+    .number {
+        text-align: right;
+    }
+
+    .text {
+        text-align: left;
+    }
+
+    .date {
+        text-align: center;
+    }
+
+    .custom-combobox {
+        position: relative;
+        display: inline-block;
+    }
+
+    .custom-combobox-toggle {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        margin-left: -1px;
+        padding: 0;
+    }
+
+    .custom-combobox-input {
+        margin: 0;
+        padding: 5px 10px;
+        width: 200px;
+    }
+
+    #DistAdd {
+        display: none;
+    }
+
+    .controls {
+        margin-top: 10px;
+        border: 1px solid transparent;
+        border-radius: 2px 0 0 2px;
+        box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        height: 32px;
+        outline: none;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    #mapSearchBox {
+        background-color: #fff;
+        font-family: Roboto;
+        font-size: 15px;
+        font-weight: 300;
+        margin-left: 12px;
+        padding: 0 11px 0 13px;
+        text-overflow: ellipsis;
+        width: 300px;
+    }
+
+        #mapSearchBox:focus {
+            border-color: #4d90fe;
+        }
+
+    /*#DistributorCreateForm .k-multiselect-wrap li {
+        margin: 2px 2px 1px 4px !important;
+    }*/
+    /*.k-list-container
+           {
+               max-height:150px !important;
+               overflow-y:auto !important;
+           }*/
+    .material-switch > input[type="checkbox"] {
+        display: none;
+    }
+
+    .material-switch > label {
+        cursor: pointer;
+        height: 0px;
+        position: relative;
+        width: 40px;
+    }
+
+        .material-switch > label::before {
+            background: rgb(0, 0, 0);
+            box-shadow: inset 0px 0px 10px rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            content: '';
+            height: 16px;
+            margin-top: -8px;
+            position: absolute;
+            opacity: 0.3;
+            transition: all 0.4s ease-in-out;
+            width: 40px;
+        }
+
+        .material-switch > label::after {
+            background: rgb(255, 255, 255);
+            border-radius: 16px;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.3);
+            content: '';
+            height: 24px;
+            left: -4px;
+            margin-top: -8px;
+            position: absolute;
+            top: -4px;
+            transition: all 0.3s ease-in-out;
+            width: 24px;
+        }
+
+    .material-switch > input[type="checkbox"]:checked + label::before {
+        background: inherit;
+        opacity: 0.5;
+    }
+
+    .material-switch > input[type="checkbox"]:checked + label::after {
+        background: inherit;
+        left: 20px;
+    }
+
+    #mapReset {
+        padding: 1px 5px 1px 5px;
+        color: white;
+        background-color: #1a9492;
+        border: 1px;
+        margin-top: 4px;
+    }
+
+    #DistributorCreateForm .k-multiselect-wrap.k-floatwrap {
+        height: auto !important;
+    }
+
+
+    .k-grid tbody tr {
+        cursor: move;
+    }
+
+    .k-grid k-widget {
+        outline-style: dashed;
+        outline-width: 1px;
+        outline-color: red;
+    }
+
+    .loader {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 1000;
+        display: none; /* Initially hidden */
+    }
+
+        .loader.ng-show {
+            display: block; /* Show when loading */
+        }
+
+</style>
+
+<div ng-controller="DistributorCtrl" class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+            @*<li>
+                <i class="fa fa-home"></i>
+                <a href="/sales/SalesHome/Dashboard">Home</a>
+                <i class="fa fa-angle-right"></i>
+            </li>
+            <li>
+                <a href="#">Distributor Setup</a>
+                <i class="fa fa-angle-right"></i>
+            </li>*@
+        </ul>
+        <div ng-show="isViewLoading" class="loader">
+            Loading...
+        </div>
+        <div class="actions pull-right actionbutton" ng-hide="createPanel">
+            <div class="btn-group" style="margin-top:10px;">
+                <input id="avatar" type="file" name="avatar" style="width:185px;" />
+            </div>
+            <div class="btn-group">
+                <a href="javascript:void(0)" id="uploadExcel" class="pull-right btn btn-circle btn-icon-only btn-default">
+                    <i class="fa fa-upload"></i>
+                </a>
+            </div>
+            <div class="btn-group">
+                <a target="_self" class="pull-right btn btn-circle btn-icon-only btn-default" href="~/Pictures/Distribution/Format/DistributorFormat.xlsx" data-toggle="tooltip" title="Download Excel Format.." download>
+                    <i class='fa fa-file-excel-o excelfile fontgreen' />
+                </a>
+            </div>
+            <div class="btn-group">
+                <a class="btn btn-circle btn-icon-only btn-default " ng-click="AddClickEvent()">
+                    <i class="fa fa-plus"></i>
+                </a>
+            </div>
+
+            <div class="btn-group">
+                @Html.Partial("~/Views/Shared/Controls/_SetupConfig.cshtml", "DistributorSetup")
+            </div>
+        </div>
+    </div>
+
+    <div>
+
+
+        <div class="portlet light bordered main" ng-show="createPanel">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-list-alt font-green-haze"></i>
+                    <span class="caption-subject font-green-haze bold uppercase pull-left">
+                        Add Distributor
+                    </span>
+                </div>
+                <span class="actions pull-right">
+                    <button type="button" id="cancelTarget" name="cancelTarget" class="btn btn-default btn-sm" ng-click="cancelClickEvent();">Cancel</button>
+
+                    <button type="submit" id="saveDistributorCreate" name="saveDistributorCreate" ng-click="distributorCreate(DistributorCreateForm.$valid)" class="btn btn-green btn-sm">{{saveAction}}</button>
+                </span>
+
+            </div><!-- /portlet-title-->
+            <div class="portlet-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <form id="DistributorCreateForm" name="DistributorCreateForm" novalidate>
+                            <div class="row">
+                                <div class="col-sm-4 col-md-4">
+                                    <div class="form-group">
+                                        <label class="control-label">
+                                            Distributor <span style="color:red" ng-show="DistributorCreateForm.distCustomerMultiSelect.$invalid">
+                                                <span ng-show="DistributorCreateForm.distCustomerMultiSelect.$error.required">*</span>
+                                            </span>
+                                        </label>
+                                        <select id="distCustomerMultiSelect" name="distCustomerMultiSelect" kendo-multi-select k-options="distCustomerSelectOptions" slim-scroll ng-model="selecteddistCustomer" style="width:100%;" required></select>
+                                        @*<input id="distCustomerMultiSelect" name="distCustomerMultiSelect" slim-scroll ng-model="selecteddistCustomer"  style="width:100%" required />*@
+                                    </div>
+                                </div>
+                                <div class="col-sm-4 col-md-4">
+                                    <div class="form-group">
+                                        <label class="control-label">
+                                            Area <span style="color:red" ng-show="DistributorCreateForm.areaMultiSelect.$invalid">
+                                                <span ng-show="DistributorCreateForm.areaMultiSelect.$error.required">*</span>
+                                            </span>
+                                        </label>
+                                        <select id="areaMultiSelect" name="areaMultiSelect" kendo-multi-select k-options="areaSelectOptions" slim-scroll ng-model="selectedArea" required></select>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-3 col-md-3">
+                                    <div class="form-group">
+                                        <label style="margin-top:25px;height:27px;padding:2px 7px">
+                                            Status
+
+                                            <div class="material-switch pull-right" style="margin-left:15px;">
+                                                <input id="someSwitchOptionPrimary" name="someSwitchOptionPrimary" type="checkbox" checked />
+                                                <label for="someSwitchOptionPrimary" class="label-primary"></label>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div ng-if="showCustomerSelect" class="col-sm-3 col-md-3">
+                                    <div class="form-group">
+                                        <label style="margin-top:25px;height:27px;padding:2px 7px">
+                                            Create Synergy Customer
+
+                                            <div class="material-switch pull-right" style="margin-left:15px;">
+                                                <input id="CustomerSwitchOption" name="CustomerSwitchOption" type="checkbox" checked />
+                                                <label for="CustomerSwitchOption" class="label-primary"></label>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+
+                                <div class="col-sm-4 col-md-4">
+                                    <div class="form-group">
+                                        <label class="control-label" for="distGroupSelect">
+                                            Group
+                                            @*<span style="color:red" ng-show="DistributorCreateForm.distGroupSelect.$invalid">
+                                                    <span ng-show="DistributorCreateForm.distGroupSelect.$error.required">*</span>
+                                                </span>*@
+                                        </label>
+                                        <select id="distGroupSelect" name="distGroupSelect" kendo-multi-select k-options="distGroupSelectOptions" slim-scroll ng-model="selectedGroup"></select>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4 col-md-4">
+                                    <div class="form-group">
+                                        <label class="control-label" for="distBrandSelect">
+                                            Brands
+                                        </label>
+                                        <select id="distBrandSelect" name="distBrandSelect" kendo-multi-select k-options="distBrandSelectOptions" ng-model="selectedBrands"></select>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4 col-md-4">
+                                    <div class="form-group">
+                                        <label class="control-label" for="distItemsSelect">
+                                            Items
+                                        </label>
+                                        <select id="distItemsSelect" name="distItemsSelect" kendo-multi-select k-options="distItemsSelectOptions" ng-model="selectedItems"></select>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-4 col-md-3">
+                                    <div class="form-group">
+                                        <label class="control-label" for="distDistributorSelect">
+                                            Distributor Type
+                                            @*<span style="color:red" ng-show="ResellerCreateForm.distOutletSelect.$invalid">
+                                                    <span ng-show="ResellerCreateForm.distOutletSelect.$error.required">*</span>
+                                                </span>*@
+                                        </label>
+                                        <select id="distDistributorSelect" name="distDistributorSelect" kendo-multi-select k-options="distDistributorSelectOptions" slim-scroll ng-model="selectedDistributor" style="width:100%;"></select>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-4 col-md-3">
+                                    <div class="form-group">
+                                        <label class="control-label" for="distSubDistributorSelect">
+                                            Distributor Category
+                                            @*<span style="color:red" ng-show="ResellerCreateForm.distSubOutletSelect.$invalid">
+                                                    <span ng-show="ResellerCreateForm.distSubOutletSelect.$error.required">*</span>
+                                                </span>*@
+                                        </label>
+                                        <select id="distSubDistributorSelect" name="distSubDistributorSelect" kendo-multi-select k-options="distSubDistributorSelectOptions" slim-scroll ng-model="selectedSubDistributor" style="width:100%;"></select>
+                                    </div>
+                                </div>
+
+
+                                <div class="col-sm-4 col-md-3">
+                                    <div class="form-group">
+                                        <label class="control-label">
+                                            Contact No
+                                        </label>
+                                        <input id="ContactNo" ng-model="ContactNo" name="ContactNo" class="form-control  ng-pristine ng-empty ng-invalid ng-invalid-required ng-touched" placeholder="Contact Number" />
+                                        <span id="panNoError" class="text-danger" style="display: none;">Pan No must be exactly 9 digits.</span>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-4 col-md-3">
+                                    <div class="form-group">
+                                        <label class="control-label">
+                                            Vat/Pan No
+                                        </label>
+                                        <input id="VatNo" ng-model="VatNo" name="VatNo" class="form-control  ng-pristine ng-empty ng-invalid ng-invalid-required ng-touched" placeholder="Vat Number" />
+                                        <span id="vatNoError" class="text-danger" style="display: none;">Vat No must be exactly 9 digits.</span>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </form>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="boxborder">
+                            <input type="hidden" id="mapcenter" />
+                            <div class="col-md-12 latlong text-right">
+                                <span id="maplat">27.70076900000002</span>, <span id="maplng">85.30151329101568</span>
+                                <button id="mapReset" class="fa fa-refresh" ng-click="mapReset();"></button>
+                            </div>
+                            <div id="distributor-map-panel">
+                                <div id="distributor-map-fullscreen"></div>
+                                <input id="mapSearchBox" class="controls" type="text" placeholder="Search Box">
+                                <div id="map-canvas"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div><!--/portlet-body-->
+
+
+        <div class="row collapse in" id="demo">
+            <div class="col-md-12">
+                <div class="portlet light bordered">
+                    <div class="portlet-body form">
+                        <div class="row kendo_table">
+                            <div id="grid"></div>
+                            @*<kendo-grid options="grid" id="grid"></kendo-grid>*@
+                            @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    @*<script>
+            $("#distCustomerMultiSelect").kendoAutoComplete({
+                dataTextField: "CUSTOMER_EDESC",
+                dataValueField: "DISTRIBUTOR_CODE",
+                height: 600,
+                valuePrimitive: true,
+                maxSelectedItems: 1,
+                headerTemplate: '<div class="col-md-offset-3"><strong>Distributors...</strong></div>',
+                placeholder: "Enter Distributor...",
+                autoClose: false,
+                dataBound: function (e) {
+                    var current = this.value();
+                    this._savedOld = current.slice(0);
+                    $("#" + e.sender.element[0].id + "_listbox").slimScroll({ 'height': '179px', 'scroll': 'scroll' });
+                },
+                dataSource: {
+                    transport: {
+                        read: {
+                            url: window.location.protocol + "//" + window.location.host + "/api/Distribution/GetIndividualCustomer",
+                            dataType: "json"
+                        }
+                    }
+                }
+            });
+        </script>*@
+    <script>
+        $('#uploadExcel').click(function () {
+            if (window.FormData !== undefined) {
+                //showloader();
+                var file_data = $("#avatar").prop("files")[0];   // Getting the properties of file from file field
+                if (!file_data) {
+                    displayPopupNotification("Please select a file", "error");
+                    setTimeout(function () {
+                        $("#avatar").trigger("click");
+                    }, 500);
+                    return;
+                }
+                var format = file_data.name.substr(file_data.name.lastIndexOf('.'), file_data.name.length)
+                if (![".xls", ".xlsx"].includes(format)) {
+                    displayPopupNotification("Invalid file format", "error");
+                    return;
+                }
+                var form_data = new FormData();                  // Creating object of FormData class
+                form_data.append("file", file_data);
+
+                $.ajax({
+                    url: '/Distributor/ImportDistributor',
+                    type: "POST",
+                    contentType: false,
+                    processData: false,
+                    data: form_data,
+                    success: function (result) {
+                        displayPopupNotification(result.MESSAGE, result.TYPE);
+                        if (result.TYPE == "success") {
+                            $('#avatar').val("");
+                            $('#treelist').data("kendoTreeList").dataSource.read();
+                        }
+                    },
+                    error: function (err) {
+                        displayPopupNotification(err.statusText, "error");
+                    }
+                });
+            } else {
+                alert("FormData is not supported.");
+            }
+        });
+
+        var a = location.hash;
+        var b = location.pathname;
+        var url = (b + a);
+        $(".active").removeClass();
+        $("a[href='" + url + "']").parent().addClass("active");
+        $("a[href='" + url + "']").parent().parent().slideDown("slow");
+    </script>
+    <script src="@Scripts.Url("~/JS/reportFilter.js")"></script>
+
+    <script src="@Scripts.Url("~/JS/DateFilter.js?V5")" type="text/javascript"></script>
+    <script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js?V2")"></script>
+</div>

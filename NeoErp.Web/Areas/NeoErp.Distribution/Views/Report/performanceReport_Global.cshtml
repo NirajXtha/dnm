@@ -1,0 +1,453 @@
+﻿@using NeoErp.Core.Models;
+<style>
+    .datatable thead th {
+        font-size: 11px !important;
+        background-color:#eee;
+        text-align:center;
+    }
+        td{
+            font-size:10px !important
+        }
+
+        fieldset {
+            padding: .35em .625em .75em !important;
+            margin: 0 2px !important;
+            border: 1px solid silver !important;
+            border-radius: 5px;
+        }
+
+        .table-scrollable {
+            overflow: hidden !important;
+        }
+        .portlet.portlet-sortable.light.bordered {
+        min-height: 170px;
+    }
+    .data_search {
+        height: 20px !important;
+        max-width: 25%;
+        float: right;
+        font-size: 10px !important;
+        padding: 0 6px;
+        position: relative;
+        margin-top: -11px;
+    }
+
+    .datasearch_icon {
+        right: 41px;
+        position: absolute;
+        font-size: 10px;
+        color: #ccc;
+        padding-top: 2px;
+        margin-top: -9px;
+    }
+        .modal-title
+        {
+        display:inline-block;
+        }
+       .performanceModal .modal-content
+        {
+            max-width:436px;
+        }
+       .page-content
+       {
+           min-height:1200px !important;
+       }
+       .modal-backdrop.fade.in{
+           z-index:10030;
+       }
+       .toolbar_performance{
+           margin-left:-4px !important ;
+       }
+       .amount-right{
+           text-align:right;
+       }
+         .portlet.light > .portlet-title > .caption > .caption-subject{
+             font-size:12px !important
+         }
+         .loader {
+             border-bottom: 16px solid red;
+             border-radius: 50%;
+             width: 34px;
+             height: 34px;
+             animation: spin 2s linear infinite;
+             border-width: 5px;
+         }
+         /*.button_space a {
+             margin-right: 183px !important;
+             margin-top: -10px;
+         }*/
+         #image {
+             -moz-transition: transform 1s;
+             -webkit-transition: transform 1s;
+             transition: transform 1s;
+         }
+
+         .flip {
+             transform: rotate(-180deg);
+         }
+
+    .portlet.portlet-sortable.light.bordered {
+        box-shadow: 1px 0 6px 1px #ddd;
+        -moz-box-shadow: 1px 0 6px 1px #ddd;
+        -o-box-shadow: 1px 0 6px 1px #ddd;
+        -webkit-box-shadow: 1px 0 6px 1px #ddd;
+    }
+
+    .fontgreen {
+        color: hsl(109, 56%, 41%) !important;
+    }
+
+</style>
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb"></ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right button_space">
+                <a class="loader" style="display:none"></a>
+
+                <div class="btn-group toolbar_performance">
+                    @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                </div>
+                <div class="btn-group">
+                    @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+               {
+                   ShowDistEmployeeFilter = true,
+
+                    })
+                </div>
+                @*<div class="btn-group">
+            @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+        </div>*@
+                @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+                <a class="btn btn-circle btn-icon-only btn-default" id="collapseAllButton" title="Collapse All" onclick="CollapseAll()">
+                    <i class="fa fa-chevron-down" id="image"></i>
+                </a>
+                @*<a class="btn btn-circle btn-icon-only btn-default" id="expandAllButton" title="Expand All" onclick="ExpandAll()">
+            <i class="fa fa-chevron-down"></i>
+        </a>*@
+                @*<a class="btn btn-circle btn-icon-only btn-default" id="downloadPDF" title="Download PFD">
+            <i class="fa fa-file-pdf-o"></i>
+        </a>*@
+
+
+            </div>
+        </div>
+    </div>
+</div>
+<div class="main-view-port" ng-controller="performanceGlobalCtrl">
+    <div class="">
+        <div class="row ui-sortable" id="sortable_portlets">
+            <div class="col-md-6">
+                <div class="">
+                    <div class="portlet portlet-sortable light bordered">
+                        <div class="portlet-title">
+                            <div class="caption">
+                                <i class="icon-bar-chart fontgreen"></i>
+                                <span class="caption-subject bold uppercase fontgreen custom-modal">Present Day ASM Beat Detail</span>
+                            </div>
+
+                            <div class="tools">
+
+                                <a href="javascript:;" class="collapse"></a>
+                                <a href="" class="fullscreen" data-original-title="" title=""> </a>
+                                <a href="javascript:;" class="remove"></a>
+                                @*<a href="" class="fa fa-file-excel-o" id="topEffective" data-ng-click="ExportToExcel($event)"></a>*@
+                            </div>
+                            
+                        </div>
+
+
+                        <div class="portlet-body">
+                            Staff Name: {{StaffName}}
+                            <br />
+                            Today's 'Date: {{date | date:'yyyy-MM-dd'}}
+                            <br />
+                            Attendance Time:- <span ng-if="AttendanceTime == '' || "AttendanceTime == null">Attendance Not Done</span>{{AttendanceTime}}
+                            <br />
+                            EOD Time :- <span ng-if="EODTime == '' || EODTime == null">EOD Not Done</span>{{EODTime}}
+                            <br />
+                            Total Target : {{TotalTarget}}
+                            <br />
+                            Target Visited: {{TargetVisited}}
+                            <br />
+                            Achieved Target : {{AchievedTarget}}%
+                            <br />
+                            Productive Call: {{ProductiveCall}}
+                            <br />
+                            Effective %: {{EffectiveCall}}%
+                            <br />
+                            No. of Outlet made:  <span ng-if="EODTime == ''">0</span>{{OUTLET_ADDED}}
+
+
+                            @*<table class="table table-hover table-bordered datatable">
+            <thead>
+                <tr ng-click="changeSorting()">
+                    <th>Staff Name</th>
+                    <th>Effective Calls(%)</th>
+                    <th>Qty(Case)</th>
+                    <th>Order(Amt)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="font-size:11px;" ng-if="topEffectiveCall.length==0">
+                    <td colspan="8">No Items To Display..</td>
+                </tr>
+                <tr ng-repeat="data in topEffectiveCall | filter:searchOrder">
+
+                    <td>
+                        {{data.EMPLOYEE_EDESC}}
+                    </td>
+                    <td class="amount-right">
+                        {{data.PERCENT_EFFECTIVE_CALLS}}%
+                    </td>
+                    <td class="amount-right">
+                        {{data.PJP_TOTAL_QUANTITY + data.NPJP_TOTAL_QUANTITY |number}}
+                    </td>
+                    <td class="amount-right">
+                        {{data.PJP_TOTAL_AMOUNT + data.NPJP_TOTAL_AMOUNT |currency :'&#8360. '}}
+                    </td>
+                </tr>
+            </tbody>
+        </table>*@
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <img src="pic_trulli.jpg" alt="Italian Trulli">
+            </div>
+                <!--<-->@*div class="">
+                    <div class="portlet portlet-sortable light bordered">
+                        <div class="portlet-title">
+                            <div class="caption">
+                                <i class="icon-bar-chart fontgreen"></i>
+                                <span class="caption-subject bold uppercase fontgreen custom-modal">ASM Beat Detail ({{SelectedMonths}})</span>
+                            </div>
+                            <div class="tools bypassPrint">
+                                <a href="javascript:;" class="collapse"></a>
+                                <a href="" class="fullscreen" data-original-title="" title=""> </a>
+                                <a href="javascript:;" class="remove"></a>
+                                <a href="" class="fa fa-file-excel-o" id="LessEffective" data-ng-click="ExportToExcel($event)"></a>
+                            </div>
+                        </div>
+                        <input type="text" class="form-control data_search" ng-model="searchOrderLes" />
+                        <i class="fa fa-search datasearch_icon" aria-hidden="true"></i>
+                        <div class="portlet-body">
+                            <table class="table table-hover table-bordered datatable">
+                                <thead>
+                                    <tr ng-click="changeSorting()">
+                                        <th>Staff Name</th>
+                                        <th>Effective Calls(%)</th>
+                                        <th>Qty(Case)</th>
+                                        <th>Order(Amt)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr style="font-size:11px;" ng-if="lessEffectiveCall.length==0">
+                                        <td colspan="8">No Items To Display..</td>
+                                    </tr>
+                                    <tr ng-repeat="data in lessEffectiveCall | filter:searchOrderLes">
+
+                                        <td>
+                                            {{data.EMPLOYEE_EDESC}}
+                                        </td>
+                                        <td class="amount-right">
+                                            {{data.PERCENT_EFFECTIVE_CALLS}}%
+                                        </td>
+                                        <td class="amount-right">
+                                            {{data.PJP_TOTAL_QUANTITY + data.NPJP_TOTAL_QUANTITY |number}}
+                                        </td>
+                                        <td class="amount-right">
+                                            {{data.PJP_TOTAL_AMOUNT + data.NPJP_TOTAL_AMOUNT | currency:'&#8360. '}}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>*@
+            @*<div class="portlet portlet-sortable light bordered">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="icon-bar-chart fontgreen"></i>
+                    <span class="caption-subject bold uppercase fontgreen custom-modal">Zone Wise Performance Report</span>
+                </div>
+                <div class="tools bypassPrint">
+                    <a href="javascript:;" class="collapse"></a>
+                    <a href="" class="fullscreen" data-original-title="" title=""> </a>
+                    <a href="javascript:;" class="remove"></a>
+                </div>
+            </div>
+            <div class="portlet-body clearfix" id="metric_sortable" style="display: block;">
+                <div class="row">
+
+                </div>
+            </div>*@
+        </div>
+            <div class="portlet portlet-sortable light bordered">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="icon-bar-chart fontgreen"></i>
+                        <span class="caption-subject bold uppercase fontgreen custom-modal">ASM Beat Detail ({{SelectedMonths}})</span>
+                    </div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse"></a>
+                        <a href="" class="fullscreen" data-original-title="" title=""> </a>
+                        <a href="" class="fa fa-file-excel-o" title="Export to Excel" id="globalPerformanceReport" data-ng-click="ExportToExcel($event)"></a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <table class="table table-hover table-bordered datatable">
+                        <thead>
+                            <tr ng-click="changeSorting()">
+                                <th width="20%">Route Name</th>
+                                <th width="20%">Group</th>
+                                <th width="10%">Assign Date</th>
+                                <th width="10%">Attendance Time</th>
+                                <th width="10%">EOD Time</th>
+                                <th width="10%">Working Hours</th>
+                                <th width="10%">Target</th>
+                                <th width="10%">Visited</th>
+                                <th width="10%">Effective Call %</th>
+                                <th width="10%">Productive Call %</th>
+                                <th width="20%">EOD Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="font-size:11px;" ng-if="mondata.length==0">
+
+                                <td colspan="11">No Items To Display..</td>
+                            </tr>
+                            <tr ng-repeat="data in mondata">
+                                <td >
+                                    {{data.ROUTE_NAME}}
+                                </td>
+                                <td>
+                                    {{data.GROUP_EDESC}}
+                                </td>
+                                <td class="amount-right">
+                                    <span ng-if="data.ASSIGN_DATE === null">-</span>{{data.ASSIGN_DATE | date}}
+</td>
+                                <td class="amount-right">
+                                    <span ng-if="data.ATN_TIME === null">-</span>{{data.ATN_TIME}}
+
+                                </td>
+
+                                <td class="amount-right">
+                                    <span ng-if="data.EOD_TIME === null">-</span>{{data.EOD_TIME}}
+                                </td>
+                                <td class="amount-right">
+                                    {{data.WORKING_HOURS}}
+                                </td>
+                                <td class="amount-right">
+                                    {{data.TARGET}}
+                                </td>
+                                <td class="amount-right">
+                                    {{data.VISITED}}
+                                </td>
+                                <td class="amount-right">
+                                    {{data.PERCENT_EFFECTIVE_CALLS}}
+                                </td>
+                                <td class="amount-right">
+                                    {{data.PERCENT_PRODUCTIVE_CALLS}}
+                                </td>
+                                <td class="amount-right">
+                                    <span ng-if="data.EOD_REMARKS === null">-</span>{{data.EOD_REMARKS}}
+                                </td>
+                                
+                            </tr>
+                            <tr style="font-weight:600;background-color:#eee;color:hsl(109, 56%, 41%);">
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td>Total</td>
+                                <td class="amount-right">{{TotalPJP | currency:'&#8360.'}}</td>
+                                <td class="amount-right">{{TotalNPJP | currency:'&#8360.'}}</td>
+                                <td class="amount-right">{{TARGET+TARGET | currency:'&#8360.'}}</td>
+                            </tr>
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        </div>
+        <script src="@Scripts.Url("~/JS/reportFilter.js")"></script>
+        <script src="@Scripts.Url("~/JS/DashboardChartFilter/DateFilter.js")" type="text/javascript"></script>
+        <script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js?V2")"></script>
+
+
+        <script>
+            $(document).ready(function () {
+                //  DateFilter.init(function () {
+                //consolidate.init(function () {
+                //    // BindGrid(urltest);
+                //});
+                //});
+                //DateFilter.init(function () {
+                //    consolidate.init(function () {
+                //      //  BindGrid(urltest);
+                //    });
+                //});
+
+                $("#downloadPDF").on("click", function () {
+                    // replaceSVGwithCanvas();
+                    var specialElementHandlers = {
+                        '#editor': function (element, renderer) {
+                            return true;
+                        }
+                    };
+                    var pdf = new jsPDF('p', 'pt', 'a4');
+                    $('.bypassPrint').hide();
+                    pdf.setFontSize(2);
+                    pdf.addHTML($('.main-view-port')[0], {
+                        'elementHandlers': specialElementHandlers,
+                        'pagesplit': true,
+                    }, function (dispose) {
+                        pdf.save('Dashboard.pdf');
+                        $('.bypassPrint').show();
+                    });
+
+                });
+            });
+
+        </script>
+        <script>
+            var a = location.hash;
+            var b = location.pathname;
+            var url = (b + a);
+            $(".active").removeClass();
+            $("a[href='" + url + "']").parent().addClass("active");
+            $("a[href='" + url + "']").parent().parent().slideDown("slow");
+        </script>
+        <script src="~/Areas/NeoErp.sales.Module/Scripts/jspdf.debug.js"></script>
+        <script>
+            $(document).ready(function () {
+                $(".tooltips-date,.config").click(function () {
+                    $('.dateFilterSelect  option[value="Today"],[value="Forth Quarter"],[value="Third Quarter"],[value="First Quarter"],[value="Last Week"],[value="This Week"],[value="Last Month"],[value="This Year"],[value="Second Quarter"]').remove();
+
+                })
+                PortletDraggable.init("Distribution_Performance");
+            })
+            function CollapseAll() {
+                if ($("#image").hasClass('flip')) {
+                    $('.portlet-body').slideDown('slow');
+                    $('#collapseAllButton').prop('title', 'Collapse All');
+                    $("#image").toggleClass('flip');
+                }
+                else {
+                    $('.portlet-body').slideUp('slow');
+                    $('.portlet').css('min-height', '0px');
+                    $('#collapseAllButton').prop('title', 'Expand All');
+                    $("#image").toggleClass('flip');
+                }
+            }
+        </script>
+        <script src="https://cdn.jsdelivr.net/alasql/0.3/alasql.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.7.12/xlsx.core.min.js"></script>
+
+
+
+

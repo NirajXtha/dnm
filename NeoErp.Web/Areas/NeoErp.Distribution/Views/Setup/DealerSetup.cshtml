@@ -1,0 +1,330 @@
+﻿@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+    ViewBag.Title = "Dealer Setup";
+    Layout = null;
+}
+
+
+<style>
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+        // width: 183px !important;
+    }
+
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+         font-size:11px;
+    }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    a.k-button.k-button-icontext.k-grid-excel {
+        float: right;
+    }
+
+    .dealer-map-fullscreen {
+        display: none;
+        background-color: #fff;
+        text-align: center;
+        height: 35px;
+        width: 24px;
+        cursor: pointer;
+        background: url() -52px -86px no-repeat;
+        background-image: url('../../Content/map/asset/img/sv5.png');
+        margin-top: 12px;
+        margin-left: 20px;
+    }
+
+    #map-canvas {
+        height: 100%;
+        width: 100%;
+        background: #fff;
+    }
+
+    #dealer-map-panel {
+        width: 100%;
+        height: 430px;
+        margin: 0 auto;
+        /*border: solid;*/
+        padding: 10px;
+    }
+
+    .number {
+        text-align: right;
+    }
+
+    .text {
+        text-align: left;
+    }
+
+    .date {
+        text-align: center;
+    }
+
+    .custom-combobox {
+        position: relative;
+        display: inline-block;
+    }
+
+    .custom-combobox-toggle {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        margin-left: -1px;
+        padding: 0;
+    }
+
+    .custom-combobox-input {
+        margin: 0;
+        padding: 5px 10px;
+        width: 200px;
+    }
+
+    #DistAdd {
+        display: none;
+    }
+
+    .controls {
+        margin-top: 10px;
+        border: 1px solid transparent;
+        border-radius: 2px 0 0 2px;
+        box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        height: 32px;
+        outline: none;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    #mapSearchBox {
+        background-color: #fff;
+        font-family: Roboto;
+        font-size: 15px;
+        font-weight: 300;
+        margin-left: 12px;
+        padding: 0 11px 0 13px;
+        text-overflow: ellipsis;
+        width: 300px;
+    }
+
+        #mapSearchBox:focus {
+            border-color: #4d90fe;
+        }
+
+    /*input#officeAddress, input#contactNo, input#email, input#panNo, input#vatNo {
+        height: 24px;
+        font-size: 11px;
+    }*/
+   /*#DealerCreateForm .k-multiselect-wrap li {
+    margin: 2px 2px 1px 4px !important;
+}*/
+
+    #mapReset {
+        padding: 1px 5px 1px 5px;
+        color: white;
+        background-color: #1a9492;
+        border: 1px;
+        margin-top: 4px;
+    }
+</style>
+<div ng-controller="DealerCtrl" class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+            @*<li>
+                <i class="fa fa-home"></i>
+                <a href="/sales/SalesHome/Dashboard">Home</a>
+                <i class="fa fa-angle-right"></i>
+            </li>
+            <li>
+                <a href="#">Dealer Setup</a>
+                <i class="fa fa-angle-right"></i>
+            </li>*@
+        </ul>
+        <div class="actions pull-right actionbutton" ng-hide="createPanel">
+            <div class="btn-group">
+                <a class="btn btn-circle btn-icon-only btn-default" ng-click="AddClickEvent()">
+                    <i class="fa fa-plus"></i>
+                </a>
+            </div>
+            <div class="btn-group">
+                @Html.Partial("~/Views/Shared/Controls/_SetupConfig.cshtml", "DealerSetup")
+            </div>
+        </div>
+    </div>
+    <div class="portlet light bordered main" ng-show="createPanel">
+        <div class="portlet-title">
+            <div class="caption">
+                <i class="fa fa-list-alt font-green-haze"></i>
+                <span class="caption-subject font-green-haze bold uppercase">
+                    {{pageName }}
+                </span>
+            </div>
+            <span class="actions pull-right">
+                <button type="button" id="cancelTarget" name="cancelTarget" class="btn btn-default btn-sm" ng-click="cancelClickEvent();">Cancel</button>
+
+                <button type="submit" id="saveDealerCreate" name="saveDealerCreate" ng-click="dealerCreate(DealerCreateForm.$valid)" class="btn btn-green btn-sm">{{saveAction}}</button>
+            </span>
+
+        </div><!-- /portlet-title-->
+        <div class="portlet-body">
+            <div class="row">
+                <form id="DealerCreateForm" name="DealerCreateForm" novalidate>
+
+                    @*<div class="col-sm-4 col-md-4">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    <span ng-show="DealerCreateForm.PartyTypeMultiSelect.$invalid">
+                                        <span ng-show="DealerCreateForm.PartyTypeMultiSelect.$error.required">*</span>
+                                    </span>
+                                    Dealer
+                                </label>
+                                @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                           {
+                               ShownewPartyTypeFilter = true,
+                               IsPopUp = false,
+                           })
+                            </div>
+                        </div>*@
+                    
+                    <div class="col-sm-4 col-md-4">
+                        <div class="form-group ">
+                            <label class="control-label">
+                                Dealer<span style="color:red" ng-show="DealerCreateForm.PartyTypeMultiSelect.$invalid">
+                                    <span ng-show="DealerCreateForm.PartyTypeMultiSelect.$error.required">*</span>
+                                </span>
+                            </label>
+                            <select id="PartyTypeMultiSelect" name="PartyTypeMultiSelect" kendo-multi-select k-options="partyTypeSelectOptions" slim-scroll ng-model="selectedDealer" style="width:100%;" required></select>
+                        </div>
+                    </div>
+                    <div class="col-sm-4 col-md-4">
+                        <div class="form-group ">
+                            <label class="control-label">
+                                Area<span style="color:red" ng-show="DealerCreateForm.areaMultiSelect.$invalid">
+                                    <span ng-show="DealerCreateForm.areaMultiSelect.$error.required">*</span>
+                                </span>
+                            </label>
+                            <select id="areaMultiSelect" name="areaMultiSelect" kendo-multi-select k-options="areaSelectOptions" slim-scroll ng-model="selectedArea" style="width:100%;" required></select>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-sm-4">
+                        <div class="form-group">
+                            <label class="control-label">
+                                Address <span style="color:red" ng-show="DealerCreateForm.officeAddress.$invalid">
+                                    <span ng-show="DealerCreateForm.officeAddress.$error.required">*</span>
+                                </span>
+                            </label>
+                            <input id="officeAddress" ng-model="officeAddress" name="officeAddress" class="form-control" placeholder="Office name" style="width:100%" required />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 col-sm-12">
+                            <div class="col-md-4 col-sm-4">
+                                <div class="form-group">
+                                    <label class="control-label">
+                                        Contact <span style="color:red" ng-show="DealerCreateForm.contactNo.$invalid">
+                                            <span ng-show="DealerCreateForm.contactNo.$error.required">*</span>
+                                        </span>
+                                    </label>
+                                    <input type="number"  id="contactNo" ng-model="contactNo" name="contactNo" class="form-control" placeholder="Contact no" style="width:100%" required />
+                                </div>
+                            </div>
+                            <div class="col-md-4 col-sm-4">
+                                <div class="form-group">
+                                    <label class="control-label">
+                                        Email <span style="color:red" ng-show="DealerCreateForm.email.$invalid">
+                                            <span ng-show="DealerCreateForm.email.$error.email">*</span>
+                                        </span>
+                                    </label>
+                                    <input id="email" type="email" ng-model="email" name="email" class="form-control" placeholder="Email" style="width:100%" />
+                                </div>
+                            </div>
+                            <div class="col-md-4 col-sm-4">
+                                <div class="form-group">
+                                    <label class="control-label">Pan no</label>
+                                    <input id="panNo" ng-model="panNo" name="panNo" class="form-control" placeholder="Pan no" style="width:100%"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 col-sm-12">
+                            <div class="col-md-4 col-sm-4">
+                                <div class="form-group">
+                                    <label class="control-label">Vat no</label>
+                                    <input id="vatNo" ng-model="vatNo" name="vatNo" class="form-control input-sm" placeholder="Vat no" style="width:100%"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                <div class="col-md-12">
+                    <div class="boxborder">
+                        <input type="hidden" id="mapcenter" />
+                        <div class="col-md-12 latlong text-right">
+                            <span id="maplat">27.70076900000002</span>, <span id="maplng">85.30151329101568</span>
+                            <button id="mapReset" class="fa fa-refresh" ng-click="mapReset();"></button>
+                        </div>
+                        <div id="dealer-map-panel">
+                            <div id="dealer-map-fullscreen"></div>
+                            <input id="mapSearchBox" class="controls" type="text" placeholder="Search Box">
+                            <div id="map-canvas"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+    </div><!--/portlet-body-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-body form">
+                    <div class="row">
+                        <kendo-grid options="grid" id="grid"></kendo-grid>
+                        @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        var a = location.hash;
+        var b = location.pathname;
+        var url = (b + a);
+        $(".active").removeClass();
+        $("a[href='" + url + "']").parent().addClass("active");
+        $("a[href='" + url + "']").parent().parent().slideDown("slow");
+    </script>
+
+    <script src="@Scripts.Url("~/JS/reportFilter.js")"></script>
+    <script src="@Scripts.Url("~/JS/DateFilter.js?V5")" type="text/javascript"></script>
+</div>
+<script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js?V2")"></script>

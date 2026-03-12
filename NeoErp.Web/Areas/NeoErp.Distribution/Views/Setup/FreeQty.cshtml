@@ -1,0 +1,1083 @@
+@using NeoErp.Core.Models.CustomModels
+@using NeoErp.Core.Models;
+
+@{
+    ViewBag.Title = "Free Quantity Management";
+}
+
+
+@using NeoErp.Core.Models;
+@{
+    ViewBag.Title = "Dashboard";
+    var mainmenu = ViewBag.showmenu as string;
+
+    Layout = "~/Views/Shared/_LayoutNew.cshtml";
+
+    var myAreaName = string.Empty;
+    object areaObj;
+    if (ViewContext.RouteData.Values.TryGetValue("area", out areaObj))
+    {
+        myAreaName = areaObj.ToString();
+    }
+    else
+    {
+        myAreaName = "NeoErp.sales.Module";
+    }
+
+
+    List<string> listChartAvailable_TD = new List<string>();
+    bool UserChartSettingAvailable = false;
+    string fullWidth = "full-width";
+    if (TempData["AvailableChart"] != null)
+    {
+        listChartAvailable_TD = (List<string>
+            )TempData["AvailableChart"];
+        UserChartSettingAvailable = true;
+        fullWidth = "full-width";
+    }
+}
+
+<div>
+
+    <style>
+        .portlet-body {
+            padding: 0px !important;
+        }
+        /* Embedded CSS from NeoErpStyle.css and custom styles */
+        .portlet.light.bordered {
+            border: 1px solid #e1e1e1 !important;
+            box-shadow: 0 0 5px 1px #ddd;
+            background: #fff;
+            padding: 15px;
+            margin-bottom: 20px;
+            padding-top: 0px !important;
+        }
+
+        .form-control {
+            height: 30px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            padding: 4px 8px;
+            font-size: 13px;
+        }
+
+        .btn.green {
+            background-color: #46a930 !important;
+            border-color: #46a930 !important;
+            color: #fff !important;
+        }
+
+            .btn.green:hover {
+                background-color: #3d9128 !important;
+                border-color: #3d9128 !important;
+            }
+
+        .btn.default {
+            background-color: #e1e5ec;
+            border-color: #e1e5ec;
+            color: #666;
+        }
+
+        /* Filter Section */
+        .filter-section {
+            background: #f9f9f9;
+            padding: 2px;
+            border-radius: 4px;
+            margin-bottom: 0px;
+            border: 1px solid #e1e1e1;
+        }
+
+        /* Customer Dropdown */
+        #customerDropdown {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-top: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #customerDropdown .dropdown-item:hover {
+            background-color: #f5f5f5 !important;
+         }
+
+        #customerInput {
+            position: relative;
+        }
+
+        /* Form Dropdown */
+        #formDropdown {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-top: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+            #formDropdown label:hover {
+                background-color: #f5f5f5 !important;
+            }
+
+        #formInput {
+            position: relative;
+        }
+
+        /* Tree Table Styles */
+        .tree-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            background: #fff;
+        }
+
+        .tree-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+            .tree-table thead {
+                background: #f5f5f5;
+                position: sticky;
+                top: 0;
+                z-index: 10;
+            }
+
+                .tree-table thead th {
+                    padding: 4px 6px;
+                    text-align: left;
+                    border-bottom: 2px solid #ddd;
+                    font-weight: bold;
+                    color: #333;
+                    font-size: 13px;
+                }
+
+            .tree-table tbody tr {
+                border-bottom: 1px solid #f0f0f0;
+                transition: background 0.2s;
+            }
+
+                .tree-table tbody tr:hover {
+                    background: #f9f9f9;
+                }
+
+            .tree-table tbody td {
+                padding: 2px 4px;
+                vertical-align: middle;
+            }
+
+                .tree-table tbody td:first-child {
+                    min-width: 400px;
+                }
+
+        /* Tree node with indentation */
+        .tree-node {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+            .tree-node.parent {
+                font-weight: bold;
+                color: #333;
+            }
+
+            .tree-node.child {
+                color: #555;
+            }
+
+            .tree-node.grandchild {
+                color: #666;
+            }
+
+            .tree-node.item {
+                color: #000;
+                font-weight: 500;
+            }
+
+        .tree-toggle {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: bold;
+            color: #46a930;
+            margin-right: 5px;
+            flex-shrink: 0;
+            font-size: 16px;
+            line-height: 24px;
+        }
+
+        .tree-indent {
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        /* Input fields in table */
+        .tree-table input[type="number"],
+        .tree-table input[type="text"] {
+            width: 100%;
+            max-width: 100px;
+            height: 24px;
+            padding: 2px 4px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 12px;
+            margin: 0;
+        }
+
+        .tree-table input[readonly] {
+            background: #f5f5f5;
+            cursor: not-allowed;
+        }
+
+        /* Group rows (non-items) */
+        .tree-row.group-row {
+            background: #fafafa;
+        }
+
+            .tree-row.group-row td {
+                color: #666;
+            }
+
+        /* Item rows */
+        .tree-row.item-row {
+            background: #fff;
+        }
+
+            .tree-row.item-row:hover {
+                background: #f5f9f5;
+            }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+            .loading-spinner.show {
+                display: block;
+            }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #46a930;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @@keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Alert Messages */
+        .alert-custom {
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            display: none;
+        }
+
+            .alert-custom.show {
+                display: block;
+            }
+
+        .alert-success {
+            color: #3c763d;
+            background-color: #dff0d8;
+            border-color: #d6e9c6;
+        }
+
+        .alert-error {
+            color: #a94442;
+            background-color: #f2dede;
+            border-color: #ebccd1;
+        }
+
+        /* Action Button Section */
+        .action-buttons {
+            text-align: right;
+            margin-top: 10px;
+            padding: 10px 15px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+
+        .btn {
+            padding: 8px 20px;
+            margin-left: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        /* Responsive */
+        @@media (max-width: 768px) {
+            .item-detail-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .item-detail-input {
+                max-width: 100%;
+            }
+        }
+    </style>
+
+            <div class="portlet light bordered">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-gift font-green"></i>
+                        <span class="caption-subject font-green bold uppercase">Free Quantity Management</span>
+                    </div>
+                    <div class="actions" style="display: flex; gap: 8px;">
+                        <button type="button" class="btn btn-success btn-sm" onclick="downloadExcelTemplate()">
+                            <i class="fa fa-file-excel-o"></i> Download Excel Template
+                        </button>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="uploadExcel()">
+                            <i class="fa fa-upload"></i> Upload Excel
+                        </button>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <!-- Alert Messages -->
+                    <div id="alertMessage" class="alert-custom">
+                        <span id="alertText"></span>
+                    </div>
+
+                    <!-- Filter Section -->
+                    <div class="filter-section">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="customerInput">Customer <span class="text-danger">*</span></label>
+                                    <input type="text" id="customerInput" class="form-control" placeholder="Type to search customer..." autocomplete="off" />
+                                    <input type="hidden" id="customerCode" />
+                                    <div id="customerDropdown" class="dropdown-menu" style="display: none; position: absolute; width: 100%; max-height: 300px; overflow-y: auto; z-index: 1000;">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Form Code <span class="text-danger">*</span></label>
+                                    <div style="position: relative;">
+                                        <input type="text" id="formInput" class="form-control" placeholder="Click to select forms..." readonly style="cursor: pointer; background: #fff;" />
+                                        <input type="hidden" id="selectedFormCodes" />
+                                        <div id="formDropdown" class="dropdown-menu" style="display: none; position: absolute; width: 100%; max-height: 250px; overflow-y: auto; z-index: 1000; padding: 10px;">
+                                            <div style="margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #e1e1e1;">
+                                                <button type="button" class="btn btn-xs btn-default" onclick="selectAllForms(); event.stopPropagation();">
+                                                    <i class="fa fa-check-square"></i> Select All
+                                                </button>
+                                                <button type="button" class="btn btn-xs btn-default" onclick="deselectAllForms(); event.stopPropagation();" style="margin-left: 5px;">
+                                                    <i class="fa fa-square-o"></i> Deselect All
+                                                </button>
+                                            </div>
+                                            <div id="formCheckboxContainer">
+                                                <!-- Checkboxes will be populated here -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Loading Spinner -->
+                    <div id="loadingSpinner" class="loading-spinner">
+                        <div class="spinner"></div>
+                        <p>Loading data...</p>
+                    </div>
+
+                    <!-- Item Tree View -->
+                    <div id="itemTreeContainer" class="tree-container" style="display: none;">
+                        <table class="tree-table">
+                            <thead>
+                                <tr>
+                                    <th>Item List</th>
+                                    <th>Unit</th>
+                                    <th>Quantity</th>
+                                    <th>Free Qty</th>
+                                    <th>Free Unit</th>
+                                </tr>
+                            </thead>
+                            <tbody id="itemTree">
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="action-buttons" id="actionButtons" style="display: none;">
+                        <button type="button" class="btn default" onclick="clearForm()">
+                            <i class="fa fa-times"></i> Clear
+                        </button>
+                        <button type="button" class="btn green" onclick="saveFreeQuantity()">
+                            <i class="fa fa-save"></i> Save
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+@section Scripts {
+    <script src="@Scripts.Url("~/Areas/NeoErp.sales.Module/Scripts/DashboardController.js")"></script>
+
+    <script>
+        // Required for DashboardController.js to load dynamic menu
+        var moduleCode = '01';
+
+        var itemsData = [];
+        var savedQuantities = {};
+        var debounceTimer = null;
+
+
+        $(document).ready(function () {
+            initializeCustomerInput();
+            initializeFormInput();
+            loadFormSetup();
+            loadItemTree();
+
+            // Close dropdowns when clicking outside
+            $(document).on('click', function (e) {
+                if (!$(e.target).closest('#customerInput, #customerDropdown').length) {
+                    $('#customerDropdown').hide();
+                }
+                if (!$(e.target).closest('#formInput, #formDropdown').length) {
+                    $('#formDropdown').hide();
+                }
+            });
+        });
+        function showLoading(show) {
+            if (show) {
+                $('#loadingSpinner').addClass('show');
+            } else {
+                $('#loadingSpinner').removeClass('show');
+            }
+        }
+        function downloadExcelTemplate() {
+            window.location.href = '/Areas/NeoErp.Distribution/Content/freeqty.xlsx';
+        }
+        function uploadExcel() {
+            var fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.xlsx,.xls';
+
+            fileInput.onchange = function (e) {
+                var file = e.target.files[0];
+                if (file) {
+                    var formData = new FormData();
+                    formData.append('file', file);
+
+                    showLoading(true);
+
+                    $.ajax({
+                        url: '/api/Setup/UploadExcel',
+                        type: 'POST',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function (response) {
+                            showLoading(false);
+                            if (response.success) {
+                                showAlert(response.message || 'Excel file uploaded successfully', 'success');
+                                // Reload data if needed
+                                loadItemTree();
+                            } else {
+                                showAlert(response.message || 'Error uploading Excel file', 'error');
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            showLoading(false);
+                            showAlert('Error uploading Excel file: ' + error, 'error');
+                        }
+                    });
+                }
+            };
+
+            fileInput.click();
+        }
+        // Initialize Form Input Dropdown
+        function initializeFormInput() {
+            $('#formInput').on('click', function (e) {
+                e.stopPropagation();
+                $('#formDropdown').toggle();
+            });
+
+            // Prevent dropdown from closing when clicking inside it
+            $('#formDropdown').on('click', function (e) {
+                e.stopPropagation();
+            });
+        }
+
+        // Initialize Customer Input with Manual Debouncing
+        function initializeCustomerInput() {
+            var debounceTimer = null;
+
+            $('#customerInput').on('input', function () {
+                var searchTerm = $(this).val();
+
+                // Clear previous timer
+                if (debounceTimer) {
+                    clearTimeout(debounceTimer);
+                }
+
+                // Set new timer for 500ms debounce
+                debounceTimer = setTimeout(function () {
+                    searchCustomers(searchTerm);
+                }, 500);
+            });
+
+            $('#customerInput').on('focus', function () {
+                if ($(this).val().length > 0) {
+                    searchCustomers($(this).val());
+                }
+            });
+        }
+
+        // Search Customers with Server Call
+        function searchCustomers(searchTerm) {
+            $.ajax({
+                url: '/api/Setup/all_customer',
+                type: 'GET',
+                data: { searchTerm: searchTerm },
+                dataType: 'json',
+                success: function (data) {
+                    displayCustomerDropdown(data);
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error searching customers:', error);
+                }
+            });
+        }
+
+        // Display Customer Dropdown
+        function displayCustomerDropdown(customers) {
+            var $dropdown = $('#customerDropdown');
+            $dropdown.empty();
+
+            if (customers.length === 0) {
+                $dropdown.append('<a class="dropdown-item" style="padding: 10px; color: #999;">No customers found</a>');
+            } else {
+                $.each(customers, function (index, customer) {
+                    var $item = $('<a class="dropdown-item" href="javascript:void(0);" style="padding: 10px; display: block; color: #333; text-decoration: none;"></a>');
+                    $item.text(customer.CUSTOMER_CODE + ' - ' + customer.CUSTOMER_EDESC);
+                    $item.data('code', customer.CUSTOMER_CODE);
+                    $item.data('name', customer.CUSTOMER_EDESC);
+
+                    $item.on('click', function () {
+                        selectCustomer($(this).data('code'), $(this).data('name'));
+                    });
+
+                    $item.on('mouseenter', function () {
+                        $(this).css('background-color', '#f5f5f5');
+                    });
+
+                    $item.on('mouseleave', function () {
+                        $(this).css('background-color', '');
+                    });
+
+                    $dropdown.append($item);
+                });
+            }
+
+            $dropdown.show();
+        }
+
+        // Select Customer
+        function selectCustomer(code, name) {
+            $('#customerInput').val(code + ' - ' + name);
+            $('#customerCode').val(code);
+            $('#customerDropdown').hide();
+
+            // Trigger load if form is also selected
+            if ($('#formSelect').val()) {
+                loadSavedData();
+            }
+        }
+
+        // Load Form Setup
+        function loadFormSetup() {
+            $.ajax({
+                url: '/api/Setup/get_form_setup',
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    var container = $('#formCheckboxContainer');
+                    container.empty();
+
+                    if (data.length === 0) {
+                        container.append('<p style="margin: 0; color: #999;">No forms available</p>');
+                        return;
+                    }
+
+                    $.each(data, function (index, item) {
+                        var checkboxHtml = '<div style="margin-bottom: 5px;">' +
+                            '<label style="font-weight: normal; margin: 0; cursor: pointer; display: block;">' +
+                            '<input type="checkbox" class="form-checkbox" value="' + item.form_code + '" data-desc="' + item.form_edesc + '" onchange="updateSelectedForms()" style="margin-right: 5px;" />' +
+                            '<span>' + item.form_code + ' - ' + item.form_edesc + '</span>' +
+                            '</label>' +
+                            '</div>';
+                        container.append(checkboxHtml);
+                    });
+                },
+                error: function (xhr, status, error) {
+                    showAlert('Error loading forms: ' + error, 'error');
+                }
+            });
+        }
+
+        // Select All Forms
+        function selectAllForms() {
+            $('.form-checkbox').prop('checked', true);
+            updateSelectedForms();
+        }
+
+        // Deselect All Forms
+        function deselectAllForms() {
+            $('.form-checkbox').prop('checked', false);
+            updateSelectedForms();
+        }
+
+        // Update Selected Forms Display
+        function updateSelectedForms() {
+            var selectedForms = [];
+            var selectedDescriptions = [];
+
+            $('.form-checkbox:checked').each(function () {
+                var formCode = $(this).val();
+                var formDesc = $(this).data('desc');
+                selectedForms.push(formCode);
+                selectedDescriptions.push(formDesc);
+            });
+
+            // Update the textbox display with form names
+            var displayText = selectedDescriptions.length > 0 ? selectedDescriptions.join(', ') : '';
+            $('#formInput').val(displayText);
+            if (selectedForms.length === 0) {
+                $('#formInput').attr('placeholder', 'Click to select forms...');
+            }
+
+            // Store selected form codes in hidden field
+            $('#selectedFormCodes').val(selectedForms.join(','));
+
+            // Load saved data if customer and forms are selected
+            if ($('#customerCode').val() && selectedForms.length > 0) {
+                loadSavedData();
+            }
+        }
+
+        // Load Item Tree
+        function loadItemTree() {
+            showLoading(true);
+
+            $.ajax({
+                url: '/api/Setup/get_item_tree',
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    itemsData = data;
+                    renderItemTree(data);
+                    showLoading(false);
+                    $('#itemTreeContainer').show();
+                    $('#actionButtons').show();
+                },
+                error: function (xhr, status, error) {
+                    showLoading(false);
+                    showAlert('Error loading items: ' + error, 'error');
+                }
+            });
+        }
+
+        // Render Item Tree
+        function renderItemTree(items) {
+            var treeHtml = buildTreeStructure(items);
+            $('#itemTree').html(treeHtml);
+        }
+
+        // Build Tree Structure - Flat Table Version
+        function buildTreeStructure(items) {
+            var tree = {};
+            var html = '';
+
+            // Group items by hierarchy
+            $.each(items, function (index, item) {
+                var parentCode = item.parent_code;
+
+                if (!tree[parentCode]) {
+                    tree[parentCode] = [];
+                }
+                tree[parentCode].push(item);
+            });
+
+            // Build HTML starting from root (parent_code = '00')
+            html = buildTreeNode('00', tree, 0, null);
+
+            return html;
+        }
+
+        // Build Tree Node Recursively - Flat Row Version
+        function buildTreeNode(parentCode, tree, level, parentItemCode) {
+            var html = '';
+
+            if (!tree[parentCode]) {
+                return html;
+            }
+
+            $.each(tree[parentCode], function (index, item) {
+                var hasChildren = tree[item.child_code] && tree[item.child_code].length > 0;
+                var isItem = item.group_sku_flag === 'I';
+                var indent = level * 25; // 25px per level
+
+                var nodeClass = 'tree-node';
+                var rowClass = 'tree-row';
+
+                if (isItem) {
+                    rowClass += ' item-row';
+                    nodeClass += ' item';
+                } else {
+                    rowClass += ' group-row';
+                    if (level === 0) nodeClass += ' parent';
+                    else if (level === 1) nodeClass += ' child';
+                    else nodeClass += ' grandchild';
+                }
+
+                // Start table row with parent tracking
+                html += '<tr class="' + rowClass + '" ';
+                html += 'data-item-code="' + item.item_code + '" ';
+                html += 'data-level="' + level + '" ';
+                html += 'data-has-children="' + hasChildren + '" ';
+                if (parentItemCode) {
+                    html += 'data-parent-item="' + parentItemCode + '" ';
+                    html += 'style="display: none;" '; // Initially hide child rows
+                }
+                html += '>';
+
+                // First column: Item name with tree structure
+                html += '<td>';
+                html += '<div class="' + nodeClass + '">';
+                html += '<span class="tree-indent" style="width: ' + indent + 'px;"></span>';
+
+                if (hasChildren && !isItem) {
+                    html += '<span class="tree-toggle" onclick="toggleNode(this)">+</span>';
+                } else if (!isItem) {
+                    html += '<span class="tree-toggle" style="visibility: hidden;">-</span>';
+                } else {
+                    html += '<span class="tree-indent" style="width: 24px;"></span>';
+                }
+
+                html += '<span>' + item.item_edesc + '</span>';
+                html += '</div>';
+                html += '</td>';
+
+                // For items, show Unit, Quantity, Free Qty, Free Unit columns with inputs
+                if (isItem) {
+                    var savedQty = savedQuantities[item.item_code] || {};
+                    var availableUnits = item.available_units || [];
+                    var defaultUnit = item.unit || '';
+
+                    // Unit column (dropdown if multiple units available)
+                    html += '<td>';
+                    if (availableUnits.length > 0) {
+                        html += '<select class="form-control unit-select" data-item-code="' + item.item_code + '" data-default-unit="' + defaultUnit + '">';
+                        availableUnits.forEach(function (unitItem) {
+                            var selected = (savedQty.main_unit || defaultUnit) === unitItem.mu_code ? 'selected' : '';
+                            html += '<option value="' + unitItem.mu_code + '" data-serial="' + unitItem.serial_no + '" ' + selected + '>' + unitItem.mu_code + '</option>';
+                        });
+                        html += '</select>';
+                    } else {
+                        html += '<input type="text" class="form-control" value="' + defaultUnit + '" readonly />';
+                    }
+                    html += '</td>';
+
+                    // Quantity column (editable)
+                    html += '<td>';
+                    html += '<input type="number" class="form-control qty-input" data-item-code="' + item.item_code + '" data-unit="' + defaultUnit + '" value="' + (savedQty.qty || '') + '" placeholder="Enter qty" />';
+                    html += '</td>';
+
+                    // Free Qty column (editable)
+                    html += '<td>';
+                    html += '<input type="number" class="form-control free-qty-input" data-item-code="' + item.item_code + '" value="' + (savedQty.free_qty || '') + '" placeholder="Enter free qty" />';
+                    html += '</td>';
+
+                    // Free Unit column (dropdown if multiple units available)
+                    html += '<td>';
+                    if (availableUnits.length > 0) {
+                        html += '<select class="form-control free-unit-select" data-item-code="' + item.item_code + '" data-default-unit="' + defaultUnit + '">';
+                        availableUnits.forEach(function (unitItem) {
+                            var selected = (savedQty.free_unit || defaultUnit) === unitItem.mu_code ? 'selected' : '';
+                            html += '<option value="' + unitItem.mu_code + '" data-serial="' + unitItem.serial_no + '" ' + selected + '>' + unitItem.mu_code + '</option>';
+                        });
+                        html += '</select>';
+                    } else {
+                        html += '<input type="text" class="form-control" value="' + defaultUnit + '" readonly />';
+                    }
+                    html += '</td>';
+                } else {
+                    // For group rows, empty cells
+                    html += '<td></td><td></td><td></td><td></td>';
+                }
+
+                html += '</tr>';
+
+                // Render children as flat rows
+                if (hasChildren) {
+                    html += buildTreeNode(item.child_code, tree, level + 1, item.item_code);
+                }
+            });
+
+            return html;
+        }
+
+        // Toggle Tree Node - Flat Row Version
+        function toggleNode(element) {
+            var $element = $(element);
+            var $row = $element.closest('tr');
+            var itemCode = $row.data('item-code');
+            var isExpanded = $element.text() === '-';
+
+            if (isExpanded) {
+                // Collapse: hide all descendant rows
+                hideChildren(itemCode);
+                $element.text('+');
+            } else {
+                // Expand: show direct children only
+                $('tr[data-parent-item="' + itemCode + '"]').show();
+                $element.text('-');
+            }
+        }
+
+        // Hide all children recursively
+        function hideChildren(parentItemCode) {
+            $('tr[data-parent-item="' + parentItemCode + '"]').each(function () {
+                var $childRow = $(this);
+                $childRow.hide();
+
+                // If this child has children and is expanded, collapse it too
+                var childItemCode = $childRow.data('item-code');
+                var hasChildren = $childRow.data('has-children');
+                if (hasChildren) {
+                    var $toggle = $childRow.find('.tree-toggle');
+                    if ($toggle.text() === '-') {
+                        $toggle.text('+');
+                    }
+                    hideChildren(childItemCode);
+                }
+            });
+        }
+
+        // Load Saved Data
+        function loadSavedData() {
+            var customerCode = $('#customerCode').val();
+            var selectedForms = [];
+            $('.form-checkbox:checked').each(function () {
+                selectedForms.push($(this).val());
+            });
+
+            if (!customerCode || selectedForms.length === 0) {
+                return;
+            }
+
+            // For now, load data from the first selected form only
+            // TODO: Could be enhanced to merge data from all selected forms
+            var formCode = selectedForms[0];
+
+            showLoading(true);
+
+            $.ajax({
+                url: '/api/Setup/load_free_quantity_data',
+                type: 'GET',
+                data: {
+                    customerCode: customerCode,
+                    formCode: formCode
+                },
+                dataType: 'json',
+                success: function (data) {
+                    savedQuantities = {};
+
+                    $.each(data, function (index, item) {
+                        savedQuantities[item.item_code] = item;
+                    });
+
+                    // Re-render tree with saved data
+                    renderItemTree(itemsData);
+                    showLoading(false);
+
+                    if (data.length > 0) {
+                        var msg = 'Loaded ' + data.length + ' saved records';
+                        if (selectedForms.length > 1) {
+                            msg += ' from ' + formCode + ' (first selected form)';
+                        }
+                        showAlert(msg, 'success');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    showLoading(false);
+                    showAlert('Error loading saved data: ' + error, 'error');
+                }
+            });
+        }
+
+        // Save Free Quantity
+        function saveFreeQuantity() {
+            var customerCode = $('#customerCode').val();
+            var selectedForms = [];
+            $('.form-checkbox:checked').each(function () {
+                selectedForms.push($(this).val());
+            });
+
+            if (!customerCode) {
+                showAlert('Please select a Customer', 'error');
+                return;
+            }
+
+            if (selectedForms.length === 0) {
+                showAlert('Please select at least one Form Code', 'error');
+                return;
+            }
+
+            var dataToSave = [];
+
+            // Collect data from input fields in the tree-table
+            $('.qty-input').each(function () {
+                var $input = $(this);
+                var itemCode = $input.data('item-code');
+                var defaultUnit = $input.data('unit');
+                var qty = $input.val();
+
+                // Find the free qty input and unit selects in the same row
+                var $row = $input.closest('tr');
+                var freeQty = $row.find('.free-qty-input[data-item-code="' + itemCode + '"]').val();
+
+                // Get selected unit and serial
+                var $unitSelect = $row.find('.unit-select[data-item-code="' + itemCode + '"]');
+                var selectedUnit, mainSerial;
+                if ($unitSelect.length > 0) {
+                    selectedUnit = $unitSelect.val();
+                    var $selectedOption = $unitSelect.find('option:selected');
+                    mainSerial = selectedUnit === $unitSelect.data('default-unit') ? 0 : parseInt($selectedOption.data('serial'));
+                } else {
+                    selectedUnit = defaultUnit;
+                    mainSerial = 0;
+                }
+
+                // Get selected free unit and serial
+                var $freeUnitSelect = $row.find('.free-unit-select[data-item-code="' + itemCode + '"]');
+                var selectedFreeUnit, freeSerial;
+                if ($freeUnitSelect.length > 0) {
+                    selectedFreeUnit = $freeUnitSelect.val();
+                    var $selectedFreeOption = $freeUnitSelect.find('option:selected');
+                    freeSerial = selectedFreeUnit === $freeUnitSelect.data('default-unit') ? 0 : parseInt($selectedFreeOption.data('serial'));
+                } else {
+                    selectedFreeUnit = defaultUnit;
+                    freeSerial = 0;
+                }
+
+                if (qty || freeQty) {
+                    dataToSave.push({
+                        item_code: itemCode,
+                        qty: parseFloat(qty) || 0,
+                        unit: selectedUnit,
+                        free_qty: parseFloat(freeQty) || 0,
+                        free_unit: selectedFreeUnit,
+                        main_serial: mainSerial,
+                        free_serial: freeSerial
+                    });
+                }
+            });
+
+            if (dataToSave.length === 0) {
+                showAlert('Please enter at least one quantity', 'error');
+                return;
+            }
+
+            console.log('Data to save:', dataToSave);
+            console.log('Customer Code:', customerCode);
+            console.log('Selected Form Codes:', selectedForms);
+
+            showLoading(true);
+
+            $.ajax({
+                url: '/api/Setup/save_free_quantity',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    data: dataToSave,
+                    customerCode: customerCode,
+                    formCodes: selectedForms
+                }),
+                dataType: 'json',
+                success: function (response) {
+                    console.log('Server response:', response);
+                    showLoading(false);
+
+                    if (response.success) {
+                        var successMsg = response.message || 'Data saved successfully for ' + selectedForms.length + ' form(s)';
+                        showAlert(successMsg, 'success');
+                        loadSavedData();
+                    } else {
+                        showAlert(response.message || 'Error saving data', 'error');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('AJAX Error:', error);
+                    console.error('Response:', xhr.responseText);
+                    showLoading(false);
+                    showAlert('Error saving data: ' + error, 'error');
+                }
+            });
+        }
+
+        // Clear Form
+        function clearForm() {
+            $('#customerInput').val('');
+            $('#customerCode').val('');
+            $('#customerDropdown').hide();
+            $('#formInput').val('').attr('placeholder', 'Click to select forms...');
+            $('#formDropdown').hide();
+            $('.form-checkbox').prop('checked', false);
+            updateSelectedForms();
+            savedQuantities = {};
+            renderItemTree(itemsData);
+            $('#alertMessage').removeClass('show');
+        }
+
+        // Show Alert
+        function showAlert(message, type) {
+            var $alert = $('#alertMessage');
+            var $alertText = $('#alertText');
+
+            $alert.removeClass('alert-success alert-error');
+
+            if (type === 'success') {
+                $alert.addClass('alert-success');
+            } else {
+                $alert.addClass('alert-error');
+            }
+
+            $alertText.text(message);
+            $alert.addClass('show');
+
+            setTimeout(function () {
+                $alert.removeClass('show');
+            }, 5000);
+        }
+
+        // Show/Hide Loading
+        function showLoading(show) {
+            if (show) {
+                $('#loadingSpinner').addClass('show');
+            } else {
+                $('#loadingSpinner').removeClass('show');
+            }
+        }
+    </script>
+}

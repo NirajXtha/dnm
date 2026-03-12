@@ -1,0 +1,308 @@
+﻿
+@{
+
+}
+
+<style>
+    .tabbable-line > .nav-tabs > li.active, .tabbable-line > .nav-tabs > li:hover {
+        border-bottom: 4px solid #F3565D !important;
+    }
+
+    .nav-tabs {
+        border-bottom: 1px solid whitesmoke;
+        position: relative;
+        width: 500px;
+    }
+
+    div.dataTables_length select {
+        width: 45px;
+    }
+
+    div.dataTables_filter input {
+        width: 15em;
+        height: 1.5em;
+    }
+
+    .size {
+        padding: 20px;
+    }
+</style>
+@using (Html.BeginForm("UploadMappingExcel", "WarrantyChecker", FormMethod.Post, new { enctype = "multipart/form-data" }))
+{
+    <div class="form-horizontal">
+
+
+
+        <div class="form-group">
+
+            <div class="control-label col-md-2">Excel:</div>
+            <div class="col-md-10">
+                <input type="file" id="FileUpload" name="FileUpload" class="" />
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" value="Upload" id="btnSubmit1" class="btn btn-primary" />
+
+            </div>
+        </div>
+    </div>
+}
+
+<div class="page-content-wrapper" id="operationContent">
+    <div class="page-content full-width" style="min-height:310px">
+        <div ng-app="defectApp">
+            <div ng-controller="defectCtrl" class="row row-details">
+                <!-- BEGIN PAGE CONTENT-->
+                <div class="a col-lg-12">
+                    <div class="divList">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <!-- BEGIN EXAMPLE TABLE PORTLET-->
+                                <div class="portlet portlet-sortable  light bordered">
+                                    <div class="portlet-title">
+                                        <div class="caption">
+                                            <i class="fa fa-globe"></i>
+                                            <span class="caption-subject bold uppercase font-green-haze">Defect Setup</span>
+                                        </div>
+
+                                        <div class="form-actions right" style="float:right;">
+                                            <button type="button" class="btn default" ng-click="cancelDefect()">Cancel</button>
+                                            <button ng-click="addDefectSetup(defectform.$valid)" type="button" class="btn blue">
+                                                <i class="fa fa-check"></i> Save
+                                            </button>
+                                        </div>
+
+                                    </div>
+
+                                    <div class="col-xs-4"></div>
+                                    <script src="~/Scripts/underscore-min.js"></script>
+                                    <div class="size">
+                                        <div class="portlet-body">
+
+
+                                            <!-- BEGIN FORM-->
+                                            <form action="#" class="horizontal-form" name="defectform" novalidate>
+
+                                                <div class="form-body">
+                                                    <!--<h3 class="form-section">Bank Info</h3>-->
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <div class="form-group">
+                                                                <label for="DEFECT_DESC" class="control-label">
+                                                                    <input type="hidden" ng-model="defectCode" />
+                                                                    Defect Description<span style="color:red"
+                                                                                            ng-show="defectform.DEFECT_DESC.$invalid">
+                                                                        <span ng-show="defectform.DEFECT_DESC.$error.required">*</span>
+                                                                    </span>
+                                                                </label>
+                                                                <input type="text" id="DEFECT_DESC" name="DEFECT_DESC" ng-model="DEFECT_DESC" class="form-control" required>
+                                                                <span style="color:red" ng-show="defectform.DEFECT_DESC.$touched">
+                                                                    <span ng-show="defectform.DEFECT_DESC.$error.required">This field is required.</span>
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="form-group">
+                                                                <label class="control-label">
+                                                                    Defect Name<span style="color:red" ng-show="defectform.defectname.$invalid">
+                                                                        <span ng-show="defectform.defectname.$error.required">*</span>
+                                                                    </span>
+                                                                </label>
+                                                                <input type="text" id="defectname" name="defectname" ng-model="defectname" class="form-control" placeholder="" required>
+                                                                <span style="color:red" ng-show="defectform.defectname.$touched">
+                                                                    <span ng-show="defectform.defectname.$error.required">This field is required.</span>
+                                                                </span>
+
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+
+                                            </form>
+                                            <!-- END FORM-->
+
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <!-- BEGIN EXAMPLE TABLE PORTLET-->
+                                                    <div class="portlet light bordered">
+                                                        <div class="portlet-body">
+                                                            <table class="display table table-striped table-bordered table-hover" datatable="ng" id="lcbank">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>Defect Code</th>
+                                                                        <th>Defect Name</th>
+                                                                        <th>Defect Description</th>
+                                                                        <th>Action</th>
+                                                                    </tr>
+                                                                </thead>
+
+                                                                <tbody>
+                                                                    <tr ng-repeat="items in LcDefects">
+                                                                        <td>{{items.DEFECT_CODE}}</td>
+                                                                        <td>{{items.DEFECT_NAME}}</td>
+                                                                        <td>{{items.DEFECT_DESC}}</td>
+
+                                                                        <td>
+                                                                            <a ng-click="getDefectByDefectCode(items);"><i class="fa fa-edit"></i></a>
+                                                                            <a ng-click="deleteByDefectCode(items.DEFECT_CODE)"><i class="fa fa-trash"></i> </a>
+                                                                        </td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    // Code goes here
+    var app = angular.module('defectApp', ['kendo.directives', 'ngMessages', 'datatables']);
+
+    app.controller('defectCtrl', function ($scope, $http, $filter, $q, DefectService) {
+
+        //$scope.GetBanks();// = [];
+        init();
+
+        $scope.LcDefects = null;
+
+        //Start Add LC Setups //
+        $scope.addDefectSetup = function (isValid) {
+
+            if (isValid) {
+                var createUrldefect = window.location.protocol + "//" + window.location.host + "/api/Defect/CreateDefect";
+
+                var defect = {
+                    DEFECT_CODE: $scope.defectCode,
+                    DEFECT_NAME: $scope.defectname,
+                    DEFECT_DESC: $scope.DEFECT_DESC,
+                };
+                var response = $http({
+                    method: "post",
+                    url: createUrldefect,
+                    data: JSON.stringify(defect),
+                    dataType: "json"
+                });
+
+                return response.then(function (data) {
+                    
+                    if (data == "success") {
+                        $scope.defectCode = "";
+                        $scope.defectname = "";
+                        $scope.DEFECT_DESC = "";
+                        displayPopupNotification("Succesfully Saved LC Bank.", "success");
+                        init().DefectService.getallLCBanks();
+                    }
+                    else {
+                        displayPopupNotification("Error Occured.", "error");
+
+                    }
+
+                });
+
+            }
+            else {
+                toastr.error("Fields cannot be empty.");
+            }
+
+        };
+
+        //End Add LC Setups //
+
+        function init() {
+            DefectService.getAlldefect().then(function (d) {
+                
+                $scope.LcDefects = d.data;
+
+            }, function () { alert("Error at: Get All Defect List Error") });
+            function isEmpty(obj) {
+                return Object.keys(obj).length === 0;
+            }
+
+
+        }
+
+
+        $scope.deleteByDefectCode = function (defectCode) {
+            bootbox.confirm("Are you sure you want to delete?", function (result) {
+                if (result) {
+                    DefectService.deleteByDefectCode(defectCode).then(function (data) {
+                        displayPopupNotification("Succesfully Deleted LC Status.", "success");
+                        init().DefectService.getallLCBanks();
+
+                    }, function (e) {
+
+                    });
+                }
+            });
+
+        }
+
+        //End Delete LC Setups //
+
+        //Start Cancel LC Setups //
+        $scope.cancelDefect = function () {
+            $scope.defectCode = 0;
+            $scope.defectname = "";
+        }
+        $scope.getDefectByDefectCode = function (defectCode) {
+            $scope.defectCode = defectCode.DEFECT_CODE;
+            $scope.defectname = defectCode.DEFECT_NAME;
+            $scope.DEFECT_DESC = defectCode.DEFECT_DESC;
+        }
+
+        //End Cancel LC Setups //
+    });
+
+    app.service('DefectService', function ($http) {
+        var fac = {};
+        fac.getAlldefect = function () {
+            return $http.get('/api/Defect/GetDefect');
+        }
+
+        fac.deleteByDefectCode = function (DefectCode) {
+            
+            return $http({
+                url: '/api/Defect/DeletedDefect',
+                method: "GET",
+                params: { DefectCode: BankCode }
+            });
+        }
+
+
+        return fac;
+
+    });
+
+    $.urlParam = function (name) {
+        var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+        return results[1] || 0;
+    }
+
+    $(document).ready(function () {
+        if ($.urlParam('m') == 's') {
+            displayPopupNotification("Updated Successfully.", "success");
+        }
+        else {
+            displayPopupNotification("Invalid Excel.", "error");
+        }
+    });
+
+
+
+
+</script>
+

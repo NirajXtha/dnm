@@ -1,0 +1,149 @@
+﻿<style>
+    #detailModal-dialog {
+        width: 90%;
+    }
+</style>
+<div kendo-window="dlgWindow" k-visible="false" k-modal="true">
+    <form name="typeSelectionForm" novalidate ng-submit="DrawMainGrid()">
+        <div class="form-group">
+            <label class="col-md-5 control-label">Select Cr. Limit Type</label>
+            <div class="col-md-7">
+                <div class="mt-radio-inline">
+                    <label class="mt-radio">
+                        <input type="radio" name="radioLimitType" value="F"> Funded
+                        <span></span>
+                    </label>
+                    <label class="mt-radio">
+                        <input type="radio" name="radioLimitType" value="N"> Non-Funded
+                        <span></span>
+                    </label>
+                    <label class="mt-radio">
+                        <input type="radio" name="radioLimitType" value="B" checked="checked"> Both
+                        <span></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <br />
+        <div class="form-group col-sm-11 col-md-11 col-xs-11">
+            <input type="submit" value="Ok" class="btn green pull-right" />
+        </div>
+    </form>
+</div>
+
+<div kendo-window="dlgRenewWindow" k-visible="false" k-modal="true">
+    <form name="RenewForm" novalidate ng-submit="Renew(limitId,RenewDate)">
+        <input type="text" id="limitId" ng-model="limitId" style="display:none;" />
+        <div class="form-group col-sm-10 col-md-10 col-xs-10">
+            <label for="renewDate" class="col-md-4 control-label">Expiry Date</label>
+            <div class="col-md-8">
+                <input type="text" id="renewDate" name="renewDate" class="maskdate" ng-model="RenewDate" style="width:100%;" required />
+                <div class="help-block" ng-messages="RenewForm.renewDate.$error"
+                     ng-if="RenewForm.renewDate.$touched">
+                    <p ng-message="required">Please select a date</p>
+                </div>
+            </div>
+        </div>
+        <div class="form-group col-sm-10 col-md-10 col-xs-10">
+            <input type="submit" value="Renew" class="btn green pull-right" />
+        </div>
+    </form>
+</div>
+
+
+<div class="modal fade" id="detailModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" id="detailModal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close right-dismis" data-dismiss="modal" aria-hidden="true"></button>
+                <h4 class="modal-title">History</h4>
+            </div>
+            <div class="modal-body" style="overflow-x:hidden; overflow-y:scroll;">
+                <div class="portlet-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <kendo-grid options="DetailGridOptions" id="detailGrid">
+                            </kendo-grid>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+    <div class="col-md-12">
+        <div class="transaction">
+            <div class="page-content-wrapper">
+                <div class="portlet light bordered">
+                    <div class="portlet-title">
+                        <div class="caption">
+                            <span class="caption-subject font-green bold uppercase text-center" style="text-align:center">
+                                <i class="fa fa-outdent"></i>
+                                Bank Limit List
+                            </span>
+                        </div>
+                        <span class="pull-right">
+                            <input type="button" value="Select Type" ng-click="dlgWindow.open()" class="btn btn-sm btn-default" />
+                            <a href="/Transaction/Home/Index/#!Transaction/TransactionSetup" class="btn btn-sm green">Add</a>
+                        </span>
+                    </div>
+
+                    <div class="portlet-body">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div id="grid" @*ng-controller="KendoCtrl"*@>
+                                    <script id="action-template" type="text/x-kendo-template">
+                                        @*<a href="/Transaction/Home/Index/\\#!Transaction/TransactionSetup?transNo=#:TransactionNumber#&type=#:Type#">
+                                            <i style="padding-left:10px;font-size: 18px;" class="fa fa-pencil-square-o"></i>
+                                        </a>*@
+                                        <a data-toggle="modal" data-target="\\#renewModal" ng-click="dlgRenewWindow.open()" onclick='setLimitId("#:Id#","#:ExpiryDate#")'>
+                                            <span style="padding-left:10px;font-size:12px;">Renew</span>
+                                        </a>
+                                        <a data-toggle="modal" data-target="\\#detailModal" ng-click='DetailGrid("#:Sn#","#:TransactionNumber#","#:Type#")'>
+                                            <span style="padding-left:10px;font-size:12px;">History</span>
+                                        </a>
+                                    </script>
+                                    <kendo-grid options="mainGridOptions" id="mainGrid">
+                                    </kendo-grid>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    $(document).on('click', '.maskdate', function () {
+        var me = $(this);
+        me.datepicker({
+            showOn: 'focus',
+            altFormat: "mm/dd/yy",
+            dateFormat: "mm/dd/yy",
+            changeMonth: true,
+            changeYear: true,
+            showButtonPanel: true
+
+        }).focus();
+    }).on('focus', '.maskdate', function () {
+        var me = $(this);
+        me.mask('99/99/9999');
+    }).on('change', '.maskdate', function () {
+        var date = $(this).val();
+        var arr = date.split('/');
+        var month = (arr[0]);
+        var day = (arr[1]);
+        if (month > 12 || day > 32) {
+            $(this).val(new Date('mm/dd/yy'));
+        }
+    });
+    
+    function setLimitId(limitId,date) {
+        debugger;
+        $("#limitId").val(limitId).trigger('change');
+        $("#renewDate").val(date).trigger('change');
+    }
+</script>

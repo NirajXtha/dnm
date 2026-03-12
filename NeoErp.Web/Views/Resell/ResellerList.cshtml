@@ -1,0 +1,104 @@
+﻿
+@{
+    ViewBag.Title = "ResellerList";
+    Layout = "~/Views/Shared/_LayoutNew.cshtml";
+}
+<script tye="text/javascript">
+    $(document).ready(function () {
+        debugger;
+        $.ajax({
+            type: 'GET',
+            url: window.location.protocol + "//" + window.location.host +"/api/MobileReseller/GetResellerRegisteredList?id=",
+            datatype: JSON,
+            success: function (data) {
+                debugger;
+                $('#tbllst tbody').empty();
+                var rows = null;
+                $.each(data.data, function (i, v) {
+                    debugger;
+                    i = i + 1;
+                    rows = "<tr><td>" + i + ".</td><td>" + v.UserName + "</td><td>" + v.Email
+                        + "</td><td>" + v.Address + "</td><td>" + v.RegistrationDate
+                        + "</td><td>" + v.Registration_Type + "</td>";
+                    if (v.Approved_Flag == 'N') {
+                        rows = rows + "<td><a href='#' title='Not Approved' onclick='ApproveUser(this)' data-assigned-id=" + v.Id
+                            + "><i class='fa fa-square-o' style='font-size:20px; color:black;'></i></a>"
+                            + "</td>"
+                            + "</tr>";
+                    }
+                    else {
+                        rows = rows + "<td><a href='#' title='Approved' onclick='ApproveUser(this)' data-assigned-id=" + v.Id
+                            + "><i class='fa fa-check-square-o' style='font-size:20px; color:black;'></i></a>"
+                            + "</td>"
+                            + "</tr>";
+                    }                        
+                    $('#tbllst tbody').append(rows);
+                });
+            },
+            error: function (data) {}
+        });
+    });
+    function ApproveUser(elem) {
+        debugger;
+        var className = $(elem).find('i').attr('class');
+        if (className == 'fa fa-check-square-o') {
+            alert('Already Approved.');
+        }
+        else {
+            if (confirm('Do you want to approve record?')) {
+                var id = $(elem).data('assigned-id');
+                $.ajax({
+                    type: "POST",
+                    url: window.location.protocol + "//" + window.location.host + '/api/MobileReseller/ApproveRegisteredReseller?id=' + id,
+                    contentType: "application/json; charset-utf-8",
+                    datatype: JSON,
+                    success: function (response) {
+                        debugger;
+                        if (response.status == true) {
+                            $(elem).find('i').removeClass();
+                            $(elem).find('i').addClass('fa fa-check-square-o');
+                        }
+                    },
+                    failure: function (response) {
+                        alert(response);
+                    },
+                    error: function (response) {
+                        alert(response.Text);
+                    }
+                });
+            }
+            else return false;
+        }        
+    }
+</script>
+<h2>ResellerList</h2>
+
+<div>
+    <table class="table" id="tbllst">
+        <thead>
+            <tr>
+                <th>S.N.</th>
+                <th>
+                    UserName
+                </th>
+                <th>
+                   Email
+                </th>
+                <th>
+                    Address
+                </th>
+                <th>
+                    Resgistration Date
+                </th>
+                <th>
+                    Registration Type
+                </th>
+                <th>Approve</th>
+            </tr>
+        </thead>
+        <tbody>
+            
+        </tbody>
+    </table>
+</div>
+

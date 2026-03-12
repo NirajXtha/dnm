@@ -1,0 +1,623 @@
+﻿@using NeoErp.Core.Models;
+@using NeoErp.Core.Domain;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    var actionPageId = "CustomerWiseTargetChart";
+    IWorkContext _workContext = EngineContext.Current.Resolve<IWorkContext>();
+}
+<style>
+    .slimScrollBar {
+        border-radius: 5px !important;
+        background-color: #333 !important;
+    }
+
+    .slimScrollDiv, #customerMultiSelect {
+        height: auto !important;
+    }
+
+    ul.dropdown-menu.custom {
+        margin-top: 8px !important;
+        border: none;
+        box-shadow: none !important;
+    }
+
+    .dropdown-menu.custom:before {
+        left: 58px !important;
+    }
+
+    .download-btn {
+        margin: 0px !important;
+        padding-top: -2px !important;
+        padding-left: 0px;
+        padding-right: 0px;
+        margin-top: -5px !important;
+        margin-left: 5px !important;
+    }
+
+    .dropdown-menu.custom {
+        left: -27px !important;
+        top: 20px !important;
+    }
+
+    .dropdown > .dropdown-menu:before, .dropdown-toggle > .dropdown-menu:before, .btn-group > .dropdown-menu:before {
+        position: absolute;
+        top: -8px;
+        left: 30px;
+        right: auto;
+        display: inline-block !important;
+        border-right: 8px solid transparent;
+        border-bottom: 8px solid #e0e0e0;
+        border-left: 8px solid transparent;
+        content: '';
+    }
+
+    i.icon-arrow-down {
+        color: #acacac;
+    }
+
+    .btn-group-custom button.btn {
+        padding: 7px 7px !important;
+        float: left;
+    }
+
+    .dropdown-menu.custom {
+        left: -55px !important;
+    }
+
+    a.btnCategoryDatagrid {
+        color: #acacac !important;
+    }
+    .custom-portal-modal
+    {
+        width:450px !important;
+    }
+        .custom-portal-modal .ftitle h5 {
+            font-size:14px;
+            font-weight:400;
+        }
+        .custom-portal-modal .bottom-gappingtwo
+        {
+            padding-bottom:15px !important;
+        } 
+
+</style>
+
+<!-- Modal -->
+<div class="modal fade" id="exampleModalLong" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content custom-portal-modal">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                <h4 class="modal-title"><span class="fa fa-bar-chart"></span> Options</h4>
+            </div>
+            <div class="modal-body bottom-gappingtwo">
+                <div class="row">
+                    <div class="chart_button clearfix">
+
+                        <div class="col-sm-6 col-md-6">
+                            <div class="choosevaluefield">
+                                <div class="ftitle">
+                                    <h5> Choose Value Field</h5>
+                                </div>
+                                <div class="btn-group sales-category-options" data-toggle="buttons">
+                                    <button type="button" class="btn btn-sm default red-stripe active">
+                                        <i class="fa fa-cart-arrow-down"></i>
+                                        <input id="SalesColumn_CustomerWiseTargetChart" name="fieldType_CategoryChart"
+                                               type="radio" value="QUANTITY" checked="checked" autocomplete="off" /> Quantity
+                                    </button>
+                                    <button type="button" class="btn btn-sm default green-stripe">
+                                        <input id="CollectionColumn_CustomerWiseTargetChart" name="fieldType_CategoryChart"
+                                               type="radio" value="ActualAmount" autocomplete="off" /> Total
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- show labels & inStack option-->
+                        <div class="col-sm-6 col-md-6">
+                            <div class="input-group chart-option">
+                                <div class="icheck-inline">
+                                    <label>
+                                        <input id="showlables_CategoryChart" type="checkbox" autocomplete="off" /> Show Labels
+                                    </label>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-green applydp" data-dismiss="modal" id="apply_@actionPageId">Apply</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- /.modal-dialog -->
+<div class="portlet portlet-sortable light bordered" id="CustomerWiseTargetChartDiv">
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="icon-bar-chart font-green-haze"></i>
+            <span class="caption-subject bold uppercase font-green-haze custom-modal">Target VS. Purchase (MONTHLY)</span>
+        </div>
+        <div class="tools">
+            <a href="javascript:;" class="collapse"></a>
+            <a class="btnGrid btnCategoryDatagrid" href="javascript:;" data-type="Chart" data-title="Grid">
+                <i class="fa fa-table"></i>
+            </a>
+
+            <div class="btn-group">
+                <a class="btn dropdown-toggle download-btn" title="Download" data-toggle="dropdown" href="javascript(0)">
+                    <i class="icon-arrow-down Elvcustom"></i>
+                </a>
+                <ul class="dropdown-menu custom Elvslidetoggle">
+                    <div class="btn-group-custom">
+                        <button type="button" onclick="GlobalExport($(this))" data-id="Category_Chart" class="export-pdf btn default red-stripe"><i class="fa fa-file-pdf-o"></i>PDF</button>
+                        <button type="button" onclick="GlobalExport($(this))" data-id="Category_Chart" class="export-img btn default blue-stripe"><i class="fa fa-image-o"></i>Image</button>
+                        <button type="button" onclick="GlobalExport($(this))" data-id="Category_Chart" class="export-svg btn default green-stripe">SVG</button>
+                    </div>
+                </ul>
+            </div>
+            <a href="javascript:;" class="reload"></a>
+            <a href="javascript:;" class="fullscreen"></a>
+            <a data-toggle="modal" class="config" data-target="#exampleModalLong"></a>
+            <a href="javascript:;" class="remove"></a>
+        </div>
+    </div>
+    <div class="portlet-body">
+        <script type="text/x-kendo-template" id="toolbar-template">
+            <div class="k-header k-grid-toolbar pull-right">
+                <a class="k-button k-button-icontext k-grid-excel" href="javascript:">
+                    <i class="fa fa-file-excel-o"></i>
+                </a>
+            </div>
+        </script>
+        <div class="k-content wide">
+            <div id="CustomerWiseTargetChart"></div>
+            <div class="AmountFigureType"></div>
+            <div class="DisplayFilterContent"><a href="javascript:;" data-toggle="tooltip" title=""></a></div>
+        </div>
+    </div>
+</div>
+
+<script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/ExportToAll.js")"></script>
+<script>
+        var dataProvider = [];
+        var toggleFlag_CategoryChart = true;
+        var IsStack = true;
+        var Category_series = [{
+            field: "ActualAmount",
+            name: "ActualAmount"
+        }];
+        var categoryUrlData = null;
+        function createCategoryChart(urlData) {
+            urlData = (urlData == undefined) ? "?customerCode=&itemCode=&categoryCode=&companyCode=&branchCode=01&partyTypeCode=&formCode=" : urlData;
+            categoryUrlData = urlData;
+            var mainUrl = window.location.protocol + "//" + window.location.host + "/api/Distributor/GetDistributortarget?DistributorCode=@_workContext.CurrentUserinformation.DistributerNo";
+            var childUrl = window.location.protocol + "//" + window.location.host + "/api/SalesDashboard/GetProductSalesByCategory";
+            var IsDataGrid = $('.btnCategoryDatagrid').data("type");
+            //reportFilter = reportFilter == undefined ? ReportFilter.filterAdditionalData() : reportFilter;
+            var dataSource = new kendo.data.DataSource({
+                transport: {
+                    read: {
+                        url: mainUrl, // <-- Get data from here.
+                        dataType: "json", // <-- The default was "jsonp".
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8"
+                    },
+                },
+                requestStart: function () {
+                    if (IsDataGrid != "Grid") {
+                        kendo.ui.progress($("#CustomerWiseTargetChart"), true);
+                    }
+                },
+                requestEnd: function () {
+                    kendo.ui.progress($("#CustomerWiseTargetChart"), false);
+                },
+
+                serverSorting: false,
+                serverPaging: true,
+                serverFiltering: false,
+                pageSize: 20,
+            });
+            dataProvider = dataSource;
+            $("#CustomerWiseTargetChart .DisplayFilterContent a").text("");
+            // data-grid set option on ceate funciton
+
+            if (IsDataGrid == "Grid") {
+                GenerateDataGrid_Category(dataSource);
+                return;
+            }
+
+            LoadCategoryChart(dataSource,urlData);
+            //Dynamic export function DSK
+              GlobalExport = function (evt) {
+                exportToAll({
+                    ExportClass: evt[0].classList[0],
+                    PageId: '@actionPageId',
+                    urlInfo: mainUrl,
+                    headerName: $('.caption-subject').text(),
+                })
+            };
+
+        }
+        function LoadCategoryChart(dataSource, urlData) {
+
+             urlData = (urlData == undefined) ? "?customerCode=&itemCode=&categoryCode=&companyCode=&branchCode= branchCodes&partyTypeCode=&formCode=" : urlData;
+            var childUrl = window.location.protocol + "//" + window.location.host + "/api/SalesDashboard/GetProductSalesByCategory";
+            $("#CustomerWiseTargetChart").kendoChart({
+                chartArea: {
+                    height: ($("#CustomerWiseTargetChart").hasClass("portlet-fullscreen")) ? 550 : 350,
+                },
+                onDrag: function (e) {
+                    var chart = e.sender;
+                    var ds = chart.dataSource;
+                    var options = chart.options;
+
+                    var categoryRange = e.axisRanges.CategoryAxis;
+
+                    if (categoryRange) {
+                        var xMin = categoryRange.min;
+                        var xMax = categoryRange.max;
+
+                        options.categoryAxis.min = xMin;
+                        options.categoryAxis.max = xMax;
+
+                        ds.filter(viewModel.getFilter(xMin, xMax));
+                    }
+                },
+                pannable: {
+                    lock: "y"
+                },
+                zoomable: {
+                    mousewheel: {
+                        lock: "y"
+                    },
+                    selection: {
+                        lock: "y"
+                    }
+                },
+                dataSource: dataSource,
+                legend: {
+                    position: "bottom"
+                },
+                seriesDefaults: {
+                    type: "column",
+                    labels: {
+                        visible: $("#showlables_CategoryChart").prop("checked"),
+                        template: "#=(value)#",
+                        rotation: '270',
+                        padding: {
+                            left: -5
+                        },
+                    },
+                    style: "smooth",
+                },
+                valueAxis: [{
+                    min: 100,
+                    max: 10000,
+                    majorGridLines: {
+                        visible: false
+                    },
+                    minorTicks: {
+                        visible: true
+                    },
+                    plotBands: [{
+                        from: 1000, to: 3000,  opacity: 0.55
+                    }, {
+                            from: 3000, to: 5000,  opacity: 0.4
+                    }, {
+                            from: 5000, to: 8000, opacity: 0.25
+                    }, {
+                            from: 8000, to: 11000,  opacity: 0.1
+                    }]
+                }],
+                series: [{
+                    field: "QUANTITY",
+                    categoryField: "NepaliMonth",
+                    name: "Target Quantity"
+                    }, {
+                        field: "ACHIVE_QTY",
+                        categoryField: "NepaliMonth",
+                        name: "Actual Quantity"
+                    }],
+                tooltip: {
+                    visible: true,
+                    background: "green",
+                    //format: "Actual: #:dataItem.ActualAmount# <br/> Target: #:dataItem.TargetAmount#",
+                },
+                categoryAxis: {
+                    field: "NepaliMonth",
+                    labels: {
+                        rotation: -50,
+                    },
+                    title: { text: $("#CustomerWiseTargetChart").data("kendoChart") == undefined ? "" : $("#CustomerWiseTargetChart").data("kendoChart").options.categoryAxis.title.text }
+                },
+                dataBound: function (e) {
+                    var data = e.sender.dataSource.view();
+                    var TargetAmount = 0;
+                    var actualAmount = 0;
+                    var QUANTITY = 0;
+                    var max = 0;
+                    jQuery.map(data, function (obj) {
+                        if (obj.TargetAmount > TargetAmount)
+                            TargetAmount = obj.TargetAmount;
+                    });
+
+                    jQuery.map(data, function (obj) {
+                        if (obj.ActualAmount > actualAmount)
+                            actualAmount = obj.ActualAmount;
+                    });
+
+                    jQuery.map(data, function (obj) {
+                        if (obj.QUANTITY > QUANTITY)
+                            QUANTITY = obj.QUANTITY;
+                    });
+                    if (this.options.series[0].field == "QUANTITY")
+                        var maxValue = QUANTITY; //Math.max(QUANTITY, TargetAmount);
+                    else
+                        var maxValue = TargetAmount;
+                    var majorunit = Math.max(6, maxValue / 6);
+                    e.sender.options.valueAxis.majorUnit = Math.round(majorunit);
+                    e.sender.options.valueAxis.max = Math.round(maxValue + majorunit);
+                   // e.sender.options.series[0].tooltip.format = "Actual: {0} <br/> Target: {1}";
+                },
+
+            });
+        };
+        function refreshCategoryChart() {
+            if ($(".btnCategoryDatagrid").attr("data-type") == "Grid")// data-grid toogle chart option in data-grid attribute in div
+            {
+                $(".btnCategoryDatagrid").attr("data-type", "Chart");
+                //createCategoryChart();
+                LoadCategoryChart($("#CustomerWiseTargetChart").data("kendoChart"));
+                return;
+            }
+            var chart = $("#CustomerWiseTargetChart").data("kendoChart"),
+                type = $("input[name=seriesType_CategoryType]:checked").val(),
+                fieldType = $("input[name=fieldType_CategoryChart]:checked").val(),
+                stack = $("#salesCollectionInStack_CategoryChart").prop("checked"),
+                IsLebelShow = $("#showlables_CategoryChart").prop("checked");
+            for (var i = 0, length = chart.options.series.length; i < length; i++) {
+                chart.options.series[i].type = type;
+                chart.options.series[i].labels.visible = IsLebelShow;
+                chart.options.series[i].stack = stack;
+            };
+
+            if (fieldType == "QUANTITY") {
+                chart.options.series[0].field = "QUANTITY";
+                chart.options.series[0].name = "Target Quantity";
+
+                chart.options.series[1].field = "ACHIVE_QTY";
+                chart.options.series[1].name = "Actual Quantity";
+            }
+            else {
+
+                chart.options.series[0].field = "TargetAmount";
+                chart.options.series[0].name = "Target Amount";
+
+                chart.options.series[1].field = "ActualAmount";
+                chart.options.series[1].name = "Actual Amount";
+            }
+            
+            chart.refresh();
+        }
+
+        $('#CustomerWiseTargetChart').closest('.portlet').find('.reload').click(function () {
+            refreshGridChart();
+        });
+
+        function refreshGridChart () {
+               var urlData = "?customerCode=&itemCode=&categoryCode=&companyCode=&branchCode=branchCodes&partyTypeCode=&formCode=";
+            $('.btnCategoryDatagrid').data("type", "Chart");
+            $("#CustomerWiseTargetChart").data("kendoChart").options.categoryAxis.title.text = "";
+            createCategoryChart(urlData);
+            RefreshChartFilterControl('@actionPageId');
+        }
+
+        $('#CustomerWiseTargetChart').closest('.portlet').find('.fullscreen').click(function () {
+            setTimeout(function () {
+                refreshGridChart();
+            })
+            if ($(this).hasClass("on")) {
+                $("#CustomerWiseTargetChart").data("kendoChart").options.chartArea.height = 350;
+            }
+            else {
+                $("#CustomerWiseTargetChart").data("kendoChart").options.chartArea.height = 600;
+
+            }
+            $("#CustomerWiseTargetChart").data("kendoChart").dataSource.read();
+            $("#CustomerWiseTargetChart").data("kendoChart").refresh();
+        });
+        $('#CustomerWiseTargetChart').closest('.portlet').find('.config').click(function () {
+            $(this).closest('.portlet').css('zIndex', 10040);
+        });
+        $('#CustomerWiseTargetChart').closest('.portlet').find('.icon-arrow-down').click(function () {
+            $(this).closest('.portlet').css('zIndex', 10040);
+        });
+
+        $('#apply_@actionPageId').click(function () {
+            ChartFilter('@actionPageId', "createCategoryChart");
+        });
+
+        //LoadDataGrid_Category function for data-grid
+    function LoadDataGrid_Category(dataSource) {
+        debugger;
+            $("#CustomerWiseTargetChart").html('');
+            $('.btnCategoryDatagrid').data("type", "Grid");
+            var title = $("#CustomerWiseTargetChart").data("kendoChart").options.categoryAxis.field;
+            var column = (title != "") ? title : "Description";
+            var excelName = (title == "") ? "Category Sales Report" : "Category Sales Report (" + title + ")";
+            $("#CustomerWiseTargetChart").kendoGrid({
+                dataSource: dataSource == undefined ? $("#CustomerWiseTargetChart").data("kendoChart").dataSource : dataSource,
+                //height: $("#CustomerWiseTargetChart").hasClass("portlet-fullscreen") ? 550 : 350,
+                groupable: false,
+                sortable: true,
+                toolbar: [{ template: kendo.template($("#toolbar-template").html()) }],
+                excel: {
+                    fileName: excelName,
+                    allPages: true
+                },
+                // selectable: "multiple",
+                columns: [{
+                    field: column,
+                    title: "Month",
+                    width: 240
+                }, {
+                    field: "TargetAmount",
+                    title: "Target Amount",
+                    format: "{0:n0}",
+                    attributes: {
+                        style: "text-align: right;"
+                    },
+                }, {
+                    field: "ActualAmount",
+                    title: "Actual Amount",
+                    format: "{0:n}",
+                    attributes: {
+                        style: "text-align: right;"
+                    },
+                }, {
+                    field: "QUANTITY",
+                    title: "Target Quantity",
+                    format: "{0:n}",
+                    attributes: {
+                        style: "text-align: right;"
+                    },
+                }, {
+                    field: "ACHIVE_QTY",
+                    title: "Actual Quantity",
+                    format: "{0:n}",
+                    attributes: {
+                        style: "text-align: right;"
+                    },
+                }]
+            });
+        }
+
+        function GenerateDataGrid_Category(datasource) { // data-grid function onClick event of button DataGrid
+
+            $('.btnCategoryDatagrid').data("type", "Grid");
+            if (datasource == undefined || datasource == null) {
+                datasource = $("#CustomerWiseTargetChart").data("kendoChart").dataSource;
+            }
+            LoadDataGrid_Category(datasource);
+        }
+
+        function CategoryChartData() {
+            $('.btnCategoryDatagrid').data("type", "Chart");
+            var urlData = "?customerCode=&itemCode=&categoryCode=&companyCode=&branchCode=branchCodes&partyTypeCode=&formCode=";
+            createCategoryChart(urlData);
+            RefreshChartFilterControl('@actionPageId');
+        }
+
+
+        $(".btnCategoryDatagrid").click(function () {
+            var datasource = $("#CustomerWiseTargetChart").data("kendoChart").dataSource;
+            var type = $('.btnCategoryDatagrid').data("type");
+            if(type=="Chart"){
+                GenerateDataGrid_Category(datasource);
+                $('.btnCategoryDatagrid').data("type","Grid");
+            }
+            else{
+                LoadCategoryChart(datasource);
+                $('.btnCategoryDatagrid').data("type","Chart");
+            }
+            $("i", this).toggleClass("icon-bar-chart");
+        });
+
+
+        $(document).ready(function () {
+            $('[title="Download"]').tooltip({
+                trigger: 'hover'
+            });
+            $('.icon-arrow-down.Elvcustom').click(function () {
+                $('.dropdown-menu.custom.Elvslidetoggle').slideToggle(200);
+            });
+            createCategoryChart();
+            $(document).bind("kendo:skinChange", createCategoryChart);
+            $(".sales-category-options").bind("change", function () {
+                if ($('.btnCategoryDatagrid').data("type") == "Chart")
+                    refreshCategoryChart();
+                else
+                    chart_grid_option_change("btnCategoryDatagrid", "createCategoryChart");
+            });
+            $("#showlables_CategoryChart").bind("change", function () {
+                var temp = $('.btnCategoryDatagrid').data("type");
+                $('.btnCategoryDatagrid').data("type", "temp");
+                refreshCategoryChart();
+                $('.btnCategoryDatagrid').data("type", temp);
+            });
+
+        });
+
+        $("#CustomerWiseTargetChart").on('dblclick', ".k-state-selected", function (e) {
+            var grid = $("#CustomerWiseTargetChart").data("kendoGrid");
+            var selectedItem = grid.dataItem(grid.select());
+            if (selectedItem.Code != null) {
+                var childUrl = window.location.protocol + "//" + window.location.host + "/api/SalesDashboard/GetProductSalesByCategory";
+                var monthFiled = "MonthEnglish";
+                var temp = childUrl + "?categoryCode=" + selectedItem.Code + categoryUrlData.replace('?', '&').replace('categoryCode', 'categoryCode2');
+                var dataSourcetest = new kendo.data.DataSource({
+                    transport: {
+                        read: {
+                            url: temp,
+                            dataType: "json", // <-- The default was "jsonp".
+                            type: "POST",
+                            contentType: "application/json; charset=utf-8"
+                        },
+                        parameterMap: function (options, type) {
+                            var paramMap = JSON.stringify($.extend(options, reportFilter));
+                            delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                            delete paramMap.$format; // <-- remove format parameter.
+                            return paramMap;
+                        }
+                    },
+                    serverSorting: false,
+                    serverPaging: true,
+                    serverFiltering: false,
+                    selectable: "multiple",
+                    pageSize: 20,
+                });
+                //
+
+                $("#CustomerWiseTargetChart").html('');
+                $("#CustomerWiseTargetChart").kendoGrid({
+                    dataSource: dataSourcetest,
+                    height: ($("#CustomerWiseTargetChart").hasClass("portlet-fullscreen")) ? 550 : 350,
+                    groupable: false,
+                    sortable: true,
+                    //selectable: "multiple",
+                    pageable: {
+                        refresh: true,
+                        pageSizes: true,
+                        buttonCount: 5,
+                    },
+                    columns: [{
+                        field: "Description",
+                        title: "Product [Category : " + selectedItem.Description + "]",
+                        width: 250
+                    },
+                    {
+                        field: "QUANTITY",
+                        title: "Quantity",
+                        format: "{0:n0}",
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                    },
+                    {
+                        field: "ActualAmount",
+                        title: "ActualAmount",
+                        format: "{0:n}",
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                    },
+                    ]
+                });
+            }
+        })
+</script>

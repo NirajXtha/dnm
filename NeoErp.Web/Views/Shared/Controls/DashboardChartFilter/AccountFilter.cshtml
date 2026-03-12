@@ -1,0 +1,256 @@
+﻿@{
+
+    var pageid = ViewData["ActionPageId"];
+}
+<div>
+    <div id="accountTreeView_@pageid" style="max-height:400px;"></div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        var autoCompleteurl = window.location.protocol + "//" + window.location.host + "/api/CalendarReport/GetAccountFilterTreeList";
+        var autoCompletedataSource = new kendo.data.DataSource({
+            transport: {
+                read: {
+                    url: autoCompleteurl,
+                    dataType: "json"
+                }
+            }
+            //serverFiltering: true
+        });
+
+        function OnMultiSelect(e) { // amrit
+            var dataItem = this.dataItem(e.item.index());
+            //Make the selected customer checked in treeView here...
+            var treeView = $("#accountTreeView_@pageid").data('kendoTreeView');
+            var dataSource = treeView.dataSource;
+            var treeViewItem = dataSource.get(dataItem.ACC_CODE);
+            if (typeof treeViewItem != 'undefined') {
+                $("#_" + treeViewItem.uid).attr('checked', true);
+            }
+            //loadAccountTree();
+        };
+
+        $("#accountMultiSelect_@pageid").kendoMultiSelect({
+            dataSource: autoCompletedataSource,
+            dataTextField: "ACC_EDESC",
+            dataValueField: "ACC_CODE",
+            height: 600,
+            headerTemplate: '<div class="col-md-offset-4"><strong>Acconts...</strong></div>',
+            //filter: "startswith",
+            placeholder: "Select Accounts...",
+            autoClose: false,
+            select: OnMultiSelect,
+            dataBound: function () {
+                var current = this.value();
+                this._savedOld = current.slice(0);
+            },
+            change: OnMultiSelectChange
+        });
+
+        function OnMultiSelectChange(e) {
+            var previous = this._savedOld;
+            var current = this.value();
+            var diff = [];
+            if (previous) {
+                diff = $(previous).not(current).get();
+            }
+            this._savedOld = current.slice(0);
+            if (diff.length > 0) {
+                //Make the removed customer unChecked in treeView here...
+                var treeView = $("#accountTreeView_@pageid").data('kendoTreeView');
+                var dataSource = treeView.dataSource;
+                var mydataItem = dataSource.get(diff);
+                $("#_" + mydataItem.uid).attr('checked', false);
+            }
+            loadAccountTree();
+        }
+
+        //var loadAllCustomersUrl = window.location.protocol + "//" + window.location.host + "/api/SalesHome/GetAllCustomerNodes";
+        //var loadCustomerByNodeUrl = window.location.protocol + "//" + window.location.host + "/api/SalesHome/GetAllCustomersByCustId";
+
+        var loadAllAccountsUrl = window.location.protocol + "//" + window.location.host + "/api/CalendarReport/GetAccountFilterTreeListData";
+        var loadAccountByNodeUrl = window.location.protocol + "//" + window.location.host + "/api/CalendarReport/GetAllAccountFilterByACCId";
+
+        var localData;
+        var AccountTreeDataSource = new kendo.data.HierarchicalDataSource({
+            transport: {
+                read: function (options) {
+                    if (typeof options.data.ACC_CODE != 'undefined') {
+                        var id = options.data.ACC_CODE;
+                        var data = getNextLevel(localData, id);
+                        if (data) {
+                            options.success(data);
+                        } else {
+                            var currentnode = get(localData, id);
+                            $.ajax({
+                                url: loadAccountByNodeUrl,
+                                data: {
+                                    acc_code: currentnode.ACC_CODE,
+                                    level: currentnode.LEVEL,
+                                    master_code: currentnode.MASTER_ACC_CODE
+                                },
+                                type: "GET",
+                                success: function (result) {
+                                    setTimeout(function () {
+                                        var res = result;
+                                        addToLocalData(localData, res, currentnode.ACC_CODE);
+                                        options.success(res);
+                                    }, 1000);
+
+                                },
+                                error: function (result) {
+                                    options.error(result);
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        $.ajax({
+                            url: loadAllAccountsUrl,
+                            type: "GET",
+                            success: function (result) {
+                                setTimeout(function () {
+                                    options.success(result);
+                                }, 1000);
+                                localData = result;
+                            },
+                            error: function (result) {
+                                options.error(result);
+                            }
+                        });
+                    }
+                }
+            },
+            schema: {
+                model: {
+                    id: "ACC_CODE",
+                    hasChildren: "hasAccount",
+                    masterCustCode: "MASTER_ACC_CODE"
+                }
+            }
+        });
+
+        $("#accountTreeView_@pageid").kendoTreeView({
+            checkboxes: {
+                checkChildren: true
+            },
+            autoScroll: true,
+            autoBind: false,
+            dataSource: AccountTreeDataSource,
+            dataTextField: "ACC_EDESC",
+            height: 400,
+            scrollable: {
+                virtual: true
+            },
+            check: onCheck,
+        });
+
+        $("#accountTreeView_@pageid").data("kendoTreeView").expand(".treeNode");
+
+        function onCheck(e) {
+            var accountMultiSelect = $("#accountMultiSelect_@pageid").data("kendoMultiSelect");
+            var mvalue = accountMultiSelect.value();
+            var dataItemAccountID = this.dataItem(e.node).ACC_CODE;
+            if (this.dataItem(e.node).checked == true) {
+                var res = [];
+                res.push(dataItemCustomerID);
+                res.forEach(function (dataItem) {
+                    var temp = $.merge($.merge([], mvalue), [dataItem]);
+                    temp = $.unique(temp);
+                    accountMultiSelect.value(temp);
+                    accountMultiSelect._savedOld = temp.slice(0)
+                });
+
+            }
+            if (this.dataItem(e.node).checked == false) {
+                mvalue.forEach(function (dataItem) {
+                    var temp = $.grep(mvalue, function (a) { return a != dataItem });
+                    temp = $.unique(temp);
+                    accountMultiSelect.value(temp);
+                });
+
+            }
+        }
+
+
+        //Checks if nodes are already in the tree and returns it if it does
+        function getNextLevel(data, id) {
+            if (!id) {
+                return data;
+            } else {
+                for (var i = 0; i < data.length; i++) {
+                    if (data[i].ACC_CODE == id) {
+                        return data[i].Items;
+                    } else if (data[i].Items) {
+                        for (var j = 0; j < data[i].Items.length; j++) {
+                            if (data[i].Items[j].ACC_CODE == id) {
+                                return data[i].Items[j].Items;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        //Get Tree object for a given customerId
+        function get(data, id) {
+            if (id) {
+                for (var i = 0; i < data.length; i++) {
+                    if (data[i].ACC_CODE == id) {
+                        return data[i];
+                    }
+                    else if (data[i].Items) {
+                        for (var j = 0; j < data[i].Items.length; j++) {
+                            if (data[i].Items[j].ACC_CODE == id) {
+                                return data[i].Items[j];
+                            }
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        //Add newly read nodes to cached tree
+        function addToLocalData(localdata, data, id) {
+            if (!id) {
+                return localdata;
+            } else {
+                for (var i = 0; i < localdata.length; i++) {
+                    if (localdata[i].ACC_CODE == id) {
+                        localdata[i].Items = data;
+                        return;
+                    } else {
+                        if (localdata[i].Items) {
+                            for (var j = 0; j < localdata[i].Items.length; j++) {
+                                if (localdata[i].Items[j].ACC_CODE == id) {
+                                    localdata[i].Items[j].Items = data;
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+    });
+    $(function () {
+        $('#accountTreeView_@pageid').slimScroll({
+            // height: '20px'
+        });
+    });
+
+    var loadAccountTree = function () {
+        $("#accountSlidebox_@pageid").slideToggle();
+        activateTab('accountTab');
+        $("#accountTreeView_@pageid").data("kendoTreeView").dataSource.bind("change",
+        $("#accountTreeView_@pageid").data("kendoTreeView").dataSource.read()
+        );
+    }
+
+    function activateTab(tab) {
+        $('.nav-tabs a[href="#' + tab + '"]').tab('show');
+    };
+</script>

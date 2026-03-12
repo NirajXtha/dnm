@@ -1,0 +1,308 @@
+﻿<style>
+    #divisionModal .modal-header {
+        padding: 10px !important;
+        background-color: #eee;
+    }
+ 
+
+    /*#customerModal input {
+        width: auto !important;
+    }*/
+
+    #divisionModal .k-icon {
+        display: inline-block;
+    }
+
+
+    /*#customerTreeViewdocument {
+        width: 40%;
+        float: left;
+        margin-right: 20px;
+    }*/
+
+    .expand {
+        height: 370px;
+        padding-left: 10px;
+    }
+
+    .verticalLine {
+        border-left: solid #ddd 1px;
+    }
+
+    .k-group.k-treeview-lines {
+        max-height: 230px !important;
+    }
+
+    .mingapright, .mingapleft {
+        padding-right: 0px !important;
+        padding-left: 0px !important;
+    }
+
+    
+    #divisionGrid {
+        font-size: 9px;
+        /*height: 345px !important;*/
+    }
+
+  
+    #divisiontxtSearchString {
+        margin: 3px;
+        height: 27px !important;
+        margin-top: 0px;
+    }
+
+    .show-displaygrid {
+        display: none;
+    }
+
+    #efilterText {
+        width: 98% !important;
+        margin-left: 3px;
+        height: 26px !important;
+    }
+
+    /*.btn-link {
+        position: absolute;
+        top: -1px;
+        background-color: #ddd;
+        padding: 5px 8px;
+        right: 38px;
+    }
+
+        .btn-link:hover {
+            background-color: #ccc;
+        }*/
+
+    .modal-body {
+        padding: 0px 10px 10px 15px !important;
+        padding-bottom: 0px !important;
+    }
+
+    .efilterText {
+        height: 30px !important;
+    }
+
+    .customcolumn-one {
+        width: 27%;
+    }
+
+    .columnbg {
+        background-color: #eee;
+    }
+
+    .customcolumn-two {
+        width: 73%;
+    }
+
+    .topsearch {
+        margin-right: 51px;
+    }
+
+ 
+
+    #masteracccode-list li {
+        border-bottom: solid #ded5d5 1px;
+    }
+
+    .rightallign {
+        font-weight: bold;
+        font-size: 8px !important;
+        float: right;
+    }
+
+    .custName {
+        width: 71% !important;
+        display: inline-block !important;
+    }
+</style>
+<div ng-controller="divisionCtrl" id="divisionCtrl">
+    <div ng-if="element.HELP_DESCRIPTION">
+        <label for="element">
+        {{element.COLUMN_HEADER}} <i class="fa fa-info-circle font-green" data-toggle="tooltip" title="{{element.HELP_DESCRIPTION}}"></i><span style="color:red">{{divisionerror}}</span>
+        </label>
+     </div>
+    <div ng-if="!element.HELP_DESCRIPTION">
+        <label for="element">
+            {{element.COLUMN_HEADER}}<span style="color:red">{{divisionerror}}</span>
+        </label>
+    </div>
+        <div class="input-group">
+            <input id="division" ng-model="masterModels[element.COLUMN_NAME]" name="acccode" class="division divisionmaster mdivision c w-100" kendo-drop-down-list
+                   k-placeholder="'Select Division'"
+                   k-data-text-field="'DIVISION_EDESC'"
+                   k-data-value-field="'DIVISION_CODE'"
+                   k-filter="'contains'"
+                   k-auto-bind="true"
+                   k-options="divisionCodeOption"
+                   k-suggest="false"
+                   k-on-change="DivisionCodeOnChange(kendoEvent)"
+                   k-min-length="3" />
+            <span class="input-group-addon addon-iconbox" style="cursor:pointer">
+                <i class="fa fa-search" ng-click="BrowseTreeListForDivision()" data-toggle="tooltip" title="Search division"></i>
+                @*class="fa fa-adjust"*@
+            </span>
+        </div>
+        <div class="modal fade-out" id="divisionModal" data-backdrop="static" tabindex="-1" data-width="760">
+            <div class="modal-dialog  modal-dialog-box">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div>
+                            <b>Division</b>
+                            <div type="button" class="close" data-dismiss="modal" aria-hidden="true" next-on-tab data-toggle="tooltip" title="Close">&times;</div>
+                        </div>
+
+                    </div>
+
+                    <div class="modal-body modal-dialogbox-body">
+                        <div class="row">
+                            <div class="col-md-5 mingapright customcolumn-one columnbg">
+                                <input id="efilterText" class="form-control filterText" type="text" placeholder="Search categories" />
+                                <div id="divisiontree" kendo-tree-view="tree"
+                                     k-data-source="divisiontreeData"
+                                     k-options="divisionoptions"
+                                     k-data-bound="onDataBound">
+                                    <span k-template>
+                                        {{dataItem.divisionName}}
+                                    </span>
+                                </div>
+
+                            </div>
+                            <div class="col-md-7 customcolumn-two mingapleft">
+                                <div class="expand verticalLine">
+                                    <div class="row">
+                                        <div class="col-md-offset-8 col-md-4 search_box">
+                                            <div class="topsearch">
+                                                <a class="btn-link fa fa-search" ng-click="BindSearchGrid()" data-toggle="tooltip" title="Search list"></a>
+                                                <input class="k-textbox" type="text" id="divisiontxtSearchString" ng-model="txtSearchString" name="search" placeholder="enter search text..." />
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <kendo-grid id="divisionGrid" options="divisionCodeGridOptions" k-rebind="divisionCodeGridOptions" class="search-grid">
+
+                                    </kendo-grid>
+                                </div>
+
+                            </div>
+                        </div>
+
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-default" data-dismiss="modal" ng-click="SubLedger_Cancel($index)" data-toggle="tooltip" title="Cancel">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        $("#efilterText").keyup(function (e) {
+
+            var FilterValue = $(this).val();
+            var value = FilterValue.substring(0, 1).toUpperCase() + FilterValue.substring(1);
+
+            if (value !== "") {
+                $(".selectAll").css("visibility", "hidden");
+
+                $("#divisiontree .k-group .k-group .k-in").closest("li").hide();
+                $("#divisiontree .k-group").closest("li").hide();
+                $("#divisiontree .k-group .k-group .k-in:contains(" + value + ")").each(function () {
+                    $(this).parents("ul, li").each(function () {
+                        var treeView = $("#divisiontree").data("kendoTreeView");
+                        treeView.expand($(this).parents("li"));
+                        $(this).show();
+                    });
+                });
+                $("#divisiontree .k-group .k-in:contains(" + value + ")").each(function () {
+                    $(this).parents("ul, li").each(function () {
+                        $(this).show();
+                    });
+                });
+            }
+            else {
+                $("#divisiontree .k-group").find("li").show();
+                var nodes = $("#divisiontree > .k-group > li");
+
+                $.each(nodes, function (i, val) {
+                    if (nodes[i].getAttribute("data-expanded") == null) {
+                        $(nodes[i]).find("li").hide();
+                    }
+                });
+                $(".selectAll").css("visibility", "visible");
+            }
+        });
+
+        $("#divisiontxtSearchString").keyup(function () {
+
+            var val = $(this).val();
+            var grid = $("#divisionGrid").data("kendoGrid");
+            if (grid != undefined) {
+                var tempServerFilter = grid.dataSource.options.serverFiltering;
+                grid.dataSource.options.serverFiltering = false;
+                var filter = [];
+                $.each(grid.columns, function (i, v) {
+                    if (v.field != undefined) {
+                        var searchText = $.trim($("#divisiontxtSearchString").val());
+                        var model = grid.dataSource.options.schema.model.fields[v.field];
+                        var type = "string";
+                        if (model != undefined)
+                            type = model.type;
+                        if (type === "string")
+                            filter.push({ field: v.field, operator: "contains", value: searchText });
+                        else if (type === "number")
+                            filter.push({ field: v.field, operator: "eq", value: searchText });
+                        else if (type === "date") {
+                            var dateValue = new Date(searchText);
+                            searchText = dateValue == "Invalid Date" ? searchText : dateValue;
+                            filter.push({ field: v.field, operator: "eq", value: searchText });
+                        }
+                    }
+
+                });
+                var filter = {
+                    logic: "or",
+                    filters: filter,
+                }
+
+                grid.dataSource.filter(filter);
+
+                if ($("#txteSearchString").val().length == 0)
+                    grid.dataSource.filter([]);
+                grid.bind("dataBound", function () {
+                    grid.dataSource.options.serverFiltering = tempServerFilter;
+                });
+            }
+        });
+        //function formatValue(value, text) {
+        //    if (text.indexOf("#") > -1)
+        //        text = text.split("#")[1];
+        //    var textMatcher = new RegExp(text, "ig");
+        //    return value.replace(textMatcher, function (match) {
+        //        return "<u><strong>" + match + "</strong></u>";
+        //    });
+        //}
+    </script>
+    <script>
+        $(document).ready(function () {
+            setTimeout(function () {
+                $(".k-list").slimScroll({
+                    position: 'right',
+                    //alwaysVisible: false,
+                    //height: '150',
+                });
+            }, 100)
+        });
+        //function formatValue(value, type, text) {
+        //
+        //        if (type == null)
+        //            type = "";
+        //        if (text != undefined)
+        //            if (text.indexOf("#") > -1)
+        //                text = text.split("#")[1];
+        //        var textMatcher = new RegExp(text, "ig");
+        //        var val = value.replace(textMatcher, function (match) {
+        //            return "<u><strong>" + match + "</strong></u>";
+        //        });
+        //        return "<span class='comboBoxedescName'>" + val + "</span> <span class='rightallign'>" + type + "</span> ";
+        //    }
+    </script>

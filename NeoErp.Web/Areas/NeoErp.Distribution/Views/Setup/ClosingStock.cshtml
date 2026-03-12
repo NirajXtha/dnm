@@ -1,0 +1,261 @@
+﻿@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    Layout = null;
+    var CurrentUser = EngineContext.Current.Resolve<IWorkContext>().CurrentUserinformation;
+}
+
+<style>
+    .titleheading {
+        margin-bottom: 35px;
+    }
+    /*.btn-group {
+        margin-right: 7px;
+    }*/
+    #cancelOutlet {
+        margin-right: 10px;
+    }
+
+    span.fa.fa-truck {
+        margin-right: 5px;
+    }
+
+    a#RunQuery {
+        margin-right: 5px;
+    }
+
+    #grid {
+        height: 100%;
+    }
+
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+    }
+
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+        -webkit-user-select: none; /* webkit (safari, chrome) browsers */
+        -moz-user-select: none; /* mozilla browsers */
+        -khtml-user-select: none; /* webkit (konqueror) browsers */
+        -ms-user-select: none; /* IE10+ */
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content, .k-grid-header {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    a.k-button.k-button-icontext.k-grid-excel {
+        float: right;
+    }
+
+    .k-input {
+        padding: 0.28em 0;
+    }
+    /*.CustomItemList .k-widget.k-multiselect.k-header {
+        display: block !important;
+    }*/
+</style>
+
+
+
+<div ng-controller="ClosingStockCtrl" ng-init="selecteddistCustomer=[@CurrentUser.DistributerNo]">
+    <div class="content">
+        <div class="page-bar">
+            @if (CurrentUser.LoginType.ToUpper().Trim() != "DISTRIBUTOR")
+            {
+                <ul class="page-breadcrumb"></ul>
+            }
+            <div class="page-toolbar actions pull-right">
+                <div class="btn-group" ng-hide="true">
+                    @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                </div>
+                <button class="btn btn-sm btn-circle btn-icon-only btn-default" ng-click="AddClickEvent()" ng-hide="createPanel">
+                    <i class="fa fa-plus"></i>
+                </button>
+                <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                    <i class="icon-control-play"></i>
+                </a>
+                <div class="btn-group">
+                    @Html.Partial("~/Views/Shared/Controls/_SetupConfig.cshtml", "ClosingStockSetup")
+                </div>
+            </div>
+        </div>
+
+        <div class="row collapse in">
+            <div class="col-md-12">
+                <div class="portlet light bordered main" ng-show="createPanel">
+                    <div class="portlet-title">
+                        <div class="caption">
+                            <i class="fa fa-list-alt font-green-haze"></i>
+                            <span class="caption-subject font-green-haze bold uppercase pull-left">
+                                CLosing Stock Setup
+                            </span>
+                        </div>
+                        <div class="actions pull-right">
+                            <button type="button" id="cancelTarget" name="cancelTarget" class="btn btn-default btn-sm" ng-click="cancelClickEvent(@CurrentUser.DistributerNo);">Cancel</button>
+                            <button type="submit" id="saveClosingStockCreate" name="saveClosingStockCreate" ng-click="closingStockCreate(ClosingStockCreateForm.$valid)" class="btn btn-green btn-sm">{{saveAction}}</button>
+                            </>
+                        </div>
+                    </div>
+                    <div class="portlet-body form">
+                        <form id="ClosingStockCreateForm" name="ClosingStockCreateForm" novalidate>
+                            <div class="row">
+                                <div class="col-md-6 CustomItemList">
+                                    <select id="allItems" name="Item"
+                                            kendo-multi-select
+                                            k-options="distItemsSelectOptions"></select>
+                                </div>
+                            </div>
+                            @if (CurrentUser.LoginType.ToUpper().Trim() != "DISTRIBUTOR")
+                            {
+                                <div class="row">
+                                    <div class="col-sm-5 col-md-5">
+                                        <div class="form-group">
+                                            <label class="control-label">
+                                                Distributor <span style="color:red" ng-show="ClosingStockCreateForm.distCustomerMultiSelect.$invalid">
+                                                    <span ng-show="DistributorCreateForm.distCustomerMultiSelect.$error.required">*</span>
+                                                </span>
+                                            </label>
+                                            <select id="distCustomerMultiSelect" name="distCustomerMultiSelect"
+                                                    kendo-multi-select k-options="distCustomerSelectOptions"
+                                                    slim-scroll
+                                                    k-on-select="onDistCustomerSelect(kendoEvent)"
+                                                    k-on-deselect="onDistCustomerDeselect(kendoEvent)"
+                                                    ng-model="selecteddistCustomer"
+                                                    style="width:100%;" required></select>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            <div class="row">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th>S.N.</th>
+                                                <th style="width:20%">Item</th>
+                                                <th style="width:10%">Unit</th>
+                                                <th>Shrawan</th>
+                                                <th>Bhadra</th>
+                                                <th>Ashoj</th>
+                                                <th>Kartik</th>
+                                                <th>Mangsir</th>
+                                                <th>Poush</th>
+                                                <th>Magh</th>
+                                                <th>Falgun</th>
+                                                <th>Chaitra</th>
+                                                <th>Baisakh</th>
+                                                <th>Jestha</th>
+                                                <th>Ashadh</th>
+                                                <th ng-show="additems" style="width:5%">
+                                                    <button class="btn btn-green btn-xs" ng-click="AddClosingStock()"><i class="fa fa-plus"></i> Add</button>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr style="font-size:10px;" ng-if="itemlist.length==0">
+                                                <td colspan="16">No Items To Display..</td>
+                                            </tr>
+                                            <tr ng-repeat="items in itemlist">
+                                                <td> {{$index+1}}</td>
+                                                <td>
+                                                    <select id="ItemSelect_{{$index}}" name="distItemsSelect"
+                                                            kendo-multi-select
+                                                            k-options="distItemsSelectOptions"
+                                                            k-ng-model="items.ITEM_CODE"
+                                                            k-data-value-field="'ITEM_CODE'"
+                                                            k-on-select="onItemsChange(kendoEvent,$index)"
+                                                            k-on-deselect="ItemRemove(kendoEvent,$index)"></select>
+                                                </td>
+                                                @*<td><input type="text" id="mu_code" name="mu_code" class="form-control input-sm" ng-model="items.mu_code" disabled /></td>*@
+                                                <td>
+                                                    <select kendo-multi-select k-options="items.MuOptions"
+                                                            k-rebind="items.MuOptions"
+                                                            k-ng-model="items.MU_CODE"
+                                                            style="width:100%;"></select>
+                                                </td>
+                                                <td><input type="number" ng-model="items.Shrawan" class="form-control input-sm" style="width:100%" /></td>
+                                                <td><input type="number" ng-model="items.Bhadra" class="form-control input-sm" style="width:100%" /></td>
+                                                <td><input type="number" ng-model="items.Ashoj" class="form-control input-sm" style="width:100%" /></td>
+                                                <td><input type="number" ng-model="items.Kartik" class="form-control input-sm" style="width:100%" /></td>
+                                                <td><input type="number" ng-model="items.Mangsir" class="form-control input-sm" style="width:100%" /></td>
+                                                <td><input type="number" ng-model="items.Poush" class="form-control input-sm" style="width:100%" /></td>
+                                                <td><input type="number" ng-model="items.Magh" class="form-control input-sm" style="width:100%" /></td>
+                                                <td><input type="number" ng-model="items.Falgun" class="form-control input-sm" style="width:100%" /></td>
+                                                <td><input type="number" ng-model="items.Chaitra" class="form-control input-sm" style="width:100%" /></td>
+                                                <td><input type="number" ng-model="items.Baisakh" class="form-control input-sm" style="width:100%" /></td>
+                                                <td><input type="number" ng-model="items.Jestha" class="form-control input-sm" style="width:100%" /></td>
+                                                <td><input type="number" ng-model="items.Ashadh" class="form-control input-sm" style="width:100%" /></td>
+                                                <td class="add_btn" ng-show="removeitems">
+                                                    <button class="btn btn-xs btn-danger" ng-click="RemoveClosingStock($index)"><i class="fa fa-trash delete_icon"></i></button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!--grid-->
+            <div class="col-md-12">
+                <div class="portlet light bordered">
+                    <div class="portlet-body form">
+                        <div class="row kendo_table">
+                            <kendo-grid options="mainGridOptions" id="grid">
+                                <div k-detail-template>
+                                    <div kendo-grid k-options="detailGridOptions(dataItem)"></div>
+                                </div>
+                            </kendo-grid>
+                            @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--grid-->
+
+        </div>
+    </div>
+</div>
+
+<script src="@Scripts.Url("~/JS/DateFilter.js?V5")" type="text/javascript"></script>
+    <script type="text/javascript">
+        DateFilter.init();
+
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+
+    $("#RunQuery").on("click", function (evt) {
+        $(".k-icon.k-i-reload").trigger("click");
+        //$("#grid").data("kendoGrid").dataSource.read();
+        evt.preventDefault();
+    });
+    </script>
+    <script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js?V2")"></script>

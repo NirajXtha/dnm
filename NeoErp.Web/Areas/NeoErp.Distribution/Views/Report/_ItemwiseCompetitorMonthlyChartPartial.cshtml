@@ -1,0 +1,150 @@
+﻿@model NeoErp.Distribution.Service.Model.CustomerModel
+@{
+    var actionPageId = "ItemWiseComp_" + Model.Code;
+}
+<style>
+    .chart {
+        height: 400px;
+    }
+</style>
+
+<div class="portlet portlet-sortable light bordered" id="@actionPageId">
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="icon-bar-chart font-green-haze"></i>
+            <span class="caption-subject bold uppercase font-green-haze custom-modal">Competitor Chart (@Model.Name)</span>
+        </div>
+        <div class="tools">
+            <a href="javascript:;" class="collapse"></a>
+            <div class="btn-group">
+                <a class="btn dropdown-toggle download-btn" title="Download" data-toggle="dropdown" href="#">
+                    <i class="icon-arrow-down Elvcustom"></i>
+                </a>
+                <ul class="dropdown-menu custom Elvslidetoggle">
+                    <div class="btn-group-custom">
+                        @*<h4>Advanced Export options</h4>*@
+                        <button type="button" data-id="Category_Chart" class="export-pdf btn default red-stripe"><i class="fa fa-file-pdf-o"></i>PDF</button>
+                        <button type="button" data-id="Category_Chart" class="export-img btn default blue-stripe"><i class="fa fa-image-o"></i>Image</button>
+                        <button type="button" data-id="Category_Chart" class="export-svg btn default green-stripe">SVG</button>
+                    </div>
+                </ul>
+            </div>
+            @*<a href="#Model_@actionPageId" data-toggle="modal" class="config"></a>*@
+            <a href="javascript:;" class="reload" id="compItem-reload_@Model.Code"></a>
+            <a href="javascript:;" class="fullscreen"></a>
+            <a href="javascript:;" class="remove"></a>
+            @*<a data-toggle="modal" data-target="#itemSelectModal">
+                <i class="fa fa-cog"></i>
+            </a>*@
+        </div>
+    </div>
+    <div class="portlet-body">
+        <div class="k-content wide">
+            <div id="ItemWiseComp_chartMonthly_@Model.Code" class="chart"></div>
+            <div class="overlay"><div>No data Found</div></div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    function createItemwiseChart_@{<text>@Model.Code</text>} (evt) {
+        evt.preventDefault();
+        var url = window.location.protocol + "//" + window.location.host + "/api/Report/GetCompetitorReportMonthly?Item_code=@Model.Code&category=" + evt.category;
+        var chart = $("#ItemWiseComp_chartMonthly_@Model.Code").data('kendoChart');
+        chart.dataSource.transport.options.read.url = url;
+        chart.dataSource.read();
+        chart.refresh();
+        chart.unbind('seriesClick');
+    }
+
+    function createChart(url) {
+        $("#ItemWiseComp_chartMonthly_@Model.Code").kendoChart({
+            dataSource: {
+                transport: {
+                    read: {
+                        url: url,
+                        dataType: "json",
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8"
+                    },
+                    parameterMap: function (options, type) {
+                        var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+                    }
+                },
+                group: { field: "NEPALI_MONTH" },
+                //sort: { field: "ITEM_EDESC", dir: "desc"}
+            },
+            title: {
+                position: "bottom",
+                text: "@Model.Name"
+            },
+            legend: {
+                position: "bottom"
+            },
+            seriesDefaults: {
+                type: "column",
+                labels: {
+                    visible: false,
+                    background: "transparent",
+                    template: "#= category #: \n #= value#%"
+                }
+            },
+            series: [{
+                field: "PERCENT",
+                categoryField: "ITEM_EDESC",
+            }],
+            valueAxis: {
+                max: 100,
+                line: {
+                    visible: false
+                },
+                minorGridLines: {
+                    visible: true
+                },
+                labels: {
+                    rotation: "auto"
+                }
+            },
+            categoryAxis: {
+                labels: {
+                    rotation: -45
+                },
+                majorGridLines: {
+                    visible: false
+                }
+            },
+            tooltip: {
+                visible: true,
+                format: "N0",
+                template: "#= dataItem.ITEM_EDESC # - #=value#% (#=dataItem.QUANTITY#/#=dataItem.TOTAL#)"
+            },
+            dataBound: function (e) {
+                var data = e.sender.dataSource.view();
+                $("#ItemWiseComp_chartMonthly_@Model.Code").next(".overlay").toggle(data.length <= 0);
+                $("#applyDate").trigger('click');
+            },
+            seriesClick: createItemwiseChart_@Model.Code,
+        });
+    }
+
+    $(document).ready(function () {
+            var url = window.location.protocol + "//" + window.location.host + "/api/Report/GetCompetitorReportMonthly?Item_code=@Model.Code";
+            createChart(url);
+
+        $("#compItem-reload_@Model.Code").on('click', function (e) {
+                e.preventDefault();
+                var url = window.location.protocol + "//" + window.location.host + "/api/Report/GetCompetitorReportMonthly?Item_code=@Model.Code";
+                var chart = $("#ItemWiseComp_chartMonthly_@Model.Code").data('kendoChart');
+                chart.unbind('seriesClick');
+                chart.dataSource.transport.options.read.url = url;
+                chart.dataSource.read();
+                chart.refresh();
+                chart.bind('seriesClick', createItemwiseChart_@Model.Code);
+            });
+        });
+</script>
+<script src="@Scripts.Url("~/JS/reportFilter.js")"></script>

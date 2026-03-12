@@ -1,0 +1,496 @@
+﻿/* Formatted on 12/24/2019 10:29:01 AM (QP5 v5.163.1008.3004) */
+CREATE OR REPLACE FORCE VIEW DIST_VISITED_ENTITY
+(
+   SP_CODE,
+   UPDATE_DATE,
+   LATITUDE,
+   LONGITUDE,
+   CUSTOMER_CODE,
+   CUSTOMER_TYPE,
+   DESTINATION,
+   IS_VISITED,
+   REMARKS,
+   COMPANY_CODE,
+   USERID,
+   FULL_NAME,
+   USER_TYPE,
+   ENTITY_NAME,
+   ENTITY_ADDRESS,
+   AREA_CODE,
+   ENTITY_LATITUDE,
+   ENTITY_LONGITUDE,
+   AREA_NAME,
+   GROUP_EDESC,
+   GROUPID
+)
+AS
+   SELECT A.SP_CODE,
+          A.UPDATE_DATE,
+          A.LATITUDE,
+          A.LONGITUDE,
+          A.CUSTOMER_CODE,
+          A.CUSTOMER_TYPE,
+          A.DESTINATION,
+          A.IS_VISITED,
+          A.REMARKS,
+          A.COMPANY_CODE,
+          B.USERID,
+          B.FULL_NAME,
+          B.USER_TYPE,
+          E.RESELLER_NAME ENTITY_NAME,
+          E.REG_OFFICE_ADDRESS ENTITY_ADDRESS,
+          E.AREA_CODE,
+          E.LATITUDE ENTITY_LATITUDE,
+          E.LONGITUDE ENTITY_LONGITUDE,
+          F.AREA_NAME,
+          G.GROUP_EDESC,
+            B.GROUPID
+     FROM DIST_LOCATION_TRACK A,
+          DIST_LOGIN_USER B,
+          DIST_RESELLER_MASTER E,
+          DIST_AREA_MASTER F,
+          DIST_GROUP_MASTER G
+    WHERE     A.SP_CODE = B.SP_CODE
+          AND A.COMPANY_CODE = B.COMPANY_CODE
+          AND B.USER_TYPE <> 'D'
+          AND A.CUSTOMER_TYPE = 'R'
+          AND A.CUSTOMER_CODE = E.RESELLER_CODE
+          AND A.COMPANY_CODE = E.COMPANY_CODE
+          AND E.COMPANY_CODE = F.COMPANY_CODE
+          AND E.AREA_CODE = F.AREA_CODE
+          AND E.COMPANY_CODE = F.COMPANY_CODE
+          AND F.GROUPID = G.GROUPID
+          AND F.COMPANY_CODE = G.COMPANY_CODE
+          AND E.ACTIVE = 'Y'
+          AND E.IS_CLOSED = 'N'
+          AND E.DELETED_FLAG = 'N'
+   UNION ALL
+   SELECT A.SP_CODE,
+          A.UPDATE_DATE,
+          A.LATITUDE,
+          A.LONGITUDE,
+          A.CUSTOMER_CODE,
+          A.CUSTOMER_TYPE,
+          A.DESTINATION,
+          A.IS_VISITED,
+          A.REMARKS,
+          A.COMPANY_CODE,
+          B.USERID,
+          B.FULL_NAME,
+          B.USER_TYPE,
+          H.CUSTOMER_EDESC ENTITY_NAME,
+          H.REGD_OFFICE_EADDRESS ENTITY_ADDRESS,
+          E.AREA_CODE,
+          E.LATITUDE ENTITY_LATITUDE,
+          E.LONGITUDE ENTITY_LONGITUDE,
+          F.AREA_NAME,
+          G.GROUP_EDESC,
+                B.GROUPID
+     FROM DIST_LOCATION_TRACK A,
+          DIST_LOGIN_USER B,
+          DIST_DISTRIBUTOR_MASTER E,
+          DIST_AREA_MASTER F,
+          DIST_GROUP_MASTER G,
+          SA_CUSTOMER_SETUP H
+    WHERE     A.SP_CODE = B.SP_CODE
+          AND A.COMPANY_CODE = B.COMPANY_CODE
+          AND B.USER_TYPE <> 'D'
+          AND A.CUSTOMER_TYPE = 'D'
+          AND A.CUSTOMER_CODE = E.DISTRIBUTOR_CODE
+          AND A.COMPANY_CODE = E.COMPANY_CODE
+          AND E.COMPANY_CODE = F.COMPANY_CODE
+          AND E.AREA_CODE = F.AREA_CODE
+          AND E.COMPANY_CODE = F.COMPANY_CODE
+          AND F.GROUPID = G.GROUPID
+          AND F.COMPANY_CODE = G.COMPANY_CODE
+          AND E.COMPANY_CODE = H.COMPANY_CODE
+          AND E.DISTRIBUTOR_CODE = H.CUSTOMER_CODE
+          AND E.DELETED_FLAG = 'N'
+          AND E.ACTIVE = 'Y'
+   UNION ALL
+   SELECT A.SP_CODE,
+          A.UPDATE_DATE,
+          A.LATITUDE,
+          A.LONGITUDE,
+          A.CUSTOMER_CODE,
+          A.CUSTOMER_TYPE,
+          A.DESTINATION,
+          A.IS_VISITED,
+          A.REMARKS,
+          A.COMPANY_CODE,
+          B.USERID,
+          B.FULL_NAME,
+          B.USER_TYPE,
+          H.PARTY_TYPE_EDESC ENTITY_NAME,
+          H.ADDRESS ENTITY_ADDRESS,
+          E.AREA_CODE,
+          E.LATITUDE ENTITY_LATITUDE,
+          E.LONGITUDE ENTITY_LONGITUDE,
+          F.AREA_NAME,
+          G.GROUP_EDESC,
+          B.GROUPID
+     FROM DIST_LOCATION_TRACK A,
+          DIST_LOGIN_USER B,
+          DIST_DEALER_MASTER E,
+          DIST_AREA_MASTER F,
+          DIST_GROUP_MASTER G,
+          IP_PARTY_TYPE_CODE H
+    WHERE     A.SP_CODE = B.SP_CODE
+          AND A.COMPANY_CODE = B.COMPANY_CODE
+          AND B.USER_TYPE <> 'D'
+          AND A.CUSTOMER_TYPE = 'P'
+          AND E.ACTIVE = 'Y'
+          AND A.CUSTOMER_CODE = E.DEALER_CODE
+          AND A.COMPANY_CODE = E.COMPANY_CODE
+          AND E.COMPANY_CODE = F.COMPANY_CODE
+          AND E.AREA_CODE = F.AREA_CODE
+          AND E.COMPANY_CODE = F.COMPANY_CODE
+          AND F.GROUPID = G.GROUPID
+          AND F.COMPANY_CODE = G.COMPANY_CODE
+          AND E.COMPANY_CODE = H.COMPANY_CODE
+          AND E.DEALER_CODE = H.PARTY_TYPE_CODE
+          AND E.DELETED_FLAG = 'N';
+----------------------------------------------------------------------------------------------------
+
+
+/* Formatted on 12/24/2019 10:32:10 AM (QP5 v5.163.1008.3004) */
+CREATE OR REPLACE FORCE VIEW DIST_VISITED_PO
+(
+   IS_VISITED,
+   CUSTOMER_TYPE,
+   FULL_NAME,
+   SP_CODE,
+   USER_NAME,
+   ORDER_NO,
+   ORDER_DATE,
+   RESELLER_CODE,
+   CUSTOMER_CODE,
+   ITEM_CODE,
+   MU_CODE,
+   QUANTITY,
+   UNIT_PRICE,
+   TOTAL_PRICE,
+   PARTY_TYPE_CODE,
+   ORDER_FROM,
+   APPROVED_FLAG,
+   DISPATCH_FLAG,
+   ACKNOWLEDGE_FLAG,
+   REJECT_FLAG,
+   DELETED_FLAG,
+   COMPANY_CODE,
+   DISPATCH_FROM,
+   USERID,
+   CREATED_DATE,
+   GROUPID
+)
+AS
+     SELECT DISTINCT C.IS_VISITED,
+                     C.CUSTOMER_TYPE,
+                     A."FULL_NAME",
+                     A."SP_CODE",
+                     A."USER_NAME",
+                     A."ORDER_NO",
+                     A."ORDER_DATE",
+                     A."RESELLER_CODE",
+                     A."CUSTOMER_CODE",
+                     A."ITEM_CODE",
+                     A."MU_CODE",
+                     A."QUANTITY",
+                     A."UNIT_PRICE",
+                     A."TOTAL_PRICE",
+                     A."PARTY_TYPE_CODE",
+                     A."ORDER_FROM",
+                     A."APPROVED_FLAG",
+                     A."DISPATCH_FLAG",
+                     A."ACKNOWLEDGE_FLAG",
+                     A."REJECT_FLAG",
+                     A."DELETED_FLAG",
+                     A."COMPANY_CODE",
+                     A."DISPATCH_FROM",
+                     A."USERID",
+                     A."CREATED_DATE",
+                     A."GROUPID"
+       FROM (SELECT B.FULL_NAME,
+                    B.SP_CODE,
+                    B.USER_NAME,
+                    A.ORDER_NO,
+                    A.ORDER_DATE,
+                    A.CUSTOMER_CODE RESELLER_CODE,
+                    A.CUSTOMER_CODE,
+                    A.ITEM_CODE,
+                    A.MU_CODE,
+                    A.QUANTITY,
+                    A.UNIT_PRICE,
+                    A.TOTAL_PRICE,
+                    A.PARTY_TYPE_CODE,
+                    A.ORDER_FROM,
+                    A.APPROVED_FLAG,
+                    A.DISPATCH_FLAG,
+                    A.ACKNOWLEDGE_FLAG,
+                    A.REJECT_FLAG,
+                    A.DELETED_FLAG,
+                    A.COMPANY_CODE,
+                    '' DISPATCH_FROM,
+                    A.CREATED_BY USERID,
+                    A.CREATED_DATE,
+                    B.GROUPID
+               FROM DIST_IP_SSD_PURCHASE_ORDER A, DIST_LOGIN_USER B
+              WHERE     A.CREATED_BY = B.USERID
+                    AND A.COMPANY_CODE = B.COMPANY_CODE
+                    AND B.ACTIVE = 'Y'
+             UNION ALL
+             SELECT B.FULL_NAME,
+                    B.SP_CODE,
+                    B.USER_NAME,
+                    A.ORDER_NO,
+                    A.ORDER_DATE,
+                    A.RESELLER_CODE,
+                    A.CUSTOMER_CODE,
+                    A.ITEM_CODE,
+                    A.MU_CODE,
+                    A.QUANTITY,
+                    A.UNIT_PRICE,
+                    A.TOTAL_PRICE,
+                    A.PARTY_TYPE_CODE,
+                    'RESELLER' ORDER_FROM,
+                    A.APPROVED_FLAG,
+                    A.DISPATCH_FLAG,
+                    A.ACKNOWLEDGE_FLAG,
+                    A.REJECT_FLAG,
+                    A.DELETED_FLAG,
+                    A.COMPANY_CODE,
+                    A.DISPATCH_FROM,
+                    A.CREATED_BY USERID,
+                    A.CREATED_DATE,
+                      B.GROUPID
+               FROM DIST_IP_SSR_PURCHASE_ORDER A, DIST_LOGIN_USER B
+              WHERE     A.CREATED_BY = B.USERID
+                    AND A.COMPANY_CODE = B.COMPANY_CODE
+                    AND B.ACTIVE = 'Y') A,
+            DIST_LOCATION_TRACK C
+      WHERE     A.COMPANY_CODE = C.COMPANY_CODE(+)
+            AND A.SP_CODE = C.SP_CODE(+)
+            AND A.COMPANY_CODE = C.COMPANY_CODE(+)
+            AND A.RESELLER_CODE = C.CUSTOMER_CODE(+)
+            AND A.COMPANY_CODE = C.COMPANY_CODE(+)
+            AND TRUNC (A.ORDER_DATE) = TRUNC (C.UPDATE_DATE(+))
+   ORDER BY 1;
+---------------------------------------------------------------------------------------------
+
+/* Formatted on 12/24/2019 10:34:56 AM (QP5 v5.163.1008.3004) */
+CREATE OR REPLACE FORCE VIEW DIST_TARGET_ENTITY
+(
+   USERID,
+   FULL_NAME,
+   SP_CODE,
+   USER_TYPE,
+   COMPANY_CODE,
+   ASSIGN_DATE,
+   ROUTE_CODE,
+   ROUTE_NAME,
+   ENTITY_CODE,
+   ENTITY_TYPE,
+   ENTITY_NAME,
+   ENTITY_ADDRESS,
+   AREA_CODE,
+   LATITUDE,
+   LONGITUDE,
+   AREA_NAME,
+   GROUP_EDESC
+)
+AS
+   SELECT A.USERID,
+          A.FULL_NAME,
+          A.SP_CODE,
+          A.USER_TYPE,
+          A.COMPANY_CODE,
+          B.ASSIGN_DATE,
+          B.ROUTE_CODE,
+          D.ROUTE_NAME,
+          C.ENTITY_CODE,
+          C.ENTITY_TYPE,
+          E.RESELLER_NAME ENTITY_NAME,
+          E.REG_OFFICE_ADDRESS ENTITY_ADDRESS,
+          E.AREA_CODE,
+          E.LATITUDE,
+          E.LONGITUDE,
+          F.AREA_NAME,
+          G.GROUP_EDESC
+     FROM DIST_LOGIN_USER A,
+          DIST_ROUTE_DETAIL B,
+          DIST_ROUTE_ENTITY C,
+          DIST_ROUTE_MASTER D,
+          DIST_RESELLER_MASTER E,
+          DIST_AREA_MASTER F,
+          DIST_GROUP_MASTER G
+    WHERE     A.SP_CODE = B.EMP_CODE
+          AND A.COMPANY_CODE = B.COMPANY_CODE
+          AND A.USER_TYPE <> 'D'
+          AND B.COMPANY_CODE = C.COMPANY_CODE
+          AND B.ROUTE_CODE = C.ROUTE_CODE
+          AND C.ENTITY_TYPE = 'R'
+          AND B.ROUTE_CODE = D.ROUTE_CODE
+          AND B.COMPANY_CODE = D.COMPANY_CODE
+          AND C.ENTITY_CODE = E.RESELLER_CODE
+          AND C.COMPANY_CODE = E.COMPANY_CODE
+          AND C.COMPANY_CODE = F.COMPANY_CODE
+          AND E.AREA_CODE = F.AREA_CODE
+          AND E.COMPANY_CODE = F.COMPANY_CODE
+          AND A.GROUPID = G.GROUPID
+          AND A.COMPANY_CODE = G.COMPANY_CODE
+          AND E.ACTIVE = 'Y'
+          AND E.IS_CLOSED = 'N'
+          AND E.DELETED_FLAG = 'N'
+          AND A.ACTIVE = 'Y'
+   UNION ALL
+   SELECT A.USERID,
+          A.FULL_NAME,
+          A.SP_CODE,
+          A.USER_TYPE,
+          A.COMPANY_CODE,
+          B.ASSIGN_DATE,
+          B.ROUTE_CODE,
+          D.ROUTE_NAME,
+          C.ENTITY_CODE,
+          C.ENTITY_TYPE,
+          H.CUSTOMER_EDESC ENTITY_NAME,
+          H.REGD_OFFICE_EADDRESS ENTITY_ADDRESS,
+          E.AREA_CODE,
+          E.LATITUDE,
+          E.LONGITUDE,
+          F.AREA_NAME,
+          G.GROUP_EDESC
+     FROM DIST_LOGIN_USER A,
+          DIST_ROUTE_DETAIL B,
+          DIST_ROUTE_ENTITY C,
+          DIST_ROUTE_MASTER D,
+          DIST_DISTRIBUTOR_MASTER E,
+          DIST_AREA_MASTER F,
+          DIST_GROUP_MASTER G,
+          SA_CUSTOMER_SETUP H
+    WHERE     A.SP_CODE = B.EMP_CODE
+          AND A.COMPANY_CODE = B.COMPANY_CODE
+          AND A.USER_TYPE <> 'D'
+          AND B.COMPANY_CODE = C.COMPANY_CODE
+          AND B.ROUTE_CODE = C.ROUTE_CODE
+          AND C.ENTITY_TYPE = 'D'
+          AND B.ROUTE_CODE = D.ROUTE_CODE
+          AND B.COMPANY_CODE = D.COMPANY_CODE
+          AND C.ENTITY_CODE = E.DISTRIBUTOR_CODE
+          AND C.COMPANY_CODE = E.COMPANY_CODE
+          AND C.COMPANY_CODE = F.COMPANY_CODE
+          AND E.AREA_CODE = F.AREA_CODE
+          AND E.COMPANY_CODE = F.COMPANY_CODE
+          AND A.GROUPID = G.GROUPID
+          AND A.COMPANY_CODE = G.COMPANY_CODE
+          AND E.COMPANY_CODE = H.COMPANY_CODE
+          AND E.DISTRIBUTOR_CODE = H.CUSTOMER_CODE
+          AND E.DELETED_FLAG = 'N'
+          AND E.ACTIVE = 'Y'
+          AND A.ACTIVE = 'Y'
+   UNION ALL
+   SELECT A.USERID,
+          A.FULL_NAME,
+          A.SP_CODE,
+          A.USER_TYPE,
+          A.COMPANY_CODE,
+          B.ASSIGN_DATE,
+          B.ROUTE_CODE,
+          D.ROUTE_NAME,
+          C.ENTITY_CODE,
+          C.ENTITY_TYPE,
+          H.PARTY_TYPE_EDESC ENTITY_NAME,
+          H.ADDRESS ENTITY_ADDRESS,
+          E.AREA_CODE,
+          E.LATITUDE,
+          E.LONGITUDE,
+          F.AREA_NAME,
+          G.GROUP_EDESC
+     FROM DIST_LOGIN_USER A,
+          DIST_ROUTE_DETAIL B,
+          DIST_ROUTE_ENTITY C,
+          DIST_ROUTE_MASTER D,
+          DIST_DEALER_MASTER E,
+          DIST_AREA_MASTER F,
+          DIST_GROUP_MASTER G,
+          IP_PARTY_TYPE_CODE H
+    WHERE     A.SP_CODE = B.EMP_CODE
+          AND A.COMPANY_CODE = B.COMPANY_CODE
+          AND A.USER_TYPE <> 'D'
+          AND B.COMPANY_CODE = C.COMPANY_CODE
+          AND B.ROUTE_CODE = C.ROUTE_CODE
+          AND C.ENTITY_TYPE = 'P'
+          AND B.ROUTE_CODE = D.ROUTE_CODE
+          AND B.COMPANY_CODE = D.COMPANY_CODE
+          AND C.ENTITY_CODE = E.DEALER_CODE
+          AND C.COMPANY_CODE = E.COMPANY_CODE
+          AND C.COMPANY_CODE = F.COMPANY_CODE
+          AND E.AREA_CODE = F.AREA_CODE
+          AND E.COMPANY_CODE = F.COMPANY_CODE
+          AND A.GROUPID = G.GROUPID
+          AND A.COMPANY_CODE = G.COMPANY_CODE
+          AND E.COMPANY_CODE = H.COMPANY_CODE
+          AND E.DEALER_CODE = H.PARTY_TYPE_CODE
+          AND E.DELETED_FLAG = 'N'
+          AND E.ACTIVE = 'Y'
+          AND A.ACTIVE = 'Y'
+   UNION ALL
+   SELECT A.USERID,
+          A.FULL_NAME,
+          A.SP_CODE,
+          A.USER_TYPE,
+          A.COMPANY_CODE,
+          B.ASSIGN_DATE,
+          B.ROUTE_CODE,
+          D.ROUTE_NAME,
+          '' ENTITY_CODE,
+          '' ENTITY_TYPE,
+          '' ENTITY_NAME,
+          '' ENTITY_ADDRESS,
+          '' AREA_CODE,
+          '' LATITUDE,
+          '' LONGITUDE,
+          '' AREA_NAME,
+          G.GROUP_EDESC
+     FROM DIST_LOGIN_USER A,
+          DIST_ROUTE_DETAIL B,
+          DIST_ROUTE_ENTITY C,
+          DIST_ROUTE_MASTER D,
+          DIST_GROUP_MASTER G
+    WHERE     A.SP_CODE = B.EMP_CODE
+          AND A.COMPANY_CODE = B.COMPANY_CODE
+          AND A.USER_TYPE <> 'D'
+          AND B.COMPANY_CODE = C.COMPANY_CODE(+)
+          AND B.ROUTE_CODE = C.ROUTE_CODE(+)
+          AND B.ROUTE_CODE = D.ROUTE_CODE
+          AND B.COMPANY_CODE = D.COMPANY_CODE
+          AND A.GROUPID = G.GROUPID
+          AND A.COMPANY_CODE = G.COMPANY_CODE
+          AND C.ENTITY_CODE IS NULL
+          AND A.ACTIVE = 'Y';
+
+---------------------------------------------------------------------------------------------
+
+/* Formatted on 12/24/2019 10:34:56 AM (QP5 v5.163.1008.3004) */
+CREATE OR REPLACE FORCE VIEW "V_RETAIL_DETAIL" ("RESELLER_CODE", "RESELLER_NAME", "AREA_NAME", "OUTLET_TYPE", "OUTLET_SUBTYPE", "GROUP_NAME", "COMPANY_CODE") AS 
+  SELECT drem.reseller_code,
+           drem.reseller_name,
+           dam.area_name,
+           dout.type_edesc        outlet_type,
+           dost.subtype_edesc     outlet_subtype,
+           dgrm.group_edesc       group_name,
+           drem.company_code
+      FROM dist_reseller_master  drem
+           LEFT JOIN dist_area_master dam
+               ON     drem.area_code = dam.area_code
+                  AND drem.company_code = dam.company_code
+           LEFT JOIN dist_outlet_type dout
+               ON     dout.type_id = drem.outlet_type_id
+                  AND dout.company_code = drem.company_code
+           LEFT JOIN dist_outlet_subtype dost
+               ON     dost.subtype_id = drem.outlet_subtype_id
+                  AND dost.company_code = drem.company_code
+           LEFT JOIN dist_group_master dgrm
+               ON     drem.groupid = dgrm.groupid
+                  AND drem.company_code = dgrm.company_code
+     WHERE drem.deleted_flag = 'N' AND drem.is_closed = 'N';

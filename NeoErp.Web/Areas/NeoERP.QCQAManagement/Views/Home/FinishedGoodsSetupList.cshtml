@@ -1,0 +1,156 @@
+﻿@{
+	Layout = null;
+}
+<style>
+	.table-wrapper {
+		width: 100%;
+	}
+
+	.custom-table {
+		width: 100%;
+		border-collapse: collapse;
+	}
+
+	.table-body {
+		max-height: 350px; /* adjust height as needed */
+		overflow-y: auto;
+		display: block;
+	}
+
+		.table-body table {
+			width: 100%;
+			border-collapse: collapse;
+		}
+
+	th, td {
+		border: 1px solid #ccc;
+		padding: 6px 10px;
+	}
+
+	thead, th {
+		background-color: #f1f1f1;
+		position: sticky;
+		top: 0;
+		z-index: 2;
+	}
+
+</style>
+
+<link href="@Styles.Url("~/Areas/NeoERP.QCQAManagement/Content/QCQASetup.css")" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/css/bootstrap-select.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/js/bootstrap-select.min.js"></script>
+<div class="col-md-12 bodyController" ng-controller="FinishedGoodsSetupList">
+	<div class="portlet light form-fit bordered bottomspance">
+		<div class="portlet box green-box main">
+			<div class="portlet-title">
+				<div class="caption">
+					<a class="btn-back pull-left" data-toggle="tooltip" data-placement="top" title="Back To Dashboard" href="/QuotationManagement/Home/Dashboard">
+						<i class="fa fa-arrow-circle-left"></i>
+					</a>
+					<i class="fa fa-gift font-white-haze"></i>
+					<span class="caption-subject font-white-haze bold uppercase">Finished Goods Inspection Setup</span>
+				</div>
+			</div>
+
+			<div class="portlet-body light bg-inverse">
+				<div class="row" style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; margin-bottom: 0.3rem;">
+					<div class="col-md-3" style="flex: 1;">
+						<div class="topsearch" style="display: block;">
+							<input class="k-textbox txtSearchString" type="text" id="itemtxtSearchString" ng-model="txtSearchString" name="search" placeholder="Search...." style="width: 35%;" />
+						</div>
+					</div>
+					<div class="col-md-4" style="flex: none;">
+						<div class="actions text-right">
+							<a class="btn dark-green btn-sm addcolor" id="createbtn" ng-disabled="treenodeselected" ng-click="AddQCQAFinishedGoodsSetup()" data-loading-text="<i class='fa fa-spinner fa-spin'></i> Processing..." href="javascript:;" style="margin-left: 0;">
+								<i class="fa fa-plus"></i> NEW
+							</a>
+						</div>
+					</div>
+				</div>
+				<div id="FinishedGoodsSetupGrid"></div>
+			</div>
+			<div class="modal fade-out" ng-controller="FinishedGoodsSetupList" id="QCQAParameterInspectionModal" data-backdrop="static" tabindex="-1" data-width="760">
+				<div class="modal-dialog modal-dialog-centered">
+					<div class="modal-content" style="height: 500px;">
+						<div class="modal-header">
+							<button type="button" class="close" data-dismiss="modal" aria-hidden="true" next-on-tab>&times;</button>
+							<h4 class="modal-title">
+								<span class="fa fa-file"></span>
+								Received Finished Goods Inspection Report
+							</h4>
+
+						</div>
+
+						<div class="modal-body" style="height: 410px;">
+							<form name="projectForm" class="form" method="post" ng-submit="submitQCSetup()" enctype="multipart/form-data" id="projectForm" novalidate>
+								@*<input type="hidden" name="qcqaId" id="qcqaId" ng-model="FORM_CODE">*@
+								<div class="form-group row">
+									<label for="projectName" class="col-sm-3 col-form-label">Parameters</label>
+									<div class="row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
+										<div class="col-md-3" style="flex: 1; margin-bottom: 5px;">
+											<div class="topsearch" style="display: block;">
+
+												<select id="ddlInspectionParameter" k-ng-model="selectedInspectionParameter" kendo-drop-down-list
+														k-options="ddlInspectionParameter"
+														class="ddlInspectionParameter">
+												</select>
+											</div>
+										</div>
+
+									</div>
+								</div>
+								<div class="form-group row table-body" style="margin-left:0px;">
+									<table class="table table-bordered custom-table" style="table-layout: fixed;">
+										<thead>
+											<tr>
+												<th style="width: 15% !important;">S/No</th>
+												<th style="width: 70% !important;">Items</th>
+												<th style="width: 25% !important;"></th>
+											</tr>
+										</thead>
+										<tbody>
+											<tr ng-repeat="(key,row) in FinishedGoodsSetup" id="FinishedGoods">
+												<td class="SNo_child" style="background-color: #eeeeee;">
+													<div>
+														<input type="text" style="width: 100% !important; text-align: right;" value="{{key + 1}}" class="form-control SNo_child" disabled />
+													</div>
+												</td>
+
+												<td><input style="width: 100% !important;" type="text" ng-model="childParameterInspectionItemModels[key]['ITEMS']" class="form-control ITEMS_{{key}}" ng-readonly="panelMode === 'view'" autocomplete="new-item-{{key}}"></td>
+												<td class="btn-action">
+													<a href="" id="add_child_element" name="add_child_element" class="buttonadd" ng-click="add_child_element($index)"><i class="fa fa-plus" data-toggle="tooltip" title="Add row"></i></a>
+													<a href="" id="remove_child_element" name="remove_child_element" class="buttondelete" ng-click="remove_child_element($index)"><i class="fa fa-trash" data-toggle="tooltip" title="Delete row"></i></a>
+												</td>
+											</tr>
+										</tbody>
+									</table>
+								</div>
+
+								<input type="submit" class="hidden" id="btnProject" value="submit">
+							</form>
+						</div>
+
+						<div class="modal-footer">
+							<button type="button" class="btn btn-sm btn-green" ng-hide="panelMode === 'view'" id="savedocumentformdata" ng-click="saveFinishedGoods()" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Processing..." href="javascript:;">
+								<i class="fa fa-floppy-o"></i> Save
+							</button>
+							<button type="button" class="btn btn-sm btn-danger" ng-click="ItemCancel()" data-dismiss="modal">
+								<i class="fa-solid fa-xmark"></i> Cancel
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
+
+		</div>
+	</div>
+</div>
+<script>
+	var a = location.hash;
+	var b = location.pathname;
+	var url = (b + a);
+	$(".active").removeClass();
+	$("a[href='" + url + "']").parent().addClass("active");
+	$("a[href='" + url + "']").parent().parent().slideDown("slow");
+</script>
+

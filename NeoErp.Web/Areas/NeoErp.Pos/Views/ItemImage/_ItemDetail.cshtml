@@ -1,0 +1,253 @@
+﻿
+
+<div>
+
+    <h4>TreeView</h4>
+    <div id="menuTreeView" style="max-height:1200px;"></div>
+
+
+
+    <ul id="menu">
+        <li><img src="~/Areas/NeoErp.Pos/Images/upload.png" />Upload</li>
+        
+    </ul>
+</div>
+
+<script>
+    $(document).ready(function () {
+       
+        document.DataTableTest = function () {
+            setTimeout(function () {
+                $('.datatable').DataTable();
+            }, 200)
+        }
+
+        GetMenuInTreeView = function () {
+            var tree = $("#menuTreeView").data("kendoTreeView");
+            tree.dataSource.read();
+        }
+
+        var loadAllProductsUrl = window.location.protocol + "//" + window.location.host + "/api/SalesHome/GetAllProductNodes";
+        var loadProductByNodeUrl = window.location.protocol + "//" + window.location.host + "/api/SalesHome/GetAllProductsByProdId";
+
+        var localData;
+        var productTreeDataSource = new kendo.data.HierarchicalDataSource({
+            transport: {
+                read: function (options) {
+                    debugger;
+                    if (typeof options.data.ItemCode != 'undefined') {
+                        debugger;
+                        var id = options.data.ItemCode;
+                        var data = getNextLevel(localData, id);
+                        if (data) {
+                            options.success(data);
+                        } else {
+                            var currentnode = get(localData, id);
+
+                            $.ajax({
+                                url: loadProductByNodeUrl,
+                                data: {
+                                    prodId: currentnode.ItemCode,
+                                    level: currentnode.Level,
+                                    masterCode: currentnode.MasterItemCode
+                                },
+                                type: "GET",
+                                success: function (result) {
+                                    var res = result;
+                                    addToLocalData(localData, res, currentnode.ItemCode);
+                                    options.success(res);
+
+                                },
+                                error: function (result) {
+                                    options.error(result);
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        debugger;
+                        $.ajax({
+                            url: loadAllProductsUrl,
+                            type: "GET",
+                            success: function (result) {
+
+                                setTimeout(function () {
+                                    options.success(result);
+                                }, 1000);
+                                localData = result;
+                            },
+                            error: function (result) {
+                                options.error(result);
+                            }
+                        });
+                    }
+                }
+            },
+            schema: {
+                model: {
+                    id: "ItemCode",
+                    hasChildren: "hasProducts",
+                    masterCustCode: "MasterItemCode"
+                }
+            }
+        });
+
+        $("#menuTreeView").kendoTreeView({
+            autoScroll: true,
+            autoBind: true,
+            dataSource: productTreeDataSource,
+            dataTextField: "ItemName",
+            height: 1200,
+            scrollable: {
+                virtual: true
+            },
+            select: function (e) {
+                onSelect(e);
+            }
+        });
+
+        var obj;
+        function onSelect(e) {
+         
+            var tv = $("#menuTreeView").data("kendoTreeView");
+            var item = tv.dataItem(e.node);
+            obj = item;
+           
+            ImageDisplay(obj);
+        }
+
+      
+
+
+        $("#menuTreeView").data("kendoTreeView").expand(".treeNode");
+        //Checks if nodes are already in the tree and returns it if it does
+        function getNextLevel(data, id) {
+            debugger;
+            if (!id) {
+                return data;
+            } else {
+                for (var i = 0; i < data.length; i++) {
+                    if (data[i].ItemCode == id) {
+                        return data[i].Items;
+                    } else if (data[i].Items) {
+                        var childData = getNextLevel(data[i].Items, id);
+                        if (childData) {
+                            return childData;
+                        }
+                        //for (var j = 0; j < data[i].Items.length; j++) {
+                        //    if (data[i].Items[j].ItemCode == id) {
+                        //        return data[i].Items[j].Items;
+                        //    }
+                        //}
+                    }
+                }
+            }
+        }
+
+        //Get Tree object for a given menuno
+        function get(data, id) {
+            debugger;
+            if (id) {
+                var grepObject = $.grep(data, function (item, index) {
+                    return item.ItemCode == id;
+
+                });
+
+                if (grepObject != null && grepObject != undefined && grepObject.length > 0) {
+                    return grepObject[0];
+                }
+                else {
+                    for (var i = 0; i < data.length; i++) {
+                        if (data[i].Items) {
+                            var childGrepObject = get(data[i].Items, id);
+                            if (childGrepObject != null && childGrepObject != undefined) {
+                                return childGrepObject;
+                            }
+
+                        }
+                    }
+                }
+
+            }
+
+            return null;
+        }
+
+        function addToLocalData(localdata, data, id) {
+            if (!id) {
+                return localdata;
+            } else {
+                for (var i = 0; i < localdata.length; i++) {
+                    if (localdata[i].ItemCode == id) {
+                        localdata[i].Items = data;
+                        return;
+                    } else {
+                        if (localdata[i].Items) {
+                            addToLocalData(localdata[i].Items, data, id)
+                        }
+
+                    }
+                }
+            }
+        }
+
+
+        $("#menu").kendoContextMenu({
+
+            target: "#menuTreeView",
+            filter: ".k-in",
+
+            select: function (e) {
+               
+                var button = $(e.item);
+                var node = $(e.target);
+                if (button.text() == "Upload") {
+                    $('#itemimages').modal('show');
+                    ItemCode(obj);
+
+                }
+
+            }
+        });
+
+        //var treeview = productTreeDataSource;
+        //debugger;
+        //treeview.tbody.find('>tr').each(function () {
+
+        //    var dataItem = treeview.dataItem(this);
+        //    if (dataItem != undefined && dataItem != null) {
+        //        var childnumbher = dataItem.CHILD_REC;
+        //        if ($("#showsubledger").prop('checked') == true) {
+        //            var subchildnumbher = dataItem.sub_count;
+        //            if (childnumbher <= 0) {
+
+        //                if (subchildnumbher <= 0 && dataItem.Sub_code != null) {
+        //                    $(this).addClass("rightColumnClasssub");
+        //                    $(this).find("td:first-child").find('span').removeClass("k-i-expand").addClass("k-i-none");
+        //                }
+        //                else {
+        //                    $(this).addClass("rightColumnClass");
+        //                    $(this).css("background-color", "#3FD5C0");
+        //                }
+        //                //$(this).find("td:first-child").find('span').removeClass("k-i-expand").addClass("k-i-none");
+        //            }
+
+        //        }
+        //        else {
+        //            if (childnumbher <= 0) {
+        //                $(this).addClass("rightColumnClass");
+        //                $(this).find("td:first-child").find('span').removeClass("k-i-expand").addClass("k-i-none");
+        //            }
+        //        }
+        //    }
+        //});
+    });
+    $(function () {
+        $('#menuTreeView').slimScroll({
+
+        });
+    });
+
+
+
+</script>

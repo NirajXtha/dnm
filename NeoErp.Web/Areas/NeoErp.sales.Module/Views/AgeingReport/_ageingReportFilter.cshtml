@@ -1,0 +1,236 @@
+﻿@using NeoErp.Core.Helpers
+@using NeoErp.Core.Models.CustomModels
+<style>
+    .slimScrollBar {
+        border-radius: 5px !important;
+        background-color: #333 !important;
+    }
+
+    .slimScrollDiv, #customerMultiSelect_listbox {
+        height: auto !important;
+    }
+    .form-horizontal .control-label.align_right {
+        text-align: right !important;
+    }
+    .input-small-size {
+        width:170px;
+    }
+    .inputsm
+    {
+        width:65px !important;
+    }
+</style>
+<a class="btn btn-circle btn-icon-only btn-default agingsettingbtn" href="#ageingReportFilter" data-toggle="modal">
+    <i class="icon-wrench"></i>
+</a>
+<div id="ageingReportFilter" class="modal fade" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg custom-modal-large  popup_filter-modal">    @*modal-AgeingReport*@
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                <h4 class="modal-title"><span class="fa fa-filter" aria-hidden="true"></span> Ageing Report Filter</h4>
+            </div>
+            <div class="modal-body">
+
+                <div class="form-horizontal">
+                 
+                        <div class="ageing-filter">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="form-group">
+                                        <label class="control-label col-md-2">As on Date</label>
+                                        <div class="col-md-6">
+                                            @Html.Partial("~/Views/Shared/Controls/DatePicker.cshtml", new DatePickerModel()
+                                   {
+                                       TextToAppend = "End of",
+                                       AppendText = true,
+                                       IsPopUp = false
+                                   })
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-4 col-md-4">
+                                    <div class="form-group">
+                                        <label class="control-label col-md-4">Frequency</label>
+                                        <div class="col-md-8">
+                                            @*<label><input type="checkbox" class="icheck ageing toggle" data-label="Custom Frequency Days" id="user-custom-frequency-days" name="user-custom-frequency-days"></label>*@
+                                            <div class="input-group input-small-size date-picker input-daterange">
+                                                @Html.DropDownList("fixed-days", EnumExtensions.ToSelectListNameSameAsValue(FrequencyDayFilter.FifteenDay), new { @class = "form-control ddl-frequency-days inputsm", id = "ddl-frequency-days" })
+                                                <span class="input-group-addon1"></span>
+                                                <input type="number" min="@((int)FrequencyDayFilter.SevenDay)" class="form-control non-negative-non-decimal inputsm" id="range-frequency-days" name="range-frequency-days" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4 col-md-4">
+                                   <div class="form-group">
+                                                <label class="control-label col-md-4 align_right">Final Days</label>
+                                                <div class="col-md-8">
+                                                    @*<label><input type="checkbox" class="icheck ageing toggle" data-label="Custom Fixed Days" id="user-custom-fixed-days" name="user-custom-fixed-days"></label>*@
+                                                    <div class="input-group input-small-size date-picker input-daterange">
+                                                        @Html.DropDownList("fixed-days", EnumExtensions.ToSelectListNameSameAsValue(FixedDayFilter.ThirtyDay), new { @class = "form-control ddl-fixed-days inputsm", id = "ddl-fixed-days" })
+                                                        <span class="input-group-addon1"></span>
+                                                        <input type="number" min="@((int)FixedDayFilter.ThirtyDay)" class="form-control inputsm non-negative-non-decimal" id="range-fixed-days" name="range-fixed-days" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                   
+                                </div>
+                                <div class="col-sm-4 col-md-4">
+                                    <div class="form-group ageingtype">
+                                        <label class="control-label col-md-4">AgeingType</label>
+                                        <div class="col-md-6">
+                                            @*<label><input type="checkbox" class="icheck ageing toggle" data-label="Custom Fixed Days" id="user-custom-fixed-days" name="user-custom-fixed-days"></label>*@
+                                            <div class="input-group input-large date-picker input-daterange">
+                                                <select name="BillWiseOrLedgerWise" id="BillWiseOrLedgerWise" class="form-control input-small">
+                                                    <option value="BillWise">Bill Wise</option>
+                                                    <option value="LedgerWise" selected>Ledger Wise</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row" >
+                               
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label class="control-label col-md-4">Group wise</label>
+                                        <div class="col-md-4">
+                                            <div class="TriSea-technologies-Switch">
+                                                <input id="ShowGroupSwitch" name="ShowGroupSwitch" type="checkbox" />
+                                                <label for="ShowGroupSwitch" class="label-primary"></label>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>       
+                            
+                                        <div class="col-md-8">
+                                            <div class="form-group">
+                                                <label class="control-label col-md-2 align_right">Choose</label>
+                                                <div class="col-md-10">
+                                                    <div class="input-group" style="margin-top:-9px;">
+                                                        <div class="icheck-inline">
+
+                                                            <label>
+                                                                <input type="radio" value="ageingCustomerTab" id="ageing-customer-filter" name="ageing-type-filter" checked class="icheck ageing tab" data-label="@EnumExtensions.ToDescription(AgeingReportType.Customer)">
+                                                            </label>
+                                                            <label>
+                                                                <input type="radio" value="ageingSupplierTab" id="ageing-supplier-filter" name="ageing-type-filter" class="icheck ageing tab" data-label="@EnumExtensions.ToDescription(AgeingReportType.Supplier)">
+                                                            </label>
+                                                            <label>
+                                                                <input type="radio" value="ageingProductTab" id="ageing-product-filter" name="ageing-type-filter" class="icheck ageing tab" data-label="@EnumExtensions.ToDescription(AgeingReportType.Product)">
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                             
+                            </div>
+                           
+
+                            <div class="tabbable-line" id="ageingFilterTreeTabs">
+                                <ul class="nav nav-tabs">
+                                    
+                                    <li><a data-toggle="tab" href="javascript:void();" id="href-ageingCustomerTab">Customer</a></li>
+                                    <li><a data-toggle="tab" href="javascript:void();" id="href-ageingSupplierTab">Supplier</a></li>
+                                    <li class="active"><a href="javascript:void();" id="href-ageingProductTab">Product</a></li>
+
+                                </ul>
+                                <div class="tab-content">
+                                    <div id="ageingProductTab" class="tab-pane fade in active">
+                                           
+                                            <select id="productMultiselect"  multiple="multiple"></select>
+                                            @Html.Partial("~/Views/Shared/Controls/productFilter.cshtml")
+                                        </div>
+
+                                    <div id="ageingCustomerTab" class="tab-pane fade">
+
+                                        @*<h3>Customer List</h3>*@
+                                        <select id="customerMultiSelect" multiple="multiple"></select>
+                                        @Html.Partial("~/Views/Shared/Controls/CustomerGroupFilter.cshtml")
+
+                                    </div>
+
+                                    <div id="ageingSupplierTab" class="tab-pane fade">
+                                        @*<h3>Supplier List</h3>*@
+                                        <select id="supplierMultiSelect" multiple="multiple"></select>
+                                        @Html.Partial("~/Views/Shared/Controls/supplierGroupFilter.cshtml")
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+              
+
+
+
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-green applydp" id="applyFilters">Apply</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        AgeingReportFilter.init();
+        $(".agingsettingbtn").trigger('click');
+        $('#ageingProductTab').hide();
+
+    });
+
+    $('input').on('ifChecked', function (event) {
+        
+        if (event.currentTarget.id == "ageing-supplier-filter")
+        {
+            $('#ageingCustomerTab').hide();
+            $('#ageingProductTab').hide();
+            $('#ageingSupplierTab').show();
+        }
+        else if (event.currentTarget.id == "ageing-product-filter")
+        {
+            $('#ageingCustomerTab').hide();
+            $('#ageingProductTab').show();
+            $('#ageingSupplierTab').hide();
+        }
+        else {
+            $('#ageingCustomerTab').show();
+            $('#ageingProductTab').hide();
+            $('#ageingSupplierTab').hide();
+        }
+    });
+
+
+    $(function () {
+        $('.modal-body').slimScroll({
+            //height: '450px',
+            // opacity: '0.4',
+            railVisible: true,
+            alwaysVisible: true
+        });
+    });
+
+
+    $('#supplierTreeView').slimScroll({
+        height: '292px',
+        railVisible: true,
+    });
+
+    $(".k-list.k-reset").slimScroll({
+        height: '220px'
+    });
+
+    $('#href-ageingSupplierTab').hide();
+    $('#href-ageingCustomerTab').hide();
+    $('#href-ageingProductTab').hide();
+</script>
+

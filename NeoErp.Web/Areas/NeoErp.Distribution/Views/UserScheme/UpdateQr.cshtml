@@ -1,0 +1,196 @@
+﻿@using NeoErp.Core.Models
+@using NeoErp.Core
+@using NeoErp.Core.Infrastructure
+@{
+    ViewBag.Title = "Update QR data";
+}
+<!--form-->
+<div class="container">
+    <h2 class="mb-4"> Update QR Coupon</h2>
+
+    <div>
+        <div class="form-group mb-3">
+            <label for="itemSelect">Item:</label>
+            <select id="itemSelect" class="form-control">
+                <option value="">-- Select an Item --</option>
+            </select>
+        </div>
+
+        <div class="form-group mb-3">
+            <label>Points:</label>
+            <input type="number" id="points" class="form-control" />
+        </div>
+       
+            <div class="form-group mb-3">
+                <label>Valid From:</label>
+                <input type="date" id="validFrom" class="form-control" />
+            </div>
+            <div class="form-group mb-3">
+                <label>Valid To:</label>
+                <input type="date" id="validTo" class="form-control" />
+            </div>
+
+        <button type="button" id="update" class="btn btn-primary mt-3">
+            Update Coupons
+        </button>
+    </div>
+</div>
+
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $("#wrapper").attr("id", "");
+            $(".navbar-header").hide();
+
+            const popup = $("#popupContainer");
+            const popupQrContainer = $("#popupQrContainer");
+            const toast = $("#toast");
+            const couponCountSpan = $("#couponCount");
+
+
+
+
+         
+
+         
+
+
+            /// FETCH ITMES
+
+            const apiUrl = window.location.protocol + "//" + window.location.host + "/api/mobileDistribution/SchemeApi/";
+            function fetchItems() {
+                $.ajax({
+                    url: apiUrl,
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        action: "getItems",
+                        data: {}
+                    }),
+                    success: function (response) {
+                        if (response.response && response.result.Data) {
+                            $('#itemSelect').empty();
+                            $.each(response.result.Data, function (i, item) {
+                                $('#itemSelect').append(`<option value="${item.ITEM_CODE}">${item.ITEM_EDESC}</option>`);
+                            });
+                        }
+                    },
+                    error: function (xhr) {
+                        console.error('Failed to fetch items:', xhr.responseText);
+                    }
+                });
+            }
+            fetchItems();
+
+
+
+
+
+            ///// GENERATE QR API
+
+            /// GENERATE QR API
+            function UpdateQrApi() {
+                // 1. Get and convert values from HTML inputs
+                let itemCode = $("#itemSelect").val();
+                let points = $("#points").val();
+                let validFrom = $("#validFrom").val();
+                let validTo = $("#validTo").val();
+               
+
+
+                // 2. Define API URL
+                let url = window.location.protocol + "//" + window.location.host + "/api/mobileDistribution/SchemeApi/";
+
+                // 3. Define the data object, ensuring numeric conversion
+                const requestData = {
+                    "action": "updateQr",
+                    "data": {
+                        "data": {
+                            "count": 1,        // Convert to integer
+                            "item_code": itemCode,
+                            "points": parseFloat(points),    // Convert to float
+                            "from_date": validFrom,
+                            "to_date": validTo
+                        }
+                    }
+                };
+
+                // 4. AJAX Call
+                $.ajax({
+                    method: 'POST',
+                    url: url,
+                    // Set contentType and stringify data for modern JSON API
+                    contentType: 'application/json',
+                    data: JSON.stringify(requestData),
+                    dataType: 'json',
+
+                    // Success Handler
+                    success: function (response) {
+                        // Note: Assuming API response structure is { response: true/false, result: {...} }
+                        if (response.response) { // Accessing 'response.response' directly
+
+                            console.info("Update successful");
+
+                        }
+                    },
+
+                    // Error Handler
+                    error: function (xhr, status, error) {
+                        console.error("Error:", status, error, xhr.responseText);
+                        // You might want to display an error toast here
+                    }
+                });
+            }
+
+            // Corrected Button Binding to match the HTML: #showPopupBtn
+            $("#update").click(() => UpdateQrApi());
+
+          
+
+        });
+    </script>
+
+    <style>
+        .page-break {
+            page-break-after: always;
+            height: 0;
+        }
+        
+        .container {
+            page-break-after: always;
+            height: 0;
+            width:500px;
+        }
+
+        #popupQrContainer {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-start;
+            max-width: 780px;
+            margin: 25px auto;
+            gap: 25px;
+            background: #fff;
+        }
+
+        .coupon-container {
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+            background: #fff !important;
+        }
+
+        #pdfContent {
+            background: #fff !important;
+        }
+
+        @@media print {
+            .coupon-container {
+                page-break-inside: avoid;
+            }
+        }
+    </style>

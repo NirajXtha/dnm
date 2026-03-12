@@ -1,0 +1,416 @@
+﻿@{   
+    
+    ViewBag.Title = "Overview";
+    Layout = "~/Views/Common/Master.cshtml";
+    ViewBag.DemoSettings = true;
+}
+<link href="~/Content/JGrid/JQGridDemo.css" rel="stylesheet" media="screen">
+<div class="row">
+    <div class="col-lg-12" style="background-color: #f5f5f5; height:38px;">
+           <div class="btn-group" role="group" style="float: right; padding-top:6px;">
+            @Html.Partial("~/Views/Report/Search.cshtml")
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-lg-12">
+        <form class="form-horizontal" action="~/Report/SalesReportsNepali" method="post" onsubmit="return ValidateDate(); ">
+      @Html.Partial("~/Views/Report/SearchContent.cshtml")<div id="divBalanceSheetReport" class="row"></div>
+            </form>
+    </div>
+</div>
+<div class="container-fluid wrapper">
+    <div class="row">
+            <div class="col-md-12">
+            <div class="btn-group btn-group-xs pull-right">
+                <a href="~/Report/SalesReportsWeekly" style="text-decoration: none">
+                    <button value="W" name="Weekly" type="button" class="btn btn-default">Weekly</button></a>
+                <a href="~/Report/SalesReports" style="text-decoration: none">
+                    <button value="M" name="Monthly" type="button" class="btn btn-default">Monthly</button></a>
+                    <a href="~/Report/SalesReportsQuarterly" style="text-decoration: none">
+                        <button value="Q" name="Quarterly" type="button" class="btn btn-default">Quarterly</button></a>
+            </div>
+           <div class="table-content" style="margin-top:26px;overflow-x: auto;" id="salesreport">
+                <table id="grid" class="table table-bordered" style:"padding-right:10px;"></table>
+                <div id='pager'></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="~/Sales/Content/jquery.ba-throttle-debounce.min.js"></script>
+<script src="~/Sales/Content/jquery.stickyheader.js"></script>
+<link href="~/Sales/Content/nepali.datepicker.v2.1.min.css" rel="stylesheet" />
+<script src="~/Sales/Content/nepali.datepicker.v2.1.min.js"></script>
+<script>
+    $('#btnCommonSearch').click(function () {
+        var DateFilter = $('#ddlDateFilter').val();
+        var fromDate = $('#fromInputDate').val();
+        var toDate = $('#toInputDate').val();
+        var Currency = $('#ddlCurrency').val();
+        var Consolidated = $('#chkConsolidated').is(':checked');
+        var Monthly = $("#chkMonthly").is(':checked');
+        var YearType = $('#ddlYearType').val();
+        var DataType = $('#ddlDataType').val();
+    });
+</script>
+<script>
+    function UpdateChart(CPeriod) {
+        var ChartPeriod = CPeriod;
+        var url = window.location.href + "?change=" + ChartPeriod;
+        var urlc = url.split("?");
+        url = urlc[0] + "?change=" + ChartPeriod;
+        window.location.href = url;
+        alert(url);
+    };
+
+</script>
+<script type="text/javascript">
+    var divwidth = $(document).width();
+    var divheight = $(window).height();
+    jQuery(document).ready(function () {
+        var monthNames = ["", "Baisakh", "Jesth", "Asadh", "Shrawan", "Bhadra", "Asoj",
+                         "Kartik", "Mangshir", "Poush", "Magh", "Falgun", "Chaitra"
+        ];
+
+        jQuery("#grid").jqGrid('jqPivot',
+           [@if (ViewData.Model != null)
+            {
+                foreach (var item in ViewData.Model)
+                {<text>{ grandparent: "<b>@Convert.ToString(item["GRANDPARENT"])</b>", category: "<b>@Convert.ToString(item["PARENT"])</b>", name: "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@Convert.ToString(item["ITEM_EDESC"])", year: "@Convert.ToString(item["YEAR"])", month: "<div class='hidden'>@Convert.ToInt16(item["MONTH"])</div>" + monthNames['@Convert.ToInt16(item["MONTH"])'] + "-@Convert.ToString(item["YEAR"])", quantity: "@Convert.ToString(item["QUANTITY"])", price: "@Convert.ToString(item["PRICE"])" },</text>}
+            }
+            else
+            {<text>{ name: "", month: "", quantity: "", price: "" }</text>}
+           ],
+        // pivot options
+        {
+            xDimension: [{ dataName: 'grandparent', label: "parent", width: 600 },
+                         { dataName: 'category', label: "Category", width: 600 },
+                        { dataName: 'name', label: "Item Description", width: 300, sortable: true }
+            ],
+            yDimension: [{ dataName: 'month', label: "Month" }],
+            aggregates: [
+                {
+                    member: "quantity", aggregator: "sum", label: "Qty.", summaryType: 'sum', width: 40, formatter: 'integer', align: 'right'
+                },
+                {
+                    member: "price", aggregator: "sum", label: "Amt.", summaryType: 'sum', width: 100
+                }
+            ],
+            footerTotals: true,
+            footerAggregator: "sum",
+            totals: true,
+            totalHeader: "Grand Total",
+            totalText: "<span style='font-style: italic'>Grand {0} {1}</span>",
+            frozenStaticCols: true,
+        },
+
+
+        // grid options
+        {
+            iconSet: "fontAwesome",
+            //cmTemplate: { autoResizable: true },
+            shrinkToFit: true,
+            rowList: [50, 100, 200, "10000:All"],
+            autowidth: false,
+            autoresizeOnLoad: true,
+            scroll: true,
+            width: divwidth,
+            autoResizing: { compact: true },
+            gridview: true,
+            pager: "#pager",
+            rowNum: 10000,
+            caption: "Sales Report",
+            groupingView: {
+                groupCollapse: true,
+                showSummaryOnHide: false,
+                groupColumnShow: [false, false],
+                //groupSummaryPos: ["header", "header"],
+                groupSummary: [true, true]
+            },
+            height: 430,
+
+        });
+    });
+</script>
+<script>
+    function ValidateDate() {
+        var FromDate = document.getElementById("fromInputDate").value;
+        var ToDate = document.getElementById("toInputDate").value;
+        var f = BS2AD(FromDate);
+        var t = BS2AD(ToDate);
+        var fsplit = f.split("-", 3);
+        var tsplit = t.split("-", 3);
+        var month = new Array();
+        month[01] = "Jan";
+        month[02] = "Feb";
+        month[03] = "Mar";
+        month[04] = "Apr";
+        month[05] = "May";
+        month[06] = "Jun";
+        month[07] = "Jul";
+        month[08] = "Aug";
+        month[09] = "Sep";
+        month[1] = "Jan";
+        month[2] = "Feb";
+        month[3] = "Mar";
+        month[4] = "Apr";
+        month[5] = "May";
+        month[6] = "Jun";
+        month[7] = "Jul";
+        month[8] = "Aug";
+        month[9] = "Sep";
+        month[10] = "Oct";
+        month[11] = "Nov";
+        month[12] = "Dec";
+        document.getElementById("FromDate").value = fsplit[2] + "-" + month[parseInt(fsplit[1])] + "-" + fsplit[0];
+        document.getElementById("ToDate").value = tsplit[2] + "-" + month[parseInt(tsplit[1])] + "-" + tsplit[0];
+
+        if (document.getElementById("FromDate").value == "" && document.getElementById("ToDate").value == "") {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+</script>
+<script>
+    $('html').mouseover(function () {
+        var FromDate = document.getElementById("fromInputDate").value;
+        var ToDate = document.getElementById("toInputDate").value;
+        var f = BS2AD(FromDate);
+        var t = BS2AD(ToDate);
+        var fsplit = f.split("-", 3);
+        var tsplit = t.split("-", 3);
+        var month = new Array();
+        month[01] = "Jan";
+        month[02] = "Feb";
+        month[03] = "Mar";
+        month[04] = "Apr";
+        month[05] = "May";
+        month[06] = "Jun";
+        month[07] = "Jul";
+        month[08] = "Aug";
+        month[09] = "Sep";
+        month[1] = "Jan";
+        month[2] = "Feb";
+        month[3] = "Mar";
+        month[4] = "Apr";
+        month[5] = "May";
+        month[6] = "Jun";
+        month[7] = "Jul";
+        month[8] = "Aug";
+        month[9] = "Sep";
+        month[10] = "Oct";
+        month[11] = "Nov";
+        month[12] = "Dec";
+        document.getElementById("FromDate").value = fsplit[2] + "-" + month[parseInt(fsplit[1])] + "-" + fsplit[0];
+        document.getElementById("ToDate").value = tsplit[2] + "-" + month[parseInt(tsplit[1])] + "-" + tsplit[0];
+    });
+</script>
+<script>
+    $(document).ready(function () {
+        //alert(BS2AD('2072-04-27'));
+        // alert(AD2BS('2015-08-12'));
+        $('#fromInputDate').nepaliDatePicker();
+        $('#toInputDate').nepaliDatePicker();
+        var DbFromDate = AD2BS('@ViewData["FromDate"]');
+        var DbToDate = AD2BS('@ViewData["ToDate"]');
+        var FromDate = '@ViewData["FromDate"]';
+        var ToDate = '@ViewData["ToDate"]';
+        if (FromDate != "" && ToDate != "") {
+            $('#fromInputDate').val(DbFromDate);
+            $('#toInputDate').val(DbToDate);
+        } else {
+            var current_date = getNepaliDate();
+            $('#fromInputDate').val(current_date);
+            $('#toInputDate').val(current_date);
+        }
+
+    });
+</script>
+<script>
+    $('.extraBtn #btnToggle').click(function () {
+        $('#btnToggle').html($('#btnToggle').text() == 'Total Amount' ? 'Quantity' : 'Total Amount');
+        $('.Total').toggleClass('tbl-active');
+        $('.Quantity').toggleClass('tbl-inactive');
+        $('.MuEdesc').toggleClass('tbl-inactive');
+
+    });
+</script>
+<script type="text/javascript">
+    $(function () {
+        $("#ddlDateFilter").change(function () {
+            var month = new Array();
+            month[0] = "Jan";
+            month[1] = "Feb";
+            month[2] = "Mar";
+            month[3] = "Apr";
+            month[4] = "May";
+            month[5] = "Jun";
+            month[6] = "Jul";
+            month[7] = "Aug";
+            month[8] = "Sep";
+            month[9] = "Oct";
+            month[10] = "Nov";
+            month[11] = "Dec";
+            var today = new Date();
+            var n = month[today.getMonth()];
+            var dd = today.getDate();
+            var yyyy = today.getFullYear();
+            if (dd < 10) {
+                dd = '0' + dd
+            }
+            today = dd + '-' + n + '-' + yyyy;
+            var current_date = getNepaliDate();
+            var current_date = current_date.split("-");
+            var cYear = current_date[0];
+            var cMonth = current_date[1];
+            var cDay = current_date[2];
+
+            if ($('option:selected', this).val() == "TD") {
+                var FromDate = cYear + "-" + cMonth + "-" + cDay;
+                var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                $("#fromInputDate").val(FromDate);
+                $("#toInputDate").val(ToDate);
+            }
+            else if ($('option:selected', this).val() == "TY") {
+                var FromDate = cYear + "-" + "04" + "-" + "01";
+                var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                $("#fromInputDate").val(FromDate);
+                $("#toInputDate").val(ToDate);
+            }
+            else if ($('option:selected', this).val() == "LY") {
+                var FromDate = (cYear - 1) + "-" + "04" + "-" + "01";
+                var ToDate = cYear + "-" + "03" + "-" + numberOfBsDays(cYear, "2");
+                $("#fromInputDate").val(FromDate);
+                $("#toInputDate").val(ToDate);
+            }
+            else if ($('option:selected', this).val() == "TM") {
+                var FromDate = cYear + "-" + cMonth + "-" + "01";
+                var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                $("#fromInputDate").val(FromDate);
+                $("#toInputDate").val(ToDate);
+            }
+            else if ($('option:selected', this).val() == "LM") {
+                if (cMonth == 1) {
+                    cYear = cYear - 1;
+                    cMonth = "12";
+                }
+                else {
+                    cMonth = cMonth - 1;
+                }
+                var newToDate = numberOfBsDays(cYear, (cMonth - 1));
+                if (cMonth > 1 && (cMonth) < 10)
+                    cMonth = "0" + cMonth;
+                var FromDate = cYear + "-" + cMonth + "-" + "01";
+                var ToDate = cYear + "-" + cMonth + "-" + newToDate;
+                $("#fromInputDate").val(FromDate);
+                $("#toInputDate").val(ToDate);
+            }
+            else if ($('option:selected', this).val() == "TQ") {
+                if (cMonth > 3 && cMonth < 7) {
+                    var FromDate = cYear + "-" + "04" + "-" + "01";
+                    var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+                else if (cMonth > 6 && cMonth < 10) {
+                    var FromDate = cYear + "-" + "07" + "-" + "01";
+                    var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+                else if (cMonth > 9 && cMonth <= 12) {
+                    var FromDate = cYear + "-" + "10" + "-" + "01";
+                    var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+                else if (cMonth >= 1 && cMonth < 4) {
+                    var FromDate = cYear + "-" + "01" + "-" + "01";
+                    var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+            }
+            else if ($('option:selected', this).val() == "LQ") {
+                if (cMonth > 3 && cMonth < 7) {
+                    var FromDate = cYear + "-" + "01" + "-" + "01";
+                    var ToDate = cYear + "-" + "03" + "-" + numberOfBsDays(cYear, "2");
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+                else if (cMonth > 6 && cMonth < 10) {
+                    var FromDate = cYear + "-" + "04" + "-" + "01";
+                    var ToDate = cYear + "-" + "06" + "-" + numberOfBsDays(cYear, "5");
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+                else if (cMonth > 9 && cMonth <= 12) {
+                    var FromDate = cYear + "-" + "07" + "-" + "01";
+                    var ToDate = (cYear + 1) + "-" + "09" + "-" + numberOfBsDays((cYear + 1), "8");
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+                else if (cMonth >= 1 && cMonth < 4) {
+                    var FromDate = (cYear - 1) + "-" + "10" + "-" + "01";
+                    var ToDate = (cYear - 1) + "-" + "12" + "-" + numberOfBsDays((cYear - 1), "11");
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+            }
+            else if ($('option:selected', this).val() == "TH") {
+                if (cMonth > 3 && cMonth < 10) {
+                    var FromDate = cYear + "-" + "04" + "-" + "01";
+                    var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+                else {
+                    var FromDate = cYear + "-" + "10" + "-" + "01";
+                    var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+            }
+            else if ($('option:selected', this).val() == "LH") {
+                if (cMonth > 3 && cMonth < 10) {
+                    var FromDate = (cYear - 1) + "-" + "10" + "-" + "01";
+                    var ToDate = cYear + "-" + "03" + "-" + numberOfBsDays(cYear, "2");
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+                else if (cMonth >= 10) {
+                    var FromDate = cYear + "-" + "04" + "-" + "01";
+                    var ToDate = cYear + "-" + "09" + "-" + numberOfBsDays(cYear, "8");
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+                else {
+                    var FromDate = (cYear - 1) + "-" + "04" + "-" + "01";
+                    var ToDate = (cYear - 1) + "-" + "09" + "-" + numberOfBsDays((cYear - 1), "8");
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+            }
+        });
+    });
+</script>
+<script>
+    $(document).ready(function () {
+        var selected = '@ViewData["DateStep"]';
+        if (selected == "") {
+            document.getElementById("ddlDateFilter").value = 'TD';
+        } else {
+            document.getElementById("ddlDateFilter").value = selected;
+        }
+    });
+</script>
+<script>
+    $(document).ready(function () {
+        var pageHeight = $('div#search').outerHeight() + $('div.pull-right').outerHeight();
+        $('.overflow-y').height($('.page-wrapper').height() - pageHeight);
+    });
+
+
+</script>

@@ -1,0 +1,119 @@
+﻿@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+    ViewBag.Title = "Scheme User Setup";
+    Layout = null;
+}
+<script>
+    $(document).ready(function () {
+        // API endpoint
+        var url = window.location.protocol + "//" + window.location.host + "/api/mobileDistribution/SchemeApi/";
+        // Fetch data via jQuery AJAX
+        $.ajax({
+            method: 'POST',
+            url: url,
+            contentType: "application/json",
+            data: JSON.stringify({
+                "action": "getAllPointsHistory",
+                "data": {
+                    "user_id": 1,
+                    "company_code": "01",
+                    "branch_code": "01.01"
+                }
+            }),
+            success: function (response) {
+
+                console.log(response);
+
+                if (response.response) {
+                    console.log("Success response");
+                }
+
+                if (response.result && response.result.Result.Data) {
+                    initKendoGrid(response.result.Result.Data);
+                }
+            },
+            error: function (xhr, status, error) {
+
+                console.error("Error fetching users:", error);
+            }
+        });
+
+        function initKendoGrid(data) {
+            debugger;
+            $("#grid").kendoGrid({
+                dataSource: {
+                    data: data,
+                    pageSize: 25
+                },
+                //height: 550,
+                scrollable: true,
+                sortable: true,
+                filterable: true,
+                pageable: {
+                    refresh: true,
+                    pageSizes: [5, 10, 20],
+                    buttonCount: 5
+                },
+                columns: [
+                    /* { field: "Transaction_Id", title: "Transaction ID", width: "150px" },*/
+                    { field: "USER_ID", title: "User ID", width: "100px" },
+                    { field: "QR_ID", title: "QR ID", width: "100px" },
+                    { field: "FIRST_NAME", title: "First Name", width: "150px" },
+                    { field: "MIDDLE_NAME", title: "Middle Name", width: "150px" },
+                    { field: "LAST_NAME", title: "Last Name", width: "150px" },
+                    {
+                        field: "CREATED_DATE",
+                        title: "Date",
+                        width: "150px",
+                        template: function (dataItem) {
+                            if (!dataItem.CREATED_DATE) {
+                                return "";
+                            }
+
+                            // Ensure it's a string
+                            var str = dataItem.CREATED_DATE.toString();
+
+                            // Split into [date, time]
+                            var parts = str.split("T");
+
+                            // Example: "2025-08-17 14:25:00"
+                            return parts[0] + " " + (parts[1] ? parts[1].split(".")[0] : "");
+                        }
+                    },
+                    //{ field: "TYPE", title: "Type", width: "120px" },
+                    { field: "POINTS", title: "Points", width: "100px" },
+                    //{ field: "Balance_Remaining", title: "Balance Remaining", width: "150px" },
+                    //{ field: "Qr_Data", title: "QR Data", width: "150px" },
+                    //{ field: "Offer_Name", title: "Offer Name", width: "150px" },
+                    //{ field: "Offer_Desc", title: "Offer Description", width: "250px" }
+                ]
+            });
+        }
+    });
+</script>
+
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+        </ul>
+    </div>
+    <div>
+        <div class="row collapse in" id="demo">
+            <div class="col-md-12">
+                <div class="portlet light bordered">
+                    <div class="portlet-body form">
+                        <div class="row kendo_table">
+                            <div id="grid"></div>
+                            @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js?V2")"></script>
+</div>

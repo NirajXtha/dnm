@@ -1,0 +1,676 @@
+﻿@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+    Layout = "~/Areas/NeoERP.DocumentTemplate/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    /**
+    * The dnd-list should always have a min-height,
+    * otherwise you can't drop to it once it's empty
+    */
+    .simpleDemo ul[dnd-list] {
+        min-height: 42px;
+        padding-left: 0px;
+    }
+
+    .portlet {
+        padding: 3px !important;
+    }
+    /**
+    * The dndDraggingSource class will be applied to
+    * the source element of a drag operation. It makes
+    * sense to hide it to give the user the feeling
+    * that he's actually moving it.
+    */
+    .simpleDemo ul[dnd-list] .dndDraggingSource {
+        display: none;
+    }
+
+    /**
+    * An element with .dndPlaceholder class will be
+    * added to the dnd-list while the user is dragging
+    * over it.
+    */
+    .simpleDemo ul[dnd-list] .dndPlaceholder {
+        background-color: #ddd;
+        display: block;
+        min-height: 42px;
+    }
+
+    .simpleDemo ul[dnd-list] li {
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-top-right-radius: 4px;
+        border-top-left-radius: 4px;
+        display: block;
+        padding: 10px 15px;
+        margin-bottom: -1px;
+    }
+
+        /**
+    * Show selected elements in green
+    */
+        .simpleDemo ul[dnd-list] li.selected {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+
+
+    .rightallign {
+        font-weight: bold;
+        font-size: 8px !important;
+        float: right;
+    }
+
+    .comboBoxedescName {
+        width: 65% !important;
+        display: inline-block !important;
+    }
+
+    .portlet.portlet-sortable {
+        min-height: 0px !important;
+    }
+
+    .page-content {
+        padding: 7px 20px 10px !important;
+        min-height: 5000px !important;
+        height: auto !important;
+    }
+
+    /*.DistMenuHeight {
+        height: 1400px !important;
+    }*/
+    .icon-button a {
+        height: auto !important;
+        display: inline-block !important;
+        margin-right: 3px;
+    }
+
+    .icon-button {
+        /*width: auto !important;
+        margin-top: -10% !important;*/
+    }
+
+        .icon-button a {
+            display: none !important;
+            color: #fff;
+            border-radius: 3px !important;
+        }
+
+    .erp-iconlist ul li:hover .icon-button a {
+        display: inline-block !important;
+        -moz-transition: all 2s;
+        -webkit-transition: all 2s;
+        transition: all 2s;
+        color: #fff !important;
+        transform: translate(-50%, -50%);
+    }
+
+
+    /*li.k-item.k-state-default.k-last {
+        width: 102px;
+    }*/
+
+    .modal_dialog_custom {
+        width: 195px;
+    }
+
+    #ResetFolder {
+        width: 76px;
+    }
+
+    .toggle {
+        width: 81px !important;
+        height: 28px !important;
+        margin-top: 4px;
+    }
+
+    .toggle-handle {
+        padding: 0px !important;
+    }
+
+    .toggle-off.btn, .toggle-on.btn {
+        padding: 4px 0px 0px 0px !important;
+    }
+
+    .toggle-off {
+        background-color: #3c763d !important;
+        color: white !important;
+    }
+
+    #FolderContent:hover {
+        background-color: #a7a1a1 !important;
+        color: white !important;
+    }
+
+    #FolderContent {
+        background-color: #fff !important;
+        color: #000000 !important;
+    }
+
+    #ResetFolder:hover {
+        background-color: #a7a1a1 !important;
+        color: white !important;
+    }
+
+    #ResetFolder {
+        background-color: #fff !important;
+        color: #000000 !important;
+        padding-right: 32px;
+    }
+
+    #ShowFolder:hover {
+        background-color: #a7a1a1 !important;
+        color: white !important;
+    }
+
+    #ShowFolder {
+        background-color: #fff !important;
+        color: #000000 !important;
+    }
+
+    #HideFolder:hover {
+        background-color: #a7a1a1 !important;
+        color: white !important;
+    }
+
+    #HideFolder {
+        background-color: #fff !important;
+        color: #000000 !important;
+    }
+
+    #AddToFolder:hover {
+        background-color: #a7a1a1 !important;
+        color: white !important;
+    }
+
+    #AddToFolder {
+        background-color: #fff !important;
+        color: #000000 !important;
+    }
+
+    #quick_sidebar_tab_2 .page-quick-sidebar-alerts-list > div {
+        padding-left: 15px !important;
+    }
+
+    .color-section-container {
+        margin-top: 10px;
+    }
+
+    .color-picker-row {
+        display: flex;
+        gap: 12px;
+        width: 100%;
+    }
+
+    .color-column {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .color-label-sub {
+        font-size: 10px;
+        font-weight: 700;
+        color: #777;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        margin: 0;
+        height: 12px;
+        line-height: 12px;
+    }
+
+    .selected-color-preview {
+        height: 36px;
+        width: 100%;
+        border-radius: 6px !important;
+        border: 1px solid #ced4da;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        font-weight: 600;
+        font-size: 13px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: all 0.2s ease;
+    }
+
+    /* Aggressive Kendo Overrides */
+    .k-colorpicker.custom-picker {
+        width: 100% !important;
+        border: none !important;
+        background: transparent !important;
+    }
+
+    .k-colorpicker.custom-picker .k-picker-wrap {
+        width: 100% !important;
+        height: 36px !important;
+        border-radius: 6px !important;
+        border: 1px solid #ced4da !important;
+        background-color: #fff !important;
+        padding: 3px !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+        cursor: pointer;
+        display: flex !important;
+        align-items: center;
+    }
+
+    .k-colorpicker.custom-picker .k-picker-wrap .k-selected-color {
+        width: 100% !important;
+        height: 100% !important;
+        border-radius: 4px !important;
+        flex: 1;
+    }
+
+    .k-colorpicker.custom-picker .k-picker-wrap .k-input,
+    .k-colorpicker.custom-picker .k-picker-wrap .k-icon,
+    .k-colorpicker.custom-picker .k-picker-wrap .k-select {
+        display: none !important;
+        width: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+</style>
+
+<link href="~/Areas/NeoERP.DocumentTemplate/Content/hotkeys.css" rel="stylesheet" />
+
+<link href="@Styles.Url("~/Content/MainTheme/fontawesome-iconpicker-1.0.0/dist/css/fontawesome-iconpicker.css")" rel="stylesheet" />
+<link href="@Styles.Url("~/Areas/NeoErp.DocumentTemplate/Content/MenuStyleSheet.css")" rel="stylesheet" />
+
+<!DOCTYPE html>
+
+<html lang="en" class="no-js">
+<head>
+    <script src="@Scripts.Url("~/Areas/NeoERP.DocumentTemplate/Scripts/hotkeys.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.DocumentTemplate/js/module/DTModule.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.DocumentTemplate/js/controller/MenuCtrl.js")"></script>
+    <script src="~/Areas/NeoERP.DocumentTemplate/js/controller/SplitterMenuCtrl.js"></script>
+    <script src="~/Areas/NeoERP.DocumentTemplate/js/services/SplitterMenuService.js"></script>
+    <script src="@Scripts.Url("~/Content/MainTheme/keymaster.js")"></script>
+    @*<script src="@Scripts.Url("~/Areas/NeoERP.DocumentTemplate/Scripts/drag-arrange.js")"></script>*@
+</head>
+<body class="page-header-fixed  page-sidebar-closed-hide-logo page-content-white">
+    <div class="busy-loader">
+        <div id="preloader" class="loader"></div>
+        <span style="color:white">Loading.....Please Wait.....</span>
+    </div>
+    <div ng-app="" id="myarea">
+        <!-- BEGIN HEADER -->
+        <!-- END HEADER INNER -->
+        <!-- END HEADER -->
+        <div class="clearfix"></div>
+        <div class="">
+            <div class="page-sidebar-wrapper">
+                <div ng-controller="MenuCtrl">
+                    <div class="">
+                        <div class="page-bar">
+
+                            <ul class="page-breadcrumb">
+                                <li>
+                                    <i class="fa fa-home"></i>
+                                    <a href="/main/GlobalDashboard">Home</a>
+
+                                </li>
+
+                            </ul>
+
+
+                            <div class="row">
+                                <div class="pull-right" style="margin-right:20px;">
+                                    <input type="checkbox" id="SwitchControl">
+                                </div>
+                                <div class="col-md-3 pull-right">
+
+                                    <div class="form-group has-feedback">
+                                        <input type="search" id="searchFolder" placeholder="Search..." ng-model="searchBox" ng-change="ShowIcon(searchBox)" class="search form-control">
+                                        <span class="search-icon glyphicon glyphicon-search form-control-feedback"></span>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <div class="main-contain-box collapse in" id="demo">
+                            <div class="margin-top-10">
+                                <div class="">
+
+                                    <div class="">
+                                        @* For Favroite *@
+                                        <div class="custom-menu">
+                                            <a href="javascript:;"><span class="fa fa-times text-danger"></span></a>
+                                        </div>
+                                        <div class="row sortable" id="sortable_portlets">
+
+                                            <div id="FolderTemplate">
+                                                @{Html.RenderAction("FolderTemplate", "Template");}
+                                            </div>
+                                            <div class="clear-both clearfix"></div>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        </div>
+                        <div class="modal fade" id="ContentModal" role="dialog">
+
+
+                            <div class="modal-dialog inputcontent modal_dialog_custom modal-theme-bg" style="width:250px;">
+
+                                <!-- Modal content-->
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal" ng-click="CancelFolder()" aria-hidden="true" next-on-tab="">×</button>
+                                        <h4 class="modal-title">
+                                            <span class="fa fa-file"></span>
+                                            Add Folder
+                                        </h4>
+                                    </div>
+                                    <div class="modal-body main">
+                                        <form id="FolderForm" name="FolderForm" novalidate>
+                                            <div class="row">
+
+                                                <div class="col-xs-12 col-sm-12 col-md-12">
+                                                    <div class="form-group">
+                                                        <label class="control-label">
+                                                            Name
+                                                            <span style="color:red" ng-show="FolderForm.FOLDER_NAME.$invalid">
+                                                                <span ng-show="FolderForm.FOLDER_NAME.$error.required">*</span>
+                                                            </span>
+                                                        </label>
+                                                        <input type="text" id="FOLDER_NAME" name="FOLDER_NAME" ng-model="FOLDER_NAME" class="form-control input-sm" required />
+
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-xs-12 col-sm-12 col-md-12">
+                                                    <div class="form-group">
+                                                        <label class="control-label">
+                                                            Folder Color
+                                                            <span style="color:red" ng-show="FolderForm.FOLDER_COLOR.$invalid">
+                                                                <span ng-show="FolderForm.FOLDER_COLOR.$error.required">*</span>
+                                                            </span>
+                                                        </label>
+                                                        <div class="color-section-container">
+                                                            <div class="color-picker-row">
+                                                                <div class="color-column">
+                                                                    @*<label class="color-label-sub">Current Color</label>*@
+                                                                    <div class="selected-color-preview" ng-style="{'background-color': FOLDER_COLOR}" title="Current Color Code">
+                                                                        {{FOLDER_COLOR}}
+                                                                    </div>
+                                                                </div>
+                                                                <div class="color-column">
+                                                                    @*<label class="color-label-sub">Choose Color</label>*@
+                                                                    <input name="FOLDER_COLOR" id="FOLDER_COLOR"
+                                                                           kendo-color-picker
+                                                                           ng-model="FOLDER_COLOR"
+                                                                           k-buttons="true"
+                                                                           k-preview="false"
+                                                                           k-input="false"
+                                                                           class="custom-picker"
+                                                                           required />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+
+
+                                            <div class="modal-footer" style="text-align:center;">
+                                                <a class="btn btn-sm btn-green ng-binding" id="savedocumentformdata" ng-disabled="!FolderForm.$valid" ng-click="AddFolder()">
+                                                    <i class="fa fa-print"></i> Save
+                                                </a>
+                                            </div>
+                                        </form>
+                                    </div>
+
+                                </div>
+                            </div>
+                            <!--container end -->
+                        </div>
+                        <ul id="context-menu">
+                            <li><a id="FolderContent" name="FolderContent" data-toggle="modal" data-backdrop="static" data-keyboard="false" data-target="#ContentModal">Add Folder</a></li>
+                            <li><a id="ResetFolder" name="ResetFolder">Reset Folder</a></li>
+                            <li><a id="ShowFolder" name="ShowFolder">Show Folder</a></li>
+                            <li><a id="HideFolder" name="HideFolder">Hide Folder</a></li>
+                        </ul>
+
+                    </div>
+
+                </div>
+            </div>
+
+
+        </div>
+
+
+
+    </div>
+
+    <link href="~/Areas/NeoERP.DocumentTemplate/Content/bootstrap2-toggle.css" rel="stylesheet" />
+    <script src="~/Areas/NeoERP.DocumentTemplate/Scripts/jscolor.js"></script>
+    <script src="~/Areas/NeoERP.DocumentTemplate/Scripts/bootstrap2-toggle.js"></script>
+    <script src="~/Areas/NeoERP.DocumentTemplate/Scripts/drag-arrange.min.js"></script>
+    <script>
+        $(function () {
+            //$('.portlet-body').slimScroll({
+            //    //height: '607px'
+            //});
+
+            $("#ResetFolder").click(function () {
+                RESET();
+                WebDesktopManagement.RESET = "RESET";
+                Showpartial();
+            });
+
+
+            $("#ShowFolder").click(function () {
+                $(".portlet-body").show();
+            });
+
+            $("#HideFolder").click(function () {
+                $(".portlet-body").hide();
+            });
+
+
+
+
+            $('#SwitchControl').bootstrapToggle({
+                on: 'Move Folder',
+                off: 'Drag Icon'
+            });
+            window.dragicon = true;
+
+        });
+
+        $("#SwitchControl").change(function (ev) {
+            var Switch = $("#SwitchControl").prop('checked');
+            if (!Switch) {
+                window.dragicon = true;
+                $('.draggable-element').unbind();
+            }
+            if (Switch) {
+                $('.draggable-element').arrangeable();
+                window.dragicon = false;
+
+            }
+        });
+
+    </script>
+
+    <script>
+        var initMenu = function () {
+            menu = $("#context-menu").kendoContextMenu({
+                orientation: "vertical",
+                target: "#myarea",
+                animation: {
+                    open: { effects: "fadeIn" },
+                    duration: 500
+                },
+                select: function (e) {
+                    // Do something more complicated on select
+                }
+            });
+        };
+
+        initMenu();
+    </script>
+
+    <script>
+
+        var WebDesktopManagement = {
+            FORM_CODE: "", HREF: "", COLOR: "", ICON_PATH: "", FORM_TYPE: "", ABBR: "", FORM_DESC: "", PREV_FOLDER_NAME: "", NEW_FOLDER_NAME: "", FUNCTION_LINK: "", TEMPLATE_CODE: "", MENU_EDESC: "", MENU_DESC: "", MENU_NO: "", UNIQUE_ID: "", RESET: ""
+        };
+
+
+
+
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function drag(ev) {
+
+            if (!window.dragicon) {
+                ev.preventDefault();
+            }
+
+            id = ev.target.id;
+            var str = id;
+            id = str.replace(/\s/g, '');
+            var checksidebar = $($("#" + id).find("span")[0]).text().split("&")[2].split("_")[0].trim();
+            if (checksidebar === "SIDEBAR") {
+                WebDesktopManagement.FORM_CODE = "";
+                WebDesktopManagement.FORM_TYPE = "";
+                WebDesktopManagement.PREV_FOLDER_NAME = $($($("#" + id)[0]).find("span")[0]).text().split("&")[0];
+                WebDesktopManagement.HREF = $($($("#" + id)[0]).find("span")[0]).text().split("&")[1];
+                WebDesktopManagement.SIDEBAR_ID = $($("#" + id).find("span")[0]).text().split("&")[2].split("_")[1].trim();
+                WebDesktopManagement.MENU_NO = "";
+                WebDesktopManagement.COLOR = $($($("#" + id)[0]).find("span")[0]).text().split("&")[3];
+                WebDesktopManagement.ICON_PATH = $($($("#" + id)[0]).find("span")[0]).text().split("&")[4];
+                WebDesktopManagement.MENU_EDESC = $($($("#" + id)[0]).find("span")[0]).text().split("&")[5];
+                WebDesktopManagement.UNIQUE_ID = $($($("#" + id)[0]).find("span")[0]).text().split("&")[6];
+
+            } else {
+                var FORM_CODE = str.split("_")[1];
+                var FOLDER_DRAG_LINK = str.split("_")[0];
+                FORM_CODE = parseInt(FORM_CODE);
+                var Menu = false;
+                if (isNaN(FORM_CODE)) {
+                    Menu = true;
+                }
+                if (!Menu) {
+                    WebDesktopManagement.FORM_CODE = FORM_CODE;
+
+                    var TEMPLATE_CODE = $($($("#" + id)[0]).find("span")[0]).text().split("&")[5];
+                    TEMPLATE_CODE = TEMPLATE_CODE.replace(/\s/g, '');
+                    if (!isNaN(TEMPLATE_CODE)) {
+                        WebDesktopManagement.FUNCTION_LINK = $($($("#" + id)[0]).find("span")[0]).text().split("&")[1];
+                        WebDesktopManagement.TEMPLATE_CODE = TEMPLATE_CODE.toString();
+                        WebDesktopManagement.UNIQUE_ID = $($($("#" + id)[0]).find("span")[0]).text().split("&")[5];
+                    } else {
+                        WebDesktopManagement.HREF = $($($("#" + id)[0]).find("span")[0]).text().split("&")[1];
+                        WebDesktopManagement.UNIQUE_ID = $($($("#" + id)[0]).find("span")[0]).text().split("&")[5];
+
+
+                    }
+                    WebDesktopManagement.PREV_FOLDER_NAME = $($($("#" + id)[0]).find("span")[0]).text().split("&")[0];
+                    WebDesktopManagement.FORM_TYPE = $($($("#" + id)[0]).find("span")[0]).text().split("&")[2];
+                    WebDesktopManagement.COLOR = $($($("#" + id)[0]).find("span")[0]).text().split("&")[3];
+                    WebDesktopManagement.ICON_PATH = $($($("#" + id)[0]).find("span")[0]).text().split("&")[4];
+
+                    WebDesktopManagement.ABBR = WebDesktopManagement.FORM_TYPE;
+
+                } else {
+                    WebDesktopManagement.FORM_CODE = "";
+                    WebDesktopManagement.FORM_TYPE = "";
+                    WebDesktopManagement.PREV_FOLDER_NAME = $($($("#" + id)[0]).find("span")[0]).text().split("&")[0];
+                    WebDesktopManagement.HREF = $($($("#" + id)[0]).find("span")[0]).text().split("&")[1];
+                    WebDesktopManagement.MENU_NO = $($($("#" + id)[0]).find("span")[0]).text().split("&")[2];
+                    WebDesktopManagement.COLOR = $($($("#" + id)[0]).find("span")[0]).text().split("&")[3];
+                    WebDesktopManagement.ICON_PATH = $($($("#" + id)[0]).find("span")[0]).text().split("&")[4];
+
+                    WebDesktopManagement.MENU_EDESC = $($($("#" + id)[0]).find("span")[0]).text().split("&")[5];
+                    WebDesktopManagement.UNIQUE_ID = $($($("#" + id)[0]).find("span")[0]).text().split("&")[6];
+                    WebDesktopManagement.MENU_DESC = str.split("_")[1];
+                    WebDesktopManagement.ABBR = "";
+
+                }
+            }
+            WebDesktopManagement;
+            var data = ev.dataTransfer.getData("text");
+            ev.dataTransfer.setData("text", id);
+
+
+
+
+        }
+
+        function RESET() {
+            WebDesktopManagement = {};
+            //var WebDesktopManagement = {
+            //    FORM_CODE: "", HREF: "", COLOR: "", ICON_PATH: "", FORM_TYPE: "", ABBR: "", FORM_DESC: "", PREV_FOLDER_NAME: "", NEW_FOLDER_NAME: "", FUNCTION_LINK: "", TEMPLATE_CODE: "", MENU_EDESC: "", MENU_NO: ""
+            //};
+        }
+
+        function Showpartial() {
+            $.ajax({
+                type: "GET",
+
+                url: "/DocumentTemplate/Template/FolderTemplate",
+                data: WebDesktopManagement,// now data come in this function
+                dataType: "html",
+                success: function (response) {
+
+                    $("#FolderTemplate").html("");
+                    $("#FolderTemplate").html(response);
+                    //window.location.reload();
+                    RESET();
+                },
+                error: function (response) {
+
+                }
+
+
+            });
+        };
+
+        function drop(ev) {
+
+            WebDesktopManagement.NEW_FOLDER_NAME = $(ev.currentTarget).attr("foldername");
+            //var data = ev.dataTransfer.getData("text");
+            //ev.target.appendChild(document.getElementById(data));
+            if (WebDesktopManagement.NEW_FOLDER_NAME === WebDesktopManagement.PREV_FOLDER_NAME) {
+                return false;
+            }
+            //ev.preventDefault();
+            WebDesktopManagement;
+            Showpartial();
+
+
+
+
+        }
+
+
+    </script>
+
+
+</body>
+
+</html>
+
+
+
+
+
+
+
+

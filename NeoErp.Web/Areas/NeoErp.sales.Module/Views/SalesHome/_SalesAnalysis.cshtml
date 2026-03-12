@@ -1,0 +1,444 @@
+﻿
+
+@using NeoErp.Core.Models;
+@{
+    var myAreaName = string.Empty;
+    object areaObj;
+    if (ViewContext.RouteData.Values.TryGetValue("area", out areaObj))
+    {
+        myAreaName = areaObj.ToString();
+    }
+    var actionPageId = "SalesAnalysis";
+}
+<style>
+    .slimScrollBar {
+        border-radius: 5px !important;
+        background-color: #333 !important;
+    }
+
+    .slimScrollDiv, #customerMultiSelect {
+        height: auto !important;
+    }
+
+    ul.dropdown-menu.custom {
+        margin-top: 8px !important;
+        border: none;
+        box-shadow: none !important;
+    }
+
+    .dropdown-menu.custom:before {
+        left: 58px !important;
+    }
+
+    .download-btn {
+        margin: 0px !important;
+        padding-top: -2px !important;
+        padding-left: 0px;
+        padding-right: 0px;
+        margin-top: -5px !important;
+        margin-left: 5px !important;
+    }
+
+    .dropdown-menu.custom {
+        left: -27px !important;
+        top: 20px !important;
+    }
+
+    .dropdown > .dropdown-menu:before, .dropdown-toggle > .dropdown-menu:before, .btn-group > .dropdown-menu:before {
+        position: absolute;
+        top: -8px;
+        left: 30px;
+        right: auto;
+        display: inline-block !important;
+        border-right: 8px solid transparent;
+        border-bottom: 8px solid #e0e0e0;
+        border-left: 8px solid transparent;
+        content: '';
+    }
+
+    i.icon-arrow-down {
+        color: #acacac;
+    }
+
+    .btn-group-custom button.btn {
+        padding: 7px 7px !important;
+        float: left;
+    }
+
+    .dropdown-menu.custom {
+        left: -55px !important;
+    }
+
+    .k-grid-toolbar .k-button {        
+        float: right;
+    }
+    #SalesAnalysisgrid{
+        font-size:8px;
+        margin:-15px;
+
+    }
+
+        #SalesAnalysisgrid thead, #SalesAnalysisgrid tbody {
+            font-size: 8px !important;
+        }
+        #SalesAnalysisgrid thead th {
+            text-align:center !important;
+        }
+    #SalesAnalysisgrid > tr {
+        font-size: 8px;
+    }
+
+    .portlet.portlet-sortable {
+        min-height: 0px;
+        padding-bottom:20px;
+    }
+</style>
+
+
+<div class="portlet portlet-sortable  light bordered" id="SalesAnalysis" style="height:430px">
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="icon-bar-chart font-green-haze"></i>
+            <span class="caption-subject bold uppercase font-green-haze custom-modal">Sales Analysiss</span>
+        </div>
+        <div class="tools">
+            <a href="javascript:;" class="reload">
+            </a>
+            <a href="javascript:;" class="collapse">
+            </a>
+            <a href="javascript:;" class="fullscreen">
+            </a>
+            <a href="javascript:;" class="remove">
+            </a>
+        </div>
+    </div>
+    <div class="portlet-body">
+        <div class="k-content wide">
+            <div id="SalesAnalysisgrid"></div>
+            <script type="text/x-kendo-template" id="toolbar-template">
+                <div class="k-header k-grid-toolbar">
+
+                    <a class="k-button k-button-icontext k-grid-excel" href="javascript:">
+                        <i class="fa fa-file-excel-o"></i>
+                    </a>
+                </div>
+            </script>
+        </div>
+    </div>
+
+    <script>
+
+        $(".reload").on("click", function () {
+            $('#SalesAnalysisgrid').val('');
+            $('#SalesAnalysisgrid').html('');
+            BindGrid();
+        });
+        $(".fullscreen").on("click", function () {           
+            if ($('body').hasClass('page-portlet-fullscreen')) {
+                $("#SalesAnalysisgrid").css({ "margin": "-15px" });
+            }
+            else {
+                $("#SalesAnalysisgrid").css({ "margin": "0px" });
+            }
+                     
+        });
+
+
+
+        var columns = [];
+        $(document).ready(function () {
+            BindGrid();
+        });
+        function BindGrid()
+        {
+            var readurl = window.location.protocol + "//" + window.location.host + "/api/SalesSummaryReportApi/GetSalesAnalysis";
+            var dataSource = new kendo.data.DataSource({
+                type: "json",
+                transport: {
+                    read: {
+                        url: readurl, // <-- Get data from here.
+                        dataType: "json", // <-- The default was "jsonp".
+                        type: "POST",
+                        //contentType: "application/json; charset=utf-8"
+                    },
+                    parameterMap: function (options, type) {
+
+                        var paramMap = $.extend(options, ReportFilter.filterAdditionalData());
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+                    }
+                },               
+                error: function (e) {
+                    displayPopupNotification("Sorry error occured while processing data", "error");
+                },
+                serverFiltering: false,                
+                serverPaging: false,
+                //serverSorting: true,
+                pageSize: 100,
+                schema: {
+                    total: function (response) {
+                        return $(response.data).length;
+                    }
+                },
+            });
+            dataSource.fetch(function () {                
+                Calculation(this.data())
+            });
+            var grid = $("#SalesAnalysisgrid").kendoGrid({
+                //dataSource: dataSource,
+                //toolbar: kendo.template($("#toolbar-template").html()),                                  
+                //height: 380,
+                sortable: true,
+                reorderable: true,
+                groupable: false,
+                resizable: true,
+                filterable: {
+                    extra: false,
+                    operators: {
+                        number: {
+
+                            eq: "Is equal to",
+                            neq: "Is not equal to",
+                            gte: "is greater than or equal to	",
+                            gt: "is greater than",
+                            lte: "is less than or equal",
+                            lt: "is less than",
+                        },
+                        string: {
+
+                            eq: "Is equal to",
+                            neq: "Is not equal to",
+                            startswith: "Starts with	",
+                            contains: "Contains",
+                            doesnotcontain: "Does not contain",
+                            endswith: "Ends with",
+                        },
+                        date: {
+
+                            eq: "Is equal to",
+                            neq: "Is not equal to",
+                            gte: "Is after or equal to",
+                            gt: "Is after",
+                            lte: "Is before or equal to",
+                            lt: "Is before",
+                        }
+
+                    }
+                },
+                columnMenu: true,               
+                columnMenuInit: function (e) {
+                    wordwrapmenu(e);
+                },
+                pageable: true,
+                height: 250,
+                scrollable: {
+                    virtual: true
+                },
+                autoBind:false,
+                dataBound: function (o) {
+                    
+                    var grid = o.sender;                   
+                },
+                columns: columns,
+            });
+        }
+
+
+
+
+        function Calculation(data) {
+            columns = [];
+            var finalData = [];
+            var finalFinalData = [];
+            columns.push({ field: "DURATION", title: " " });
+            var getGroups = _.uniq(data, "ITEM_GROUP_NAME");
+            $.each(getGroups, function (index, obj) {
+                //first change field names
+                var test = _.where(data, { ITEM_GROUP_NAME: obj.ITEM_GROUP_NAME });
+                test.forEach(function (e) {
+                    e["QUANTITY_" + obj.ITEM_GROUP_NAME] = e.QUANTITY;
+                    e["AMOUNT_" + obj.ITEM_GROUP_NAME] = e.AMOUNT;
+                    e["DISCOUNT_" + obj.ITEM_GROUP_NAME] = e.DISCOUNT;
+                    e["REALIZATION_" + obj.ITEM_GROUP_NAME] = e.REALIZATION;
+                    delete e.QUANTITY;
+                    delete e.AMOUNT;
+                    delete e.DISCOUNT;
+                    delete e.REALIZATION;
+                });
+                //now push to columns
+                columns.push({
+                    field: "ITEM_GROUP_NAME",
+                    title: obj.ITEM_GROUP_NAME,
+                    columns: [
+                        {
+                            field: "QUANTITY_" + obj.ITEM_GROUP_NAME,
+                            title: "Qty in Bag",
+                            format: "{0:n0}",
+                            attributes: {
+                                style: "text-align: right;"
+                            },
+                            template: function (data) {
+                                return data["QUANTITY_" + obj.ITEM_GROUP_NAME] == undefined ? 0 : data["QUANTITY_" + obj.ITEM_GROUP_NAME];
+                            }
+                        },
+                        {
+                            field: "AMOUNT_" + obj.ITEM_GROUP_NAME,
+                            title: "Amount",
+                            format: "{0:n2}",
+                            attributes: {
+                                style: "text-align: right;"
+                            },
+                            template: function (data) {
+                                return data["AMOUNT_" + obj.ITEM_GROUP_NAME] == undefined ? "0.00" : data["AMOUNT_" + obj.ITEM_GROUP_NAME];
+                            }
+                        },
+                        {
+                            field: "DISCOUNT_" + obj.ITEM_GROUP_NAME,
+                            title: "Discount",
+                            format: "{0:n2}",
+                            attributes: {
+                                style: "text-align: right;"
+                            },
+                            template: function (data) {
+                                return data["DISCOUNT_" + obj.ITEM_GROUP_NAME] == undefined ? "0.00" : data["DISCOUNT_" + obj.ITEM_GROUP_NAME];
+                            }
+                        },
+                        {
+                            field: "REALIZATION_" + obj.ITEM_GROUP_NAME,
+                            title: "Realization",
+                            format: "{0:n2}",
+                            attributes: {
+                                style: "text-align: right;"
+                            },
+                            template: function (data) {
+                                return data["REALIZATION_" + obj.ITEM_GROUP_NAME] == undefined ? "0.00" : data["REALIZATION_" + obj.ITEM_GROUP_NAME];
+                            }
+
+                        },
+                    ]
+                });
+            });
+            columns.push({
+                field: "TotalSales",
+                title: "Total Sales",
+                format: "{0:n2}",
+                attributes: {
+                    style: "text-align: right;"
+                },
+            });
+
+
+            var getDuration = _.uniq(data, "DURATION");
+            $.each(getDuration, function (index, obj) {
+                var test = _.where(data, { DURATION: obj.DURATION });
+                var newArr = [];
+                test.forEach(function (e) {
+                    $.extend(newArr, e);
+                });
+                finalData.push(newArr);
+            });
+
+            //new implimentation
+            var current_date = getNepaliDate();
+            var date = current_date.split("-");
+            var currentFiscalYear = (parseInt(date[0]) - 1).toString() + "/" + date[0].toString().substring(2, date[0].toString().length);
+            var readUrl = window.location.protocol + "//" + window.location.host + "/api/Common/GetDateFilters?fiscalYear=" + currentFiscalYear;
+            $.ajax({
+                type: "GET",
+                url: readUrl,
+                async: false,
+                success: function (dateData) {
+                    
+                    //only take required duration
+                    dateData = GetRequiredDuration(dateData);
+
+                    $.each(dateData, function (i) {
+                        //var reqDuration = ["This Year", "This Month", "This Week", "First Quarter", "Second Quarter", "Today"];
+                        // if (_.contains(requiredDuration, dateData[i].RangeName)){
+                        var test = _.filter(finalData, function (d) {
+                            return moment(d.SALES_DATE)._d >= moment(dateData[i].StartDate)._d && moment(d.SALES_DATE)._d <= moment(dateData[i].EndDate)._d;
+                        });
+                        if (test.length > 0) {
+                            test.forEach(function (e, v) {
+                                if (v > 0) {
+                                    test[0].DURATION = dateData[i].RangeName;
+                                    test[0]["AMOUNT_" + test[v].ITEM_GROUP_NAME] += e["AMOUNT_" + test[v].ITEM_GROUP_NAME];
+                                    test[0]["DISCOUNT_" + test[v].ITEM_GROUP_NAME] += e["DISCOUNT_" + test[v].ITEM_GROUP_NAME];
+                                    test[0]["QUANTITY_" + test[v].ITEM_GROUP_NAME] += e["QUANTITY_" + test[v].ITEM_GROUP_NAME];
+                                    test[0]["REALIZATION_" + test[v].ITEM_GROUP_NAME] += e["REALIZATION_" + test[v].ITEM_GROUP_NAME];
+                                }
+                                else
+                                    test[0].DURATION = dateData[i].RangeName;
+                            });
+                            var amount = 0;
+                            for (var key in test[0]) {
+                                if (key.indexOf("AMOUNT") >= 0)
+                                    amount += test[0][key];
+                            }
+                            test[0]["TotalSales"] = amount;
+                            finalFinalData.push($.extend([], test[0]));
+                        }
+                        else {
+                            
+                            test.push({
+                                DURATION: dateData[i].RangeName
+                            });
+                            test[0]["TotalSales"] = 0;
+                            finalFinalData.push($.extend([], test[0]));
+
+                        }
+                        // }
+                    });
+                },
+            });
+            var ds = new kendo.data.DataSource({
+                data: finalFinalData,
+            });
+            $("#SalesAnalysisgrid").data("kendoGrid").setOptions({ columns: columns });
+            $("#SalesAnalysisgrid").data("kendoGrid").setDataSource(ds);
+            $('#SalesAnalysisgrid').data("kendoGrid").dataSource.page(1);
+        }
+        function GetRequiredDuration(data) {
+            var dur = [];
+            //today
+            dur.push(_.filter(data, function (x) {
+                return x.RangeName == "Today";
+            })[0]);
+            //This Week
+            dur.push(_.filter(data, function (x) {
+                return x.RangeName == "This Week";
+            })[0]);
+            //MTD
+            var temp = _.filter(data, function (x) {
+                return x.RangeName == "This Month";
+            })[0];
+            temp.RangeName = "MTD";
+            dur.push(temp);
+            //First Quarter
+            dur.push(_.filter(data, function (x) {
+                return x.RangeName == "First Quarter";
+            })[0]);
+            //Second Quarter
+            dur.push(_.filter(data, function (x) {
+                return x.RangeName == "Second Quarter";
+            })[0]);
+            //Half Year
+            var temp1 = $.extend(true, [], _.filter(data, function (x) {
+                return x.RangeName == "First Quarter";
+            }));
+            temp1[0].RangeName = "Half Year"
+            temp1[0].EndDate = _.filter(data, function (x) {
+                return x.RangeName == "Second Quarter";
+            })[0].EndDate;
+            dur.push(temp1[0]);
+            //This Year
+            dur.push(_.filter(data, function (x) {
+                return x.RangeName == "This Year";
+            })[0]);
+
+
+            return dur;
+        }
+    </script>
+</div>

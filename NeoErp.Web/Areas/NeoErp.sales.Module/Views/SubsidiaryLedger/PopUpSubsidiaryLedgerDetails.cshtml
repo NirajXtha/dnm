@@ -1,0 +1,581 @@
+﻿@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+@model NeoErp.sales.Module.Models.LedgerSearch
+<style>
+    .page-bar {
+        margin-bottom: 0px !important;
+    }
+
+    .div.k-window-content {
+        overflow: inherit !important;
+    }
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+
+    /*#grid thead{
+         font-size:11px;
+    }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .k-list.k-reset {
+        height: auto !important;
+    }
+
+    .discontinued {
+        font-weight: bold;
+        color: #15c44f;
+    }
+</style>
+
+@*<ul id="context-menu" style="display:none;">
+<li id="TBvoucherDetailContextmenu">
+Voucher Detail
+</li>
+</ul>*@
+<div class="clearfix"></div>
+<!-- END PAGE HEADER-->
+<!-- BEGIN PAGE CONTENT-->
+<div class="row">
+    <div class="col-md-12">
+        <div class="row">
+            <div class="col-md-12">
+                @{
+                    var breadCrumbid = "breadCrumbDiv" + ViewBag.totaltab;
+                }
+                @*<div id="@breadCrumbid"></div>*@
+                <div id="@Model.GridName" class="grid"></div>
+                <script type="text/x-kendo-template" id="CrTemplate">
+                    <div style="float:right">
+                        #: kendo.format("{0:n}", data["cr_amount"].sum)# <br />
+                    </div>
+                    <span style="float: right;">
+
+                        #if(data["cr_amount"].sum>data["dr_amount"].sum){#
+                        #: kendo.format("{0:n}", data["cr_amount"].sum-data["dr_amount"].sum)#
+                        #}else{#
+                        <br />
+                        #}#
+                    </span>
+                </script>
+                <script type="text/x-kendo-template" id="BalanceTemplate">
+                    <div style="float:right">
+                        #: kendo.format("{0:n}", data["dr_amount"].sum - data["cr_amount"].sum)# <br />
+                    </div>
+                    <span style="float: right;">
+
+                        #if(data["cr_amount"].sum>data["dr_amount"].sum){#
+                        #: kendo.format("{0:n}", data["cr_amount"].sum-data["dr_amount"].sum)#
+                        #}else{#
+                        <br />
+                        #}#
+                    </span>
+                </script>
+                <script type="text/x-kendo-template" id="DrTemplate">
+                    <div style="float:right;">
+                        #: kendo.format("{0:n}", data["dr_amount"].sum)# <br />
+                    </div>
+                    <span style="float: right;">
+
+                        #if(data["dr_amount"].sum>data["cr_amount"].sum){#
+                        #: kendo.format("{0:n}", data["dr_amount"].sum-data["cr_amount"].sum)#
+                        #}else{#
+                        <br />
+                        #}#
+                    </span>
+                </script>
+                <script type="text/x-kendo-template" id="OpenAmountTemplate">
+                    <div style="float:right;">
+                        #: kendo.format("{0:n}", data["OPEN_AMOUNT"].sum)#
+                    </div>
+                    <span style="float: right;">
+
+                        #if(data["dr_amount"].sum>data["cr_amount"].sum){#
+                        #: kendo.format("{0:n}", data["dr_amount"].sum-data["cr_amount"].sum)#
+                        #}else{#
+                        <br />
+                        #}#
+                    </span>
+                </script>
+                <script type="text/x-kendo-template" id="toolbar-template">
+                    <div class="k-header k-grid-toolbar">
+                        <a class="k-button k-button-icontext k-grid-excel" href="javascript:">
+                            <i class="fa fa-file-excel-o"></i>
+                        </a>
+                        <a id="PrintReport" class="k-button k-button-icontext k-grid-print" href="javascript:" title="Print Report" style="float:right;">
+                            <i class="fa fa-print"></i>
+                        </a>
+                    </div>
+                </script>
+
+            </div>
+        </div>
+    </div>
+</div>
+<!-- END PAGE CONTENT-->
+<input type="hidden" id="voucherNo" name="voucherNo" />
+<input type="hidden" id="uid" name="uid" />
+<script src="~/JS/UniversalGridPrint.js"></script>
+@*
+ManualEmailSender is intentionally NOT initialized here.
+This is a partial view loaded per-tab via AJAX. The parent page
+(SubsidiaryLedgerIndex.cshtml) manages the send button with dynamic grid lookup.
+*@
+<script>
+    $('@breadCrumbid').on("change", ".input-medium", function () {
+        alert(this.value);
+        //alert("test");
+    });
+    $('@breadCrumbid').on("change", ".editable-submit", function () {
+        alert(this.value);
+        alert("test");
+    });
+    //$("#applydp").on("click", function (evt) {
+    //    evt.preventDefault();
+    //    $("#RunQuery").trigger("click");
+    //})
+
+    $(document).ready(function () {
+
+
+        var formEnglishDate = $("#FromDateVoucher").val('@Model.formDate');
+        var toEnglishDate = $("#ToDateVoucher").val('@Model.toDate');
+        var urltest = Arg.url(window.location.protocol + "//" + window.location.host + "/api/SubsidiaryLedger/GetSubsidiaryVouchersDetails", { formDate: '@Model.formDate', toDate: '@Model.toDate', AccoundCode: '@Model.accountCode', branchCode: '@Model.BranchCode', LinkSubCode: '@Model.linkSubCode', groupSkuFlag: '@Model.groupSkuFlag', listType: '@Model.listType', MasterCode: '@Model.MasterCode', actionName: '@Model.actionName' });
+        LedgerGridRefresh(urltest);
+
+        // $("#TBvoucherDetailContextmenu").on('click', function (e) {
+        // e.preventDefault();
+        // e.stopPropagation();
+        //amrit test
+        //var formEnglishDate = $("#FromDateVoucher").val();
+        // var toEnglishDate = $("#ToDateVoucher").val();
+        // $('#tab1').removeClass("active");
+        //var nextTab = $('#tabs li').size() + 1;
+
+        // var accountNo = $("#uid").val();
+        // var voucherNo = $("#voucherNo").val();
+
+        //  var jsonData = JSON.stringify({ uid: accountNo, voucherNo: voucherNo }).replace(/"/g, "!");
+        // create the tab
+        // $('<li><a href="#tab' + nextTab + '" data-toggle="tab"> Voucher ' + voucherNo + '<span class="close">×</span><input type="hidden" class="TBvoucherDetail" value = "' + jsonData + '"> <div class="clearfix"></div></a></li>').appendTo('#tabs');
+        //create tab content
+        //  $.ajax({
+        // url: '@Url.Action("AgeingVoucherView", "AgeingReport")',
+        // data: { uid: accountNo, voucherNo: voucherNo },
+        //  cache: false,
+        //  type: "POST",
+        //  dataType: "html",
+        //  success: function (data, textStatus, XMLHttpRequest) {
+        //     $('<div class="tab-pane" id="tab' + nextTab + '">' + data + '</div>').appendTo('.tab-content');
+        //     $('#tabs a:last').tab('show');
+        //     $("#tab" + nextTab).addClass('active');
+        //     $(window).resize();
+    @*$.ajax({
+            url: '@Url.Action("BreadCrumbs", "Ledger")',
+            data: { AccountCode: accountNo },
+            cache: false,
+            type: "POST",
+            dataType: "html",
+            success: function (data, textStatus, XMLHttpRequest) {
+            var breadCrumbId = "#breadCrumbDiv" + nextTab;
+            $(breadCrumbId).html(data);
+            }
+            });*@
+        //  }
+        //  });
+
+        // make the new tab active
+        //  $('#tabs a:last').tab('show');
+        //   $(".tab-pane").removeClass("active");
+        //   $('div#atab' + nextTab).addClass('active');
+        //});
+
+    });
+
+    function showLoading(e) {
+        var gridElement = $("#@Model.GridName");
+        kendo.ui.progress(gridElement, true);
+    }
+
+    function LedgerBindGrid(readurl, refresh) {
+
+        var dataSource = new kendo.data.DataSource({
+            requestStart: showLoading,
+            type: "json",
+            transport: {
+                read: {
+                    url: readurl, // <-- Get data from here.
+                    dataType: "json", // <-- The default was "jsonp".
+                    type: "post",
+                    contentType: "application/json; charset=utf-8"
+                },
+                parameterMap: function (options, type) {
+
+                    var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+
+                    //  paramMap.formDate = $("#FromDateVoucher").val();
+                    delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                    delete paramMap.$format; // <-- remove format parameter.
+                    return paramMap;
+                }
+            },
+
+            schema: {
+                data: "data", // records are returned in the "data" field of the response
+                total: "total",
+                model: {
+                    fields: {
+                        voucher_date: { type: "date" },
+                        Miti: { type: "string" },
+                        manual_no: { type: "string" },
+                        Voucher_no: { type: "string" },
+                        PARTICULARS: { type: "string" },
+                        dr_amount: { type: "number" },
+                        OPEN_AMOUNT: { type: "number" },
+                        cr_amount: { type: "number" },
+                        SUB_EDESC: { type: "string" },
+                        Balance: { type: "number" },
+                        BalanceHeader: { type: "string" },
+
+
+                    }
+                },
+
+            },
+            aggregate: [{ field: "dr_amount", aggregate: "sum" },
+            { field: "cr_amount", aggregate: "sum" }, { field: "OPEN_AMOUNT", aggregate: "sum" }],
+            serverFiltering: true,
+            serverGrouping: false,
+            serverAggregates: false,
+            //serverSorting: true,
+            //serverFiltering: true,
+            //serverPaging: true,
+            serverPaging: false,
+            //serverSorting: true,
+            pageSize: 20,
+
+        });
+        var grid = $("#@Model.GridName").kendoGrid({
+            dataSource: dataSource,
+
+            toolbar: kendo.template($("#toolbar-template").html()),
+            excel: {
+                fileName: "Subsidiary Ledger Details",
+                //proxyURL: "//demos.telerik.com/kendo-ui/service/export",
+                allPages: true
+            },
+            excelExport: function (e) {
+                var gridElement = $("#@Model.GridName");
+                var sheet = e.workbook.sheets[0];
+                var rows = sheet.rows;
+
+                // Get column count BEFORE inserting header rows
+                var colCount = (rows.length > 0 && rows[0].cells) ? rows[0].cells.length : 5;
+
+                // Clean up the footer row: strip HTML tags from cell values
+                if (rows.length > 0) {
+                    var lastRow = rows[rows.length - 1];
+                    if (lastRow && lastRow.cells) {
+                        for (var i = 0; i < lastRow.cells.length; i++) {
+                            var cell = lastRow.cells[i];
+                            if (cell.value && typeof cell.value === 'string' && cell.value.indexOf('<') >= 0) {
+                                var tempDiv = document.createElement('div');
+                                tempDiv.innerHTML = cell.value;
+                                var textContent = (tempDiv.textContent || tempDiv.innerText || '').trim();
+                                var match = textContent.match(/[\d,]+\.?\d*/);
+                                if (match) {
+                                    var num = parseFloat(match[0].replace(/,/g, ''));
+                                    cell.value = isNaN(num) ? textContent : num;
+                                } else {
+                                    cell.value = textContent;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Build date range string (AD + BS dates)
+                var fromAD = $("#FromDateVoucher").val() || '';
+                var toAD = $("#ToDateVoucher").val() || '';
+                var fromBS = $("#fromInputDateVoucher").val() || '';
+                var toBS = $("#toInputDateVoucher").val() || '';
+
+                var fromStr = fromAD + (fromBS ? ' (' + fromBS + ')' : '');
+                var toStr = toAD + (toBS ? ' (' + toBS + ')' : '');
+                var dateRange = fromStr + ' to ' + toStr;
+
+                // Helper to build a plain info row
+                function makeInfoRow(label, value) {
+                    return {
+                        height: 18,
+                        cells: [{
+                            value: label + value,
+                            bold: true,
+                            fontSize: 11,
+                            colSpan: colCount
+                        }]
+                    };
+                }
+
+                // Insert rows at top in REVERSE order (each unshift pushes to row 1)
+                rows.unshift(makeInfoRow("Date Range: ", dateRange));
+                rows.unshift(makeInfoRow("Report Name :- ", "Subsidiary Ledger Details"));
+                rows.unshift(makeInfoRow("Branch Name :- ", branchName));
+                rows.unshift(makeInfoRow("Company Name :- ", companyName));
+
+                // Hide loading spinner after export
+                kendo.ui.progress(gridElement, false);
+            },
+
+            pdf: {
+                allPages: true,
+                avoidLinks: true,
+                pageSize: "auto",
+                //paperSize: [1100 , 1430],
+                margin: {
+                    top: "2m",
+                    left: "1cm",
+                    right: "1cm",
+                    bottom: "1cm"
+                },
+                landscape: true,
+                repeatHeaders: true,
+                scale: 0.8
+
+            },
+            // height: 300,
+            reorderable: true,
+            groupable: true,
+            resizable: true,
+            columnMenu: true,
+            pageable: true,
+            scrollable: {
+                virtual: true
+            },
+            dataBound: function (o) {
+
+
+                var gridElement = $("#@Model.GridName");
+                kendo.ui.progress(gridElement, false);
+                var grid = this;
+                grid.tbody.find('>tr').each(function () {
+                    var dataItem = grid.dataItem(this);
+                    if (dataItem.Voucher_no != "0") {
+                        $(this).addClass("rightColumnClass");
+                    }
+                });
+
+                var dataItems = o.sender.dataSource.view();
+                for (var j = 0; j < dataItems.length; j++) {
+                    if (dataItems[j].flag == "I") {
+                        var row = o.sender.tbody.find("[data-uid='" + dataItems[j].uid + "']");
+                        row.addClass("discontinued");
+                    }
+                }
+                $('div').removeClass('.k-header k-grid-toolbar');
+            },
+            selectable: "multiple",
+            navigatable: true,
+            //adding column for the subledger menu
+            columnMenu: true,
+            columnMenuInit: function (e) {
+                wordwrapmenu(e);
+
+                //end the adding  column part
+            },
+            columns: [
+
+                {
+                    field: "SUB_EDESC",
+                    title: "Sub Name",
+                    //width: "200px"
+                    footerTemplate: "<div style='float:right;'>Total Amount</div><br/><div style='float:right;margin-right:-69px;'>Closing Amount</div>",
+                },
+                {
+                    field: "OPEN_AMOUNT",
+                    title: "Opening Amount",
+                    attributes: {
+                        style: "text-align: right;"
+                    },
+                    format: "{0:n}",
+                    width: "100px",
+                    footerTemplate: kendo.template($("#OpenAmountTemplate").html()),
+
+
+                },
+
+                {
+                    field: "dr_amount",
+                    title: "Dr Amount",
+                    attributes: {
+                        style: "text-align: right;"
+                    },
+                    format: "{0:n}",
+                    width: "100px",
+                    footerTemplate: kendo.template($("#DrTemplate").html()),
+                },
+                {
+                    field: "cr_amount",
+                    title: "Cr Amount",
+                    attributes: {
+                        style: "text-align: right;"
+                    },
+                    format: "{0:n}",
+                    width: "100px",
+                    footerTemplate: kendo.template($("#CrTemplate").html()),
+                },
+                {
+                    //field: "cr_amount",
+                    template: '#: kendo.format("{0:n}", dr_amount - cr_amount)#',
+
+                    title: "Balance Amount",
+                    attributes: {
+                        style: "text-align: right;"
+                    },
+                    format: "{0:n}",
+                    width: "100px",
+                    footerTemplate: kendo.template($("#BalanceTemplate").html()),
+                },
+
+            ],
+
+            change: function () {
+
+                var text = "";
+                var grid = this;
+                contextmenuInit();
+                grid.select().each(function () {
+
+                    var dataItem = grid.dataItem($(this));
+                    $("#uid").val(dataItem.uid);
+                    $("#voucherNo").val(dataItem.Voucher_no);
+                });
+            },
+        });
+
+        var companyName = @Html.Raw(Json.Encode(workingContent.CurrentUserinformation.company_name));
+        var branchName = @Html.Raw(Json.Encode(workingContent.CurrentUserinformation.branch_name));
+
+        UniversalGridPrint.init({
+            gridSelector: '#@Model.GridName',
+            reportName: "Subsidiary Ledger Details",
+            companyName: companyName,
+            branchName: branchName
+        });
+    };
+
+    function GridSearch() {
+        var $input = $(event.target);
+        var $gridElement = $input.closest(".k-grid");
+        var grid = $gridElement.data("kendoGrid");
+        var searchValue = $input.val();
+
+        grid.dataSource.filter({
+            logic: "or",
+            filters: [
+                { field: "SUB_EDESC", operator: "contains", value: searchValue },
+                { field: "PARTICULARS", operator: "contains", value: searchValue },
+                { field: "Voucher_no", operator: "contains", value: searchValue },
+                { field: "manual_no", operator: "contains", value: searchValue },
+            ]
+        });
+    }
+
+    function CalculateBalance(drAmount, crAmount) {
+        alert(drAmount + crAmount);
+    }
+
+    function LedgerGridRefresh(readUrl) {//KendoGridRefresh
+        $('#@Model.GridName').val('');
+        $('#@Model.GridName').html('');
+        LedgerBindGrid(readUrl); // BindGrid
+        $("#accountnamelbl").html($("#AccountName").val());
+    }
+</script>
+
+<script>
+    // elixir
+    function dataBoundMe(args) {
+        var grid = this;
+        grid.tbody.find('>tr').each(function () {
+            var dataItem = grid.dataItem(this);
+            if (dataItem.Voucher_no != "0") {
+                $(this).addClass("rightColumnClass");
+            }
+        });
+    }
+
+    function contextmenuInit() {
+        $("#contextmenu").css({ "top": event.pageY + "px", "left": event.pageX + "px" })
+        $("#context-menu").kendoContextMenu({
+            filter: '.rightColumnClass',
+            target: "#@Model.GridName",
+            orientation: "vertical",
+            alignToAnchor: true
+        });
+    }
+    $("#contextmenu").css({ "top": event.pageY + "px", "left": event.pageX + "px" })
+    $("#context-menu").kendoContextMenu({
+        filter: '.rightColumnClass',
+        target: "#@Model.GridName",
+        orientation: "vertical",
+        alignToAnchor: true
+    });
+
+    $('.nav-pills, .nav-tabs').tabdrop()
+
+    // voucher detail on click event.
+    // retrive detail and
+    // open in new tab
+
+    $("#firsttab").on("click", function () {
+
+        $('.textcheckedforledger').text("");
+        $(".tab-pane").removeClass("active");
+        $("#tab1").addClass('active');
+        $('#tabs a:first').tab('show');
+    });
+
+    $("ul#tabs").on('click', 'li', function () {
+        $this = $(this);
+        var link = $('a', $this).attr('href');
+        if ($this.attr("id") != "firsttab") {
+            $('div.tab-pane').removeClass('active');
+            var data = JSON.parse($($this).find('input[type=hidden]').val().replace(/!/g, '"'));
+            SubsidiaryLedger.CheckBoxControl(data.AccountCode, data.AccountName);
+
+            // Update UniversalGridPrint for the active tab
+            var $activeGrid = $('div' + link).find(".k-grid");
+            if ($activeGrid.length > 0) {
+                var actualGridId = $activeGrid.attr("id");
+                UniversalGridPrint.init({
+                    gridSelector: '#' + actualGridId,
+                    reportName: "Subsidiary Ledger Details (" + data.AccountName + ")"
+                });
+            }
+        }
+
+        $('div' + link).addClass("active");
+        $(window).resize();
+    })
+</script>

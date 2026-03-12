@@ -1,0 +1,205 @@
+﻿@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+@model bool
+
+@{
+    var pageid = ViewData["ActionPageId"];
+}
+
+
+@if (Model == true)
+{
+    <!-- Trigger the modal with a button -->
+    <a class="btn btn-circle btn-icon-only btn-default" id="ShowConsolidateModal_@pageid" data-toggle="modal" data-target="#ConsolidateModal_@pageid">
+        <i class="fa fa-maxcdn"></i>
+    </a>
+
+    <!-- Modal -->
+    <div id="ConsolidateModal_@pageid" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Consolidate Filter</h4>
+                </div>
+                <div class="modal-body">
+                    <div>
+                        <div id="consolidateTreeView_@pageid" style="max-height:400px;"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn green applydp" data-dismiss="modal" id="apply">Apply</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+}
+else
+{
+    <div>
+        <div id="consolidateTreeView_@pageid" style="max-height:400px;"></div>
+    </div>
+}
+
+
+
+
+
+<script>
+
+    $(document).ready(function () {
+        var loadAllBranchUrl = window.location.protocol + "//" + window.location.host + "/api/SalesHome/GetAllConsolidateNodes";
+        var consolidateTreeDataSource = new kendo.data.HierarchicalDataSource({
+            transport: {
+               
+                read: function (options) {
+                    if (typeof options.data.branch_Code != 'undefined') {
+                        $.ajax({
+                            url: loadAllBranchUrl,
+                            data: {
+                                company_code: options.data.branch_Code,
+                            },
+                            type: "GET",
+                            //async: false,
+                            success: function (result) {
+                                options.success(result);
+                            },
+                            error: function (result) {
+                                options.error(result);
+                            }
+                        });
+                    }
+                    else {
+                        $.ajax({
+                            url: loadAllBranchUrl,
+                            type: "GET",
+                            //async: false,
+                            success: function (result) {
+                                options.success(result);
+                            },
+                            error: function (result) {
+                                options.error(result);
+                            }
+                        });
+                    }
+                }
+    },
+        schema: {
+            model: {
+                id: "branch_Code",
+                children: "Items",
+                hasChildren: "hasBranch",
+            },
+            parse: function (response) {
+                return _.each(_.filter(response, function (x) {
+                    return x.pre_branch_code == '00';
+                }), function (y) {
+                    y.Items = _.filter(response, function (z) {
+                        return z.pre_branch_code == y.branch_Code;
+                    });
+                    y.hasBranch = y.Items.length == 0 ? false : true;
+                });
+            }
+        }
+    });
+    // consolidateTreeDataSource.read();
+    $("#consolidateTreeView_@pageid").kendoTreeView({
+        checkboxes: {
+            checkChildren: true
+        },
+        autoScroll: true,
+        autoBind: true,
+        loadOnDemand:false,
+        dataSource: consolidateTreeDataSource,
+        dataTextField: "branch_edesc",
+        height: 400,
+        scrollable: {
+            virtual: true
+        },
+        check: onChecked_@pageid,
+        dataBound: function () {
+            try {
+                var treeview = $("#consolidateTreeView_@pageid").data("kendoTreeView");
+                var updateCheck = treeview.findByText('@workingContent.CurrentUserinformation.company_name');
+                if (updateCheck.length > 0)
+                    treeview.dataItem(updateCheck).set("checked", true);
+                //  $("#consolidateTreeView_@pageid").data("kendoTreeView").expand(updateCheck);
+            }
+            catch (e) { }
+        }
+
+    });
+    });
+
+
+
+
+    var onChecked_@pageid = function (e) {
+        var treeview = $("#consolidateTreeView_@pageid").data("kendoTreeView");
+        var data = treeview.dataItem(e.node);
+        var isExpanded = $(e.node).attr("data-expanded");
+        if (data.pre_branch_code == "00") {
+            if (typeof isExpanded === 'undefined' || isExpanded === false) {
+                treeview.expand(".k-item");
+                treeview.collapse(".k-item");
+                treeview.expand(e.node);
+            }
+        }
+
+    }
+
+    function getCheckedItems(treeview) {
+        if (treeview != undefined) {
+            var nodes = treeview.dataSource.view();
+            return getCheckedNode(nodes);
+        } else {
+            return [];
+        }
+
+    }
+
+    function getCheckedNode(nodes) {
+        var node, childCheckedNodes;
+        var checkedNodes = [];
+
+        for (var i = 0; i < nodes.length; i++) {
+            node = nodes[i];
+            if (node.checked) {
+                checkedNodes.push(node);
+            }
+
+            // to understand recursion, first
+            // you must understand recursion
+            if (node.hasChildren) {
+                childCheckedNodes = getCheckedNode(node.children.view());
+                if (childCheckedNodes.length > 0) {
+                    checkedNodes = checkedNodes.concat(childCheckedNodes);
+                }
+            }
+
+        }
+
+        return checkedNodes;
+    }
+
+</script>
+<script>
+    $(function () {
+        $('#consolidateTreeView_@pageid').slimScroll({
+            //height: '420px',
+            // opacity: '0.4',
+            railVisible: true,
+            alwaysVisible: true
+
+
+
+        });
+    });
+</script>

@@ -1,0 +1,905 @@
+﻿@{
+	Layout = null;
+}
+<style>
+		/* sensible default so widths include padding/border */
+		*, *::before, *::after {
+			box-sizing: border-box;
+		}
+	html, body {
+		overflow-x: hidden;
+	}
+		/* the table */
+		.dynamic_child_table6 {
+			table-layout: fixed;
+			width: 100%;
+			min-width: 0; /* lets table shrink inside parent */
+			border-collapse: collapse;
+			/*overflow-x: hidden;*/
+		}
+
+			/* allow cells to wrap instead of expanding table */
+			.dynamic_child_table6 th,
+			.dynamic_child_table6 td {
+				/*white-space: normal !important;*/
+				word-break: break-word;
+				/*overflow-wrap: anywhere;*/
+			}
+
+			/* inputs/widgets inside table: allow them to shrink */
+			.dynamic_child_table6 .form-control,
+			.dynamic_child_table6 input,
+			.dynamic_child_table6 select,
+			.dynamic_child_table6 textarea,
+			.dynamic_child_table6 .input-group,
+			.dynamic_child_table6 .k-widget, /* kendo widgets */
+			.dynamic_child_table6 .k-combobox,
+			.dynamic_child_table6 .clsParametersValue {
+				max-width: 100% !important;
+				min-width: 0 !important; /* critical for flexbox children */
+				box-sizing: border-box;
+			}
+
+		/* fix flex children that cause overflow */
+		.input-group, .btn-action, .addon-iconbox {
+			min-width: 0 !important;
+		}
+
+		/* images/svg/iframes shouldn't blow out container */
+		img, svg, iframe {
+			max-width: 100%;
+			height: auto;
+		}
+
+		/* fallback: if anything still uses 100vw (common cause), force it to 100% */
+		*[style*="100vw"], *[style*="width:100vw"] {
+			width: 100% !important;
+			max-width: 100% !important;
+		}
+
+
+		.material-font {
+			font-size: 11px;
+			width: 200px;
+		}
+
+		.SNo {
+			width: 36px;
+		}
+
+		.SNo_div {
+			width: 36px;
+		}
+
+		.Parameters {
+			width: 170px;
+		}
+
+		.PARAMETERS_div {
+			width: 170px;
+		}
+
+		.clsParametersValue {
+			width: 157px;
+		}
+		.SPECIFICATION {
+			width: 170px;
+		}
+
+		.SPECIFICATION_div {
+			width: 170px;
+		}
+
+		.Target, .Tolerence, .Results, .Variance {
+			width: 140px;
+		}
+	.Unit, .Unit_div {
+		width: 90px;
+	}
+	.TARGET_div, .TOLERENCE_div, .RESULTS_div, .VARIANCE_div {
+		width: 140px;
+	}
+	.table_body, .table_vendor_body {
+		overflow: visible !important;
+	}
+	.material-align {
+		margin-left: 50px;
+	}
+
+		.large-button {
+			padding: 8px 24px;
+			/*font-size: 18px;*/
+			border-radius: 6px;
+			background-color: #28a745;
+			color: white;
+			border: none;
+			cursor: pointer;
+			display: block; /* Ensures proper centering */
+			margin: auto; /* Centers horizontally */
+		}
+
+		.textpadding {
+			padding-left: 5px;
+		}
+
+		#search {
+			position: fixed;
+			top: 0px;
+			left: 0px width: 100%;
+			height: 100%;
+			background-color: rgba(0, 0, 0, 0.7);
+			-webkit-transition: all 0.5s ease-in-out;
+			-moz-transition: all 0.5s ease-in-out;
+			-o-transition: all 0.5s ease-in-out;
+			-ms-transition: all 0.5s ease-in-out;
+			transition: all 0.5s ease-in-out;
+			-webkit-transform: translate(0px, -100%) scale(0, 0);
+			-moz-transform: translate(0px, -100%) scale(0, 0);
+			-o-transform: translate(0px, -100%) scale(0, 0);
+			-ms-transform: translate(0px, -100%) scale(0, 0);
+			transform: translate(0px, -100%) scale(0, 0);
+			opacity: 0;
+		}
+
+			#search.open {
+				-webkit-transform: translate(0px, 0px) scale(1, 1);
+				-moz-transform: translate(0px, 0px) scale(1, 1);
+				-o-transform: translate(0px, 0px) scale(1, 1);
+				-ms-transform: translate(0px, 0px) scale(1, 1);
+				transform: translate(0px, 0px) scale(1, 1);
+				opacity: 1;
+				z-index: 5000 !important;
+			}
+
+			#search input[type="search"] {
+				position: absolute;
+				top: 50%;
+				width: 100%;
+				color: rgb(255, 255, 255);
+				background: rgba(0, 0, 0, 0);
+				font-size: 40px;
+				font-weight: 300;
+				text-align: center;
+				border: 0px;
+				margin: 0px auto;
+				margin-top: -51px;
+				padding-left: 30px;
+				padding-right: 30px;
+				outline: none;
+			}
+
+			#search .btn {
+				position: absolute;
+				top: 50%;
+				left: 50%;
+				margin-top: 61px;
+				margin-left: -45px;
+			}
+
+			#search .search-close {
+				background-color: green;
+				border-color: green;
+				font-size: 21px;
+				opacity: 1;
+				padding: 0px 8px;
+				position: fixed;
+				right: 15px;
+				top: 54px;
+				color: #fff;
+				border: solid green;
+			}
+
+		.search-input a {
+			display: inline-table;
+		}
+
+		.search-icon {
+			color: #555555;
+		}
+
+			.search-icon i:hover {
+				color: forestgreen;
+			}
+
+	.btn-action a, .buttonadd, .buttondelete {
+		border: solid #ddd 1px !important;
+		background-color: #ddd !important;
+		padding: 0px 3px 0px 3px !important;
+		display: inline-block;
+		font-size: 11px !important;
+		margin-left: 2px !important;
+		vertical-align: middle !important;
+		vertical-align: -webkit-baseline-middle;
+	}
+
+	.btn-action {
+		width: 100px !important;
+	}
+
+	.btn-action {
+		width: 8%;
+	}
+	.text-align{
+		padding-left:5px;
+	}
+	/*.date-width {
+		width: 87px !important;
+	}*/
+	.date-container {
+		display: flex;
+		flex-direction: column; /* label on top */
+	}
+
+	.date-label {
+		margin-bottom: 6px; /* space below label */
+		font-weight: 500;
+	}
+
+	.date-row {
+		display: flex;
+		gap: 12px; /* 👈 constant distance */
+		align-items: center;
+	}
+
+	.nepali-wrapper {
+		position: relative;
+		display: inline-flex;
+		align-items: center;
+	}
+
+	.nepali-calendar {
+		padding-right: 30px; /* space for icon */
+		height: 34px; /* match Kendo input height */
+	}
+
+
+	.calendar-icon-2 {
+		position: absolute;
+		right: 8px;
+		top: 50%;
+		transform: translateY(-50%);
+		font-size: 14px;
+		color: #555;
+		right: 9px !important;
+		top: 10px !important;
+		pointer-events: none;
+	}
+
+	.k-widget.k-datepicker {
+		width: 50% !important;
+	}
+	/*.Vendors {
+		width:250px !important;
+	}
+	.Vendors_Quantity {
+		width: 79.5px !important;
+	}*/
+
+	/* TABLE */
+	.lblVendor{
+		padding-left:15px;
+	}
+	.input_text {
+		border: solid #ddd 1px !important;
+	}
+	.dynamic_child_table6 {
+		width: 330px; /* 250 + 80 */
+		border-collapse: collapse;
+		table-layout: fixed; /* CRITICAL */
+	}
+
+		/* HEAD + BODY */
+		.dynamic_child_table6 thead,
+		.dynamic_child_table6 tbody {
+			display: table;
+			width: 100%;
+			table-layout: fixed;
+		}
+
+		/* ROW */
+		.dynamic_child_table6 tr {
+			width: 100%;
+		}
+
+		/* HEADER */
+		.dynamic_child_table6 th {
+			padding: 6px;
+			font-weight: 600;
+			text-align: left;
+			border: 1px solid #ddd;
+		}
+
+		/* BODY CELL */
+		.dynamic_child_table6 td {
+			/*padding: 6px;*/
+			border: 1px solid #ddd;
+			vertical-align: middle;
+		}
+
+			/* ITEM NAME COLUMN */
+			.dynamic_child_table6 th.Vendors,
+			.dynamic_child_table6 td.Vendors {
+				width: 250px;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+
+			/* QUANTITY COLUMN */
+			.dynamic_child_table6 th.Vendors_Quantity,
+			.dynamic_child_table6 td.Vendors_Quantity {
+				width: 80px;
+				padding:6px;
+				text-align: center;
+			}
+
+				/* INPUT */
+				.dynamic_child_table6 td.Vendors_Quantity input {
+					width: 100%;
+					box-sizing: border-box;
+					/*height: 26px;*/
+				}
+
+
+	.table-scroll-y {
+		max-height: 250px;
+		overflow-y: auto;
+		overflow-x: hidden;
+	}
+
+		/* Keep header fixed */
+		.table-scroll-y thead th {
+			position: sticky;
+			top: 0;
+			background: #fff;
+			z-index: 2;
+		}
+</style>
+
+@*<link href="@Styles.Url("~/Areas/NeoERP.QCQAManagement/Content/QCQASetup.css")" rel="stylesheet" />*@
+<div class="col-md-12 bodyController" ng-controller="InternalInspectionList">
+	<div class="portlet light form-fit bordered bottomspance">
+		<div class="portlet box green-box main">
+			<div class="portlet-title">
+				<div class="caption">
+					<a class="btn-back pull-left" data-toggle="tooltip" data-placement="top" title="Back To Dashboard" href="/QuotationManagement/Home/Dashboard">
+						<i class="fa fa-arrow-circle-left"></i>
+					</a>
+					<i class="fa fa-gift font-white-haze"></i>
+					<span class="caption-subject font-white-haze bold uppercase">Internal Inspection Form</span>
+				</div>
+			</div>
+			<div class="portlet-body light bg-inverse">
+				<div id="ItemGrid">
+					<div class="row" style="margin-bottom: 10px; margin-top: 10px;">
+						<form id="registeredVehicle" name="registeredVehicle">
+							<div class="col-md-12 col-sm-12 form-group nopadding-right dynamicform">
+								<div class="form-group col-md-3 col-sm-3">
+									<label for="element">Inspection No:</label>
+									<div>
+										<label class="clsFormType" hidden ng-init="FormType='@ViewBag.FormType'">@ViewBag.FormType</label>
+										<input type="text" ng-model="Inspection_No" ng-init="Inspection_No='@ViewBag.QCNO'" disabled>
+									</div>
+								</div>
+								<div class="form-group col-md-4 date-container">
+									<label class="date-label">Date / Miti</label>
+
+									<div class="date-row">
+										<input id="englishdatedocument"
+											   autocomplete="off"
+											   class="englishdate"
+											   kendo-date-picker
+											   ng-model="CREATED_DATE"
+											   k-options="monthSelectorOptions" />
+
+										<div class="nepali-wrapper nopadding-left pl-1">
+											<input type="text"
+												   id="nepaliDate5"
+												   class="nepali-calendar"
+												   data-checkfor="englishdatedocument"
+												   autocomplete="off"
+												   onchange="ConvertNepToEng(this)"
+												   next-on-tab />
+											<i class="fa fa-calendar calendar-icon-2"></i>
+										</div>
+									</div>
+								</div>
+								<div class="form-group col-md-3 col-sm-3">
+									<label for="element">Shift</label>
+									<div class="topsearch" style="display: block;">
+
+										<select id="ddlShift" k-ng-model="ITEM_CODE" kendo-drop-down-list
+												k-options="ddlShift"
+												class="ddlShift">
+										</select>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-12 col-sm-12 form-group nopadding-right dynamicform">
+								<div class="form-group col-md-3 col-sm-3">
+									<label for="element">Product</label>
+									<div class="topsearch" style="display: block;">
+
+										<select id="ddlProductType" k-ng-model="selectedProductType" kendo-drop-down-list
+												k-options="ddlProductType"
+												class="ddlProductType">
+										</select>
+									</div>
+								</div>
+								<div class="form-group col-md-4 col-sm-3">
+									<label for="element">Batch No:</label>
+									<div>
+										<input type="text" class="material-font" autocomplete="off" ng-model="Batch_No" name="Batch_No" id="idBatch_No" />
+									</div>
+								</div>
+								<div class="form-group  col-md-3 col-sm-3">
+									<label for="element">Ref.No:</label>
+									<div>
+										<input type="text" ng-model="REFERENCE_NO" autocomplete="off" class="material-font" name="WB_SLIP_NO" id="txtReferenceNo" />
+									</div>
+								</div>
+							</div>
+							<div class="col-md-12 col-sm-12 form-group nopadding-right ">
+								<label for="element" class="lblVendor">Vendor Details</label>
+								<div class="table-scroll-y">
+									<table class="document_child_table dynamic-table table-fixed dynamic_child_table dynamic_child_table6">
+
+										<thead class="child-table-head">
+											<tr>
+												<th class="Vendors">Item Name</th>
+												<th class="Vendors_Quantity">Quantity</th>
+												<th rowspan="2" class="btn-action">&nbsp;</th>
+											</tr>
+										</thead>
+										<tbody class="table_vendor_body">
+											<tr ng-repeat="(key,row) in vendorchildModels" id="idInternalInspectionVendor">
+												<td class="Vendors text-align  Item  item_{{key}}">
+													{{ row.ITEM_EDESC }}
+												</td>
+												<td class="Vendors text-align  itemCode_{{key}}" hidden>
+													{{ row.ITEM_CODE }}
+												</td>
+												<td class="Vendors_Quantity text-align  ParamID_{{key}}"><input class="input_text Quantity_{{key}}" type="text" /></td>
+												<td class="btn-action">
+													<a href="" id="remove_vendor_child_element" name="remove_vendor_child_element" class="buttondelete" ng-click="remove_vendor_child_element($index)"><i class="fa fa-trash" data-toggle="tooltip" title="Delete row"></i></a>
+												</td>
+											</tr>
+										</tbody>
+									</table>
+								</div>
+							</div>
+					</form>
+					</div>
+					<div class="tab-content d-tab-content">
+
+						<div class="tab-pane active" id="tab_15_1">
+							<div class="table-responsive">
+								<table class="document_child_table dynamic-table table-fixed dynamic_child_table dynamic_child_table6">
+
+									<thead class="child-table-head">
+										<tr>
+											<th class="SNo">S/No</th>
+											<th colspan="4" class="text-center Parameters">Parameters</th>
+											<th colspan="4" class="text-center Specification">Specification</th>
+											<th colspan="4" class="text-center Unit">Unit</th>
+											<th colspan="4" class="text-center Target">Target</th>
+											<th colspan="4" class="text-center Tolerence">Tolerence(±)</th>
+											<th colspan="4" class="text-center Results">Results</th>
+											<th colspan="4" class="text-center Variance">Variance</th>
+											<th rowspan="2" class="btn-action">&nbsp;</th>
+										</tr>
+									</thead>
+									<tbody class="table_body">
+										<tr ng-repeat="(key,row) in childModels" id="idIntenalInspection">
+											<td class="SNo">
+												<div>
+													<input type="text" style="text-align: right;" value="{{key + 1}}" class="form-control SNo" disabled />
+												</div>
+											</td>
+											<td class="ParamID_{{key}}" hidden>{{ row.PARAMETER_ID }}</td>
+											<td class="Serial_{{key}}" hidden>{{ row.SERIAL_NO }}</td>
+											<td class="Param_{{key}}" hidden>{{ row.PARAM_CODE }}</td>
+											<td class="text-align Parameters Parameters_{{key}}">{{ row.PARAMETERS }}</td>
+											<td class="text-align Specification Specification_{{key}}">{{ row.SPECIFICATION }}</td>
+											<td class="text-align Unit Unit_{{key}}">{{ row.UNIT }}</td>
+											<td class="text-align Target Target_{{key}}">{{ row.TARGET }}</td>
+											<td class="text-align Tolerence Tolerence_{{key}}">{{ row.TOLERENCE }}</td>
+											<td class="text-align Results"><input type="text" autocomplete="off" class="RESULTS_{{key}}" ng-model="childModels[key].RESULTS" name="RESULTS" id="txtRESULTS" onkeypress="return event.charCode == 0 || (event.charCode >= 48 && event.charCode <= 57) || event.charCode == 46" ng-keyup="CalculateVariance(key)" /></td>
+											<td class="text-align Variance Variance_{{key}}">{{ row.VARIANCE }}</td>
+											<td class="btn-action">
+												<a href="" id="remove_child_element" name="remove_child_element" class="buttondelete" ng-click="remove_child_element($index)"><i class="fa fa-trash" data-toggle="tooltip" title="Delete row"></i></a>
+											</td>
+										</tr>
+										<tr class="remarks-row"><th class="th-headers">Remarks</th><td><div><input class="input_text remarks-input form-control" id="txtRemarks" autocomplete="off" type="text" ng-model="REMARKS"></div></td></tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="modal-footer">
+			<button type="button" class="btn btn-sm btn-green" ng-hide="panelMode === 'view'" id="savedocumentformdata" ng-click="saveInternalInspection()" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Processing..." href="javascript:;">
+				<i class="fa fa-floppy-o"></i> Save
+			</button>
+			<button type="button" class="btn btn-sm btn-danger" ng-click="ItemCancel()" data-dismiss="modal">
+				<i class="fa-solid fa-xmark"></i> Cancel
+			</button>
+		</div>
+	</div>
+</div>
+<script>
+	var a = location.hash;
+	var b = location.pathname;
+	var url = (b + a);
+	$(".active").removeClass();
+	$("a[href='" + url + "']").parent().addClass("active");
+	$("a[href='" + url + "']").parent().parent().slideDown("slow");
+</script>
+<script>
+	function dateSet(date) {
+		var month = date.getMonth() + 1;
+		var day = date.getDate();
+		date = date.getFullYear() + '/' +
+			(('' + month).length < 2 ? '0' : '') + month + '/' +
+			(('' + day).length < 2 ? '0' : '') + day;
+		return date;
+	}
+
+	function setNepaliDateFromEnglish() {
+		var engDate = $("#englishdatedocument").val();
+		var formattedDate = moment(engDate, 'M/D/YYYY').format('DD-MMM-YYYY');
+		$("#englishdatedocument").val(formattedDate);
+		var formattedEngDate = moment(engDate, 'M/D/YYYY').format('YYYY-MM-DD');
+		var nepaliDate = AD2BS(formattedEngDate);
+		$("#issueNep").val(nepaliDate);
+	}
+
+	function NepaliDateFromEnglish() {
+		var engDate = $("#validDt").val();
+		var formattedDate = moment(engDate, 'M/D/YYYY').format('DD-MMM-YYYY');
+		$("#validDt").val(formattedDate);
+
+		var formattedEngDate = moment(engDate, 'M/D/YYYY').format('YYYY-MM-DD');
+		var nepaliDate = AD2BS(formattedEngDate);
+		$("#nepaliDate").val(nepaliDate);
+
+		var issueDt = moment($("#englishdatedocument").val(), 'DD-MMM-YYYY');
+		var validUntilDt = moment(engDate, 'M/D/YYYY');
+
+		if (validUntilDt.isBefore(issueDt)) {
+			displayPopupNotification("To be Deliver Date cannot be greater than Date/Miti date.", "error");
+		}
+	}
+
+	function ConvertNepToEng(e) {
+		var date = BS2AD($("#issueNep").val());
+		var FormattedEngDate = moment(date).format('DD-MMM-YYYY');
+		$("#englishdatedocument").val(FormattedEngDate);
+	}
+
+	$(".nepali-calendar").nepaliDatePicker({
+		//  ndpEnglishInput: 'englishdatedocument',
+		npdMonth: true,
+		onFocus: true,
+		npdYear: true,
+		npdYearCount: 10,
+		altFormat: "dd-MMM-YYYY",
+		dateFormat: "dd-MMM-YYYY",
+		onChange: function (evt) {
+			var nepaliDate = $("#issueNep").val(); // Get the Nepali date value
+			var engDate = BS2AD(nepaliDate); // Convert Nepali date to English date
+			var formattedEngDate = moment(engDate).format('DD-MMM-YYYY'); // Format the English date
+			$("#englishdatedocument").val(formattedEngDate); // Update the English date input field
+		}
+	});
+
+	function NepToEng(e) {
+		var date = BS2AD($("#nepaliDate").val());
+		var FormattedEngDate = moment(date).format('DD-MMM-YYYY');
+		$("#validDt").val(FormattedEngDate);
+	}
+
+	$(".nepali-calendar").nepaliDatePicker({
+		//  ndpEnglishInput: 'englishdatedocument',
+		npdMonth: true,
+		onFocus: true,
+		npdYear: true,
+		npdYearCount: 10,
+		altFormat: "dd-MMM-YYYY",
+		dateFormat: "dd-MMM-YYYY",
+		onChange: function (evt) {
+			//evt.stopPropagation();
+
+			var nepalidate = $("#nepaliDate5").val();
+			var Engdate = BS2AD(nepalidate);
+			var cmpEngDate = moment(Engdate).format('YYYY/MM/DD');
+			var FormattedEngDate = moment(Engdate).format('DD-MMM-YYYY');
+			var date = new Date();
+			var formBackDays = $('#hdnformBackDays').val();
+			date.setDate(date.getDate() - formBackDays);
+			var minDate = dateSet(date);
+			var maxDate = dateSet(new Date());
+			$("#englishdatedocument").val(FormattedEngDate);
+
+		}
+	});
+
+</script>
+<script type="text/javascript">
+
+	$(document).ready(function () {
+        var ddlShift = $("#ddlShift").kendoDropDownList({
+            optionLabel: "Select Shift...",
+            dataTextField: "text",
+            dataValueField: "value",
+            dataSource: [
+                { text: "Day", value: "D" },
+                { text: "Night", value: "N" }
+            ]
+		});
+		var ddlUrl = window.location.protocol + "//" + window.location.host + "/api/IncomingMaterialAPI/MaterialListsByCategory?CategoryCode=FG"
+		var defaultValue = "QC_Master_Setup";
+		var ddlProductType = $("#ddlProductType").kendoDropDownList({
+			optionLabel: "-- Select Product--",
+			dataTextField: "item_edesc", // Field name for the dropdown text
+			dataValueField: "item_code", // Field name for the dropdown value
+			autoBind: false, // Prevent auto-binding until we load the data
+			filter: "contains",
+			dataSource: {
+				transport: {
+					read: {
+						url: ddlUrl,
+						dataType: "json",
+						success: function (data) {
+							data.forEach(item => {
+							});
+							// Populate the dropdown
+							ddlProductType.data("kendoDropDownList").setDataSource(new kendo.data.DataSource({
+								data: data
+							}));
+							ddlProductType.data("kendoDropDownList").enable(true); // Enable dropdown after loading data
+						},
+						error: function (xhr, status, error) {
+							console.error("Error loading dropdown data:", error);
+						}
+					}
+				}
+			},
+			dataBound: function () {
+				var dropdown = this;
+				var items = dropdown.dataSource.data();
+
+				// Check if the default value exists in the data
+				var exists = items.some(function (item) {
+					return item.TABLE_NAME === defaultValue;
+				});
+
+				if (exists) {
+					dropdown.value(defaultValue);  // Set default value
+					//callNeewFieldAPI(defaultValue);
+				}
+			},
+			change: function (e) {
+				var dropdown = e.sender;
+				var selectedValue = dropdown.value();
+				// Update AngularJS scope
+				var scope = angular.element($("#ddlProductType")).scope();
+				scope.$apply(function () {
+					scope.tableName = selectedValue;
+				});
+			}, height: 200
+		}).data("kendoDropDownList");
+		var grid = $("#ItemGrid").data("kendoGrid");
+
+		function parseCustomDate(dateStr) {
+			var parts = dateStr.split("/");
+			if (parts.length === 3) {
+				return new Date(parts[2], parts[0] - 1, parts[1]); // Month is zero-based
+			}
+			return null;
+		}
+		$(document).on('click', '.Item', function (e) {
+			e.preventDefault();
+			let classes = $(this).attr('class');
+			let index = classes.match(/item_(\d+)/)[1];
+			ShowPopupList($(this).closest('tr').find('.itemCode_' + index).text().trim(), 0, index, "Batch");
+		});		
+		function ShowPopupList(itemCode, index,itemIndex, ItemName) {
+			// Example: Fetch details from an API
+            if (ItemName === "Batch") {
+				$.get("/api/OnSiteInspectionAPI/GetBatchNoByItemCode?ItemCode=" + itemCode, function (response) {
+					if ($("#popupWindow").length === 0) {
+						$("body").append('<div id="popupWindow"></div>');
+					}
+					$("#popupWindow").kendoWindow({
+						width: "800px",
+						height: "300px",
+						title: "Select Parameter",
+						visible: false,
+						modal: true,
+						actions: ["Close"]
+					});
+					var popupWindow = $("#popupWindow").data("kendoWindow");
+					$.each(response, function (index, value) {
+
+						let contentHtml =
+							`<input type="text" id="searchInputText" placeholder="Search..." style="width: 35%;position: inherit; margin-bottom: 10px;margin-top: 4px; border: 1px solid #ccc;height: 25px;" />
+							<table id=voucherList class=voucher-list  border='1' style='border-collapse: collapse; width: 100%;'>
+						<tr style="padding:5px; border-bottom:1px solid #ccc; font-size: 14px;height: 25px;">
+						<td class=textpadding><b>REFERENCE NO</b></td>
+						<td class=textpadding><b>VENDOR NAME</b></td>
+						<td class=textpadding hidden><b>SUPPLIER </b></td>
+						<td class=textpadding><b>BATCH NO</b></td>
+						<td class=textpadding><b>QUANTITY</b></td>
+						<td class=textpadding><b>UNIT PRICE</b></td>
+					</tr>`
+						$.each(response, function (index, value) {
+							contentHtml += `<tr id='voucherList' data-transaction="${value.TRANSACTION_NO}" data-batch="${value.BATCH_NO}" data-vendor="${value.SUPPLIER_EDESC}" data-quantity="${value.QUANTITY}" data-supplierCode="${value.SUPPLIER_CODE}" style="padding:5px; border-bottom:1px solid #ccc; font-size: 14px;">
+						<td class=textpadding>${value.REFERENCE_NO}</td>
+						<td class=textpadding>${value.SUPPLIER_EDESC}</td>
+						<td class=textpadding hidden>${value.SUPPLIER_CODE}</td>
+						<td class=textpadding>${value.BATCH_NO}</td>
+
+						<td class=textpadding>${value.QUANTITY}</td>
+						<td class=textpadding>${value.UNIT_PRICE}</td>
+						<td><button class="btnClass batch-no large-button  data-batch=${value.BATCH_NO} type ="button">Ref</button></td>
+					</tr>`;
+						});
+						contentHtml += "</table>"; // Closing the table tag
+						popupWindow.content(contentHtml);
+						popupWindow.center().open();
+						$("#searchInputText").on("keyup", function () {
+							var searchText = $(this).val().toLowerCase();
+							$("#voucherList tbody tr").each(function () {
+								var rowText = $(this).find("td").map(function () {
+									return $(this).text().toLowerCase();
+								}).get().join(" "); // Join all cell values for a full-row search
+
+								$(this).toggle(rowText.includes(searchText));
+							});
+						});
+					});
+
+					$("#voucherList").on("click", "tr", function (e) {
+						var selectedBatch = $(this).attr("data-batch");
+						var selectedTransactionNo = $(this).attr("data-transaction");
+						var selectedSupplier = $(this).attr("data-vendor");
+						var selectedSupplierCode = $(this).attr("data-supplierCode");
+						var selectedQuantity = $(this).attr("data-quantity");
+                        $('#batch_' + index).val(selectedBatch);
+                        $('#idBatch_No').val(selectedBatch);
+						$('#transactionNo_' + index).val(selectedTransactionNo);
+						$('#txtVendor').val(selectedSupplier);
+						$('.clsVendor').val(selectedSupplierCode);
+						$('.Quantity_' + itemIndex).val(selectedQuantity);
+						var inputSelector = `.ccustomer_${key}`;
+						$(inputSelector).val(selectedBatch).trigger("input"); // Trigger input event for Angular binding						
+						popupWindow.close(); // Close popup after selection					
+					});
+					$(document).on("click", ".btnClass", function () {
+						var classes = this.classList;
+						var selectedBatch = null;
+						var selectedTransaction = null;
+						var selectedSupplier = null;
+						var selectedSupplierCode = null;
+						var selectedQuantity = null;
+						classes.forEach(function (token) {
+							if (token.indexOf("data-batch=") === 0) {
+								selectedBatch = token.substring("data-batch=".length);
+								selectedTransaction = token.substring("data-transaction=".length);
+								selectedSupplier = token.substring("data-vendor=".length);
+								selectedSupplierCode = token.substring("data-supplierCode=".length);
+								selectedQuantity = token.substring("data-quantity=".length);
+							}
+						});
+                        $('#batch_' + index).val(selectedBatch);
+						$('#idBatch_No').val(selectedBatch);
+						$('#transactionNo_' + index).val(selectedTransaction);
+						$('#txtVendor' + index).val(selectedSupplier);
+						$('.clsVendor' + index).val(selectedSupplierCode);
+						$('.Quantity_' + itemIndex).val(selectedQuantity);
+						var inputSelector = `.ccustomer_${key}`;
+						$(inputSelector).val(selectedBatch).trigger("input"); // Trigger input event for Angular binding
+						popupWindow.close(); // Close popup after selection
+					});
+				});
+			}
+			else {
+				$.get("/api/OnSiteInspectionAPI/GetParameterDetailsByPlant?Plant=" + itemCode, function (response) {
+					if ($("#popupWindow").length === 0) {
+						$("body").append('<div id="popupWindow"></div>');
+					}
+					$("#popupWindow").kendoWindow({
+						width: "800px",
+						height: "300px",
+						title: "Select Voucher",
+						visible: false,
+						modal: true,
+						actions: ["Close"]
+					});
+					var popupWindow = $("#popupWindow").data("kendoWindow");
+
+					$.each(response, function (index, value) {
+							let contentHtml =
+								`<input type="text" id="searchInputText" placeholder="Search..." style="width: 35%;position: inherit; margin-bottom: 10px;margin-top: 4px; border: 1px solid #ccc;height: 25px;" />
+							<table id=voucherList class=voucher-list  border='1' style='border-collapse: collapse; width: 100%;'>
+						<tr style="padding:5px; border-bottom:1px solid #ccc; font-size: 14px;height: 25px;">
+					   <td class=textpadding><b>PARAMETERS</b></td>
+					   <td class=textpadding><b>SPECIFICATION</b></td>
+					   <td class=textpadding><b>UNIT</b></td>
+						<td class=textpadding><b>TARGET</b></td>
+						<td class=textpadding><b>TOLERENCE</b></td>
+					</tr>`
+							$.each(response, function (index, value) {
+								contentHtml += `<tr id='voucherList' data-supplier="${value.ITEM_CODE}" data-voucher="${value.Voucher_No}" style="padding:5px; border-bottom:1px solid #ccc; font-size: 14px;">
+						<td class=clsPopupParameter textpadding>${value.PARAMETERS}</td>
+						<td class=clsPopupSpecification textpadding>${value.SPECIFICATION}</td>
+						<td class=clsPopupUnit textpadding>${value.UNIT}</td>
+						<td class=clsPopupTarget textpadding>${value.TARGET}</td>
+						<td class=clsPopupTolerence textpadding>${value.TOLERENCE}</td>
+						<td><button class="btnClass voucher-item large-button data-voucher=${value.ITEM_CODE} type ="button">Ref</button></td>
+
+					</tr>`;
+							});
+							contentHtml += "</table>"; // Closing the table tag
+							popupWindow.content(contentHtml);
+							popupWindow.center().open();
+							$("#searchInputText").on("keyup", function () {
+								var searchText = $(this).val().toLowerCase();
+								$("#voucherList tbody tr").each(function () {
+									var rowText = $(this).find("td").map(function () {
+										return $(this).text().toLowerCase();
+									}).get().join(" "); // Join all cell values for a full-row search
+									$(this).toggle(rowText.includes(searchText));
+								});
+							});
+					});
+					$("#voucherList").on("click", "tr", function (e) {
+						var selectedVoucher = $(this).attr("data-voucher");
+						var parameter = $(this).find(".clsPopupParameter").text().trim();
+						var specification = $(this).find(".clsPopupSpecification").text().trim();
+						var unit = $(this).find(".clsPopupUnit").text().trim();
+						var target = $(this).find(".clsPopupTarget").text().trim();
+						var tolerence = $(this).find(".clsPopupTolerence").text().trim();
+						$('#vendor_' + index).val(parameter);
+						$('.clsSpecification_' + index).val(specification);
+						$('.clsUnit_' + index).val(unit);
+						$('.clsTarget_' + index).val(target);
+						$('.clsTolerence_' + index).val(tolerence);
+						$('.clsResults_' + index).val(target - tolerence);
+						$('.clsVariance_' + index).val(tolerence);
+						var inputSelector = `.ccustomer_${key}`;
+						$(inputSelector).val(selectedVoucher).trigger("input"); // Trigger input event for Angular binding
+						popupWindow.close(); // Close popup after selection
+					});
+
+					$(document).on("click", ".btnClass", function () {
+						var selectedVoucher = $(this).attr("data-voucher");
+						var parameter = $(this).find(".clsPopupParameter").text().trim();
+						var specification = $(this).find(".clsPopupSpecification").text().trim();
+						var unit = $(this).find(".clsPopupUnit").text().trim();
+						var target = $(this).find(".clsPopupTarget").text().trim();
+						var tolerence = $(this).find(".clsPopupTolerence").text().trim();
+						$('#vendor_' + index).val(parameter);
+						$('.clsSpecification_' + index).val(specification);
+						$('.clsUnit_' + index).val(unit);
+						$('.clsTarget_' + index).val(target);
+						$('.clsTolerence_' + index).val(tolerence);
+						$('.clsResults_' + index).val(target - tolerence);
+						$('.clsVariance_' + index).val(tolerence);
+						var inputSelector = `.ccustomer_${key}`;
+						$(inputSelector).val(selectedVoucher).trigger("input"); // Trigger input event for Angular binding
+						popupWindow.close(); // Close popup after selection
+						var inputSelector = `.ccustomer_${key}`;
+						$(inputSelector).val(selectedVoucher).trigger("input"); // Trigger input event for Angular binding
+						popupWindow.close(); // Close popup after selection
+					});
+				});
+			}
+		}
+		var grid = $("#ItemGrid").data("kendoGrid");
+	});
+</script>
+

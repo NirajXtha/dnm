@@ -1,0 +1,185 @@
+﻿@using NeoErp.Core.Models;
+@{
+
+    var pageId = ViewContext.RouteData.Values["id"] != null ? ViewContext.RouteData.Values["id"].ToString() : "Dashboard";
+    Layout = null;
+    Session["oldPagenumber_" + pageId] = null;
+}
+<style>
+    .portlet.portlet-sortable {
+        min-height: 460px;
+    }
+    .modal-scrollable .modal {
+        background-color: none !important;
+        -webkit-box-shadow: none !important;
+        box-shadow:none !important;
+    }
+</style>
+
+<!-- BEGIN SAMPLE PORTLET CONFIGURATION MODAL FORM-->
+<!-- /.modal -->
+<div class="page-bar">
+    <ul class="page-breadcrumb">
+    </ul>
+    <div class="page-toolbar">
+        <div class="btn-group pull-right button_space">
+            <a class="btn btn-circle btn-icon-only btn-default" href="javascript:void(0);" onclick='$(".collapse").trigger("click")' title="Collapse All">
+                <i class="fa fa-chevron-up" aria-hidden="true"></i>
+            </a>
+            <a class="btn btn-circle btn-icon-only btn-default" href="javascript:void(0);" onclick='$(".expand").trigger("click");' title="Expand All">
+                <i class="fa fa-chevron-down" aria-hidden="true"></i>
+            </a>
+            <a class="btn btn-circle btn-icon-only btn-default" id="reset_Sales_widgets" href="javascript:void(0);" title="Reset Widgets">
+                <i class="fa fa-refresh" aria-hidden="true"></i>
+            </a>
+            <a class="btn btn-circle btn-icon-only btn-default" id="downloadPDF" href="javascript:void(0);" title="Download in PDF" style="display:none;visibility:hidden">
+                <i class="fa fa-file-pdf-o" aria-hidden="true"></i>
+            </a>
+            
+        </div>
+    </div>
+
+</div>
+
+<div class="clearfix"></div>
+
+<div class="main-view-port">
+    <div>
+        <div id="dashboardWidget"></div>
+    </div>
+    <div class="clearfix"></div>
+    <div class="row1">
+        <div class="col-md-12  margin-top-10">
+            <div class="row ui-sortable " id="sortable_portlets">
+            </div>
+            <div id="divLoadingIcon" style="display:none; margin-left:50%;">
+                <div class="green">
+                    NEO
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12 margin-top-10">
+            <a href="#" id="loadMore" class="btn default btn-block loadsMore">Load More</a>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    var pageNumber = 1;
+    var reportName = '@pageId';
+    $(document).ready(function () {
+        $("#loadMore").on('click', function (e) {
+
+            e.preventDefault();
+            $('div#divLoadingIcon').show(); // alert the user and show the Loading message
+
+            // fire jQuery ajax
+            LoadCharts();
+            $('html,body').animate({
+                scrollTop: $(this).offset().top
+
+            }, 1500);
+            
+        });
+        //for widgets
+        $.ajax({
+            type: 'POST',
+            url: '@Url.Content("~/sales/SalesHome/DashBoardWidgets")',
+            success: function (data) {
+                $('#dashboardWidget').html(data);
+
+                $("#loadMore").trigger("click");
+                //setTimeout(function () {
+                //    $("#loadMore").trigger("click");
+                //},2000);
+
+            }
+        });
+
+    });
+
+    $(window).scroll(function () {
+        var lengthofmsg = $(".contactAdministratorMsg").length;
+        if (lengthofmsg == 1) {
+            return false;
+        }
+        // if the scroll position is at the bottomm of the page
+        if ($(window).scrollTop() == $(document).height() - $(window).height() && $('#loadMore').is(":visible")) {
+            $('div#divLoadingIcon').show(); // alert the user and show the Loading message
+            // fire jQuery ajax
+            LoadCharts();
+        }
+        else {
+            //ArrangePortlet();
+        }
+    });
+
+
+    $(".search").on("input", function () {
+        if (this.value.length > 0)
+            $(".sub-menu:hidden").slideDown("slow");
+        else
+            $(".sub-menu").slideUp("slow");
+    });
+
+
+    function LoadCharts() {
+        $.ajax({
+            //url: "/main/dashboardpartial/?page=" + pageNumber,
+            url: "/sales/Saleshome/dashboardpartial/?page=" + pageNumber + "&reportName=" + reportName,
+            success: function (html) {
+
+                if (html.trim()) {
+                    $("#sortable_portlets").append(html); // append the data came from server
+                    $('div#divLoadingIcon').hide(); // hide the Loading... message
+                    $(".portlet-sortable-empty").remove();
+                    setTimeout(function () { $('.modal-dialog').removeClass('modal-dialog');}, 100);
+
+                    pageNumber++; // increment the page number for next request
+                    PortletDraggable.init(reportName + "_sorted");
+                    //ArrangePortlet();
+
+                } else { // no data found
+                    $('div#divLoadingIcon').hide(); // hide the Loading... message
+                }
+            }
+        });
+
+    }
+    function ArrangePortlet() {
+
+        var i = 0, j = 0;
+        var leftPortlet = _.filter($(".sortable"), function (x) {
+            return $(x).offset().left < 300;
+        });
+        var rightPortlet = _.filter($(".sortable"), function (x) {
+            return $(x).offset().left > 300;
+        });
+        if (leftPortlet.length > 1) {
+            $.each(leftPortlet, function (index, obj) {
+                if ((i + 1) < leftPortlet.length) {
+                    var diff = $(leftPortlet[i]).offset().top + $(leftPortlet[i]).outerHeight(true) - $(leftPortlet[i + 1]).offset().top;
+                    $(leftPortlet[i + 1]).find(".portlet.portlet-sortable").css("margin-top", diff + "px");
+                    i++;
+                }
+
+            });
+        }
+        if (rightPortlet.length > 1) {
+            $.each(rightPortlet, function (index, obj) {
+                if ((i + 1) < rightPortlet.length) {
+                    var diff = $(rightPortlet[i]).offset().top + $(rightPortlet[i]).outerHeight(true) - $(rightPortlet[i + 1]).offset().top;
+                    $(rightPortlet[i + 1]).find(".portlet.portlet-sortable").css("margin-top", diff + "px");
+                    i++;
+                }
+            });
+        }
+    }
+
+
+
+
+</script>

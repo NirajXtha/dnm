@@ -1,0 +1,358 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_LayoutNew.cshtml";
+}
+<style>
+    td > a > i.fa {
+        font-size: 20px;
+    }
+
+    .table thead tr th {
+        font-size: 13px;
+    }
+
+    .table thead tr td {
+        font-size: 12px;
+    }
+</style>
+
+<div ng-app="targetModule">
+    <div ng-controller="targetController" id="targetController">
+        <div class="page-content-wrapper" id="operationContent" ng-cloak>
+            <div class="portlet light form-fit bordered">
+                <div class="portlet-title">
+                    <span class="caption-subject font-green bold uppercase text-center" style="text-align:center">
+                        <i class="fa fa-list-alt"></i>
+                        Target Setup
+                    </span>
+                    <span class="pull-right" ng-show="!showFormPanel">
+                        <button type="button" id="addTarget" name="addTarget" ng-click="AddTarget()" class="btn btn-primary">[+] Add</button>
+                    </span>
+                    <span class="pull-right" ng-show="showFormPanel">
+                        <button type="button" id="cancelTarget" name="cancelTarget" class="btn btn-default" ng-click="CancelTargetForm();">Cancel</button>
+                        <button type="reset" id="resetTarget" name="resetTarget" class="btn btn-primary" ng-click="SaveAndContinueTarget(target,targetForm)">Save & Continue</button>
+                        <button type="submit" id="saveTarget" name="saveTarget" ng-click="SaveTarget(target,targetForm)" onclick="save()" class="btn btn-success">Save</button>
+                    </span>
+                </div><!-- /portlet-title-->
+                <div class="portlet-body">
+                    <div class="row" style="margin-left:10px;margin-right:10px;">
+                        <div class="col-md-12" ng-show="showFormPanel">
+                            <!-- target input form for Add/Edit/Delete-->
+                            <!-- form start-->
+                            <form id="targetForm" name="targetForm" ng-submit="SaveTarget(target)" novalidate>
+                                <div class="col-md-12">
+                                    <div class="col-md-1 col-sm-12 col-xs-12">
+                                        <div class="form-group">
+                                            <label class="control-label">Calander Type</label>
+                                            <div>
+                                                <label for="calendarTypeENG">
+                                                    <input type="radio" id="calendarTypENG" name="calendarType" ng-change="Calander_Type_Changed()" ng-model="target.calendar_type" value="ENG" />
+                                                    English
+                                                </label>
+                                            </div>
+                                            <div>
+                                                <label for="calendarTypeLOC">
+                                                    <input type="radio" id="calendarTypeLOC" name="calendarType" ng-change="Calander_Type_Changed()" ng-model="target.calendar_type" value="LOC" />
+                                                    Local
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label for="targetName" class="control-label">Name</label>
+                                            <div class="form-group">
+                                                <select name="targetName" id="targetName" ng-model="target.name" class="form-control">
+                                                    <option value="">Select...</option>
+                                                    <option ng-repeat="option in targetNameList" value="{{option.RangeName}}"
+                                                            data-start-date="{{option.StartDateString}}" data-end-date="{{option.EndDateString}}">
+                                                        {{option.RangeName}}
+                                                    </option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label class="control-label">Start Date</label>
+                                            <div class="form-group">
+                                                <div class="col-md-6" style="padding-left:0px;padding-right:0px;">
+                                                    <input type="text" id="startDate" name="startDate" class="form-control" disabled ng-model="target.start_date" />
+                                                </div>
+                                                <div class="col-md-6" style="padding-left:0px;padding-right:0px;">
+                                                    <input type="text" id="startMiti" name="startMiti" class="form-control" disabled ng-model="target.start_date_np" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label class="control-label">End Date</label>
+                                            <div class="form-group">
+                                                <div class="col-md-6" style="padding-left:0px;padding-right:0px;">
+                                                    <input type="text" id="endDate" name="endDate" class="form-control" disabled ng-model="target.end_date" />
+                                                </div>
+                                                <div class="col-md-6" style="padding-left:0px;padding-right:0px;">
+                                                    <input type="text" id="endMiti" name="endMiti" class="form-control" disabled ng-model="target.end_date_np" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label class="control-label">Sales Target</label>
+                                            <input type="number" id="salesTarget" name="salesTarget" class="form-control" ng-model="target.sales_target" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label class="control-label">Collection Target</label>
+                                            <input type="number" id="collectionTarget" name="collectionTarget" class="form-control" ng-model="target.collection_target" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label class="control-label col-sm-4">Branch</label>
+                                            <div class="col-md-8">
+                                                @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", false)
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                            <div class="clearfix"></div>
+                            <hr />
+                            <!-- end of form start-->
+                        </div>
+
+                        <div class="col-md-12">
+                            <div class="portlet-header">
+                                <span class="caption-subject font-green bold uppercase text-center" style="text-align:center">
+                                    <h3>Target List</h3>
+                                </span>
+                            </div>
+                            <!-- target list-->
+                            <table class="table table-bordered" datatable="ng" id="targetListTable" style="overflow-x:scroll">
+                                <thead>
+                                    <tr>
+                                        <th>S.N</th>
+                                        <th>Target Code</th>
+                                        <th>Name</th>
+                                        <th>Calender Type</th>
+                                        <th>Start Date</th>
+                                        <th>End Date</th>
+                                        <th>Sales Target</th>
+                                        <th>Collection Target</th>
+                                        <th>Remarks</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr ng:repeat="target in targetList" ng-cloak>
+                                        <td>{{$index+1}}</td>
+                                        <td>{{target.TARGET_CODE}}</td>
+                                        <td>{{target.NAME}}</td>
+                                        <td>{{target.CALENDAR_TYPE}}</td>
+                                        <td>{{target.START_DATE}}</td>
+                                        <td>{{target.END_DATE}}</td>
+                                        <td>{{target.SALES_TARGET}}</td>
+                                        <td>{{target.COLLECTION_TARGET}}</td>
+                                        <td>{{target.REMARKS}}</td>
+                                        <td>
+                                            <a href="javascript:void(0);" ng-click="EditTarget(target)" class="text-warning" title="Edit : {{target.NAME}}">
+                                                <i class="fa fa-edit"></i>
+                                            </a>
+                                            <a href="javascript:void(0);" ng-click="RemoveTarget(target)" class="text-danger" title="Delete:{{target.NAME}}">
+                                                <i class="fa fa-trash"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div><!--/portlet-body-->
+            </div><!-- /portlet-->
+        </div>
+    </div>
+</div>
+
+@section scripts{
+    <script src="~/Areas/NeoErp.Transaction/scripts/targetsrcipt.js"></script>
+    <script>
+        function DateLoad(callback, url) {
+            var selector = "#targetName";
+            $.support.cors = true;
+            var current_date = getNepaliDate();
+            var date = current_date.split("-");
+            var currentFiscalYear = (parseInt(date[0]) - 1).toString() + "/" + date[0].toString().substring(2, date[0].toString().length);
+            var readUrl = url;
+
+            $.ajax({
+                type: "GET",
+                url: readUrl,
+                beforeSend: function () {
+                    $(selector).html("<option> loading ... </option>");
+                },
+                success: function (data) {
+                    angular.element('#targetController').scope().targetNameList = data;
+                    angular.element('#targetController').scope().target.name = $(selector).val();
+                    loadStartEndDate();
+                    if (callback != undefined) {
+                        callback();
+                    }
+
+                },
+                error: function (xhr, status, error) {
+                    $(selector).html("<option> Error </option>");
+                }
+            });
+        }
+
+    </script>
+    <script>
+        $(document).ready(function () {
+            var isLoaded = false;
+            consolidate.init(function () {//collapse branch consolidate code.
+                if (!isLoaded) {
+                    $("#consolidateTreeView").data("kendoTreeView").dataItems()[0].set('checked', false);
+                    isLoaded = true;
+                }
+                $("#consolidateTreeView").data("kendoTreeView").collapse(".k-item");
+            });
+            var current_date = getNepaliDate();
+            var date = current_date.split("-");
+            var currentFiscalYear = (parseInt(date[0]) - 1).toString() + "/" + date[0].toString().substring(2, date[0].toString().length);
+            var locUrl = window.location.protocol + "//" + window.location.host + "/api/Common/GetDateFilters?fiscalYear=" + currentFiscalYear;
+            var engUrl = window.location.protocol + "//" + window.location.host + "/api/Common/GetEnglishDateFilters?fiscalYear=" + currentFiscalYear;
+
+            current_date = getNepaliDate();
+            $("input[name=Miti]").val(current_date);
+            var engYear = [{ value: '2015', text: '2015' },
+                { value: '2016', text: '2016' }];
+            var localYear = [{ value: '2072', text: '2072' },
+                { value: '2073', text: '2073' }];
+            $("input[name=calendarType]").on('change', function () {
+                loadYear();
+            })
+
+
+            function loadYear() {
+                var checked = $("input[name=calendarType]:checked").val()
+                var year = engYear;
+                if (checked == "LOC") {
+                    year = localYear;
+                    //DateLoad(null, locUrl);
+                }
+                else {
+                    //DateLoad(null, engUrl);
+                }
+                $("#yearName").html('');
+                $.each(year, function (index, value) {
+                    $("#yearName").append($("<option />").val(year[index].value).text(year[index].text));
+                })
+            }
+            loadYear();
+            $.uniform.restore();
+        })
+
+        $("#targetName").on('select change', function () {
+            loadStartEndDate();
+        })
+        function loadStartEndDate() {
+            $("#startDate").val($('option:selected', $("#targetName")).attr("data-start-date"));
+            $("#endDate").val($('option:selected', $("#targetName")).attr("data-end-date"));
+            $("#startMiti").val(AD2BS($("#startDate").val()));
+            $("#endMiti").val(AD2BS($("#endDate").val()));
+            angular.element('#targetController').scope().target.start_date = $("#startDate").val();
+            angular.element('#targetController').scope().target.end_date = $("#endDate").val();
+            angular.element('#targetController').scope().target.start_date_np = $("#startMiti").val();
+            angular.element('#targetController').scope().target.end_date_np = $("#endMiti").val();
+        }
+
+        $("input[name=startDate]").datepicker({
+            dateFormat: 'yy-mm-dd',
+            changeMonth: true,
+            changeYear: true,
+            showButtonPanel: true,
+            onSelect: function () {
+                if ($("input[name=calendarType]:checked").val() == "LOC") {
+                    $("#startDate").val(AD2BS($('#startDate').val()));
+                }
+                angular.element('#targetController').scope().target.start_date = $('#startDate').val();
+            }
+        });
+        $("input[name=endDate]").datepicker({
+            dateFormat: 'yy-mm-dd',
+            changeMonth: true,
+            changeYear: true,
+            showButtonPanel: true,
+            onSelect: function () {
+                if ($("input[name=calendarType]:checked").val() == "LOC") {
+                    $("#endDate").val(AD2BS($('#endDate').val()));
+                }
+                angular.element('#targetController').scope().target.end_date = $('#endDate').val();
+
+            }
+        });
+
+    </script>
+    <script>
+        save = function () {
+            var branchList = $("#consolidateTreeView").data("kendoTreeView");
+            var branchIds = [];
+            if ($("#BranchMultiSelect").length > 0) {
+                var multiselect = $("#BranchMultiSelect").data("kendoMultiSelect");
+                branchIds = multiselect.value();
+                angular.element("#targetController").scope().branchList = branchIds.join(',');
+                //return branchIds;
+            }
+            else if (branchList != undefined) {
+                var kendoData = $("#consolidateTreeView").data("kendoTreeView");
+                var items = getCheckedItems(kendoData);
+                //var branchCodeArray = [];
+                if (items.length > 0) {
+                    for (var i = 0; i < items.length; i++) {
+                        if (items[i].branch_Code.indexOf('.') != -1)
+                            branchIds[i] = items[i].branch_Code;
+                    }
+                }
+                angular.element("#targetController").scope().branchList = branchIds.join(',');
+                //return branchCodeArray;
+            }
+            else
+                angular.element("#targetController").scope().branchList = branchIds;
+            //return [];
+        }
+
+        function getCheckedItems(treeview) {
+            var nodes = treeview.dataSource.view();
+            return getCheckedNodes(nodes);
+        }
+
+        function getCheckedNodes(nodes) {
+            var node, childCheckedNodes;
+            var checkedNodes = [];
+
+            for (var i = 0; i < nodes.length; i++) {
+                node = nodes[i];
+                if (node.checked) {
+                    checkedNodes.push(node);
+                }
+
+                // to understand recursion, first
+                // you must understand recursion
+                if (node.hasChildren) {
+                    childCheckedNodes = getCheckedNodes(node.children.view());
+                    if (childCheckedNodes.length > 0) {
+                        checkedNodes = checkedNodes.concat(childCheckedNodes);
+                    }
+                }
+            }
+            return checkedNodes;
+        }
+    </script>
+}

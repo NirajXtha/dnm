@@ -1,0 +1,13 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace NeoERP.QCQAManagement.Service.Models
+{
+   public class QCInspection
+    {
+        public string ItemCode { get; set; }
+    }
+}

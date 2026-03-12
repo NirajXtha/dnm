@@ -1,0 +1,534 @@
+
+@{
+    ViewBag.Title = "Bank Guarantee";
+    Layout = null;
+}
+
+<style>
+    .k-splitbar.k-splitbar-horizontal {
+        width: 5px;
+    }
+
+    .k-calendar {
+        width: 210px !important;
+    }
+
+    .k-splitter {
+        height: 490px !important;
+    }
+
+    .portlet-title.mingap {
+        min-height: auto !important;
+    }
+
+    .bottomspance {
+        padding: 2px 15px !important;
+    }
+
+    .portlet-title.mingap {
+        min-height: auto !important;
+    }
+
+    .bottomspance .portlet-body {
+        padding-top: 2px !important;
+    }
+
+    .portlet {
+        margin-top: 0px;
+        margin-bottom: 7px !important;
+    }
+
+    .bodyController {
+        margin-top: 4px;
+    }
+
+    .main .k-widget.k-dropdown.k-header {
+        min-height: 22px !important;
+    }
+
+    .main .k-dropdown-wrap.k-state-default {
+        min-height: 24px !important;
+        font-size: 11px;
+    }
+
+    .k-splitter .k-scrollable {
+        overflow-y: hidden !important;
+    }
+
+    .k-scrollable .k-widget.k-treeview {
+        max-height: 444px;
+        overflow: auto !important;
+    }
+
+    .k-i-calendar {
+        margin-top: -10px;
+    }
+
+    span.k-icon.k-i-warning {
+        display: none;
+    }
+
+    .calendar-icon-2 {
+        top: 24px !important;
+    }
+
+    .k-widget.k-datepicker {
+        background-color: transparent !important;
+    }
+
+    .k-grid td .k-checkbox-label {
+        display: none !important;
+    }
+
+    div#ndp-nepali-box {
+        z-index: 99999 !important;
+    }
+
+    .company-header {
+        background-color: #f5f5f5;
+        padding: 10px 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-bottom: 15px;
+    }
+
+    .company-header h4 {
+        margin: 0 0 5px 0;
+        color: #2c3e50;
+        font-weight: bold;
+    }
+
+    .company-header p {
+        margin: 0;
+        color: #7f8c8d;
+        font-size: 12px;
+    }
+
+    .report-header {
+        text-align: center;
+        margin-bottom: 10px;
+    }
+
+    .report-header h3 {
+        color: #2980b9;
+        font-weight: bold;
+        margin: 5px 0;
+    }
+
+    .report-header p {
+        color: #7f8c8d;
+        font-size: 12px;
+        margin: 0;
+    }
+
+    .expired-row {
+        background-color: #ffcccc !important;
+    }
+
+    .grand-total-row {
+        font-weight: bold;
+        background-color: #e8f5e9 !important;
+    }
+</style>
+
+<div class="row" id="BankGuaranteeCtrl" ng-controller="BankGuaranteeCtrl">
+
+    <div class="col-md-12">
+
+        <div class="portlet light form-fit bordered bottomspance" style="width: 100%">
+            <div class="portlet mingap">
+
+                <div class="portlet-title">
+
+                    <div class="caption caption-title ng-binding">
+                        <a class="btn-back pull-left" data-toggle="tooltip" data-placement="top" title="Back To Dashboard" href="/DocumentTemplate/Home/Dashboard">
+                            <i class="fa fa-arrow-circle-left"></i>
+                        </a>
+                        <i class="fa fa-shield font-green-haze"></i>
+                        <span class="caption-subject font-green-haze bold uppercase">{{FormName}}</span>
+                    </div>
+
+                    <div class="actions">
+                        <a class="btn dark-green btn-sm addcolor" id="printbtn" ng-click="printBankGuarantee()">
+                            <i class="fa fa-print"></i> Print
+                        </a>
+                        <a class="btn dark-green btn-sm addcolor" id="excelbtn" ng-click="exportToExcel()">
+                            <i class="fa fa-file-excel-o"></i> Excel
+                        </a>
+                        <button class="btn dark-green btn-sm addcolor" ng-click="openBranchModal()" data-toggle="tooltip" title="Select Branches">
+                                    M
+                                </button>
+                        <a class="btn dark-green btn-sm addcolor" id="showreportbtn" ng-click="BindBankGuaranteeGrid()">
+                            <i class="fa fa-file"></i> Show Report
+                        </a>
+                    </div>
+
+                </div>
+
+                <div class="portlet-body">
+
+                    <div class="row">
+                        <div class="col-md-12 col-sm-12">
+                            <div class="col-sm-2 col-md-2 col-lg-2">
+                                <div class="form-group">
+                                    <label>Search:</label>
+                                    <div>
+                                        <input type="text" ng-model="SEARCH_TEXT" class="form-control" style="width: 100%;" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-2 col-md-2 col-lg-2">
+                                <div class="form-group">
+                                    <label for="date-range-select">Date Range:</label>
+                                    <select id="date-range-select" onchange="updateDateRange(this.value)" class="form-control">
+                                        <option value="today">Today</option>
+                                        <option value="yesterday">Yesterday</option>
+                                        <option value="month">This Month</option>
+                                        <option value="year" selected>This Year</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-sm-3 col-md-3 col-lg-3">
+                                <div class="form-group">
+                                    <label for="englishdatedocument">From Date:</label>
+                                    <div>
+                                        <input id="englishdatedocument" kendo-date-picker
+                                               ng-model="FROM_DATE"
+                                               k-options="monthSelectorOptionsSingle" data-toggle="tooltip"
+                                               title="Select date" class="form-control fromDate" style="width: calc(50% - 5px); display: inline-block; margin-right: 5px;" />
+
+                                        <div class="col-xs-6 col-sm-6 col-md-6 nopadding-left pl-1" style="display: inline-block; vertical-align: top;">
+                                            <input type="text" id="nepaliDate5"
+                                                   data-checkfor="englishdatedocument" onchange="ConvertNepToEng(this)"
+                                                   data-toggle="tooltip" title="Select date" class="nepali-calendar form-control" style="width: 100%; height: 25px" />
+                                            <i class="fa fa-calendar form-control-feedback calendar-icon-2" data-toggle="tooltip" title="Select date" style="top:5px !important;"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-3 col-lg-3">
+                                <label for="englishdatedocument1">To Date:</label>
+                                <div>
+                                    <input id="englishdatedocument1" kendo-date-picker
+                                           ng-model="TO_DATE"
+                                           k-options="monthSelectorOptionsSingle1" data-toggle="tooltip" title="Select date" style="width: calc(50% - 5px); display: inline-block; margin-right: 5px;" class="form-control toDate" />
+
+                                    <div class="col-xs-6 col-sm-6 col-md-6 nopadding-left pl-1" style="display: inline-block; vertical-align: top;">
+                                        <input type="text" id="nepaliDate51" data-checkfor="englishdatedocument" onchange="ConvertNepToEng(this)" data-toggle="tooltip" title="Select date" class="nepali-calendar form-control" style="width: 100%; height: 25px" />
+                                        <i class="fa fa-calendar form-control-feedback calendar-icon-2" data-toggle="tooltip" title="Select date" style="top:5px !important;"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-2 col-md-2 col-lg-2">
+                                <div class="form-group">
+                                    <label>Expiry:</label>
+                                    <div>
+                                        <select id="expiryFilter" ng-model="EXPIRY_FILTER" class="form-control">
+                                            <option value="Active Only">Active Only</option>
+                                            <option value="All Records">All Records</option>
+                                            <option value="Expired Only">Expired Only</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-2 col-md-2 col-lg-2">
+                                <div class="form-group">
+                                    <label>Filter:</label>
+                                    <div>
+                                        <select id="recordFilter" ng-model="RECORD_FILTER" class="form-control">
+                                            <option value="All Records">All Records</option>
+                                            <option value="Prior Alerts">Prior Alerts</option>
+                                            <option value="Post Alerts">Post Alerts</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-3 col-md-3 col-lg-3">
+                                <div class="form-group">
+                                <label></label>
+                                    <div>
+                                        <input type="checkbox" ng-model="HIDE_COMPANY" ng-change="toggleCompanyHeader()">
+                                        Hide Company Name and Address
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="divider"></div>
+
+                <!-- Company Header (conditionally shown) -->
+                <div class="row" ng-if="!HIDE_COMPANY && companyInfo">
+                    <div class="col-md-12">
+                        <div class="company-header">
+                            <h4>{{companyInfo.COMPANY_NAME}}</h4>
+                            <p>{{companyInfo.BRANCH_NAME}}</p>
+                            <p>{{companyInfo.ADDRESS}}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report Header -->
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="report-header">
+                            <h3>Bank Guarantee</h3>
+                            <p ng-if="reportDateRange">Report From: {{reportDateRange}}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="" style="overflow-x: hidden">
+                        @Html.Partial("~/Areas/NeoERP.DocumentTemplate/Views/Shared/PartialView/_GridToolbar.cshtml")
+                        <kendo-grid id="bankGuaranteeGrid" options="BankGuaranteeGridOptions" class="kendo_gride_table" style="width:100%;">
+                        </kendo-grid>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Branch Selection Modal -->
+        <div class="modal fade" id="branchSelectionModal" tabindex="-1" role="dialog" aria-labelledby="branchModalLabel">
+    <div class="modal-dialog" role="document" style="width: 500px;">
+        <div class="modal-content" style="background-color: #5cb85c; border: 3px solid #4cae4c;">
+            <div class="modal-header" style="background-color: white; border-bottom: 2px solid #5cb85c; padding: 10px 15px;">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: #333; opacity: 1;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" id="branchModalLabel" style="color: #5cb85c; font-weight: bold;">
+                    <i class="fa fa-building"></i> Option Consolidate
+                </h4>
+            </div>
+            <div class="modal-body" style="background-color: white; padding: 15px; max-height: 400px; overflow-y: auto;">
+                <div class="form-group">
+                    <label style="font-weight: bold; color: #5cb85c;">
+                        <input type="checkbox" ng-model="selectAllBranches" ng-change="toggleSelectAll()">
+                        Select All Company & Branch
+                    </label>
+                </div>
+                <div class="branch-tree" style="border: 1px solid #ddd; padding: 10px; background-color: #f9f9f9;">
+                    <div ng-repeat="company in branchList track by company.COMPANY_CODE">
+                        <div style="margin-bottom: 10px;">
+                            <label style="font-weight: bold; cursor: pointer;">
+                                <input type="checkbox" 
+                                       ng-model="company.selected" 
+                                       ng-change="toggleCompanyBranches(company)">
+                                <i class="fa fa-minus-square-o" ng-if="company.expanded" ng-click="company.expanded = !company.expanded"></i>
+                                <i class="fa fa-plus-square-o" ng-if="!company.expanded" ng-click="company.expanded = !company.expanded"></i>
+                                {{company.COMPANY_NAME}}
+                            </label>
+                        </div>
+                        <div ng-show="company.expanded" style="margin-left: 20px;">
+                            <div ng-repeat="branch in company.branches track by branch.BRANCH_CODE" style="margin-bottom: 5px;">
+                                <label style="cursor: pointer; color: #333;">
+                                    <input type="checkbox" 
+                                           ng-model="branch.selected" 
+                                           ng-change="updateBranchSelection()">
+                                    {{branch.BRANCH_NAME}}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="background-color: white; border-top: 2px solid #5cb85c; padding: 10px 15px;">
+                <button type="button" class="btn btn-success" ng-click="applyBranchSelection()" style="min-width: 100px; border: 2px dotted #4cae4c;">
+                    OK
+                </button>
+                <button type="button" class="btn btn-default" data-dismiss="modal" style="min-width: 100px;">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+    $(document).ready(function () {
+        
+    });
+</script>
+<script>
+
+    function showloader() {
+        $(".busy-loader").css("display", "block");
+    }
+    function hideloader() {
+        $(".busy-loader").css("display", "none");
+    }
+
+    $(".nepali-calendar").nepaliDatePicker({
+        npdMonth: true,
+        onFocus: true,
+        npdYear: true,
+        npdYearCount: 10,
+        altFormat: "dd-MMM-YYYY",
+        dateFormat: "dd-MMM-YYYY",
+        onChange: function (evt) {
+            var nepalidate = $("#nepaliDate5").val();
+            var nepalidate1 = $("#nepaliDate51").val();
+            var Engdate = BS2AD(nepalidate);
+            var Engdate1 = BS2AD(nepalidate1);
+            var FormattedEngDate = moment(Engdate).format('DD-MMM-YYYY');
+            var FormattedEngDate1 = moment(Engdate1).format('DD-MMM-YYYY');
+            $("#englishdatedocument").val(FormattedEngDate);
+            $("#englishdatedocument1").val(FormattedEngDate1);
+        }
+    });
+
+    function ConvertNepToEng(e) {
+        var date = BS2AD($("#nepaliDate5").val());
+        var date1 = BS2AD($("#nepaliDate51").val());
+        var FormattedEngDate = moment(date).format('DD-MMM-YYYY');
+        var FormattedEngDate1 = moment(date1).format('DD-MMM-YYYY');
+        $("#englishdatedocument").val(FormattedEngDate);
+        $("#englishdatedocument1").val(FormattedEngDate1);
+    }
+
+    $('a').tooltip();
+
+    function ConvertEngDateToNep(eng) {
+
+        if (eng === undefined)
+            return;
+        var engmonthreq = "";
+        var arr = eng.split('-');
+        var day = (arr[0]);
+        var month = (arr[1]);
+        var year = (arr[2]);
+        if (month == "Jan") { engmonthreq = "01" }
+        else if (month == "Feb") { engmonthreq = "02" }
+        else if (month == "Mar") { engmonthreq = "03" }
+        else if (month == "Apr") { engmonthreq = "04" }
+        else if (month == "May") { engmonthreq = "05" }
+        else if (month == "Jun") { engmonthreq = "06" }
+        else if (month == "Jul") { engmonthreq = "07" }
+        else if (month == "Aug") { engmonthreq = "08" }
+        else if (month == "Sep") { engmonthreq = "09" }
+        else if (month == "Oct") { engmonthreq = "10" }
+        else if (month == "Nov") { engmonthreq = "11" }
+        else if (month == "Dec") { engmonthreq = "12" }
+        engdatereq = year + '-' + engmonthreq + '-' + day;
+        return convertednepdate = AD2BS(engdatereq);
+    }
+
+    function CollapseAll() {
+
+        var elementsA = document.querySelectorAll("#bankGuaranteeGrid a.k-icon.k-minus");
+        if (elementsA.length > 0) {
+
+            for (var i = 0; i < elementsA.length; i++) {
+                $(elementsA[i]).trigger("click");
+            }
+            return;
+        }
+        var elementsB = document.querySelectorAll("#bankGuaranteeGrid a.k-icon.k-i-collapse");
+        for (var i = 0; i < elementsB.length; i++) {
+            $(elementsB[i]).trigger("click");
+        }
+    }
+    function ExpandAll() {
+        var elementsB = document.querySelectorAll("#bankGuaranteeGrid a.k-icon.k-i-expand");
+        if (elementsB.length > 0) {
+
+            for (var i = 0; i < elementsB.length; i++) {
+                $(elementsB[i]).trigger("click");
+            }
+            return;
+        }
+        var elementsA = document.querySelectorAll("#bankGuaranteeGrid a.k-icon.k-plus");
+        for (var i = 0; i < elementsA.length; i++) {
+            $(elementsA[i]).trigger("click");
+        }
+    }
+    function GridSearch() {
+        if ($.trim($('.grid-search').val()) != '') {
+            $('.search input').css('margin-left', '-9px !important')
+        }
+        else {
+            $('.search input').css('margin-left', '0px')
+        }
+
+        var grid = $("#bankGuaranteeGrid").data("kendoGrid");
+        var tempServerFilter = grid.dataSource.options.serverFiltering;
+        grid.dataSource.options.serverFiltering = false;
+        var filter = [];
+        $.each(grid.columns, function (i, v) {
+            if (v.field != undefined) {
+                var searchText = $.trim($('.grid-search').val());
+                var model = grid.dataSource.options.schema.model.fields[v.field];
+                var type = "string";
+                if (model != undefined)
+                    type = model.type;
+                if (type === "string")
+                    filter.push({ field: v.field, operator: "contains", value: searchText });
+                else if (type === "number")
+                    filter.push({ field: v.field, operator: "eq", value: searchText });
+                else if (type === "date") {
+                    var dateValue = new Date(searchText);
+                    searchText = dateValue == "Invalid Date" ? searchText : dateValue;
+                    filter.push({ field: v.field, operator: "eq", value: searchText });
+                }
+            }
+
+        });
+        var filter = {
+            logic: "or",
+            filters: filter,
+        }
+
+        grid.dataSource.filter(filter);
+        if ($(".grid-search").val().length == 0)
+            grid.dataSource.filter([]);
+        grid.bind("dataBound", function () {
+            grid.dataSource.options.serverFiltering = tempServerFilter;
+        });
+    }
+
+    function updateDateRange(selectedRange) {
+
+        let startDate, endDate;
+        let today = moment();
+
+        endDate = today.toDate();
+
+        switch (selectedRange) {
+            case 'today':
+                startDate = moment().toDate();
+                break;
+            case 'yesterday':
+                startDate = moment().subtract(1, 'days').toDate();
+                break;
+            case 'month':
+                let todayNepaliDateForMonth = ConvertEngDateToNep(moment().format('DD-MMM-YYYY'));
+                let firstDayOfMonthNepali = todayNepaliDateForMonth.substring(0, 7) + '-01';
+                startDate = BS2AD(firstDayOfMonthNepali);
+                break;
+            case 'year':
+                let todayNepaliDateForYear = ConvertEngDateToNep(moment().format('DD-MMM-YYYY'));
+                let firstDayOfYearNepali = todayNepaliDateForYear.substring(0, 4) + '-01-01';
+                startDate = BS2AD(firstDayOfYearNepali);
+                break;
+            default:
+                return;
+        }
+
+        $("#englishdatedocument").data("kendoDatePicker").value(startDate);
+        $("#englishdatedocument1").data("kendoDatePicker").value(endDate);
+
+        let englishFromDate = $("#englishdatedocument").data("kendoDatePicker").value();
+        let englishToDate = $("#englishdatedocument1").data("kendoDatePicker").value();
+
+        let nepaliFromDate = ConvertEngDateToNep(moment(englishFromDate).format('DD-MMM-YYYY'));
+        let nepaliToDate = ConvertEngDateToNep(moment(englishToDate).format('DD-MMM-YYYY'));
+
+        $("#nepaliDate5").val(nepaliFromDate);
+        $("#nepaliDate51").val(nepaliToDate);
+    }
+</script>
+

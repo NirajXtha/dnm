@@ -1,0 +1,1318 @@
+﻿
+@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    ViewBag.Title = "Home Page";
+    Layout = null;
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>
+        ();
+}
+
+<style>
+    .btn-group {
+        margin-right: 7px;
+    }
+
+    span.fa.fa-truck {
+        margin-right: 5px;
+    }
+
+    a#RunQuery {
+        margin-right: 5px;
+    }
+
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+    }
+
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+
+    /*#grid thead{
+                     font-size:11px;
+                }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content, .k-grid-header {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    a.k-button.k-button-icontext.k-grid-excel {
+        float: right;
+    }
+</style>
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+            @*<li>
+                <i class="fa fa-home"></i>
+                <a href="/sales/SalesHome/Dashboard">Home</a>
+                <i class="fa fa-angle-right"></i>
+            </li>
+            <li>
+                <a href="#/Sales/FinalSalesReport">Purchase Order Summary</a>
+                <i class="fa fa-angle-right"></i>
+            </li>*@
+
+        </ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+
+                <div class="actions">
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                    </div>
+                    @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                   {
+                       ShowSalesPersonFilter = true,
+                       ShowCustomerFilter = true,
+                       ShowItemBrandFilter= true,
+                   })
+                    </div>
+                    @*@Html.Partial("~/Views/Shared/Controls/_reportFilterSettings.cshtml", new ReportFilterSettingsModel()
+                        {
+                            ShowAmountFigureFilter = false,
+                            ShowAmountFilter = false,
+                            ShowAmountRoundUpFilter = false,
+                            ShowRangeAmountFilter = false,
+                            ShowRangeQuantityFilter = false,
+                            ShowRangeRateFilter = false
+                        })*@
+
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                        <i class="icon-control-play"></i>
+                    </a>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "getSalesOrderDetails")
+                    </div>
+
+
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-body form">
+                    <div id="aletmsg">
+                    </div>
+
+                    <div class="row">
+                        <div id="grid"></div>
+                        <script type="text/x-kendo-template" id="template">
+                            <div class="tabstrip">
+
+                                <div>
+                                    <div class="orders"></div>
+                                </div>
+
+                            </div>
+
+                        </script>
+                        @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="creditliimitwindows" class="">
+
+        <div class="form-body">
+            <div class="form-group">
+                <div id="errorforcreditlimit"></div>
+                <label class="">Remarks</label>
+                <div class="">
+
+                    <textarea cols="34" rows="5" placeholder="Please Enter limit Remarks" id="limittextbox"></textarea>
+                    <button id="showcreditremark" class="btn btn-sm btn-success pull-right"> Save </button>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+    <div id="formCodeModal" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Sales Order</h4>
+                </div>
+                <div class="modal-body">
+                    <div id="formCodeMultiSelect" style="width:400px"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn green" id="ApplyFormCodeModel" data-dismiss="modal">Apply</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+<script id="confirmationTemplate" type="text/x-kendo-template">
+    <div class="popupMessage"></div>
+    </br>
+    <hr />
+    <div class="dialog_buttons">
+        <input type="button" class="confirm_yes k-button" value="Yes" style="width: 70px" />
+        &nbsp;
+        <input type="button" class="confirm_no k-button" value="No" style="width: 70px" />
+    </div>
+</script>
+<script src="@Scripts.Url("~/JS/reportFilter.js?v9")"></script>
+<script src="@Scripts.Url("~/JS/DateFilter.js?v5")" type="text/javascript"></script>
+
+@*<script src="@Scripts.Url("~/JS/DashboardChartFilter/reportFilter.js")" type="text/javascript"></script>*@
+<script type="text/javascript">
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+
+</script>
+<script>
+    var creditlimit = false;
+    var expandedDetailRow = "";
+    function showConfirmationWindow(message) {
+        return showWindow('#confirmationTemplate', message)
+    };
+
+    function showWindow(template, message) {
+
+        var dfd = new jQuery.Deferred();
+        var result = false;
+
+        $("<div id='popupWindow'></div>")
+        .appendTo("body")
+        .kendoWindow({
+            width: "200px",
+            modal: true,
+            title: "",
+            modal: true,
+            visible: false,
+            close: function (e) {
+                this.destroy();
+                dfd.resolve(result);
+            }
+        }).data('kendoWindow').content($(template).html()).center().open();
+
+        $('.popupMessage').html(message);
+
+        $('#popupWindow .confirm_yes').val('OK');
+        $('#popupWindow .confirm_no').val('Cancel');
+
+        $('#popupWindow .confirm_no').click(function () {
+            $('#popupWindow').data('kendoWindow').close();
+        });
+
+        $('#popupWindow .confirm_yes').click(function () {
+            result = true;
+            $('#popupWindow').data('kendoWindow').close();
+        });
+
+        return dfd.promise();
+    };
+    $("#showcreditremark").on("click", function () {
+        var creditlimit = $("#limittextbox").val();
+        console.log(creditlimit);
+        if (creditlimit == '') {
+            $("#errorforcreditlimit").html('<div class="alert alert-success"><a class="close" data-dismiss="alert" aria-label="close">&times;</a> <strong>Error!</strong>Your Credit Limit is exceed. Please give Remarks</div>')
+
+        }
+        else {
+            var win = $('#creditliimitwindows').data("kendoWindow");
+            win.close();
+        }
+
+    });
+</script>
+<script>
+    var reportConfig = GetReportSetting("getSalesOrderDetails");
+    var urltest = window.location.protocol + "//" + window.location.host + "/api/DistributionPurchase/GetDistributionPurchaseOrder";
+    var reportConfig = {};
+    var formCode = "0";
+
+
+
+    $(".applydp").on("click", function (evt) {
+        evt.preventDefault();
+        KendoGridRefresh(urltest);
+        $(this).closest("#applydp").modal('hide');
+    });
+    //$("#RunQuery").click(function (evt) {
+    //    evt.preventDefault();
+    //    KendoGridRefresh(urltest);
+    //});
+    $("#loadAdvancedFilters").on("click", function (evt) {
+        evt.preventDefault();
+        KendoGridRefresh(urltest);
+    });
+
+
+    //$("#loadAdvancedFilters").on("click", function (evt) {
+    //    evt.preventDefault();
+    //    $("#RunQuery").trigger("click");
+    //});
+
+    $("#grid").on("keyup", "input[name='APPROVEQTY']", function (evt) {
+        evt.preventDefault();
+        CalculateAmount($(this), "input");
+    });
+    $("#grid").on("change", "input[type='checkbox']", function (evt) {
+        var selectedValue = $(this).closest("tr").find(".APPROVEQTY").text();
+        if (selectedValue == null || selectedValue == "")
+            selectedValue = $(this).closest("tr").find("input[name='APPROVEQTY']").val();
+        $(this).val(selectedValue);
+        CalculateAmount($(this), "checkbox");
+    });
+
+
+    function CalculateAmount(thisValue, type) {
+        var grid = thisValue.closest(".orders").data("kendoGrid");
+        var selectedRow = grid.dataItem(thisValue.closest("tr"));
+        var selectedParentRowNode = thisValue.closest("tr").closest(".k-detail-row").prev();
+        var selectedParentRow = $("#grid").data("kendoGrid").dataItem(selectedParentRowNode);
+        var changedValue = parseFloat(thisValue.val());
+        var changedCQuantity = parseFloat(thisValue.closest("tr").find(".CQuantity").text());
+        var totalQty = 0;
+        var totalamount = 0;
+        var creditliimitvalue = selectedParentRow.balance;
+        if (selectedParentRow.SO_CREDIT_LIMIT_FLAG == 'Y')
+            creditliimit = true;
+        else
+            creditliimit = false;
+        var conversionFactor = 0;
+        selectedRow.dirty = true;
+        //check if input qty is greater than Original
+        if (selectedRow.QUANTITY < changedValue) {
+            thisValue.val(selectedRow.QUANTITY);
+            changedValue = selectedRow.QUANTITY;
+        }
+        //calculate from all selected sibling
+        var nodeList = thisValue.closest("tr").parent().find("tr");
+        $.each(nodeList, function (index, node) {
+            var nodeData = grid.dataItem(node);
+            nodeData.APPROVED_FLAGBOOL = $(node).find("input[type='checkbox']").prop('checked');
+            conversionFactor = nodeData.CONVERSION_FACTOR;
+            changedValue = parseFloat($(node).closest("tr").find("input[name='APPROVEQTY']").val());
+            if (isNaN(changedValue))
+                changedValue = 0;
+            $(node).closest("tr").find(".CQuantity").html(changedValue * conversionFactor);
+            if (nodeData.APPROVED_FLAGBOOL == true) {
+                if (nodeData.UNIT_PRICE == null)
+                    nodeData.UNIT_PRICE = 0;
+                if (selectedRow == nodeData)
+                    nodeData.APPROVEQTY = changedValue;
+                totalamount = totalamount + (nodeData.APPROVEQTY * nodeData.UNIT_PRICE);
+                totalQty = totalQty + parseFloat($(node).closest("tr").find(".CQuantity").text());;
+            }
+
+        });
+        
+        //check if limit Cross
+        if (selectedParentRow.SO_CREDIT_LIMIT_FLAG == 'Y' && creditliimitValue < totalamount) {
+            creditlimit = true;
+            $("#aletmsg").html('<div class="alert alert-warning"><a class="close" data-dismiss="alert" aria-label="close">&times;</a> <strong>Error!</strong> Credit Limit is exceed.</div>');
+        }
+        else {
+            creditlimit = false;
+            $('.alert').hide();
+        }
+        var amounttotalwithFormat = totalamount.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
+        selectedParentRowNode.find(".approveamountclass").html(amounttotalwithFormat);
+
+        if (creditlimit) {
+            selectedParentRowNode.removeClass("k-alt bg-success text-white").addClass("bg-danger text-white");
+        }
+        else {
+            selectedParentRowNode.removeClass("k-alt bg-danger text-white").addClass("bg-success text-white");
+        }
+
+        //update aggregate Value
+        CalcAggregateAfterChange(nodeList, "APPROVEQTY")
+        CalcAggregateAfterChange(nodeList, "CQuantity")
+        selectedParentRowNode.find(".ApproveCQuantity").html(totalQty);
+
+    }
+    function CalcAggregateAfterChange(nodeList, field) {
+        var footer = $(".orders .k-footer-template");
+        value = 0;
+        $.each(nodeList, function (index, node) {
+            nodeValue = $(node).find("input[name='" + field + "']").val();
+            if (nodeValue == undefined)
+                nodeValue = $(node).find("." + field).text();
+            value = value + parseFloat(nodeValue);
+
+        });
+        if (isNaN(value))
+            value = 0;
+        footer.find("." + field + "SUM").text(value);
+    }
+    function CalcAggregate(field, field1) {
+        var $grid = expandedDetailRow;
+        if ($grid == "")
+            $grid = $('.orders');
+        var kendo = $grid.data().kendoGrid;
+        var data = kendo.dataSource.data();
+        var total = 0;
+        if (field1 != undefined) {
+            for (var i = 0; i < data.length; i++) {
+                var fieldValue = parseFloat(data[i][field]);
+                var fieldValue1 = parseFloat(data[i][field1]);
+                if (isNaN(fieldValue) || isNaN(fieldValue1)) {
+                    fieldValue = 0;
+                    fieldValue1 = 0;
+                }
+                total = total + (fieldValue * fieldValue1);
+            }
+        }
+        else {
+            for (var i = 0; i < data.length; i++) {
+                var fieldValue = parseFloat(data[i][field]);
+                if (fieldValue == NaN) {
+                    fieldValue = 0;
+                }
+                total = total + fieldValue;
+            }
+        }
+        return total;
+    }
+
+
+
+    var win = $('#creditliimitwindows').kendoWindow({
+        title: 'Please Update Credit Limit',
+        visible: false,
+        width: "280px",
+        //height: "200px",
+        activate: function () {
+            $('#creditliimitwindowsComment').select();
+        }
+    }).data('kendoWindow');
+    // init function for the data load
+    //BindGrid(urltest);
+    DateFilter.init(function () {
+        consolidate.init(function () {
+            BindGrid(urltest);
+        });
+    });
+    $("#RunQuery").click(function (evt) {
+        evt.preventDefault();
+        KendoGridRefresh(urltest);
+    });
+
+
+    var autoCompletedataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: window.location.protocol + "//" + window.location.host + "/api/Distribution/GetFormCode",
+                dataType: "json"
+            }
+        }
+    });
+    $("#formCodeMultiSelect").kendoMultiSelect({
+        dataSource: autoCompletedataSource,
+        dataTextField: "FORM_EDESC",
+        dataValueField: "FORM_CODE",
+        maxSelectedItems: 1,
+        height: 600,
+        headerTemplate: '<div class="col-md-offset-3"><strong>Sales Order...</strong></div>',
+        placeholder: "Select Sales Order...",
+        autoClose: false,
+        dataBound: function () {
+            var current = this.value();
+            this._savedOld = current.slice(0);
+        },
+    });
+
+
+    function BindGrid(readurl) {
+        reportConfig = GetReportSetting("getSalesOrderDetails");
+        var dataSource = new kendo.data.DataSource({
+            type: "json",
+            batch: true,
+            transport: {
+                read: {
+                    url: readurl + "?requestStatus=All", // <-- Get data from here.
+                    dataType: "json", // <-- The default was "jsonp".
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8"
+                },
+                update: {
+                    url: window.location.protocol + "//" + window.location.host + "/api/DistributionPurchase/UpdateDistributionPurchaseOrderDetail",
+                    dataType: "json",
+                    type: "post",
+                    contentType: "application/json; charset=utf-8",
+                    complete: function (e) {
+                        if (e.responseJSON.STATUS_CODE == 404) {
+                            displayPopupNotification("Voucher list is not selected", "error");
+                        }
+                        else if (e.responseJSON.STATUS_CODE == 304) {
+                            displayPopupNotification("Error to Covert Sales Order", "error");
+                        }
+                        else if (e.responseJSON.STATUS_CODE == 200) {
+                            displayPopupNotification("Sales Order Generated Successfully", "success");
+                            $("#grid").data("kendoGrid").dataSource.read();
+                        }
+                    }
+                },
+                destroy: {
+                    url: window.location.protocol + "//" + window.location.host + "/api/DistributionPurchase/DeleteDistributionPurchaseOrderDetail?parent=true",
+                    dataType: "json",
+                    type: "post",
+                    contentType: "application/json; charset=utf-8",
+                    complete: function (e) {
+                        if (e.responseJSON.STATUS_CODE == 404) {
+                            displayPopupNotification("Voucher list is not selected", "error");
+                        }
+                        else if (e.responseJSON.STATUS_CODE == 304) {
+                            displayPopupNotification("Error to Covert Sales Order", "error");
+                        }
+                        else if (e.responseJSON.STATUS_CODE == 500) {
+                            displayPopupNotification("Sales Order No already exist", "error");
+                        }
+                        else if (e.responseJSON.STATUS_CODE == 200) {
+                            displayPopupNotification("PO Cancel Successfully", "success");
+                            $("#grid").data("kendoGrid").dataSource.read();
+                        }
+                    }
+                },
+                parameterMap: function (options, operation) {
+                    if (operation !== "read" && options.models) {
+                        return JSON.stringify(options.models)
+                    }
+                    if (operation == "read") {
+                        var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+                    }
+                }
+            },
+            error: function (e) {
+                displayPopupNotification("Sorry error occured while processing data", "error");
+            },
+            serverFiltering: false,
+            serverGrouping: false,
+            serverAggregates: true,
+            serverPaging: true,
+            schema: {
+                model: {
+                    id: "ORDER_NO",
+                    fields: {
+                        GROUP_EDESC: { nullable: true },
+                        ORDER_NO: { type: "number",editable:false },
+                        ORDER_DATE: { editable: false, nullable: true, type: "date" },
+                        CUSTOMER_EDESC: { editable: false, nullable: true },
+                        CUSTOMER_CODE: { editable: false, nullable: true },
+                        ITEM_CODE: { editable: false, nullable: true },
+                        ITEM_EDESC: { editable: false, nullable: true },
+                        MU_CODE: { editable: false, nullable: true },
+                        QUANTITY: { editable: false, nullable: true, type: "number" },
+                        GrantTotalAmount: { editable: false, nullable: true, type: "number" },
+                        UNIT_PRICE: { editable: false, nullable: true, type: "number" },
+                        TOTAL_PRICE: { editable: false, nullable: true, type: "number" },
+                        REMARKS: { editable: true, nullable: true },
+                        CREATED_DATE: { editable: false, nullable: true, type: "date" },
+                        BILLING_NAME: { editable: false, nullable: true, type: "date" },
+                        APPROVED_FLAG: { editable: false, validation: { required: false } },
+                        APPROVED_FLAGBOOL: { editable: true, nullable: true, type: "boolean" },
+                        ISEDITED: { editable: true, nullable: true, type: "boolean" },
+                        REJECT_FLAG: { editable: false, validation: { required: false } },
+                        REJECT_FLAGBOOL: { editable: false, nullable: true, type: "boolean", validation: { required: true } },
+                        APPROVEQTY: { type: "number", editable: true, validation: { required: false } },
+                        credit_limit: { editable: false, nullable: true, validation: { required: false }, type: "number" },
+                        CREDITLIMITREMARKS: { editable: false, nullable: true, validation: { required: false } },
+                        PARTY_TYPE_EDESC: { editable: false, nullable: true, validation: { required: false } },
+                        EMPLOYEE_EDESC: { editable: false, nullable: true, validation: { required: false } },
+                        CREDIT_LIMIT: { editable: false, nullable: true, validation: { required: false } },
+                        balance: { editable: false, nullable: true, validation: { required: false }, type: "number" },
+                        REMARKS: { editable: false, nullable: true, validation: { required: false } },
+                        ApprovedAmount: { editable: false, nullable: true, validation: { required: false }, type: "number" },
+                        GRAND_APPROVE_QUENTITY: { editable: false, nullable: true, validation: { required: false }, type: "number" },
+                        Status: { editable: false, nullable: true },
+                    }
+                },
+                parse: function (items) {
+                    for (var i = 0; i < items.length; i++) {
+                        if (items[i].ORDER_DATE) {
+                            var d = new Date(items[i].ORDER_DATE);
+
+                            items[i].ORDER_TIME = kendo.toString(d, "hh:mm tt");
+                        }
+                        items[i].Status = "";
+                        if (items[i].APPROVED_FLAG == 'Y')
+                            items[i].Status = "Approved";
+                        else if (items[i].REJECT_FLAG == 'Y')
+                            items[i].Status = "Cancelled";
+                        else
+                            items[i].Status = "Pending";
+                    }
+                    return items;
+                }
+            },
+            group: {
+                field: "GROUP_EDESC",
+                dir: "asc",
+            },
+            groupable: true,
+            groupHeaderTemplate: function (group) {
+                return group.value; // This will display only the group name
+            },
+            pageSize: reportConfig.defaultPageSize,
+            pageable:true,
+        });
+
+
+        var grid = $("#grid").kendoGrid({
+            dataSource: dataSource,
+            toolbar: kendo.template($("#toolbar-template").html()),
+            allowCopy: true,
+            height: window.innerHeight - 50,
+            excel: {
+                fileName: "Sales Order Summary Report",
+                allPages: true,
+            },
+            excelExport: function (e) {
+                e.workbook.sheets[0].columns[0].width = 50;
+                e.workbook.sheets[0].columns[1].width = 100;
+                for (var i = 2; i < e.workbook.sheets[0].columns.length; i++)
+                    e.workbook.sheets[0].columns[i].autoWidth = true;
+                //Colors
+                //for (var i = 1; i < e.workbook.sheets[0].rows.length; i++) {
+                //    if (e.workbook.sheets[0].rows[i].cells[9].value == "Approved")
+                //        e.workbook.sheets[0].rows[i].cells[9].color = "#5cb85c";
+                //    else if (e.workbook.sheets[0].rows[i].cells[9].value == "Pending")
+                //        e.workbook.sheets[0].rows[i].cells[9].color = "#5bc0de";
+                //    else
+                //        e.workbook.sheets[0].rows[i].cells[9].color = "#d9534f";
+                //}
+            },
+            pageable: {
+                refresh: true,
+                pageSizes: reportConfig.itemPerPage,
+                buttonCount: 5
+            },
+            sortable: true,
+            reorderable: true,
+            groupable: true,
+            resizable: true,
+            reorderable: false,
+            filterable: {
+                extra: false,
+                operators: {
+                    number: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "is greater than or equal to	",
+                        gt: "is greater than",
+                        lte: "is less than or equal",
+                        lt: "is less than",
+                    },
+                    string: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        startswith: "Starts with	",
+                        contains: "Contains",
+                        doesnotcontain: "Does not contain",
+                        endswith: "Ends with",
+                    },
+                    date: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "Is after or equal to",
+                        gt: "Is after",
+                        lte: "Is before or equal to",
+                        lt: "Is before",
+                    }
+                }
+            },
+            columnMenu: true,
+            columnMenuInit: function (e) {
+                wordwrapmenu(e);
+                checkboxItem = $(e.container).find('input[type="checkbox"]');
+            },
+            columnShow: function (e) {
+                if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                    SaveReportSetting('getSalesOrderDetails', 'grid');
+            },
+            columnHide: function (e) {
+                if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                    SaveReportSetting('getSalesOrderDetails', 'grid');
+            },
+            detailTemplate: kendo.template($("#template").html()),
+            detailInit: detailInit,
+            detailExpand: function (e) {
+                expandedDetailRow = e.detailRow.find(".orders");
+            },
+            //scrollable: {
+            //    virtual: true
+            //},
+            dataBound: function (o) {
+                var grid = o.sender;
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.length + 1;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    displayPopupNotification("No Data Found Given Date Filter.", "info");
+                }
+                else {
+                    if (grid.dataSource.data()[0].PO_CONVERSION_FACTOR == 'Y') {
+                        grid.showColumn("GRAND_APPROVE_QUENTITY");
+                    }
+                    else {
+                        grid.hideColumn("GRAND_APPROVE_QUENTITY");
+                    }
+                    if (grid.dataSource.data()[0].PO_PARTY_TYPE == 'Y') {
+                        grid.showColumn("PARTY_TYPE_EDESC");
+                    }
+                    else {
+                        grid.hideColumn("PARTY_TYPE_EDESC");
+                        //grid.showColumn("PARTY_TYPE_EDESC");
+                    }
+
+
+
+                    if (grid.dataSource.data()[0].SO_CREDIT_LIMIT_FLAG == 'Y')
+                        grid.showColumn("credit_limit");
+                    else
+                        grid.hideColumn("credit_limit");
+
+                    if (grid.dataSource.data()[0].PO_BILLING_NAME == 'Y')
+                        grid.showColumn("CUSTOMER_EDESC");
+                    else 
+                    //grid.hideColumn("CUSTOMER_EDESC");
+                        grid.showColumn("CUSTOMER_EDESC");
+                    
+
+                }
+                UpdateReportUsingSetting("POIndex", "grid");
+                $('div').removeClass('.k-header k-grid-toolbar');
+            },
+            //editable: {
+            //    mode: "incell", // mode can be incell/inline/popup with Q1 '12 Beta Release of Kendo UI
+            //    confirmation: "Are you sure Want to Cancel This PO?" // the confirmation message for destroy command
+            //},
+            columns: [
+                            {
+                                field: "GROUP_EDESC",
+                                groupHeaderTemplate: "#= value #"
+                            },
+                            {
+                                field: "ORDER_NO",
+                                title: "Order No",
+                                format: "{0:n0}",
+                                width: "10%",
+
+                            },
+                          {
+                              field: "ORDER_DATE",
+                              title: "Order Date",
+                              format: "{0:d}",
+                              width: "10%",
+                            },
+                          {
+                              field: "MITI",
+                              title: "Miti",
+                              width: "8%",
+                          },{
+                            title: "Order Time",
+                            field: "ORDER_TIME",
+                            width: "8%",
+                            format: "{0:hh:mm AM/PM}"
+                        },
+                           {
+                               field: "PARTY_TYPE_EDESC",
+                               title: "Dealer",
+                               width: "15%",
+                               //footerTemplate: '<span style="float:right">Total Amount</span>',
+                           },
+                          {
+                              field: "CUSTOMER_EDESC",
+                              title: "Customer",
+                              width: "15%",
+
+                          }, {
+                              field: "EMPLOYEE_EDESC",
+                              title: "Sales Person Name",
+                              width: "15%",
+                              // width: "55",
+                              //footerTemplate: '<span style="float:right">Total Amount</span>',
+                          },
+                          {
+                              field: "GrantTotalAmount",
+                              title: "Total Amount",
+                              width: "15%",
+                              format: "{0:n0}",
+                              template: '<span style="float:right">#= kendo.toString(GrantTotalAmount, "n") #</span>'
+                          }, {
+                              field: "credit_limit",
+                              title: "Credit Limit",
+                              width: "12%",
+                              format: "{0:n0}",
+                              template: '<span style="float:right">#= kendo.toString(credit_limit, "n") #</span>'
+                              // width: "55",
+                              //footerTemplate: '<span style="float:right">Total Amount</span>',
+                          },
+                          //{
+                          //    field: "balance",
+                          //    title: "Balance", bb     
+                          //    width: "8%",
+                          //    format: "{0:n0}",
+                          //    template: '<span style="float:right">#= kendo.toString(balance, "n") #</span>'
+                              // width: "55",
+                              //footerTemplate: '<span style="float:right">Total Amount</span>',
+                         // },
+                          //{
+                          //    field: "REMARKS",
+                          //    title: "Remarks",
+                          //    width: "15%",
+                          //    format: "{0:n0}"
+                          //    //  balance
+                          //    //  ApprovedAmount
+                          //    // width: "55",
+                          //    //footerTemplate: '<span style="float:right">Total Amount</span>',
+                          //},
+                          {
+                              field: "TOTAL_APPROVE_AMT",
+                              title: "Appr. Amt",
+                              width: "15%",
+                              format: "{0:n0}",
+                              template: '<span style="float:right" class="approveamountclass">#= kendo.toString(TOTAL_APPROVE_AMT, "n") #</span>'
+                              //  ApprovedAmount
+                              // width: "55",
+                              //footerTemplate: '<span style="float:right">Total Amount</span>',
+                          },
+                           {
+                               field: "GRAND_APPROVE_QUENTITY",
+                               title: "Appr. C.Qty",
+                               width: "13%",
+                               format: "{0:n0}",
+                               template: '<span style="float:right" class="ApproveCQuantity"> #= kendo.toString(GRAND_APPROVE_QUENTITY, "n") #</span>'
+                               //  ApprovedAmount
+                               // width: "55",
+                               //footerTemplate: '<span style="float:right">Total Amount</span>',
+                },
+                {
+                    field: "SIGNATURE",
+                    title: "Signature",
+                    width: "63px", // Adjust width as needed for the image size
+                    template: function (dataItem) {
+                        debugger;
+                        if (dataItem.SIGNATURE && dataItem.SIGNATURE.trim() !== "") {
+                            // Assuming Signature contains a URL or base64 image data
+                            return '<img src="' + window.location.protocol + '//' + window.location.host + '/Areas/NeoErp.Distribution/Images/EntityImages/' + dataItem.SIGNATURE + '" alt="Signature" style="border: 3px double !important; padding: 2px 5px; width: 63px; height: auto;" />';
+                        } else {
+                            return "<span>No Signature</span>"; // Display text if no signature
+                        }
+                    }
+                },
+
+                           {
+                               field: "Status",
+                               title: "Status",
+                               width: "11%",
+                               template: function (dataItem) {
+                                   if (dataItem.Status == "Approved")
+                                       return "<span class=\'text-success\'>" + dataItem.Status + "</span>";
+                                   else if(dataItem.Status == "Cancelled")
+                                       return "<span class=\'text-danger\'>" + dataItem.Status + "</span>";
+                                   else
+                                       return "<span class=\'text-warning\'>" + dataItem.Status + "</span>";
+                               }
+                               //template: '<span> #= Status=="Approved"? "<span class=\'text-success\'>value</span>" :REJECT_FLAG=="Y"? " <span class =\'text-danger\'>Cancelled</span>" : "<span class=\'text-info\'> Pending</span>"  #</span>'
+                           },
+                          //{
+                          //    command: [
+                          //       {
+                          //           "name": "mydelete",
+                          //           "buttonType": "ImageAndText",
+                          //           "text": "Generate Sales Order",
+                          //           "imageClass": "fa-truck",
+                          //           "className": "my-edit-button",
+                          //           "iconClass": "fa",
+                          //           "click": function (e) {
+                          //               e.preventDefault();
+                          //               var grid = $(e.currentTarget).closest('tr').next('tr').find('.orders').data("kendoGrid");
+                          //               var countApprovedRow = $(e.currentTarget).closest('tr').next('tr').find('.orders').find("input:checked").length;
+                          //               if (countApprovedRow == 0) {
+                          //                   bootbox.alert("Approve atleast one item first !!");
+                          //                   return;
+                          //               }
+
+                          //               $.when(showConfirmationWindow('Are you sure Want to Generate PO To So?')).then(function (confirmed) {
+                          //                   if (confirmed) {
+                          //                       //choose partyType
+
+                          //                       $("#formCodeMultiSelect").data("kendoMultiSelect").value([]);
+                          //                       $("#formCodeModal").modal('show');
+                          //                       $("#ApplyFormCodeModel").on("click", function () {
+                          //                           var multiselect = $("#formCodeMultiSelect").data("kendoMultiSelect");
+                          //                           var value = multiselect.value();
+                          //                           if (value.length == 0)
+                          //                           {
+                          //                               return;
+                          //                           }
+                          //                           else
+                          //                           {
+                          //                               var dataSource = grid.dataSource;
+                          //                               $.each(dataSource.data(), function (index, data) {
+                          //                                   data.FORM_CODE = value[0];
+                          //                               });
+                          //                           }
+
+                          //                           if (creditlimit) {
+                          //                               var win = $('#creditliimitwindows').data("kendoWindow");
+                          //                               $("#limittextbox").val('');
+                          //                               win.center();
+                          //                               win.open();
+                          //                           }
+                          //                           else {
+                          //                               var dataSource = grid.dataSource;
+                          //                               $.each(dataSource.data(), function (index, data) {
+                          //                                   data.FORM_CODE = value[0];
+                          //                               });
+                          //                               grid.dataSource.sync();
+                          //                           }
+                          //                       });
+
+
+
+                          //                       $("#showcreditremark").on("click", function () {
+                          //                           var creditlimit = $("#limittextbox").val();
+                          //                           if (creditlimit == '') {
+                          //                               $("#errorforcreditlimit").html('<div class="alert alert-success"><a class="close" data-dismiss="alert" aria-label="close">&times;</a> <strong>Error!</strong>Your Credit Limit is exceed. Please give Remarks</div>')
+                          //                           }
+                          //                           else {
+                          //                               var dataSource = grid.dataSource;
+                          //                               $.each(dataSource.data(), function (index, data) {
+                          //                                   data.CREDITLIMITREMARKS = creditlimit;
+                          //                               });
+                          //                               dataSource.sync()
+                          //                               win.close();
+                          //                           }
+
+                          //                       });
+                          //                   }
+                          //               });
+                          //           }
+                          //       },
+                          //        {
+                          //            "name": "delete",
+                          //            "buttonType": "Image",
+                          //            "text": "Cancel",
+                          //            "imageClass": "fa-times",
+                          //            "iconClass": "fa",
+                          //            "width": "15%",
+                          //            "click": function (e) {
+                          //                e.preventDefault();
+                          //                var grid = $("#grid").data("kendoGrid");
+                          //                grid.dataSource.sync();
+                          //            }
+                          //        },
+                          //    ],
+                          //    width: "20%",
+                          //}
+
+            ]
+        });
+    }
+
+
+    function KendoGridRefresh(readUrl) {
+        var grid = $('#grid').data("kendoGrid");
+        grid.destroy();
+        $('#grid').val('');
+        $('#grid').html('');
+        BindGrid(readUrl);
+
+    }
+
+    function detailInit(e) {
+        debugger;
+        console.log(e);
+        var detailRow = e.detailRow;
+        var Rowdata = e.data;
+        var id = Rowdata.ORDER_NO;
+        var ORDER_ENTITY = e.data.ORDER_ENTITY;
+        //  var companyCode = Rowdata.COMPANY_CODE;
+        //var companyCode = ReportFilter.getCompanyFilter().join("','");
+        // If companyFilter empty get the company code from Rowdata i.e. api Data
+        var companyCode = (ReportFilter.getCompanyFilter() || []).length
+            ? ReportFilter.getCompanyFilter().join("','")
+            : Rowdata.COMPANY_CODE;
+        var dataSourceITem = new kendo.data.DataSource({
+            type: "json",
+            batch: true,
+            transport: {
+                read: {
+                    url: window.location.protocol + "//" + window.location.host + "/" + "api/DistributionPurchase/GetDistributionPurchaseOrderDetail?companyCode=" + companyCode + "&Orderno=" + id + "&requestStatus=All" + "&ORDER_ENTITY="+ORDER_ENTITY, // <-- Get data from here.
+                    dataType: "json", // <-- The default was "jsonp".
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8"
+                },
+                update: {
+
+                    url: window.location.protocol + "//" + window.location.host + "/api/DistributionPurchase/UpdateDistributionPurchaseOrderDetail",
+                    dataType: "json",
+                    type: "post",
+                    contentType: "application/json; charset=utf-8",
+                    complete: function (e) {
+                        if (e.responseJSON.STATUS_CODE == 404) {
+                            displayPopupNotification("Voucher list is not selected", "error");
+                        }
+                        else if (e.responseJSON.STATUS_CODE == 304) {
+                            displayPopupNotification("Error to Covert Sales Order", "error");
+                        }
+                        else if (e.responseJSON.STATUS_CODE == 500) {
+                            displayPopupNotification("Sales Order No already exist", "error");
+                        }
+                        else if (e.responseJSON.STATUS_CODE == 200) {
+                            displayPopupNotification("Sales Order Generated Successfully", "success");
+                            $("#grid").data("kendoGrid").dataSource.read();
+                        }
+                    }
+                },
+                destroy: {
+                    url: window.location.protocol + "//" + window.location.host + "/api/DistributionPurchase/DeleteDistributionPurchaseOrderDetail",
+                    dataType: "json",
+                    type: "post",
+                    contentType: "application/json; charset=utf-8",
+                    complete: function (e) {
+                        if (e.responseJSON.STATUS_CODE == 404) {
+                            displayPopupNotification("Voucher list is not selected", "error");
+                        }
+                        else if (e.responseJSON.STATUS_CODE == 304) {
+                            //  displayPopupNotification("Error to Covert Sales Order", "error");
+                        }
+                        else if (e.responseJSON.STATUS_CODE == 500) {
+                            //  displayPopupNotification("Sales Order No already exist", "error");
+                        }
+                        else if (e.responseJSON.STATUS_CODE == 200) {
+                            displayPopupNotification("Item Cancel Successfully", "success");
+                            $("#grid").data("kendoGrid").dataSource.read();
+                        }
+                    }
+                },
+                parameterMap: function (options, operation) {
+                    if (operation !== "read" && options.models) {
+                        if (creditlimit) {
+                            var win = $('#creditliimitwindows').data("kendoWindow");
+                            win.center();
+                            win.open();
+
+                            //kendo.prompt("Please, enter a Credit Limit Remarks value:", "any value").then(function (data) {
+                            //    if (data == '')
+                            //        return false;
+                            //}, function () {
+                            //    return false;
+                            //})
+                        }
+                        return JSON.stringify(options.models);
+                    }
+                }
+            },
+            error: function (e) {
+                displayPopupNotification("Sorry error occured while processing data", "error");
+            },
+            //serverFiltering: false,
+            //serverGrouping: false,
+            //serverAggregates: false,
+            //serverPaging: false,
+            schema: {
+                model: {
+                    id: "ORDER_NO",
+                    fields: {
+                        //GROUP_EDESC: { nullable: true },
+                        ORDER_DATE: { editable: false, nullable: true, type: "date" },
+                        CUSTOMER_EDESC: { editable: false, nullable: true },
+                        CUSTOMER_CODE: { editable: false, nullable: true },
+                        EMPLOYEE_EDESC: { editable: false, nullable: true },
+                        ITEM_CODE: { editable: false, nullable: true },
+                        ITEM_EDESC: { editable: false, nullable: true },
+                        MU_CODE: { editable: false, nullable: true },
+                        QUANTITY: { editable: false, nullable: true },
+                        UNIT_PRICE: { editable: false, nullable: true },
+                        DISCOUNT: { editable: false, nullable: true },
+                        DISCOUNT_RATE: { editable: false, nullable: true },
+                        DISCOUNT_PERCENTAGE: { editable: false, nullable: true },
+                        TOTAL_PRICE: { editable: false, nullable: true },
+                        REMARKS: { editable: true, nullable: true },
+                        CREATED_DATE: { editable: false, nullable: true, type: "date" },
+                        BILLING_NAME: { editable: false, nullable: true, type: "date" },
+                        APPROVED_FLAG: { editable: false, validation: { required: false } },
+                        APPROVED_FLAGBOOL: { editable: true, nullable: true, type: "boolean" },
+                        ISEDITED: { editable: true, nullable: true, type: "boolean" },
+                        CREDITLIMIT: { editable: true, nullable: true, type: "boolean" },
+                        REJECT_FLAG: { editable: false, validation: { required: false } },
+                        REJECT_FLAGBOOL: { editable: true, nullable: true, type: "boolean", validation: { required: true } },
+                        APPROVEQTY: { type: "number", editable: false, validation: { required: true } },
+                        FREE_QTY: { type: "number", editable: false, nullable: true },
+                        CONVERSION_MU_CODE: { editable: false, nullable: true },
+                        CONVERSION_QUANTITY: { editable: false, nullable: true },
+                        HAS_FREE_QUANTITY: { editable: false, nullable: false },
+
+                    }
+                }
+            },
+            aggregate: [
+                            { field: "QUANTITY", aggregate: "sum" },
+                            { field: "UNIT_PRICE", aggregate: "sum" },
+                            { field: "DISCOUNT", aggregate: "sum" },
+                            { field: "DISCOUNT_RATE", aggregate: "sum" },
+                            { field: "DISCOUNT_PERCENTAGE", aggregate: "sum" },
+                            { field: "TOTAL_PRICE", aggregate: "sum" },
+                            { field: "CONVERSION_QUANTITY", aggregate: "sum" },
+                            { field: "FREE_QTY", aggregate: "sum" },
+                            { field: "APPROVEQTY", aggregate: "sum" },
+            ],
+            //group: {
+            //    field: "GROUP_EDESC",
+            //    dir: "asc",
+            //    headerTemplate: "#= value #"
+            //},
+            pageSize: 100,
+            pageable: true,
+            sortable: true,
+            reorderable: true,
+            groupable: true,
+            reorderable: false,
+            resizable: true,
+        });
+        detailRow.find(".orders").kendoGrid({
+            dataSource: dataSourceITem,
+            //height: 400,
+            sortable: true,
+            pageable: false,
+            sortable: true,
+            reorderable: true,
+            resizable: true,
+            scrollable: {
+                virtual: true
+            },
+            columns: [
+//                {
+//                field: "GROUP_EDESC",
+//                    groupHeaderTemplate: "#= value #",
+                   
+//},
+                {
+                    field: "ITEM_EDESC",
+                    title: "Item Name",
+                    width: "25%",
+                    //footerTemplate: '<span style="float:right">Total Amount</span>',
+                },
+                 {
+                     field: "MU_CODE",
+                     title: "Req.Unit",
+                     width: "6%",
+                     // width: "55",
+                     footerTemplate: '<span style="float:right">Total</span>',
+                 }, {
+                     field: "QUANTITY",
+                     title: "Request Qty",
+                     width: "9%",
+                     template: '<span style="float:right">#= kendo.toString(QUANTITY) #</span>',
+                     format: "{0:n}",
+                     footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                 }, {
+                     field: "UNIT_PRICE",
+                     title: "Unit Price",
+                     template: '<span style="float:right">#= kendo.toString(UNIT_PRICE,"n") #</span>',
+                     width: "10%",
+                     footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                },
+                {
+                    field: "DISCOUNT",
+                    title: "Discount",
+                    template: '<span style="float:right">#= kendo.toString(DISCOUNT,"n") #</span>',
+                    width: "10%",
+                    footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                },
+                {
+                    field: "DISCOUNT_RATE",
+                    title: "Discount Rate",
+                    template: '<span style="float:right">#= kendo.toString(DISCOUNT_RATE,"n") #</span>',
+                    width: "10%",
+                    footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                },
+                {
+                    field: "DISCOUNT_PERCENTAGE",
+                    title: "Discount Percentage",
+                    template: '<span style="float:right">#= kendo.toString(DISCOUNT_PERCENTAGE,"n") #</span>',
+                    width: "10%",
+                    footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                },
+                {
+                     field: "TOTAL_PRICE",
+                     title: "Total Price",
+                     width: "10%",
+                     template: '<span style="float:right">#= kendo.toString(TOTAL_PRICE,"n") #</span>',
+                     footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                 },
+                  {
+                      field: "REMARKS",
+                      title: "Remarks",
+                      width: "15%",
+                      format: "{0:n0}"
+                  },
+                {
+                    field: "MU_CODE",
+                    title: "C.Unit",
+                    width: "5%",
+                },
+
+                 {
+                     field: "CONVERSION_QUANTITY",
+                     title: "C. Qty",
+                     tooltip:"conversion",
+                     width: "8%",
+                     template: '<span class="CQuantity" style="float:right">#= kendo.toString(QUANTITY * CONVERSION_FACTOR) #</span>',
+                     footerTemplate: '<span class="CQuantitySUM" style="float:right">#= CalcAggregate("QUANTITY","CONVERSION_FACTOR")#</span>',
+                 },
+                //{
+                //    field: "APPROVED_FLAGBOOL",
+                //    title: "Approve",
+                //    width: "5%",
+                //    template: '<input type="checkbox" #= APPROVED_FLAGBOOL ? checked="checked" : "" # ></input>'
+                    // width: "55",
+                    //footerTemplate: '<span style="float:right">Total Amount</span>'#= APPROVED_FLAGBOOL ? checked="checked" : "" # ,
+                //},
+                { field: "FREE_QTY", title: "Free Quantity", width: "12%", template: '<span style="float:right">#= kendo.toString(FREE_QTY,"n") #</span>',
+                    footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',},
+                {
+                    field: "APPROVEQTY",
+                    title: "Approve Qty",
+                    width: "15%",
+                    //format: "{0:n0}",
+                    // template: '<span class="APPROVEQTY" style="float:right">#= kendo.toString(APPROVEQTY) #</span>',
+                    footerTemplate: '<span class="APPROVEQTYSUM" style="float:right">#= kendo.toString(sum, "n")#</span>',
+                   // template: "<input type='number'min='0' name='APPROVEQTY' class='APPROVEQTYSUM k-formatted-value k-input' tabindex='0' title='' style='display: inline-block;width:100%;text-align:right' value='#= kendo.toString(APPROVEQTY)#' aria-disabled='false' aria-readonly='false'>"
+                    }, 
+                 //   {
+                //    command: [
+                //    {
+                //        "name": "delete",
+                //        "buttonType": "Image",
+                //        "text": "Cancel",
+                //        "imageClass": "fa-times",
+                //        "iconClass": "fa",
+                //        "click": function (e) {
+                //            e.preventDefault();
+                //            //bootbox.confirm("Are you sure Want to Cancel This Item?", function (result)
+                //            //{
+                //            //    if (result)
+                //            //    $(".orders").data("kendoGrid").dataSource.sync();
+                //            //});
+
+                //        }
+                //    }]
+                //},
+            ],
+            dataBound: function (o) {
+                var grid = o.sender;
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.length + 1;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    displayPopupNotification("No Data Found Given Date Filter.", "info");
+                }
+                else {
+                    if (grid.dataSource.data()[0].PO_CONVERSION_FACTOR == 'Y') {
+                        grid.showColumn("CONVERSION_MU_CODE");
+                        grid.showColumn("CONVERSION_QUANTITY");
+                    }
+                    else {
+                        grid.hideColumn("CONVERSION_MU_CODE");
+                        grid.hideColumn("CONVERSION_QUANTITY");
+                    }
+                    if (grid.dataSource.data()[0].PO_REMARKS == 'Y') {
+                        grid.showColumn("REMARKS");
+
+                    }
+                    else {
+                        grid.hideColumn("REMARKS");
+                    }
+                    $("div.k-group-indicator").each(function (i, v) {
+                        grid.hideColumn($(v).data("field"));
+                    });
+                }
+            },
+            editable: {
+                mode: "incell", // mode can be incell/inline/popup with Q1 '12 Beta Release of Kendo UI
+                confirmation: "Are you sure Want to Cancel This Item?" // the confirmation message for destroy command
+            },
+            edit: function (e) {
+                var data = $(this).parent(".k-master-row");
+                console.log(data);
+                var parentRow = this.wrapper.closest("tr");
+                console.log(parentRow);
+                //$('#grid').data('kendoGrid').dataSource.read();
+                console.log('edit started ');
+                console.log(e);
+                //e.preventDefault();
+            },
+            cancel: function (e) {
+                e.preventDefault();
+                e.container.data("kendoWindow").close();
+            },
+            update: function (e) {
+                console.log('edit completed');
+                console.log(e);
+            },
+            change: function (e) {
+                console.log('a change happened not datasource one');
+                console.log(e);
+            },
+            saveChanges: function (e) {
+                console.log('a save is about to occurr');
+                console.log(e);
+            },
+        });
+        var grid = detailRow.find(".orders").data("kendoGrid");
+        if (e.data.HAS_FREE_QUANTITY === "Y") {
+            grid.showColumn("FREE_QTY");
+        } else {
+            grid.hideColumn("FREE_QTY");
+        }
+
+    };
+</script>
+
+<script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js?V2")"></script>

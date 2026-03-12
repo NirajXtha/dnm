@@ -1,0 +1,251 @@
+﻿
+
+<div>
+    <div id="dealerTreeView" style="max-height:800px;"></div>
+</div>
+
+
+<script>
+
+    $(document).ready(function () {
+        var autoCompleteurl1 = window.location.protocol + "//" + window.location.host + "/api/SalesHome/GetSalesRegisterDealer";
+        var autoCompletedataSource1 = new kendo.data.DataSource({
+            transport: {
+                read: {
+                    url: autoCompleteurl1,
+                    dataType: "json"
+                }
+            }
+            //serverFiltering: true
+        });
+
+        function OnMultiSelect1(e) {
+            
+            var dataItem = this.dataItem(e.item.index());
+            var treeView = $("#dealerTreeView").data('kendoTreeView');
+            var dataSource = treeView.dataSource;
+            var mydataItem = dataSource.get(dataItem.SupplierCode);
+            if (typeof mydataItem != 'undefined') {
+                $("#_" + mydataItem.uid).attr('checked', true);
+            }
+        };
+
+        $("#dealerMultiSelect").kendoMultiSelect({
+            dataSource: autoCompletedataSource1,
+            dataTextField: "SupplierName",
+            dataValueField: "SupplierCode",
+            height: 600,
+            headerTemplate: '<div class="col-md-offset-4"><strong>Dealer...</strong></div>',
+            placeholder: "Select Dealer...",
+            autoClose: false,
+            select: OnMultiSelect1,
+            dataBound: function () {
+                var current = this.value();
+                this._savedOld = current.slice(0);
+            },
+            change: OnMultiSelectChange
+        });
+
+        function OnMultiSelectChange(e) {
+            var previous = this._savedOld;
+            var current = this.value();
+            var diff = [];
+            if (previous) {
+                diff = $(previous).not(current).get();
+            }
+            this._savedOld = current.slice(0);
+            if (diff.length > 0) {
+                var treeView = $("#dealerTreeView").data('kendoTreeView');
+                var dataSource = treeView.dataSource;
+                var mydataItem = dataSource.get(diff);
+                if (typeof mydataItem != 'undefined') {
+                    $("#_" + mydataItem.uid).attr('checked', false);
+                }
+            }
+            loadDealerFilterTreeList();
+        }
+
+        var loadAllDealersUrl = window.location.protocol + "//" + window.location.host + "/api/SalesHome/GetAllDealerNodes";
+        var loadDealerByNodeUrl = window.location.protocol + "//" + window.location.host + "/api/SalesHome/GetAllDealerBySupId";
+
+        var localData;
+        var DealerTreeDataSource = new kendo.data.HierarchicalDataSource({
+            transport: {
+                read: function (options) {
+                    if (typeof options.data.SupplierCode != 'undefined') {
+                        var id = options.data.SupplierCode;
+                        var data = getNextLevel(localData, id);
+                        if (data) {
+                            options.success(data);
+                        } else {
+                            var currentnode = get(localData, id);
+                            $.ajax({
+                                url: loadDealerByNodeUrl,
+                                data: {
+                                    Supid: currentnode.SupplierCode,
+                                    level: currentnode.Level,
+                                    mastercode: currentnode.MasterSupplierCode
+                                },
+                                type: "GET",
+                                success: function (result) {
+                                    setTimeout(function () {
+                                        var res = result;
+                                        addToLocalData(localData, res, currentnode.SupplierCode);
+                                        options.success(res);
+                                    }, 1000);
+
+                                },
+                                error: function (result) {
+                                    options.error(result);
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        $.ajax({
+                            url: loadAllDealersUrl,
+                            type: "GET",
+                            success: function (result) {
+                                setTimeout(function () {
+                                    options.success(result);
+                                }, 1000);
+                                localData = result;
+                            },
+                            error: function (result) {
+                                options.error(result);
+                            }
+                        });
+                    }
+                }
+            },
+            schema: {
+                model: {
+                    id: "SupplierCode",
+                    hasChildren: "hasSuppliers",
+                    masterCustCode: "MasterSupplierCode"
+                }
+            }
+        });
+
+        $("#dealerTreeView").kendoTreeView({
+            checkboxes: {
+                checkChildren: true
+            },
+            autoScroll: true,
+            autoBind: false,
+            dataSource: DealerTreeDataSource,
+            dataTextField: "SupplierName",
+            height: 400,
+            scrollable: {
+                virtual: true
+            },
+            check: onCheck,
+        });
+
+        $("#dealerTreeView").data("kendoTreeView").expand(".treeNode");
+
+        function onCheck(e) {
+            var dealerMultiSelect = $("#dealerMultiSelect").data("kendoMultiSelect");
+            var mvalue = dealerMultiSelect.value();
+            var dataItemCustomerID = this.dataItem(e.node).SupplierCode;
+            if (this.dataItem(e.node).checked == true) {
+                var res = [];
+                res.push(dataItemCustomerID);
+                res.forEach(function (dataItem) {
+                    var temp = $.merge($.merge([], mvalue), [dataItem]);
+                    temp = $.unique(temp);
+                    dealerMultiSelect.value(temp);
+                    dealerMultiSelect._savedOld = temp.slice(0)
+                });
+
+            }
+            if (this.dataItem(e.node).checked == false) {
+                mvalue.forEach(function (dataItem) {
+                    var temp = $.grep(mvalue, function (a) { return a != dataItem });
+                    temp = $.unique(temp);
+                    dealerMultiSelect.value(temp);
+                });
+
+            }
+        }
+
+        
+        function getNextLevel(data, id) {
+            if (!id) {
+                return data;
+            } else {
+                for (var i = 0; i < data.length; i++) {
+                    if (data[i].SupplierCode == id) {
+                        return data[i].Items;
+                    } else if (data[i].Items) {
+                        for (var j = 0; j < data[i].Items.length; j++) {
+                            if (data[i].Items[j].SupplierCode == id) {
+                                return data[i].Items[j].Items;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        function get(data, id) {
+            if (id) {
+                for (var i = 0; i < data.length; i++) {
+                    if (data[i].SupplierCode == id) {
+                        return data[i];
+                    }
+                    else if (data[i].Items) {
+                        for (var j = 0; j < data[i].Items.length; j++) {
+                            if (data[i].Items[j].SupplierCode == id) {
+                                return data[i].Items[j];
+                            }
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+        function addToLocalData(localdata, data, id) {
+            if (!id) {
+                return localdata;
+            } else {
+                for (var i = 0; i < localdata.length; i++) {
+                    if (localdata[i].SupplierCode == id) {
+                        localdata[i].Items = data;
+                        return;
+                    } else {
+                        if (localdata[i].Items) {
+                            for (var j = 0; j < localdata[i].Items.length; j++) {
+                                if (localdata[i].Items[j].SupplierCode == id) {
+                                    localdata[i].Items[j].Items = data;
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+    });
+
+    var loadDealerFilterTreeList = function () {
+        $(".supplierSlidebox").slideToggle();
+        activateTab('dealerTab');
+        $("#dealerTreeView").data("kendoTreeView").dataSource.bind("change",
+            $("#dealerTreeView").data("kendoTreeView").dataSource.read()
+        );
+    }
+
+    $(function () {
+        //$('#dealerTreeView').slimScroll({
+        //});
+    });
+
+    
+    function activateTab(tab) {
+        debugger
+        $('.nav-tabs a[href="#' + tab + '"]').tab('show');
+    };
+</script>
+

@@ -1,0 +1,693 @@
+﻿@model List<NeoErp.Planning.Service.Models.MyColumnSettings>
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    ViewBag.Title = "MasterPlanSetup";
+    string planCode = ViewBag.PlanCode;
+    Layout = null;
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+<style>
+    div#ndp-nepali-box {
+        z-index: 10076 !important;
+    }
+
+    .ui-datepicker {
+        z-index: 10076 !important;
+    }
+
+
+    .input-medium {
+        width: 100% !important;
+    }
+
+    .form-horizontal .control-label {
+        padding-top: 0px !important;
+        margin-bottom: 5px;
+        text-align: right;
+    }
+
+    #PlanSetupTreeList input {
+        width: 100%;
+        border: none;
+        background: none !important;
+        height: 17px !important;
+        display: block;
+    }
+
+        #PlanSetupTreeList input:focus {
+            border: solid #ddd 1px;
+        }
+
+    #PlanSetupTreeList td {
+        border: 0px;
+        border-bottom: solid #c5c5c5 1px;
+    }
+
+    #PlanSetupTreeList td {
+        border-style: none;
+        border-width: 0 0 0 0;
+    }
+
+    .mulitiitem-select legend {
+        width: 13%;
+        border-bottom: none !important;
+        border-bottom: none !important;
+    }
+
+    input:focus {
+        outline: none !important;
+    }
+
+    #PlanSetupTreeList .k-treelist .k-alt {
+        background-color: #eee;
+    }
+
+    .k-grid-content-locked {
+        background-color: #ffffff;
+        /*border-right: none;*/
+        border: none;
+    }
+
+    #operationContent td[role="gridcell"] {
+        font-size: 11px;
+        border-right: solid #c5c5c5 1px;
+        border-bottom: solid #c5c5c5 1px;
+    }
+
+    .labelGap {
+        padding-right: 80px;
+    }
+
+    .groupColor {
+        background-color: #ebebeb !important;
+    }
+
+    .k-treelist {
+        margin-top: 0px;
+    }
+
+    #salesReferenceOptionModal.modal.fade.in {
+        top: 30%;
+        margin: auto;
+    }
+
+    .portlet.light .portlet-body {
+        padding-top: 0px;
+    }
+
+    .titleheading {
+        padding-bottom: 0px !important;
+    }
+
+    .sales_ref_div {
+        margin-top: 16px;
+        display: inline-block;
+        padding-right: 30px;
+        padding-left: 10px;
+    }
+
+    .input-group .input-group-addon {
+        min-width: 25px !important;
+    }
+
+    .input-group-addon {
+        padding: 3px 3px !important;
+    }
+
+    .k-list.k-reset {
+        max-height: 300px !important;
+        overflow: auto !important;
+    }
+</style>
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb"></ul>
+    </div>
+
+</div>
+<div class="">
+    <div id="planSetupCtrl" class="portlet light bordered portlet_bg portletbg">
+        <div class="portlet-title titleheading" hidden>
+            <div class="col-md-7 setup_description">
+                <div class="row">
+                    <span class="text-center" style="text-align:center">
+                        <i class="fa fa-list-alt"></i>
+                        Plan Name : <strong id="PlanName"></strong>  |
+                        For : <strong id="plan_for"></strong> |
+                        Frequency : <strong id="choosed_frequency"></strong> |
+                        Date Between : <strong id="planStartDate"></strong> &nbsp;&nbsp;to&nbsp;&nbsp;<strong id="planEndDate"></strong>
+                    </span>
+                </div>
+                @*<div class="row">
+                        <span class="text-center" style="text-align:center">
+                            <i class="fa fa-list-alt"></i>
+                            <span class="">
+                                Customer : <strong class="customerName"></strong>
+                            </span>
+                            <span class="employee-span">
+                                | Employee : <strong class="employeeName"></strong>
+                            </span>
+                            <span class="party-span">
+                                | Party Type : <strong class="partytypeName"></strong>
+                            </span>
+                            <span class="division-span">
+                                | Division : <strong class="divisionName"></strong>
+                            </span>
+                            <span class="branch-span">
+                                | Branch : <strong class="branchName"></strong>
+                            </span>
+                        </span>
+                    </div>*@
+            </div>
+
+            <div class="col-md-5">
+                <span class="pull-right">
+                    <button type="button" id="resetBtn" ng-click="cancelForm()" class="btn btn-default btn-circle btn-sm"><i class="fa fa-times"></i> Cancel</button>
+                    <button type="button" id="salesReferenceplan" name="salesReferenceplan" class="btn btn-success btn-circle btn-sm"><i class="fa fa-at"></i> Reference</button>
+                    <button type="button" id="clearBtn" onclick="$('input[type=number]').val('')" class="btn btn-primary btn-circle btn-sm"><i class="fa fa-eraser"></i> Clear</button>
+                    <button type="button" id="backBtn"
+                            ng-click="gotoBack()"
+                            class="btn btn-warning btn-circle btn-sm">
+                        <i class="fa fa-caret-left"></i>
+                        Back
+                    </button>
+                    <button type="button" id="SavePlanSetup" class="btn green btn-circle btn-sm"><i class="fa fa-save"></i> Save</button>
+                </span>
+            </div>
+        </div>
+        <div class="portlet-title titleheading hidden" hidden>
+            <span class="text-center" style="text-align:center">
+                <i class="fa fa-list-alt"></i>
+                "<strong id="PlanName"></strong>"  Plan for
+                <label class="hidden">
+                    "<strong id="plan_type"></strong>" &nbsp;
+                    Type for
+                </label>
+                "<strong id="plan_for"></strong>" &nbsp;
+                to "<strong id="choosed_frequency"></strong>" &nbsp;
+                frequency between &nbsp;<strong id="planStartDate"></strong> &nbsp;&nbsp;to&nbsp;&nbsp;<strong id="planEndDate"></strong>
+            </span>
+            <span>
+                Customer : <strong class="customerName"></strong>
+            </span>
+            <span class="pull-right">
+                <button type="button" id="resetBtn" ng-click="cancelForm()" class="btn btn-default btn-circle btn-sm"><i class="fa fa-times"></i> Cancel</button>
+                <button type="button" id="backBtn" ng-click="gotoBack()" class="btn btn-warning btn-circle btn-sm"><i class="fa fa-caret-left"></i> Back</button>
+                <button type="button" id="SavePlanSetup" class="btn green btn-circle btn-sm"><i class="fa fa-save"></i> Save</button>
+            </span>
+        </div>
+        <div class="portlet-body customdesign">
+            <form id="planSetupForm" name="planSetupForm" novalidate class="form-horizontal1">
+                <input type="hidden" id="END_DATE" name="END_DATE" value="" />
+                <input type="hidden" id="IS_ITEMS_VISIBLE_ONLY" name="IS_ITEMS_VISIBLE_ONLY" value="" />
+                <input type="hidden" id="ITEM_CODE" name="ITEM_CODE" value="" />
+                <input type="hidden" id="IsCustomerProduct" name="IsCustomerProduct" value="" />
+                <input type="hidden" id="PLAN_CODE" name="PLAN_CODE" value="" ng-model="p_code" />
+                <input type="hidden" id="PLAN_EDESC" name="PLAN_EDESC" value="" />
+                <input type="hidden" id="PLAN_FOR" name="PLAN_FOR" value="" />
+                <input type="hidden" id="PLAN_TYPE" name="PLAN_TYPE" value="" />
+                <input type="hidden" id="REMARKS" name="REMARKS" value="" />
+                <input type="hidden" id="START_DATE" name="START_DATE" value="" />
+                <input type="hidden" id="TIME_FRAME_CODE" name="TIME_FRAME_CODE" value="" />
+                <input type="hidden" id="TIME_FRAME_EDESC" name="TIME_FRAME_EDESC" value="" />
+                <input type="hidden" id="customerCode" name="customerCode" value="" />
+                <input type="hidden" id="branchCode" name="branchCode" value="" />
+                <input type="hidden" id="divisionCode" name="divisionCode" value="" />
+                <input type="hidden" id="employeeCode" name="employeeCode" value="" />
+                <input type="hidden" id="partytypeCode" name="partytypeCode" value="" />
+                <input type="hidden" id="dateFormat" name="dateFormat" value="" />
+                <input type="hidden" id="salesRateType" name="salesRateType" value="" />
+                <input type="hidden" id="qtyWiseAmt" name="qtyWiseAmt" value="" />
+                <div class="" hidden>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label class="control-label ">Plan Type : <strong id="plan_type"></strong></label>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label class="control-label ">
+                                Frequency <strong id="choosed_frequency"></strong>
+                                <input type="hidden" id="frequency_code" name="frequency_code" value="" />
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="control-label">
+                            Start Date :<strong id="planStartDate"></strong>, &nbsp; &nbsp;
+                            End Date :<strong id="planEndDate"></strong>
+                        </label>
+                    </div>
+                </div>
+                <fieldset>
+                    <div class="row">
+                        <div class="col-sm-12 col-md-7">
+                            <div class="row">
+                                @Html.Partial("~/Areas/NeoERP.Planning/Views/Shared/PlanningDateField.cshtml", true)
+                            </div>
+                        </div>
+                        <div class="col-sm-8 col-md-3">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Master Plan List
+                                </label>
+                                <input id="MasterPlanList" name="masterplanlist" value="" style="width: 100%;" />
+                            </div>
+                        </div>
+                        <div class="col-sm-4 col-md-2">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Plan For
+                                </label>
+                                <input id="planfor" ng-model="planfor" name="planfor" style="width: 100%;" required />
+                            </div>
+                        </div>
+
+                    </div>
+
+                </fieldset>
+                <div class="row itemHeader" hidden style="display:none;">
+                </div>
+            </form>
+            <div id="selectedItemsList_temp" ng-bind="param" class="hidden"></div>
+            <div id="PlanSetupTreeList" style="margin: 10px 0px 0px 0px;">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="salesReferenceOptionModal" class="modal fade" tabindex="-1" data-width="760">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+        <h4 class="modal-title">Item Sales Reference<span style="color:red;" id="Errorrefrence"></span></h4>
+    </div>
+    <div class="modal-body">
+        <div class="row" id="fiscalyearclass">
+
+            <div class="col-md-7 fiscal_year_div">
+                <div class="form-horizontal">
+                    <label class="control-label"> Fiscal Year  &nbsp;&nbsp;</label>
+                </div>
+                @Html.Partial("~/Views/Shared/Controls/DashboardChartFilter/FiscalYearFilter.cshtml")
+            </div>
+        </div>
+        <div class="row" style="margin-top:10px;">
+            <div class="form-group">
+                <div class="col-md-6">
+                    <div class="form-horizontal">
+                        <label class="control-label">Date Filter &nbsp;&nbsp;</label>
+                        <select class="dateFilterSelect form-control" id="ddlDateFilterVoucher" name="DateStep" ngSelected="onDateChange()"></select>
+                    </div>
+                </div>
+            </div>
+            <div class="col1-md-2">
+                <span class="sales_ref_div">
+                    <input id="salesInvoice" type="radio" name="sales_invoice_order" value="sales_invoice" checked>
+                    <label for="salesInvoice">Sales Invoice</label>
+                </span>
+                <span class="sales_ref_div manual_mrp">
+                    <input id="salesOrder" type="radio" name="sales_invoice_order" value="sales_order">
+                    <label for="salesOrder">Sales Order</label>
+                </span>
+            </div>
+        </div>
+        <div class="row">
+            <div class="form-group">
+                <div class="col-md-6">
+                    <div class="form-horizontal">
+                        <label class="control-label">BS Date Range</label>
+                        <div class="input-group input-medium date-picker input-daterange" data-date="10/11/2012" data-date-format="mm/dd/yyyy">
+                            <input type="text" id="fromInputDateVoucher" ng-model="startdate" name="startdate" class="frmDataInput form-control" placeholder="From Date" />
+                            <span class="input-group-addon"> to </span>
+                            <input type="text" class="frmDataInput form-control" id="toInputDateVoucher" placeholder="To Date">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-horizontal">
+                        <label class="control-label">AD Date Range</label>
+                        <div class="input-group input-medium date-picker input-daterange" data-date="10/11/2012" data-date-format="mm/dd/yyyy">
+                            <input type="text" name="FromDateVoucher" id="FromDateVoucher" class="form-control frmDataInput" readonly="readonly" placeholder="From Date" />
+                            <span class="input-group-addon"> to </span>
+                            <input type="text" name="ToDateVoucher" class="form-control frmDataInput" readonly="readonly" id="ToDateVoucher" placeholder="To Date">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="form-group">
+                <div class="col-md-6 incdec_div">
+                    <div class="form-horizontal">
+                        <label class="control-label">Increment/Decrement &nbsp;</label>
+                        <div class="input-group">
+                            <input type="number" id="increment_decrement_percent" class="form-control text-right" autofocus name="increment_decrement_percent" value="0" />
+                            <label class="input-group-addon" for="increment_decrement_percent">%</label>
+                        </div>
+                        <label class="caption"><small><i>0 for no change value, (+ve) value for Increment and (-ve) Negative value for Decrement. </i></small></label>
+                    </div>
+                </div>
+                <div class="col-md-6 consolidate_div">
+                    <div class="form-horizontal">
+                        <label class="control-label">Consolidate Filter</label>
+                        <div id="consolidateTreeView" style="max-height:400px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" data-dismiss="modal" class="btn btn-outline dark">Close</button>
+        <button type="button" class="btn green" id="searchSalesItemReference" data-loading-text="Loading...">OK</button>
+    </div>
+</div>
+
+<script type="text/x-kendo-tmpl" id="ItemTemplate">
+    <input class="autoFillNum" dir="rtl" style="width:70px !important" type="number" />
+</script>
+<script type="text/x-kendo-tmpl" id="FreqTemplate">
+    <input class="autoFillItemNum" dir="rtl" style="width:100% !important " type="number" />
+</script>
+<script src="@Scripts.Url("~/Areas/NeoERP.Planning/Scripts/DateFilterWithADBS.js")" type="text/javascript"></script>
+
+<script>
+    var p_code = '@planCode';
+    var retrievedItem = null;
+    var retrievedSalesPlanDetail = null;
+
+    DateFilter.init('BS', dateTrigger);
+    function dateTrigger() {
+        $('#ddlDateFilterVoucher').val('This Year');
+        $('#ddlDateFilterVoucher').trigger('change');
+        BindMasterPlanName();
+    }
+    (function () {
+        bindPlanFor();
+        setTimeout(function () {
+            if (p_code != null && p_code != '' && retrievedItem == null) {
+                bindDataFromAjax(p_code);
+            }
+            $("#ddlDateFilterVoucher").on("change", function () {
+                BindMasterPlanName();
+            });
+        }, 2000);
+    })();
+    function refresh() {
+        var mp_code = $("#MasterPlanList").data("kendoDropDownList").value();
+        if (mp_code == "")
+            return displayPopupNotification("Please choose the plan name", "warning")
+        showloader();
+        bindDataFromAjax(mp_code);
+    }
+
+    function bindDataFromAjax(p_code) {
+        $.ajax({
+            url: window.location.protocol + "//" + window.location.host + "/api/PlanSetupApi/GetMasterPlanDetailValueByMasterPlanCode",
+            data: { mp_code: p_code }
+        }).success(function (result) {
+            var qtywise_amt = 0;
+            $.each(result.salesPlanDetail, function (i, v) {
+                if ($("#planfor").data("kendoDropDownList").value()=="AMOUNT")
+                    qtywise_amt += parseFloat(v.PER_DAY_AMOUNT);
+                else
+                    qtywise_amt += parseFloat(v.PER_DAY_QUANTITY);
+            });
+            var existedData = {
+                PLAN_CODE: result.PLAN_CODE,
+                PLAN_EDESC: result.PLAN_EDESC,
+                ITEM_CODE: result.ITEM_CODE,
+                START_DATE: result.START_DATE,
+                END_DATE: result.END_DATE,
+                REMARKS: result.REMARKS,
+                PLAN_TYPE: result.PLAN_TYPE,
+                PLAN_FOR: $("#planfor").data("kendoDropDownList").value()=="QUANTITY" ? 'QUANTITY' : 'AMOUNT', //result.PLAN_FOR,
+                TIME_FRAME_CODE: result.TIME_FRAME_CODE == null ? "203" : result.TIME_FRAME_CODE,
+                TIME_FRAME_EDESC: result.TIME_FRAME_EDESC == null ? "MONTH" : result.TIME_FRAME_EDESC,
+                IS_ITEMS_VISIBLE_ONLY: result.IS_ITEMS_VISIBLE_ONLY,
+                dateFormat: result.CALENDAR_TYPE == null ? "LOC" : result.CALENDAR_TYPE,
+                customerCode: result.customerCode,
+                customerName: result.CUSTOMER_EDESC,
+                selectedItemsList: result.selectedItemsList,
+                branchcode: result.salesPlanDetail[0].BRANCH_CODE,
+                branchName: result.salesPlanDetail[0].branchName,
+                divisioncode: result.salesPlanDetail[0].DIVISION_CODE,
+                divisionName: result.salesPlanDetail[0].divisionName,
+                employeecode: result.salesPlanDetail[0].EMPLOYEE_CODE,
+                employeeName: result.salesPlanDetail[0].employeeName,
+                partytypecode: result.salesPlanDetail[0].PARTY_TYPE_CODE,
+                partytypeName: result.salesPlanDetail[0].PARTY_TYPE_EDESC,
+                qtyWiseAmt: qtywise_amt,
+                dateFilter: '',
+            }
+            retrievedItem = existedData;
+
+            retrievedSalesPlanDetail = result.salesPlanDetail; //old retrieved from database.
+            var retrievedFromEditMode = angular.element(document.getElementById('selectedItemsList_temp')).scope().param;
+            if (retrievedFromEditMode != undefined) {
+                var uniqItems = _.uniq(retrievedFromEditMode.selectedItemsList, 'ITEM_CODE');
+                retrievedItem.selectedItemsList = uniqItems;
+                if (retrievedFromEditMode != null || retrievedFromEditMode != undefined) {
+                    retrievedItem.employeeName = retrievedFromEditMode.employeeName;
+                    retrievedItem.divisionName = retrievedFromEditMode.divisionName;
+                    retrievedItem.branchName = retrievedFromEditMode.branchName;
+                }
+            }
+            renderView();
+            }).fail(function (failEx) {
+                hideloader();
+                displayPopupNotification(failEx,"error")
+        }).error(function (err) {
+            hideloader();
+            displayPopupNotification(err, "error")
+        });
+    };
+
+    function bindPlanFor() {
+        var data = [
+            { text: "QUANTITY", value: "QUANTITY" },
+            { text: "AMOUNT", value: "AMOUNT" },
+        ];
+
+        $("#planfor").kendoDropDownList({
+            dataTextField: "text",
+            dataValueField: "value",
+            dataSource: data,
+            index: 0,
+            change: function (e) {
+                refresh();
+            }
+        });
+    }
+
+    function renderView() {
+            showloader();
+            $('#PlanName').html(retrievedItem.PLAN_EDESC);
+            $("#plan_type").html(retrievedItem.PLAN_TYPE);
+            //$("#planfor").html(retrievedItem.PLAN_FOR);
+            $("#choosed_frequency").html(retrievedItem.TIME_FRAME_EDESC);
+            $("#frequency_code").val(retrievedItem.TIME_FRAME_CODE);
+            var startDate = $.datepicker.formatDate("d-M-yy", new Date(retrievedItem.START_DATE));
+            var endDate = $.datepicker.formatDate("d-M-yy", new Date(retrievedItem.END_DATE));
+            $("#planStartDate").html(startDate);
+            $("#planEndDate").html(endDate);
+            $(".customerName").html(retrievedItem.customerName == "" ? "N/A" : retrievedItem.customerName);
+            $(".divisionName").html(retrievedItem.divisionName == "" ? "N/A" : retrievedItem.divisionName);
+            $(".employeeName").html(retrievedItem.employeeName == "" ? "N/A" : retrievedItem.employeeName);
+            $(".branchName").html(retrievedItem.branchName == "" ? "N/A" : retrievedItem.branchName);
+            $(".partytypeName").html(retrievedItem.partytypeName == "" ? "N/A" : retrievedItem.partytypeName);
+            $('input[name=END_DATE]').val(retrievedItem.END_DATE);
+            $('input[name=IS_ITEMS_VISIBLE_ONLY]').val(retrievedItem.IS_ITEMS_VISIBLE_ONLY);
+            $('input[name=ITEM_CODE]').val(retrievedItem.ITEM_CODE);
+            $('input[name=IsCustomerProduct]').val(retrievedItem.IsCustomerProduct);
+            $('input[name=PLAN_CODE]').val(retrievedItem.PLAN_CODE);
+            if (p_code != '') {
+                $('input[name=PLAN_CODE]').val(p_code);
+            }
+            $('input[name=PLAN_EDESC]').val(retrievedItem.PLAN_EDESC);
+            $('input[name=PLAN_FOR]').val(retrievedItem.PLAN_FOR);
+            $('input[name=PLAN_TYPE]').val(retrievedItem.PLAN_TYPE);
+            $('input[name=REMARKS]').val(retrievedItem.REMARKS);
+            $('input[name=START_DATE]').val(retrievedItem.START_DATE);
+            $('input[name=TIME_FRAME_CODE]').val(retrievedItem.TIME_FRAME_CODE);
+            $('input[name=TIME_FRAME_EDESC]').val(retrievedItem.TIME_FRAME_EDESC);
+            $('input[name=customerCode]').val(retrievedItem.customerCode);
+            $('input[name=branchCode]').val(retrievedItem.branchcode);
+            $('input[name=divisionCode]').val(retrievedItem.divisioncode);
+            $('input[name=employeeCode]').val(retrievedItem.employeecode);
+            $('input[name=partytypeCode]').val(retrievedItem.partytypecode);
+            $('input[name=dateFormat]').val(retrievedItem.dateFormat);
+            $("input[name=salesRateType]").val(retrievedItem.salesRateType);
+            var fromDate = moment($("#FromDateVoucher").val()).format('DD-MMM-YYYY');
+            var toDate = moment($("#ToDateVoucher").val()).format('DD-MMM-YYYY');
+            var timeFrameCode = retrievedItem.TIME_FRAME_CODE == null ? "203" : retrievedItem.TIME_FRAME_CODE;
+            var timeFrameName = retrievedItem.TIME_FRAME_EDESC == null ? "MONTH" : retrievedItem.TIME_FRAME_EDESC;
+            var dateFormat = retrievedItem.dateFormat == null ? "LOC" : retrievedItem.dateFormat;
+            //GetPlanSetupTreeList(fromDate, toDate, retrievedItem.TIME_FRAME_CODE, retrievedItem.TIME_FRAME_EDESC, retrievedItem.dateFormat);
+            GetPlanSetupTreeList(fromDate, toDate, timeFrameCode, timeFrameName, dateFormat);
+            if (retrievedItem.branchName != "") {
+                $('.branch-span').visible
+            }
+    }
+
+    function CollapseAllTree() {
+        var treeList = $("#treelist").data("kendoTreeList");
+        var rows = $("tr.k-treelist-group", treeList.tbody);
+        $.each(rows, function (idx, row) {
+            treeList.collapse(row);
+        });
+    }
+
+    function ExpandAllTree() {
+        showloader();
+        var treeList = $("#treelist").data("kendoTreeList");
+        var tr = treeList.dataItems();
+        var rows = $("tr.k-treelist-group", treeList.tbody);
+
+        $.each(rows, function (idx, row) {
+            treeList.expand(row);
+            if (idx == (rows.length - 1)) {
+                hideloader();
+            }
+        });
+    }
+
+
+    var frequencyTitleObject = null;
+    function GetPlanSetupTreeList(startDate, endDate, timeFrameCode, timeFrameName, dateformat) {
+        var savePlanUrl = window.location.protocol + "//" + window.location.host + "/Plan/LoadMasterPlanSetupTreeListPartial";
+
+        startDate = moment(startDate).format('MM-DD-YYYY');
+        endDate = moment(endDate).format('MM-DD-YYYY')
+        var param = {
+            startDate: startDate,
+            endDate: endDate,
+            timeFrameCode: timeFrameCode,
+            timeFrameName: timeFrameName,
+            datetype: dateformat
+        };
+        FrequencyTitleParameter = param;
+        $.ajax({
+            type: 'GET',
+            url: savePlanUrl,
+            data: param,
+            dataType: 'html',
+            success: function (partial) {
+                $("#PlanSetupTreeList").html(partial);
+                $.ajax({
+                    type: 'GET',
+                    url: window.location.protocol + "//" + window.location.host + "/Planning/Plan/getFrequencyTitle",
+                    data: param,
+                    dataType: 'html',
+                    async: false,
+                    success: function (result) {
+                        frequencyTitleObject = JSON.parse(result);
+                    }
+                });
+                BindTreeList(p_code, 0, 0, retrievedSalesPlanDetail);
+                var isItemGroupEntry = 'N';
+                $.ajax({
+                    type: 'GET',
+                    url: window.location.protocol + "//" + window.location.host + "/api/PlanSetupApi/GetItemGoupEntryPreferenceSetup",
+                    async: false,
+                    success: function (result) {
+                        isItemGroupEntry = result.ITEM_GROUP_ENTRY;
+                    }
+                })
+                var treeRow = $("#treelist").find('table tbody tr');
+                $.each(treeRow, function (i, v) {
+
+                    if (v.hasAttribute('aria-expanded') == true) {
+                        if (isItemGroupEntry == 'N') {
+                            $(this).find('td input[type=number]').attr('readonly', true);
+                        }
+                    }
+                });
+            },
+            error: function (error) {
+                displayPopupNotification(error, "error");
+            }
+        });
+    };
+
+    function GetItemDataIfPlanSetupDone(plancode, itemcode) {
+        return $.ajax({
+            url: window.location.protocol + "//" + window.location.host + "/api/PlanSetupApi/GetPlanDetailValue",
+            data: { plancode: plancode, itemcode: itemcode }
+        })
+    }
+    var prevSelectedVal = "";
+    function BindMasterPlanName() {
+        var fromDate = moment($("#FromDateVoucher").val()).format("DD-MMM-YYYY");
+        var toDate = moment($("#ToDateVoucher").val()).format("DD-MMM-YYYY");
+        var mainurl = window.location.protocol + "//" + window.location.host + "/api/PlanSetupApi/GetAllMasterPlanNames?startDate=" + fromDate + "&endDate=" + toDate;
+        //var mainurl = window.location.protocol + "//" + window.location.host + "/api/PlanSetupApi/GetAllMasterPlanNames";
+        $("#MasterPlanList").kendoDropDownList({
+            optionLabel: "--Select Master Plan Name--",
+            filter: "contains",
+            dataTextField: "MASTER_PLAN_EDESC",
+            dataValueField: "MASTER_PLAN_CODE",
+            suggest: true,
+            dataSource: {
+                type: "json",
+                serverFiltering: true,
+                transport: {
+                    read: {
+                        url: mainurl,
+                    },
+                    parameterMap: function (data, action) {
+
+                        if (data.filter != undefined) {
+                            if (data.filter.filters[0] != undefined) {
+                                var newParams = {
+                                    filter: data.filter.filters[0].value
+                                };
+                                return newParams;
+                            }
+                            else {
+                                var newParams = {
+                                    filter: ""
+                                };
+                                return newParams;
+                            }
+                        }
+                        else {
+                            var newParams = {
+                                filter: ""
+                            };
+                            return newParams;
+                        }
+                    }
+                }
+            },
+            change: function (e) {
+                if (e.sender.dataItem().MASTER_PLAN_CODE == "")
+                    return;
+                if ($("#treelist").data("kendoTreeList") != undefined) {
+                    $("#treelist").html('');
+                    $("#treelist").data("kendoTreeList").dataSource.data([]);
+                }
+                var planCode = this.dataItem().MASTER_PLAN_CODE;
+                if (prevSelectedVal == planCode)
+                    return;
+                showloader();
+                bindDataFromAjax(planCode);
+            },
+        });
+
+    }
+
+    setTimeout(function () {
+        $('.portlet.light.bordered').css({ 'height': window.innerHeight - 80 });
+    }, 100);
+
+    $("#resetBtn").on('click', function () {
+        $("input[type='number']").val("");
+    });
+
+    $('#salesReferenceplan').on('click', function (e) {
+        e.preventDefault();
+        $('#salesReferenceOptionModal').modal('toggle');
+    });
+</script>
+<script src="@Scripts.Url(" ~/Areas/NeoERP.Planning/js/controller/PlanningMenuNavigation.js")"></script>

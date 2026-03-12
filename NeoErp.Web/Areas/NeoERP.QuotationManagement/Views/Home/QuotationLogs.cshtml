@@ -1,0 +1,153 @@
+@{ Layout = null;}
+
+<link href="@Styles.Url("~/Areas/NeoERP.QuotationManagement/Content/quotationSetup.css")" rel="stylesheet" />
+<div class="col-md-12 bodyController">
+    <div class="portlet light form-fit bordered bottomspance">
+        <div class="portlet box green-box main">
+            <div class="portlet-title">
+                <div class="caption">
+                    @*<a class="btn-back pull-left" data-toggle="tooltip" data-placement="top" title="Back" href="javascript:history.back();">
+                        <i class="fa fa-arrow-circle-left"></i>
+                    </a>*@
+                    <i class="fa fa-gift font-white-haze"></i>
+                    <span class="caption-subject font-white-haze bold uppercase">Quotation Logs</span>
+                </div>
+            </div>
+
+            <div class="portlet-body light bg-inverse">
+                <div class="row" style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; margin-bottom: 0.3rem;">
+                    <div class="col-md-3" style="flex: 1;">
+                        <div class="topsearch" style="display: block;">
+                            <input class="k-textbox txtSearchString" type="text" id="itemtxtSearchString" name="search" placeholder="Search...." style="width: 35%;" />
+                        </div>
+                    </div>
+                </div>
+                <div id="kGrid"></div>
+                <!-- View Logs Modal -->
+                <div class="modal fade" id="logModal" tabindex="-1" role="dialog">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                <h4 class="modal-title">Quotation Logs</h4>
+                            </div>
+                            <div class="modal-body">
+                                <div id="logDetailsGrid"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+
+        let allLogs = [];
+
+        $.get('/api/QuotationApi/GetQuotationLogs', function (data) {
+            allLogs = data;
+            const distinctData = getDistinctQuotations(data);
+            loadMainGrid(distinctData);
+        });
+        function getDistinctQuotations(data) {
+            const map = {};
+
+            data.forEach(item => {
+                const key = item.QUOTATION_ID + "_" + item.TENDER_NO;
+                if (!map[key] || new Date(item.ACTION_DATE) > new Date(map[key].ACTION_DATE)) {
+                    map[key] = item;
+                }
+            });
+
+            return Object.values(map);
+        }
+        function loadMainGrid(data) {
+
+            $("#kGrid").kendoGrid({
+                dataSource: {
+                    data: data,
+                    pageSize: 20
+                },
+                pageable: true,
+                sortable: true,
+                columns: [
+                    { field: "QUOTATION_ID", title: "Quotation ID", width: 120, hidden: true },
+                    { field: "TENDER_NO", title: "Tender No" },
+                    { field: "ACTION", title: "Last Action", width: 120 },
+                    { field: "ACTION_BY", title: "Last Action By", width: 120 },
+                    {
+                        field: "ACTION_DATE",
+                        title: "Last Updated",
+                        width: 160,
+                        template: "#= kendo.toString(kendo.parseDate(ACTION_DATE),'dd-MMM-yyyy hh:mm tt') #"
+                    },
+                    {
+                        title: "View",
+                        width: 100,
+                        template: `<button class="btn btn-xs btn-info viewLogs">View</button>`
+                    }
+                ],
+                dataBound: function () {
+                    $(".viewLogs").click(function () {
+                        const grid = $("#kGrid").data("kendoGrid");
+                        const dataItem = grid.dataItem($(this).closest("tr"));
+                        openLogModal(dataItem.QUOTATION_ID, dataItem.TENDER_NO);
+                    });
+                }
+            });
+        }
+        $(document).on("keyup", "#itemtxtSearchString", function () {
+            var value = $(this).val();
+            var grid = $("#kGrid").data("kendoGrid");
+
+            if (!grid) return;
+
+            if (value) {
+                grid.dataSource.filter({
+                    logic: "and",
+                    filters: [{
+                        field: "TENDER_NO",
+                        operator: "contains",
+                        value: value
+                    }]
+                });
+            } else {
+                grid.dataSource.filter({});
+            }
+        });
+        function openLogModal(quotationId, tenderNo) {
+
+            const detailData = allLogs.filter(x =>
+                x.QUOTATION_ID === quotationId &&
+                x.TENDER_NO === tenderNo
+            );
+
+            $("#logDetailsGrid").kendoGrid({
+                dataSource: {
+                    data: detailData,
+                    //pageSize: 10
+                },
+                pageable: true,
+                sortable: true,
+                columns: [
+                    { field: "TYPE", title: "Type", width: 110, hidden: true },
+                    { field: "ACTION", title: "Action", width: 120 },
+                    { field: "REMARKS", title: "Remarks" },
+                    { field: "CHANGED", title: "Changed", width: 120 },
+                    { field: "ACTION_BY", title: "By", width: 120 },
+                    {
+                        field: "ACTION_DATE",
+                        title: "Date",
+                        width: 160,
+                        template: "#= kendo.toString(kendo.parseDate(ACTION_DATE),'dd-MMM-yyyy hh:mm tt') #"
+                    }
+                ]
+            });
+
+            $("#logModal").modal("show");
+        }
+    });
+</script>

@@ -1,0 +1,656 @@
+﻿@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@model string
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+    ViewBag.Title = "Reseller Setup";
+    Layout = null;
+}
+<style>
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+        /*width: 183px !important;*/
+    }
+
+    /*.page-bar {
+            margin-bottom: 0px !important;
+        }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+                  font-size:11px;
+             }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    a.k-button.k-button-icontext.k-grid-excel {
+        float: right;
+    }
+
+    .Reseller-map-fullscreen {
+        display: none;
+        background-color: #fff;
+        text-align: center;
+        height: 35px;
+        width: 24px;
+        cursor: pointer;
+        background: url() -52px -86px no-repeat;
+        background-image: url('../../Content/map/asset/img/sv5.png');
+        margin-top: 12px;
+        margin-left: 20px;
+    }
+
+    #map-canvas {
+        height: 100%;
+        width: 100%;
+        background: #fff;
+    }
+
+    #Reseller-map-panel {
+        width: 100%;
+        height: 430px;
+        margin: 0 auto;
+        /*border: solid;*/
+        padding: 10px;
+    }
+
+    .number {
+        text-align: right;
+    }
+
+    .text {
+        text-align: left;
+    }
+
+    .date {
+        text-align: center;
+    }
+
+    .custom-combobox {
+        position: relative;
+        display: inline-block;
+    }
+
+    .custom-combobox-toggle {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        margin-left: -1px;
+        padding: 0;
+    }
+
+    .custom-combobox-input {
+        margin: 0;
+        padding: 5px 10px;
+        width: 200px;
+    }
+
+    #DistAdd {
+        display: none;
+    }
+
+    #mapReset {
+        padding: 1px 5px 1px 5px;
+        color: white;
+        background-color: #1a9492;
+        border: 1px;
+        margin-top: 4px;
+    }
+
+    .controls {
+        margin-top: 10px;
+        border: 1px solid transparent;
+        border-radius: 2px 0 0 2px;
+        box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        height: 32px;
+        outline: none;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    #mapSearchBox {
+        background-color: #fff;
+        font-family: Roboto;
+        font-size: 15px;
+        font-weight: 300;
+        margin-left: 12px;
+        padding: 0 11px 0 13px;
+        text-overflow: ellipsis;
+        width: 300px;
+    }
+
+        #mapSearchBox:focus {
+            border-color: #4d90fe;
+        }
+    /*.k-list-container
+               {
+                   max-height:150px !important;
+                   overflow-y:auto !important;
+               }*/
+
+
+
+
+    .material-switch > input[type="checkbox"] {
+        display: none;
+    }
+
+    .material-switch > label {
+        cursor: pointer;
+        height: 0px;
+        position: relative;
+        width: 40px;
+    }
+
+        .material-switch > label::before {
+            background: rgb(0, 0, 0);
+            box-shadow: inset 0px 0px 10px rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            content: '';
+            height: 16px;
+            margin-top: -8px;
+            position: absolute;
+            opacity: 0.3;
+            transition: all 0.4s ease-in-out;
+            width: 31px;
+        }
+
+    .material-switch {
+        margin-top: 1px !important;
+    }
+
+        .material-switch > label::after {
+            background: rgb(255, 255, 255);
+            border-radius: 16px;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.3);
+            content: '';
+            height: 19px;
+            left: -4px;
+            margin-top: -8px;
+            position: absolute;
+            top: -1.5px;
+            transition: all 0.3s ease-in-out;
+            width: 19px;
+        }
+
+        .material-switch > input[type="checkbox"]:checked + label::before {
+            background: inherit;
+            opacity: 0.5;
+        }
+
+        .material-switch > input[type="checkbox"]:checked + label::after {
+            background: inherit;
+            left: 12px;
+        }
+
+    /*#ResellerCreateForm .k-multiselect-wrap li {
+        margin: 2px 2px 1px 4px !important;
+    }*/
+    #ResellerCreateForm .k-multiselect-wrap.k-floatwrap {
+        height: auto !important;
+    }
+</style>
+
+
+<div ng-app="myApp" class="content">
+    <div ng-controller="ResellerCtrl">
+        <div id="resellerSourceModal" class="modal fade" role="dialog">
+            <input type="hidden" id="outLetStatus" value="@Model" />
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                        <h4 class="modal-title">
+                            Select Source
+                        </h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row form-group">
+                            <div class="col-md-4 col-sm-4" style="text-align:right">
+                                <label for="sourceSelect">Select Source</label>
+                            </div>
+                            <div class="col-md-6 col-sm-6">
+                                <select ng-model="Source" id="sourceSelect" name="sourceSelect" style="width:100%">
+                                    <option value="B">Web/Mobile</option>
+                                    <option value="M">Mobile</option>
+                                    <option value="W">Web</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-green" ng-click="ApplySource()">Apply</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="page-bar">
+            <ul class="page-breadcrumb"></ul>
+            <div class="actions pull-right actionbutton" ng-hide="createPanel">
+
+                <div class="btn-group" style="margin-top:10px;">
+                    <input id="avatar" type="file" name="avatar" style="width:185px;" />
+                </div>
+
+                <div class="btn-group">
+                    <a href="javascript:void(0)" id="uploadExcel" class="pull-right btn btn-circle btn-icon-only btn-default">
+                        <i class="fa fa-upload"></i>
+                    </a>
+                </div>
+                <div class="btn-group">
+                    @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                </div>
+                <div class="btn-group">
+                    <a target="_self" class="pull-right btn btn-circle btn-icon-only btn-default" href="~/Pictures/Distribution/Format/ResellerFormat.xlsx" data-toggle="tooltip" title="Download Excel Format.." download>
+                        <i class='fa fa-file-excel-o excelfile fontgreen' />
+                    </a>
+                </div>
+                <div class="btn-group">
+                    <a class="btn btn-circle btn-icon-only btn-default" data-toggle="modal" data-target="#resellerSourceModal" title="Source">
+                        <i class="fa fa-archive"></i>
+                    </a>
+                </div>
+                <div class="btn-group">
+                    <a class="btn btn-circle btn-icon-only btn-default" ng-click="AddButtonClickEvent()">
+                        <i class="fa fa-plus"></i>
+                    </a>
+                </div>
+                <div class="btn-group">
+                    @Html.Partial("~/Views/Shared/Controls/_SetupConfig.cshtml", "ResellerSetup")
+                </div>
+            </div>
+        </div>
+
+        <div class="portlet light bordered main createPanel" ng-show="createPanel">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-list-alt font-green-haze"></i>
+                    <span class="caption-subject font-green-haze bold uppercase">
+                        {{pageName }}
+                    </span>
+                </div>
+                <div class="actions pull-right">
+                    <button type="button" id="cancelTarget" name="cancelTarget" class="btn btn-default btn-sm" ng-click="Cancel();">Cancel</button>
+                    <button type="submit" id="saveResellerCreate" name="saveResellerCreate" ng-click="ResellerCreate(ResellerCreateForm.$valid)" class="btn btn-green btn-sm">{{saveAction}}</button>
+                </div>
+
+            </div><!-- /portlet-title-->
+            <div class="portlet-body">
+                <div class="row">
+                    <form id="ResellerCreateForm" name="ResellerCreateForm" novalidate>
+                        <div class="col-md-12 col-sm-12">
+                            <div class="row">
+                                <div class="col-md-4 col-sm-4">
+                                    <input id="Reseller_CODE" type="hidden" ng-model="Reseller_CODE" />
+                                    <div class="form-group">
+                                        <label class="control-label" for="resellerName">
+                                            Name <span style="color:red" ng-show="ResellerCreateForm.resellerName.$invalid">
+                                                <span ng-show="ResellerCreateForm.resellerName.$error.required">*</span>
+                                            </span>
+                                        </label>
+                                        <input id="resellerName" ng-model="resellerName" name="resellerName" class="form-control" placeholder="Reseller Name" required />
+                                    </div>
+                                </div>
+                                <div class="col-sm-4 col-md-4">
+                                    <div class="form-group">
+                                        <label class="control-label" for="areaMultiSelect">
+                                            Area<span style="color:red" ng-show="ResellerCreateForm.areaMultiSelect.$invalid">
+                                                <span ng-show="ResellerCreateForm.areaMultiSelect.$error.required">*</span>
+                                            </span>
+                                        </label>
+                                        <select id="areaMultiSelect" name="areaMultiSelect" kendo-multi-select k-options="areaSelectOptions" slim-scroll ng-model="selectedArea" style="width:100%;" required></select>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4 col-md-4">
+                                    <div class="form-group">
+                                        <label class="control-label" for="distCustomerMultiSelect">
+                                            Distributor<span style="color:red" ng-show="ResellerCreateForm.distCustomerMultiSelect.$invalid">
+                                                <span ng-show="ResellerCreateForm.distCustomerMultiSelect.$error.required">*</span>
+                                            </span>
+                                        </label>
+                                        <select id="distCustomerMultiSelect" name="distCustomerMultiSelect" kendo-multi-select k-options="distCustomerSelectOptions" slim-scroll ng-model="selecteddistCustomer" style="width:100%;" ></select>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-4 col-md-4" ng-if="Preferences.SET_RES_MAP_WHOLESALER=='Y'">
+                                    <div class="form-group">
+                                        <label class="control-label" for="distWholesellerMultiSelect">
+                                            Wholeseller<span style="color:red" ng-show="ResellerCreateForm.distWholesellerMultiSelect.$invalid">
+                                                <span ng-show="ResellerCreateForm.distWholesellerMultiSelect.$error.required">*</span>
+                                            </span>
+                                        </label>
+                                        <select id="distWholesellerMultiSelect" name="distWholesellerMultiSelect" kendo-multi-select k-options="distWholesellersSelectOptions" slim-scroll ng-model="selecteddistWholeseller" style="width:100%;" disabled></select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 col-sm-4">
+                                    <div class="form-group">
+                                        <label class="control-label" for="Address">
+                                            Address <span style="color:red" ng-show="ResellerCreateForm.Address.$invalid">
+                                                <span ng-show="ResellerCreateForm.Address.$error.required">*</span>
+                                            </span>
+                                        </label>
+                                        <input id="Address" ng-model="Address" name="Address" class="form-control" placeholder="Address" required />
+                                    </div>
+                                </div>
+                                <div class="col-md-4 col-sm-4">
+                                    <div class="form-group">
+                                        <label class="control-label" for="Email">
+                                            Email <span style="color:red" ng-show="ResellerCreateForm.Email.$invalid">
+                                                <span ng-show="ResellerCreateForm.Email.$error.email">*</span>
+                                            </span>
+                                        </label>
+                                        <input id="Email" type="email" name="Email" data-ng-model="Email" class="form-control  ng-pristine ng-empty ng-invalid ng-invalid-required ng-touched" placeholder="Email" />
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4 col-sm-4">
+                                    <div class="form-group">
+                                        <label class="control-label" for="ResellerNumber">
+                                            Reseller Contact <span style="color:red" ng-show="ResellerCreateForm.ResellerNumber.$invalid">
+                                                <span ng-show="ResellerCreateForm.ResellerNumber.$error.email">*</span>
+                                            </span>
+                                        </label>
+                                        <input id="ResellerNumber" type="number" name="ResellerNumber" data-ng-model="ResellerNumber" class="form-control  ng-pristine ng-empty ng-invalid ng-invalid-required ng-touched" placeholder="Number" string-to-number />
+                                    </div>
+                                </div>
+                                <div class="col-md-4 col-sm-4">
+                                    <div class="form-group">
+                                        <label class="control-label" for="PanNo">Pan No.</label>
+                                        <input id="PanNo" ng-model="PanNo" name="PanNo" class="form-control ng-pristine ng-empty ng-invalid ng-invalid-required ng-touched" placeholder="Pan Number" />
+                                    </div>
+                                </div>
+                                <div class="col-md-4 col-sm-4">
+                                    <div class="form-group">
+                                        <label class="control-label" for="ContactName">
+                                            Contact Name <span style="color:red" ng-show="ResellerCreateForm.ContactName.$invalid">
+                                                <span ng-show="ResellerCreateForm.ContactName.$error.required">*</span>
+                                            </span>
+                                        </label>
+                                        <input id="ContactName" name="ContactName" ng-model="ContactName" class="form-control  ng-pristine ng-empty ng-invalid ng-invalid-required ng-touched" placeholder="Contact Name" required />
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4 col-sm-4">
+                                    <div class="form-group">
+                                        <label class="control-label" for="ContactNo">
+                                            Contact No. <span style="color:red" ng-show="ResellerCreateForm.ContactNo.$invalid">
+                                                <span ng-show="ResellerCreateForm.ContactNo.$error.required">*</span>
+                                            </span>
+                                        </label>
+                                        <input type="number" id="ContactNo" name="ContactNo" ng-model="ContactNo" class="form-control  ng-pristine ng-empty ng-invalid ng-invalid-required ng-touched" placeholder="Contact Number" />
+                                    </div>
+                                </div>
+                                <div class="col-md-4 col-sm-4">
+                                    <div class="form-group">
+                                        <label class="control-label" for="VatNo">Vat No.</label>
+                                        <input id="VatNo" ng-model="VatNo" name="VatNo" class="form-control  ng-pristine ng-empty ng-invalid ng-invalid-required ng-touched" placeholder="Vat Number" />
+                                    </div>
+                                </div>
+                                <div class="col-sm-4 col-md-4">
+                                    <div class="form-group">
+                                        <label class="control-label" for="distGroupSelect">
+                                            Group<span style="color:red" ng-show="ResellerCreateForm.distGroupSelect.$invalid">
+                                                <span ng-show="ResellerCreateForm.distGroupSelect.$error.required">*</span>
+                                            </span>
+                                        </label>
+                                        <select id="distGroupSelect" name="distGroupSelect" kendo-multi-select k-options="distGroupSelectOptions" slim-scroll ng-model="selectedGroup" style="width:100%;"></select>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4 col-md-4">
+                                    <div class="form-group">
+                                        <label class="control-label" for="distOutletSelect">
+                                            Outlet Type<span style="color:red" ng-show="ResellerCreateForm.distOutletSelect.$invalid">
+                                                <span ng-show="ResellerCreateForm.distOutletSelect.$error.required">*</span>
+                                            </span>
+                                        </label>
+                                        <select id="distOutletSelect" name="distOutletSelect" kendo-multi-select k-options="distOutletSelectOptions" slim-scroll ng-model="selectedOutlet" style="width:100%;"></select>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4 col-md-4">
+                                    <div class="form-group">
+                                        <label class="control-label" for="distSubOutletSelect">
+                                            Outlet Category<span style="color:red" ng-show="ResellerCreateForm.distSubOutletSelect.$invalid">
+                                                <span ng-show="ResellerCreateForm.distSubOutletSelect.$error.required">*</span>
+                                            </span>
+                                        </label>
+                                        <select id="distSubOutletSelect" name="distSubOutletSelect" kendo-multi-select k-options="distSubOutletSelectOptions" slim-scroll ng-model="selectedSubOutlet" style="width:100%;"></select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 col-sm-4">
+                                    <div class="form-group">
+                                        <label class="control-label" for="resellerName">
+                                            Remarks
+                                        </label>
+                                        <input id="REMARKS" ng-model="REMARKS" name="REMARKS" class="form-control" placeholder="Remarks" />
+                                    </div>
+                                </div>
+                                <div class="col-md-2 col-sm-2">
+                                    <div class="form-group" style="margin-top:18%">
+                                        <label class="control-label" for="wholeSellerCheckbox">Wholeseller?</label>
+                                        <div class="material-switch pull-right">
+                                            <input id="wholeSellerCheckbox" name="wholeSellerCheckbox" ng-model="Wholeseller" type="checkbox" checked="checked" />
+                                            <label for="wholeSellerCheckbox" class="label-success"></label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2 col-sm-2">
+                                    <div class="form-group" style="margin-top:18%">
+                                        <label class="control-label" for="ActiveCheckbox">Active?</label>
+                                        <div class="material-switch pull-right">
+                                            <input id="ActiveCheckbox" name="ActiveCheckbox" ng-model="active" type="checkbox" checked="checked" />
+                                            <label for="ActiveCheckbox" class="label-success"></label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2 col-sm-2">
+                                    <div class="form-group" style="margin-top:18%">
+                                        <label class="control-label" for="ClosedCheckbox">Is Closed?</label>
+                                        <div class="material-switch pull-right">
+                                            <input id="ClosedCheckbox" name="ClosedCheckbox" ng-model="Is_Closed" ng-change="ClosedChangeEvt(Is_Closed)" type="checkbox" />
+                                            <label for="ClosedCheckbox" class="label-success"></label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12 info_table">
+                            <table class="table table-hover table-bordered ContactTable k-content" id="ContactTable">
+                                <thead class="table-info">
+                                    <tr>
+                                        <th>S.N.</th>
+                                        <th>Contact Suffix</th>
+                                        <th>Name</th>
+                                        <th>Number</th>
+                                        <th>Designation</th>
+                                        <th>
+                                            <a href="javascript:void(0)" ng-click="AddContact()" class="btn btn-xs btn-green">
+                                                [<i class="fa fa-plus"></i>] Add
+                                            </a>
+                                        </th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    <tr>
+                                        <td colspan="6">Secondary Contacts</td>
+                                    </tr>
+                                    <tr ng-repeat="contact in Contacts">
+                                        <td>
+                                            <span>{{contact.Sn}}</span>
+                                        </td>
+                                        <td>
+                                            <select name="ContactSuffix" k-ng-model="contact.ContactSuffix" k-value-primitive="true"
+                                                    kendo-drop-down-list k-options="SuffixSource" style="width:100%;"></select>
+                                            @*<input type="text" ng-model="contact.ContactSuffix" placeholder="Contact Suffix" style="width:100%;" />*@
+                                        </td>
+
+                                        <td>
+                                            <input type="text" class="form-control input-sm" ng-model="contact.Name" placeholder="Name" style="width:100%;" />
+                                        </td>
+
+                                        <td>
+                                            <input type="text" class="phoneNumber form-control input-sm" ng-model="contact.Number" placeholder="Mobile" style="width:100%;" />
+                                        </td>
+
+                                        <td>
+                                            <input type="text" class="form-control input-sm" ng-model="contact.Designation" placeholder="Designation" style="width:100%;" />
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-xs btn-danger" ng-click="RemoveContact($index)"><i class="fa fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </form>
+
+                    <div class="col-md-12">
+                        <div class="boxborder">
+                            <input type="hidden" id="mapcenter" />
+                            <div class="col-md-12 latlong text-right">
+                                <span id="maplat">27.671395034971194</span>, <span id="maplng">85.31504992883606</span>
+                                <button id="mapReset" ng-click="mapReset();">
+                                    <span class="fa fa-refresh"></span>
+                                </button>
+                            </div>
+                            <div id="Reseller-map-panel">
+                                <div id="Reseller-map-fullscreen"></div>
+                                <input id="mapSearchBox" class="controls" type="text" placeholder="Search Box">
+                                <div id="map-canvas"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row collapse in" id="demo">
+            <div class="col-md-12">
+                <div class="portlet light bordered">
+                    <div class="portlet-body form">
+                        <div class="row kendo_table">
+                            <kendo-grid options="grid" id="grid">
+                                <div k-detail-template>
+                                    <kendo-tabstrip>
+                                        <ul>
+                                            <li class="k-state-active">Distributers</li>
+                                            <li>Wholesellers</li>
+                                            <li>Contacts</li>
+                                            <li>Images</li>
+                                        </ul>
+                                        <div>
+                                            <div kendo-grid k-options="detailDistributorOptions(dataItem)"></div>
+                                        </div>
+                                        <div>
+                                            <div kendo-grid k-options="detailWholesellerOptions(dataItem)"></div>
+                                        </div>
+                                        <div>
+                                            <div kendo-grid k-options="detailContactOptions(dataItem)"></div>
+                                        </div>
+                                        <div>
+                                            <div kendo-grid k-options="detailImageOptions(dataItem)"></div>
+                                        </div>
+                                    </kendo-tabstrip>
+                                </div>
+                            </kendo-grid>
+                            @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<script src="@Scripts.Url("~/JS/reportFilter.js")"></script>
+<script src="@Scripts.Url("~/JS/DateFilter.js")" type="text/javascript"></script>
+<script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js?V2")"></script>
+<script>
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+
+    $("#sourceSelect").kendoMultiSelect({
+        maxSelectedItems: 1,
+        autoClose: false
+    });
+
+    $('#uploadExcel').click(function () {
+        if (window.FormData !== undefined) {
+            //showloader();
+            var file_data = $("#avatar").prop("files")[0];   // Getting the properties of file from file field
+            if (!file_data) {
+                displayPopupNotification("Please select a file", "error");
+                setTimeout(function () {
+                    $("#avatar").trigger("click");
+                }, 500);
+                return;
+            }
+            var format = file_data.name.substr(file_data.name.lastIndexOf('.'), file_data.name.length)
+            if (![".xls", ".xlsx"].includes(format)) {
+                displayPopupNotification("Invalid file format", "error");
+                return;
+            }
+            var form_data = new FormData();                  // Creating object of FormData class
+            form_data.append("file", file_data);
+
+            $.ajax({
+                url: '/Reseller/ImportReseller',
+                type: "POST",
+                contentType: false,
+                processData: false,
+                data: form_data,
+                success: function (result) {
+                    displayPopupNotification(result.MESSAGE, result.TYPE);
+                    if (result.TYPE == "success") {
+                        $('#avatar').val("");
+                        $('#treelist').data("kendoTreeList").dataSource.read();
+                    }
+                },
+                error: function (err) {
+                    displayPopupNotification(err.statusText, "error");
+                }
+            });
+        } else {
+            alert("FormData is not supported.");
+        }
+    });
+    $(document).ready(function () {
+        DateFilter.init(function () {
+            consolidate.init(function () {
+                
+            });
+        });
+    });
+</script>

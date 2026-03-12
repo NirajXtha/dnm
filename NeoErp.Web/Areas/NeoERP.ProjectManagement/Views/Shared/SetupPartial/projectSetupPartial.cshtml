@@ -1,0 +1,693 @@
+﻿
+<style>
+    .btnadd {
+        margin-top: 2px;
+        float: right;
+        margin-right: 5px !important;
+    }
+
+    div.k-treeview {
+        overflow: unset !important;
+    }
+    /*    .modal-header {
+        background-color: green !important;
+        color: white !important;
+    }*/
+    .addcolor {
+        color: #ffffff;
+    }
+
+    .popContainer {
+        text-align: right;
+    }
+
+    .popContent {
+        display: inline-block; /* Ensures the container only takes as much width as needed */
+    }
+
+    .popMessage {
+        text-align: center;
+        padding: 10px;
+        color: white;
+        border-radius: 5px !important;
+    }
+    /*.scrollable-table {
+        max-width: 500px;*/ /* Adjust the maximum width as needed */
+    /*overflow-x: auto;*/ /* Enable horizontal scrolling */
+    /*}*/
+
+</style>
+
+<div class="portlet box green-box main">
+    <item></item>
+    <div class="portlet-title" style="padding:0.5rem;">
+        <div class="caption caption-title ng-binding">
+            <a class="btn-back pull-left" data-toggle="tooltip" data-placement="top" title="Back To Dashboard" href="/ProjectManagement/Home/Dashboard">
+                <i class="fa fa-arrow-circle-left"></i>
+            </a>
+            <i class="fa fa-gift"></i>
+            <span class="caption-subject bold uppercase">Project Setup</span>
+        </div>
+
+    </div>
+
+    <div class="portlet-body light bg-inverse">
+        <div class="row" style="margin-top: 2rem; margin-bottom: 0.3rem;">
+            <div class="col-md-3">
+                <div class="topsearch" style="display: block;">
+                    <input class="k-textbox txtSearchString" type="text" id="itemtxtSearchString" ng-model="txtSearchString" name="search" placeholder="Search...." />
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="actions text-right">
+                    <a class="btn dark-green btn-sm addcolor" id="createbtn" ng-disabled="treenodeselected" ng-click="showProjectModal()" data-loading-text="<i class='fa fa-spinner fa-spin'></i> Processing..." href="javascript:;" style="margin-left: 83rem;">
+                        <i class="fa fa-plus"></i> NEW
+                    </a>
+                </div>
+            </div>
+        </div>
+
+
+        <div id="kGrid"></div>
+        <div class="popContainer">
+            <div class="popContent">
+                <div class="popMessage">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade-out" id="projectModal" data-backdrop="static" tabindex="-1" data-width="760">
+        <div class="modal-dialog  modal-dialog-box1 modal-medium-large">
+            <div class="modal-content" style="margin-left: -42%;width:149rem;">
+                <div class="modal-header">
+
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true" next-on-tab>&times;</button>
+                    <h4 class="modal-title">
+                        <span class="fa fa-file"></span>
+                        Project Setup
+                    </h4>
+
+                </div>
+
+                <div class="modal-body">
+                    <form name="projectForm" ng-submit="submitProject()" id="projectForm" novalidate>
+                        <input type="hidden" name="projectId" id="projectId" value="@ViewBag.Id">
+                        <div style="display:flex; margin-bottom:1rem;">
+                            <label>
+                                Project Name
+                                <span style="color:red" ng-show="!project.projectname.$valid">*</span>
+                            </label>
+                            <div class="col-sm-2 col-md-2 col-lg-2">
+                                <input type="text" id="projectname" name="projectname" class="form-control" ng-model="project.PROJECT_EDESC" required />
+                            </div>
+                        </div>
+                        <table class="table table-striped table-bordered table-hover no-footer customtbl" id="projectTbl">
+                            <tr>
+                                <td>Project Sub Name</td>
+                                <td>Image</td>
+                                <td>Area
+                                <td>Material Planning</td>
+                                <td>No of Labour Planning</td>
+                                <td>Budget Planning</td>
+                                <td>Project Manager</td>
+                                <td>Contractor</td>
+                                <td>Start Date</td>
+                                <td>Deadline Date</td>
+                                <td>Status</td>
+                                <td></td>
+                            </tr>
+                            <tr ng-repeat="project in projectFormList" ">
+                                <td>
+                                    <input type="text" name="projectSubname_{{project.subProjectId}}" id="projectSubname_{{project.subProjectId}}" ng-model="project.SUB_PROJECTNAME" required="required" class="form-control" value="" style="padding:0px 6px;">
+
+                                </td>
+                                <td>
+                                    <input type="file" name="image_{{project.subProjectId}}" id="image_{{project.subProjectId}}" ng-model="project.IMAGE_NAME" required="required" class="form-control" accept="image/*">
+                                </td>
+                                <td>
+                                    <input type="text" name="area_{{project.subProjectId}}" id="area_{{project.subProjectId}}" ng-model="project.AREA" required="required" class="form-control" value="">
+
+                                </td>
+                                <td>
+                                    <button type="button" id="materialBtn" class="btn btn-primary" style="width:10rem;font-size:10px!important;" ng-click="openMaterialPlanningModal(project.subProjectId)">Material Planning</button>
+                                </td>
+                                <td>
+                                    <button type="button" id="labourBtn" class="btn btn-primary" style="width:10rem;font-size:10px!important;" ng-click="openLabourPlanningModal(project.subProjectId)">Labour Planning</button>
+                                </td>
+                                <td>
+                                    <input type="text" name="budget_{{project.subProjectId}}" id="budget_{{project.subProjectId}}" ng-model="project.BUDGET_PLANNING" required="required" class="form-control" value="">
+
+                                </td>
+                                <td>
+                                    <select name="projectManager_{{project.subProjectId}}" id="projectManager_{{project.subProjectId}}" ng-model="project.PROJECT_MANAGER" required="required" class="form-control"
+                                            ng-options="employeeTypeList.EMPLOYEE_EDESC for employeeTypeList in employeeList track by employeeTypeList.EMPLOYEE_CODE">
+                                    </select>
+                                </td>
+                                <td>
+                                    <select name="contractor_{{project.subProjectId}}" id="contractor_{{project.subProjectId}}" ng-model="project.CONTRACTOR" required="required" class="form-control"
+                                            ng-options="contractorTypeList.SUPPLIER_EDESC for contractorTypeList in contractorList track by contractorTypeList.SUPPLIER_CODE">
+                                    </select>
+                                </td>
+                                <td>
+                                    <input id="startDt_{{project.subProjectId}}" kendo-date-picker ng-model="project.START_DT" ng-change="formatStartDate(project.START_DT, project)" />
+                                </td>
+                                <td>
+                                    <input id="endDt_{{project.subProjectId}}" kendo-date-picker ng-model="project.END_DT" ng-change="formatEndDate(project.END_DT, project)" />
+                                </td>
+                                <td>
+                                    <select id="status_{{project.subProjectId}}" name="status_{{project.subProjectId}}" ng-model="project.STATUS">
+                                        <option value="S">Select</option>
+                                        <option value="H">On hold</option>
+                                        <option value="R">Running</option>
+                                        <option value="C">Completed</option>
+                                    </select>
+                                </td>
+                                <td style="padding:15px;" class="checkboxgap">
+                                    <div class="md-checkbox">
+                                        <input type="checkbox" id="{{project.checkbox}}" class="md-check" ng-model="project.checked">
+                                        <label for="{{project.checkbox}}">
+                                            <span class="inc"></span>
+                                            <span class="check"></span>
+                                            <span class="box"></span>
+                                        </label>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="10"></td>
+                                <td style="align-content:center">
+                                    <a href="javascript:;" class='btn btn-sm btn-success' ng-click="addProject()">
+                                        <i class="fa fa-plus"></i>
+                                    </a>
+                                </td>
+                                <td>
+                                    <a href="javascript:;" class='btn btn-sm btn-danger' ng-click="deleteProject()">
+                                        <i class="fa fa-trash-o"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+                        <input type="submit" class="hidden" id="btnProject" value="submit">
+                    </form>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-green" id="savedocumentformdata" ng-click="saveNewitem()" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Processing..." href="javascript:;">
+                        <i class="fa fa-floppy-o"></i> Save
+                    </button>
+                    <button type="button" class="btn btn-sm btn-danger" ng-click="ItemCancel()" data-dismiss="modal">
+                        <i class="fa-solid fa-xmark"></i> Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="materialPlanningModal_{{materialPlanning.modelId}}" ng-repeat="materialPlanning in materialPlanningFormList" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+            <!-- Modal content-->
+            <div class="modal-content" style="margin-left: -24%; width: 88rem;">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Material Planning</h4>
+                </div>
+                <div class="modal-body">
+                    <form name="materialPlanningForm" ng-submit="submitMaterialPlanning(materialPlanning.modelId)" id="materialForm" novalidate>
+                        <input type="hidden" name="projectId" id="projectId" value="{{selectedProjectForMaterialPlanning.projectId}}">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Description</th>
+                                    <th>Quantity</th>
+                                    <th>Rate</th>
+                                    <th>Amount</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="material in getMaterialFormList(materialPlanning.modelId)" id="{{materialPlanning.modelId}}">
+                                    <td>
+                                        <select name="itemId_{{material.modelId}}" id="itemId_{{material.modelId}}" ng-model="material.DESCRIPTION" ng-options="itemTypeList.ITEM_EDESC for itemTypeList in itemList track by itemTypeList.ITEM_CODE" required>
+                                        </select>
+                                    </td>
+                                    <td><input type="number" name="quantity_{{material.modelId}}" id="quantity_{{material.modelId}}" class="form-control" ng-model="material.QUANTITY" ng-change="calculateAmount(material)" required></td>
+                                    <td><input type="number" name="rate_{{material.modelId}}" id="rate_{{material.modelId}}" class="form-control" ng-model="material.RATE" ng-change="calculateAmount(material)" required></td>
+                                    <td><input type="number" name="amount_{{material.modelId}}" id="amount_{{material.modelId}}" readonly class="form-control" ng-model="material.AMOUNT" required></td>
+
+                                    <td style="padding:15px;" class="checkboxgap">
+                                        <div class="md-checkbox">
+                                            <input type="checkbox" id="materialCheckbox_{{materialPlanning.modelId}}{{material.id}}" class="md-check" ng-model="material.checked">
+                                            <label for="materialCheckbox_{{materialPlanning.modelId}}{{material.id}}">
+                                                <span class="inc"></span>
+                                                <span class="check"></span>
+                                                <span class="box"></span>
+                                            </label>
+                                        </div>
+                                    </td>
+
+                                </tr>
+                                <tr>
+                                    <td colspan="3"></td>
+                                    <td style="align-content:center">
+                                        <a href="javascript:;" class='btn btn-sm btn-success' ng-click="addMaterial(materialPlanning.modelId)">
+                                            <i class="fa fa-plus"></i>
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <a href="javascript:;" class='btn btn-sm btn-danger' ng-click="deleteMaterial(materialPlanning.modelId)">
+                                            <i class="fa fa-trash-o"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div style="display: flex; justify-content: flex-end;">
+                            <button type="submit" class="btn btn-primary" id="btnMaterialForm" ng-click="submitMaterialForm()">Submit</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="labourPlanningModal_{{labourPlanning.modelId}}" ng-repeat="labourPlanning in labourPlanningFormList" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+            <!-- Modal content-->
+            <div class="modal-content" style="margin-left: -24%; width: 88rem;">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Labour Planning</h4>
+                </div>
+                <div class="modal-body">
+                    <form name="labourPlanningForm" id="labourForm" ng-submit="submitLabourPlanning(labourPlanning.modelId)" novalidate>
+                        <input type="hidden" name="planId" id="planId" value="@ViewBag.Id">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Description</th>
+                                    <th>Quantity</th>
+                                    <th>Rate</th>
+                                    <th>Amount</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="labour in getLabourFormList(labourPlanning.modelId)">
+                                    <td><input type="text" name="description_{{$index}}" id="description_{{$index}}" class="form-control" ng-model="labour.DESCRIPTION" required></td>
+                                    <td><input type="number" name="quantity_{{$index}}" id="quantity_{{$index}}" class="form-control" ng-model="labour.QUANTITY" ng-change="updateAmount(labour)" required></td>
+                                    <td><input type="number" name="rate_{{$index}}" id="rate_{{$index}}" class="form-control" ng-model="labour.RATE" ng-change="updateAmount(labour)" required></td>
+                                    <td><input type="number" name="amount_{{$index}}" id="amount_{{$index}}" readonly class="form-control" ng-model="labour.AMOUNT" required></td>
+                                    <td style="padding:15px;" class="checkboxgap">
+                                        <div class="md-checkbox">
+                                            <input type="checkbox" id="labourCheckbox_{{labourPlanning.modelId}}{{labour.Id}}" class="md-check" ng-model="labour.checked">
+                                            <label for="labourCheckbox_{{labourPlanning.modelId}}{{labour.Id}}">
+                                                <span class="inc"></span>
+                                                <span class="check"></span>
+                                                <span class="box"></span>
+                                            </label>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td colspan="3"></td>
+                                    <td style="align-content:center">
+                                        <a href="javascript:;" class='btn btn-sm btn-success' ng-click="addLabour(labourPlanning.modelId)">
+                                            <i class="fa fa-plus"></i>
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <a href="javascript:;" class='btn btn-sm btn-danger' ng-click="deleteLabour(labourPlanning.modelId)">
+                                            <i class="fa fa-trash-o"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div style="display: flex; justify-content: flex-end;">
+                            <button type="submit" id="btnlabourForm" class="btn btn-primary" ng-click="submitLabourForm(labourPlanning.modelId)">Submit</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    @*To view Data*@
+    <div class="modal fade-out" id="viewProjectModal" data-backdrop="static" tabindex="-1" data-width="760">
+        <div class="modal-dialog  modal-dialog-box1 modal-medium-large">
+            <div class="modal-content" style="margin-left: -35%;width:137rem;">
+                <div class="modal-header">
+
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true" next-on-tab>&times;</button>
+                    <h4 class="modal-title">
+                        <span class="fa fa-file"></span>
+                        View Project
+                    </h4>
+
+                </div>
+
+                <div class="modal-body">
+                    <form name="projectForm" ng-submit="submitProject()" id="projectForm" novalidate>
+                        <input type="hidden" name="projectId" id="projectId" value="@ViewBag.Id">
+                        <div style="display:flex; margin-bottom:1rem;">
+                            <label>
+                                Project Name
+                            </label>
+                            <div class="col-sm-2 col-md-2 col-lg-2">
+                                <input type="text" id="projectName" name="projectname" class="form-control" ng-model="project.PROJECT_EDESC" readonly />
+                            </div>
+                        </div>
+                        <table class="table table-striped table-bordered table-hover no-footer customtbl" id="projectTbl">
+                            <tr>
+                                <td>Project Sub Name</td>
+                                <td>Image</td>
+                                <td>Area
+                                <td>Material Planning</td>
+                                <td>No of Labour Planning</td>
+                                <td>Budget Planning</td>
+                                <td>Project Manager</td>
+                                <td>Contractor</td>
+                                <td>Start Date</td>
+                                <td>Deadline Date</td>
+                                <td>Status</td>
+                            </tr>
+                            <tr ng-repeat="project in projectFormList" id="{{project.project.SubProjectId}}">
+                                <td>
+                                    <input type="text" name="projectSubname_{{project.project.SubProjectId}}" id="projectSubname_{{project.project.SubProjectId}}" ng-model="project.project.SUB_PROJECTNAME" required="required" class="form-control" readonly style="padding:0px 6px;">
+
+                                </td>
+                                <td>
+                                    <input name="image_{{project.project.project.SubProjectId}}" id="image_{{project.project.project.SubProjectId}}" ng-model="project.project.IMAGE_NAME" required="required" class="form-control" readonly accept="image/*">
+                                </td>
+                                <td>
+                                    <input type="text" name="area_{{project.project.SubProjectId}}" id="area_{{project.project.SubProjectId}}" ng-model="project.project.AREA" required="required" class="form-control" readonly value="">
+
+                                </td>
+                                <td>
+                                    <input type="text" ng-click="viewMaterialPlanningModal(project.project.SubProjectId)" style="background-color:aqua;" ng-model="project.project.MATERIAL_PLANNING" class="form-control" readonly>
+                                </td>
+                                <td>
+                                    <input type="text" ng-click="viewLabourPlanningModal(project.project.SubProjectId)" style="background-color:darksalmon;" ng-model="project.project.LABOUR_PLANNING" class="form-control" readonly>
+                                </td>
+                                <td>
+                                    <input type="text" name="budget_{{project.project.SubProjectId}}" id="budget_{{project.project.SubProjectId}}" ng-model="project.project.BUDGET_PLANNING" readonly required="required" class="form-control" value="">
+
+                                </td>
+                                <td>
+                                    <input name="projectManager_{{project.project.SubProjectId}}" id="projectManager_{{project.SubProjectId}}" ng-model="project.project.PROJECT_MANAGER" readonly required="required" class="form-control">
+                                </td>
+                                <td>
+                                    <input name="contractor_{{project.project.SubProjectId}}" id="contractor_{{project.project.SubProjectId}}" ng-model="project.project.CONTRACTOR" style="width:27rem;" readonly required="required" class="form-control">
+                                </td>
+                                <td>
+                                    <input name="startDt_{{project.project.SubProjectId}}" id="startDt_{{project.project.SubProjectId}}" ng-model="project.project.START_DT" readonly required="required" class="form-control" value="">
+
+                                </td>
+                                <td>
+                                    <input name="deadlineDt_{{project.project.SubProjectId}}" id="deadlineDt_{{project.project.SubProjectId}}" ng-model="project.project.END_DT" readonly required="required" class="form-control" value="">
+
+                                </td>
+                                <td>
+                                    <input name="status_{{project.project.SubProjectId}}" id="status_{{project.project.SubProjectId}}" ng-model="project.project.STATUS" readonly required="required" class="form-control" value="">
+                                </td>
+                            </tr>
+                        </table>
+                        <input type="submit" class="hidden" id="btnProject" value="submit">
+                    </form>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-danger" ng-click="ItemCancel(event)" data-dismiss="modal">
+                        <i class="fa-solid fa-xmark"></i> Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="viewMaterialModal" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+            <!-- Modal content-->
+            <div class="modal-content" style="margin-left: -24%; width: 88rem;">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Material Planning</h4>
+                </div>
+                <div class="modal-body">
+                    <form name="materialPlanningForm" ng-submit="submitMaterialPlanning()" id="materialForm" novalidate>
+                        <input type="hidden" name="projectId" id="projectId" value="{{selectedProjectForMaterialPlanning.projectId}}">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Description</th>
+                                    <th>Quantity</th>
+                                    <th>Rate</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="material in materialPlanningFormList" id="{{material.data.Id}}">
+                                    <td>
+                                        <input name="itemId_{{material.data.Id}}}" id="itemId_{{material.data.Id}}}" class="form-control" readonly ng-model="material.data.ITEM_NAME" required>
+                                    </td>
+                                    <td><input type="number" name="quantity_{{material.data.Id}}}" id="quantity_{{material.data.Id}}}" readonly class="form-control" ng-model="material.data.QUANTITY" required></td>
+                                    <td><input type="number" name="rate_{{material.data.Id}}}" id="rate_{{material.data.Id}}}" readonly class="form-control" ng-model="material.data.RATE" required></td>
+                                    <td><input type="number" name="amount_{{material.data.Id}}}" id="amount_{{material.data.Id}}" readonly class="form-control" ng-model="material.data.AMOUNT" required></td>
+
+                                </tr>
+                            </tbody>
+                        </table>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="viewLabourModal" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+            <!-- Modal content-->
+            <div class="modal-content" style="margin-left: -24%; width: 88rem;">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Labour Planning</h4>
+                </div>
+                <div class="modal-body">
+                    <form name="labourPlanningForm" id="labourForm" ng-submit="submitLabourPlanning()" novalidate>
+                        <input type="hidden" name="planId" id="planId" value="@ViewBag.Id">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Description</th>
+                                    <th>Quantity</th>
+                                    <th>Rate</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="labour in labourPlanningFormList" id="{{labour.data.Id}}">
+                                    <td><input type="text" name="description_{{labour.data.Id}}" id="description_{{labour.data.Id}}" readonly class="form-control" ng-model="labour.data.DESCRIPTION" required></td>
+                                    <td><input type="number" name="quantity_{{labour.data.Id}}" id="quantity_{{labour.data.Id}}" readonly class="form-control" ng-model="labour.data.QUANTITY" required></td>
+                                    <td><input type="number" name="rate_{{labour.data.Id}}" id="rate_{{labour.data.Id}}" readonly class="form-control" ng-model="labour.data.RATE" required></td>
+                                    <td><input type="number" name="amount_{{labour.data.Id}}" id="amount_{{labour.data.Id}}" readonly class="form-control" ng-model="labour.data.AMOUNT" required></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @*End of view modal*@
+    <div class="modal fade-out" id="editProjectModal" data-backdrop="static" tabindex="-1" data-width="760">
+        <div class="modal-dialog  modal-dialog-box1 modal-medium-large">
+            <div class="modal-content" style="margin-left: -35%;width:137rem;">
+                <div class="modal-header">
+
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true" next-on-tab>&times;</button>
+                    <h4 class="modal-title">
+                        <span class="fa fa-file"></span>
+                        Edit Project
+                    </h4>
+
+                </div>
+
+                <div class="modal-body">
+                    <form name="projectForm" ng-submit="submitProject()" id="projectForm" novalidate>
+                        <input type="hidden" name="projectId" id="projectId" value="@ViewBag.Id">
+                        <div style="display:flex; margin-bottom:1rem;">
+                            <label>
+                                Project Name
+                            </label>
+                            <div class="col-sm-2 col-md-2 col-lg-2">
+                                <input type="text" id="projectDesc" name="projectname" class="form-control" ng-model="project.PROJECT_EDESC" />
+                            </div>
+                        </div>
+                        <table class="table table-striped table-bordered table-hover no-footer customtbl" id="projectTbl">
+                            <tr>
+                                <td>Project Sub Name</td>
+                                <td>Image</td>
+                                <td>Area
+                                <td>Material Planning</td>
+                                <td>No of Labour Planning</td>
+                                <td>Budget Planning</td>
+                                <td>Project Manager</td>
+                                <td>Contractor</td>
+                                <td>Start Date</td>
+                                <td>Deadline Date</td>
+                                <td>Status</td>
+                                <td></td>
+                            </tr>
+                            <tr ng-repeat="project in projectFormList" id="{{project.project.SubProjectId}}">
+                                <td>
+                                    <input type="text" name="projectSubname_{{project.project.SubProjectId}}" id="projectSubname_{{project.project.SubProjectId}}" ng-model="project.project.SUB_PROJECTNAME" required="required" class="form-control" style="padding:0px 6px;">
+
+                                </td>
+                                <td>
+                                    <input type="file" name="image_{{project.project.project.SubProjectId}}" id="image_{{project.project.project.SubProjectId}}" ng-model="project.project.IMAGE_NAME" required="required" class="form-control" accept="image/*">
+                                </td>
+                                <td>
+                                    <input type="text" name="area_{{project.project.SubProjectId}}" id="area_{{project.project.SubProjectId}}" ng-model="project.project.AREA" required="required" class="form-control" value="">
+
+                                </td>
+                                <td>
+                                    <input type="text" ng-click="viewMaterialPlanningModal(project.project.SubProjectId)" style="background-color:aqua;" ng-model="project.project.MATERIAL_PLANNING" class="form-control">
+                                </td>
+                                <td>
+                                    <input type="text" ng-click="viewLabourPlanningModal(project.project.SubProjectId)" style="background-color:darksalmon;" ng-model="project.project.LABOUR_PLANNING" class="form-control">
+                                </td>
+                                <td>
+                                    <input type="text" name="budget_{{project.project.SubProjectId}}" id="budget_{{project.project.SubProjectId}}" ng-model="project.project.BUDGET_PLANNING" required="required" class="form-control" value="">
+
+                                </td>
+                                <td>
+                                    <select name="projectManager_{{project.project.SubProjectId}}" id="projectManager_{{project.project.SubProjectId}}" ng-model="project.project.PROJECT_MANAGER" required="required" class="form-control"
+                                            ng-options="employeeTypeList.EMPLOYEE_EDESC for employeeTypeList in employeeList track by employeeTypeList.EMPLOYEE_CODE">
+                                    </select>
+                                </td>
+                                <td>
+                                    <select name="contractor_{{project.project.SubProjectId}}" id="contractor_{{project.project.SubProjectId}}" ng-model="project.project.CONTRACTOR" required="required" class="form-control"
+                                            ng-options="contractorTypeList.SUPPLIER_EDESC for contractorTypeList in contractorList track by contractorTypeList.SUPPLIER_CODE">
+                                    </select>
+                                </td>
+                                <td>
+                                    <input name="startDt_{{project.project.SubProjectId}}" kendo-date-picker id="startDt_{{project.project.SubProjectId}}" ng-model="project.project.START_DT">
+
+                                </td>
+                                <td>
+                                    <input name="deadlineDt_{{project.project.SubProjectId}}" kendo-date-picker id="deadlineDt_{{project.project.SubProjectId}}" ng-model="project.project.END_DT">
+                                </td>
+                                <td>
+                                    <select id="status_{{project.subProjectId}}" name="status_{{project.project.SubProjectId}}" ng-model="project.STATUS">
+                                        <option value="S">Select</option>
+                                        <option value="H">On hold</option>
+                                        <option value="R">Running</option>
+                                        <option value="C">Completed</option>
+                                    </select>
+                                </td>
+                                <td style="padding:15px;" class="checkboxgap">
+                                    <div class="md-checkbox">
+                                        <input type="checkbox" id="{{project.SubProjectId}}" class="md-check" ng-model="project.checked">
+                                        <label for="{{project.subProjectId}}">
+                                            <span class="inc"></span>
+                                            <span class="check"></span>
+                                            <span class="box"></span>
+                                        </label>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="10"></td>
+                                <td style="align-content:center">
+                                    <a href="javascript:;" class='btn btn-sm btn-success' ng-click="addProject()">
+                                        <i class="fa fa-plus"></i>
+                                    </a>
+                                </td>
+                                <td>
+                                    <a href="javascript:;" class='btn btn-sm btn-danger' ng-click="deleteProject()">
+                                        <i class="fa fa-trash-o"></i>
+                                    </a>
+                                </td>
+                            </tr>
+
+                        </table>
+                        <input type="submit" class="hidden" id="btnProject" value="submit">
+                    </form>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-danger" ng-click="ItemCancel(event)" data-dismiss="modal">
+                        <i class="fa-solid fa-xmark"></i> Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="editMaterialModal" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+            <!-- Modal content-->
+            <div class="modal-content" style="margin-left: -24%; width: 88rem;">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Material Planning</h4>
+                </div>
+                <div class="modal-body">
+                    <form name="materialPlanningForm" ng-submit="submitMaterialPlanning()" id="materialForm" novalidate>
+                        <input type="hidden" name="projectId" id="projectId" value="{{selectedProjectForMaterialPlanning.projectId}}">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Description</th>
+                                    <th>Quantity</th>
+                                    <th>Rate</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="material in materialPlanningFormList" id="{{material.data.Id}}">
+                                    <td>
+                                        <input name="itemId_{{material.data.Id}}}" id="itemId_{{material.data.Id}}}" class="form-control" ng-model="material.data.DESCRIPTION" ng-options="itemTypeList.ITEM_EDESC for itemTypeList in itemList track by itemTypeList.ITEM_CODE">
+                                    </td>
+                                    <td><input type="number" name="quantity_{{material.data.Id}}}" id="quantity_{{material.data.Id}}}" class="form-control" ng-model="material.data.QUANTITY" required></td>
+                                    <td><input type="number" name="rate_{{material.data.Id}}}" id="rate_{{material.data.Id}}}" class="form-control" ng-model="material.data.RATE" required></td>
+                                    <td><input type="number" name="amount_{{material.data.Id}}}" id="amount_{{material.data.Id}}" class="form-control" ng-model="material.data.AMOUNT" required></td>
+
+                                </tr>
+                            </tbody>
+                        </table>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="editLabourModal" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+            <!-- Modal content-->
+            <div class="modal-content" style="margin-left: -24%; width: 88rem;">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Labour Planning</h4>
+                </div>
+                <div class="modal-body">
+                    <form name="labourPlanningForm" id="labourForm" ng-submit="submitLabourPlanning()" novalidate>
+                        <input type="hidden" name="planId" id="planId" value="@ViewBag.Id">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Description</th>
+                                    <th>Quantity</th>
+                                    <th>Rate</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="labour in labourPlanningFormList" id="{{labour.data.Id}}">
+                                    <td><input type="text" name="description_{{labour.data.Id}}" id="description_{{labour.data.Id}}" class="form-control" ng-model="labour.data.DESCRIPTION" required></td>
+                                    <td><input type="number" name="quantity_{{labour.data.Id}}" id="quantity_{{labour.data.Id}}" class="form-control" ng-model="labour.data.QUANTITY" required></td>
+                                    <td><input type="number" name="rate_{{labour.data.Id}}" id="rate_{{labour.data.Id}}" class="form-control" ng-model="labour.data.RATE" required></td>
+                                    <td><input type="number" name="amount_{{labour.data.Id}}" id="amount_{{labour.data.Id}}" class="form-control" ng-model="labour.data.AMOUNT" required></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

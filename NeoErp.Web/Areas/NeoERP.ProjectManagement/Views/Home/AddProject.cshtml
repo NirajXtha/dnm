@@ -1,0 +1,128 @@
+﻿@{
+    Layout = null;
+}
+
+
+
+<div class="col-md-12 bodyController" ng-controller="projectTreeCtrl">
+    <div class="portlet light form-fit bordered bottomspance">
+        <div class="portlet box green-box main">
+            <div class="portlet-title">
+                <div class="caption">
+                    <a class="btn-back pull-left" data-toggle="tooltip" data-placement="top" title="Back To Dashboard" href="/QuotationManagement/Home/Dashboard">
+                        <i class="fa fa-arrow-circle-left"></i>
+                    </a>
+                    <i class="fa fa-gift font-white-haze"></i>
+                    <span class="caption-subject font-white-haze bold uppercase">Add Project</span>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div class="row boxbg" style=" margin-top: 2rem;">
+                    <form name="projectForm" method="post" ng-submit="submitProject()" enctype="multipart/form-data" id="projectForm" novalidate>
+                        <input type="hidden" name="projectId" id="projectId" value="@ViewBag.Id">
+                        <div style="display:flex; margin-bottom:1rem;">
+                            <label>
+                                Project Name
+                                <span style="color:red" ng-show="!project.projectname.$valid">*</span>
+                            </label>
+                            <div class="col-sm-2 col-md-2 col-lg-2">
+                                <input type="text" id="projectname" name="projectname" class="form-control" ng-model="project.PROJECT_EDESC" required />
+                            </div>
+                        </div>
+                        <table class="table table-striped table-bordered table-hover no-footer customtbl" id="projectTbl">
+                            <tr>
+                                <td>Project Sub Name</td>
+                                <td>Image</td>
+                                <td>Area
+                                <td>Material Planning</td>
+                                <td>No of Labour Planning</td>
+                                <td>Budget Planning</td>
+                                <td>Project Manager</td>
+                                <td>Contractor</td>
+                                <td>Start Date</td>
+                                <td>Deadline Date</td>
+                                <td>Status</td>
+                                <td></td>
+                            </tr>
+                            <tr ng-repeat="project in projectFormList">
+                                <td>
+                                    <input type="text" name="projectSubname_{{project.subProjectId}}" id="projectSubname_{{project.subProjectId}}" ng-model="project.SUB_PROJECTNAME" required="required" class="form-control" value="" style="padding:0px 6px;">
+
+                                </td>
+                                <td>
+                                    <input type="file" name="file" id="image_{{project.subProjectId}}" ng-model="project.IMAGE_PATH" required="required" class="form-control" accept="image/*">
+                                    <!--<input type="file" name="file"--> @*name="image_{{project.subProjectId}}"*@ <!--id="image_{{project.subProjectId}}" ng-model="project.IMAGE_NAME" required="required" class="form-control" accept="image/*">-->
+                                </td>
+                                <td>
+                                    <input type="text" name="area_{{project.subProjectId}}" id="area_{{project.subProjectId}}" ng-model="project.AREA" required="required" class="form-control" value="">
+
+                                </td>
+                                <td>
+                                    <button type="button" id="materialBtn" class="btn btn-primary" style="width:10rem;font-size:10px!important;" ng-click="openMaterialPlanningModal(project.subProjectId)">Material Planning</button>
+                                </td>
+                                <td>
+                                    <button type="button" id="labourBtn" class="btn btn-primary" style="width:10rem;font-size:10px!important;" ng-click="openLabourPlanningModal(project.subProjectId)">Labour Planning</button>
+                                </td>
+                                <td>
+                                    <input type="text" name="budget_{{project.subProjectId}}" id="budget_{{project.subProjectId}}" ng-model="project.BUDGET_PLANNING" required="required" class="form-control" value="">
+
+                                </td>
+                                <td>
+                                    <select name="projectManager_{{project.subProjectId}}" id="projectManager_{{project.subProjectId}}" ng-model="project.PROJECT_MANAGER" required="required" class="form-control"
+                                            ng-options="employeeTypeList.EMPLOYEE_EDESC for employeeTypeList in employeeList track by employeeTypeList.EMPLOYEE_CODE">
+                                    </select>
+                                </td>
+                                <td>
+                                    <select name="contractor_{{project.subProjectId}}" id="contractor_{{project.subProjectId}}" ng-model="project.CONTRACTOR" required="required" class="form-control"
+                                            ng-options="contractorTypeList.SUPPLIER_EDESC for contractorTypeList in contractorList track by contractorTypeList.SUPPLIER_CODE">
+                                    </select>
+                                </td>
+                                <td>
+                                    <input @*kendo-date-picker*@ class="form-control" type="date" id="startDt_{{project.subProjectId}}" ng-model="project.START_DT" ng-change="formatStartDate(project.START_DT, project)" />
+                                </td>
+                                <td>
+                                    <input @*kendo-date-picker*@ class="form-control" type="date" id="endDt_{{project.subProjectId}}" ng-model="project.END_DT" ng-change="formatEndDate(project.END_DT, project)" />
+                                </td>
+                                <td>
+                                    <select id="status_{{project.subProjectId}}" name="status_{{project.subProjectId}}" ng-model="project.STATUS">
+                                        <option value="S">Select</option>
+                                        <option value="H">On hold</option>
+                                        <option value="R">Running</option>
+                                        <option value="C">Completed</option>
+                                    </select>
+                                </td>
+                                <td style="padding:15px;" class="checkboxgap">
+                                    <div class="md-checkbox">
+                                        <input type="checkbox" id="{{project.checkbox}}" class="md-check" ng-model="project.checked">
+                                        <label for="{{project.checkbox}}">
+                                            <span class="inc"></span>
+                                            <span class="check"></span>
+                                            <span class="box"></span>
+                                        </label>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="10"></td>
+                                <td style="align-content:center">
+                                    <a href="javascript:;" class='btn btn-sm btn-success' ng-click="addProject()">
+                                        <i class="fa fa-plus"></i>
+                                    </a>
+                                </td>
+                                <td>
+                                    <a href="javascript:;" class='btn btn-sm btn-danger' ng-click="deleteProject()">
+                                        <i class="fa fa-trash-o"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+                        <input type="submit" class="hidden" id="btnProject" value="submit">
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+

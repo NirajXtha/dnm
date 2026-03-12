@@ -1,0 +1,526 @@
+﻿
+
+<style>
+    body, .bulkpermission-modal .dropdown-menu {
+        font-family: "Open Sans",sans-serif !important;
+    }
+
+    .modal-dialog {
+        margin: 70px auto !important;
+    }
+
+    .float-clear {
+        clear: both !important;
+    }
+
+    .multiselect-parent .dropdown-menu {
+        overflow: auto !important;
+    }
+
+    .multiselect-parent .dropdown-toggle {
+        width: 253px;
+        max-width: 100%;
+        text-align: left !important;
+        height: 24px;
+        font-size: 11px;
+    }
+
+    .select2-choice {
+        font-size: 11px !important;
+    }
+
+    .multiselect-parent .dropdown-toggle span {
+        float: right;
+        position: absolute;
+        right: 6px;
+        top: 11px !important;
+    }
+
+    .multiselect-parent .dropdown-menu {
+        width: 253px;
+        max-width: 100%;
+    }
+
+    a.btn.green {
+        /*margin-left: 548px;*/
+    }
+
+    .addicon {
+        padding-left: 3px !important;
+    }
+
+    .menutitle {
+        font-size: 15px !important;
+    }
+
+    .menu-controle button, #custom_menucontrol a {
+        font-size: 12px !important;
+        padding: 4px !important;
+        margin-right: 10px !important;
+        margin-bottom: 10px;
+    }
+
+    .menucontrole-table th, .menu-controle label {
+        font-size: 12px !important;
+    }
+
+    .dataTables_filter input {
+        max-height: 24px !important;
+        font-size: 11px !important;
+    }
+
+    .portlet.box.grey-cascade {
+        min-height: 300px !important;
+        background-color: #fff !important;
+    }
+
+    #AddMenu .select2-choice, .select2-results li {
+        font-size: 11px !important;
+    }
+
+    #AddMenu h3, .bulkpermission-modal h3 {
+        padding: 15px !important;
+        margin: 0px !important;
+        font-size: 15px !important
+    }
+
+    .bargap {
+        margin-bottom: 10px !important;
+    }
+
+    .pagination a, .menucontrole-table td {
+        font-size: 12px !important
+    }
+
+    .dataTables_info {
+        font-size: 11px !important
+    }
+
+    .dropdown-menu-form {
+        max-height: 310px;
+    }
+
+    #UpdateMenu h3 {
+        font-size: 15px !important;
+        margin: 0 !important;
+        padding: 15px !important;
+    }
+
+    table.dataTable.btn {
+        padding: 7px 11px !important;
+    }
+
+    .menucontrole-table .btn {
+        font-size: 12px !important;
+        padding: 5px 11px !important;
+    }
+
+    #AddMenu label, .bulkpermission-modal label, #UpdateMenu label {
+        font-weight: normal !important;
+    }
+
+    .select2-container .select2-choice .select2-arrow {
+        background: none !important;
+        border: none !important
+    }
+
+    .select2-drop-active {
+        border-color: -moz-use-text-color #AAAAAA #AAAAAA;
+    }
+
+    #select2-drop .select2-input {
+        padding-bottom: 0px !important;
+    }
+
+    #divConfirm h4 {
+        font-size: 13px !important;
+    }
+
+    .menucontrole-table th:last-child {
+    }
+</style>
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_LayoutNew.cshtml";
+}
+<link href="~/Content/css/bootstrap.min.css" rel="stylesheet" />
+<link href="~/OldContent/Theme/plugins/datatables/dataTables.bootstrap.css" rel="stylesheet" />
+<div class="page-content-wrapper" id="operationContent">
+    <div class="page-content full-width" style="min-height:310px">
+        <div ng-app="erpApp">
+            <div ng-controller="menuControlController" id="menuControlController">
+                <!-- BEGIN PAGE HEADER-->
+
+                <div class="page-bar bargap">
+                    <ul class="page-breadcrumb">
+
+                        <li>
+                            <i class="fa fa-cog"></i>
+
+                            <a href="~/MenuSetting/Index">Menu Settings</a>
+                            <i class="fa fa-angle-right"></i>
+                        </li>
+                        <li>
+                            <i class="fa fa-pencil-square-o"></i>
+
+                            <a href="~/MenuControl/Index">Menu Control</a>
+                            <i class="fa fa-angle-right"></i>
+                        </li>
+                    </ul>
+                    <div class="page-toolbar">
+                        <div class="btn-group pull-right">
+
+                            <div class="actions">
+
+                                <div class="btn-group">
+                                    @*@Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)*@
+
+                                    <div class="btn-group">
+                                        @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                                   {
+                                       ShowUserNameFilter=true,
+                                       ShowModuleNameFilter=true,
+                                       ShowMenuNameFilter = true,
+                                   })
+                                    </div>
+                                </div>
+                                <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                                    <i class="icon-control-play"></i>
+                                </a>
+
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- END PAGE HEADER-->
+                <!-- BEGIN PAGE CONTENT-->
+
+                <div ng-show="divConfirm">
+                    <div class="modal show" id="divConfirm" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-sm menu" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                    <h4 class="modal-title" id="myModalLabel">Delete</h4>
+                                </div>
+                                <div class="modal-body">
+                                    <h4> Are you sure to delete ?</h4>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" ng-click="deleteMenuControl()" class="btn btn-primary">Yes</button>
+                                    <button type="button" class="btn btn-secondary" ng-click="Cancel()" data-dismiss="modal">No</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div ng-show="BulkPermissionDiv" class="bulkpermission-modal">
+                    <div class="modal show" style="height:auto;" tabindex="-1" role="dialog" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true" ng-click="Cancel()">×</button>
+                                    <h3 class="text-center"><span>{{Action}} Bulk Menu Control</span></h3>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="form col-md-12 center-block">
+                                        <div class="col-sm-6">
+                                            <div class="form-group">
+                                                <label>User No</label>
+                                                <div ng-dropdown-multiselect="" options="bulkuserData" name="bulkuserNo" selected-model="bulkuserModel" extra-settings="userControl" required>
+                                                </div>
+                                                <div ng-messages="menuControl.bulkuserNo.$error" ng-if="menuControl.$submitted">
+                                                    <div ng-message="required">
+                                                        <span class="required">Select Item</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <div class="form-group">
+                                                <label>Menu No</label>
+                                                <div ng-dropdown-multiselect="" options="bulkmenuData" name="bulkmenuNo" selected-model="bulkmenuModel" extra-settings="menuControl" required>
+                                                </div>
+                                                <div ng-messages="menuControl.bulkmenuNo.$error" ng-if="menuControl.$submitted">
+                                                    <div ng-message="required">
+                                                        <span class="required">Select item</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer float-clear">
+                                    <div class="col-md-12">
+                                        <input type="button" class="btn btn-default" value="Save" ng-click="AddBulkMenu()" />
+                                        <input type="button" class="btn btn-danger" value="Cancel" ng-click="Cancel()" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div ng-show="divMenuControl">
+                    <div id="{{Action}}Menu" class="modal show" style="height:auto;" tabindex="-1" role="dialog" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true" ng-click="Cancel()">×</button>
+                                    <h3 class="text-center"><span>{{Action}} Menu Control</span></h3>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="form col-md-12 center-block">
+                                        <div class="col-sm-6">
+                                            <div class="form-group">
+                                                <label>User No</label>
+                                                <select ui-select2 class="form-control input-medium select2me userno" select-selection="moduleno" ng-model="selectedUserItem" name="module" required>
+                                                    <option value="">---Select User---</option>
+                                                    <option value="{{user.id}}" ng-repeat="user in users">{{user.label}}</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6" style="display:none;">
+                                            <div class="form-group">
+                                                <label>Branch Code</label>
+                                                <input type="text" name="branchCode" class="form-control" ng-model="BRANCH_CODE" />
+                                                <div ng-messages="menuControl.branchCode.$error" ng-if="menuControl.$submitted">
+                                                    <div ng-message="required">
+                                                        <span class="required">This field is required</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <div class="form-group">
+                                                <label>Menu No</label>
+                                                <select ui-select2 class="form-control input-medium select2me" select-selection="moduleno" ng-model="selectedItem" name="menu" required>
+                                                    <option value="">Select Menu...</option>
+                                                    <option value="{{menu.id}}" ng-repeat="menu in menus">{{menu.label}}</option>
+                                                </select>
+                                                @*<div ng-dropdown-multiselect="" name="menuNo" options="menuData"  selected-model="menuModel" extra-settings="menuControl" required>
+                                                    </div>*@
+                                                <div ng-messages="menuControl.menu.$error" ng-if="menuControl.$submitted">
+                                                    <div ng-message="required">
+                                                        <span class="required">Select Item</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6" style="display:none;">
+                                            <div class="form-group">
+                                                <label>
+                                                    Company Code
+                                                </label>
+                                                <input type="text" name="companycode" ng-text="01" placeholder="01" ng-value="01" disabled class="form-control" ng-model="COMPANY_EDESC" required />
+                                                <div ng-messages="menuControl.companycode.$error" ng-if="menuControl.$submitted">
+                                                    <div ng-message="required">
+                                                        <span class="required">This field is required</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6" style="display:none;">
+                                            <input type="hidden" ng-model="MENUNO" value="{{menu.id}}" ng-init="record.usersId=user.userId" />
+                                            <div ng-messages="menuControl.MENUNO.$error" ng-if="menuControl.$submitted">
+                                            </div>
+                                        </div>
+                                        @*<div class="col-sm-6">
+                                                <div class="form-group">
+                                                    <label>
+                                                        <label> Is Active</label>
+                                                        <input type="checkbox" class="form-control" ng-checked="true" ng-model="GROUP_SKU_FLAG" ng-true-value="'G'" ng-false-value="'I'" />
+                                                    </label><br />
+                                                </div>
+                                            </div>*@
+                                    </div>
+                                </div>
+                                <div class="modal-footer float-clear">
+                                    <div class="col-md-12">
+                                        <input type="button" class="btn btn-default" value="Save" ng-click="AddUpdateMenuControl()" />
+                                        <input type="button" class="btn btn-danger" value="Cancel" ng-click="Cancel()" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="divList">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <!-- BEGIN EXAMPLE TABLE PORTLET-->
+                            <div class="portlet box grey-cascade">
+                                <div class="portlet-title">
+                                    <div class="caption menutitle">
+                                        <i class="fa fa-pencil-square-o" aria-hidden="true"></i>
+                                        Menu Control
+                                    </div>
+                                    <div class="tools">
+                                        <a href="javascript:;" class="collapse">
+                                        </a>
+                                        <a href="#portlet-config" data-toggle="modal" class="config">
+                                        </a>
+                                        <a href="javascript:;" class="reload" ng-click="ReloadGrid()">
+                                        </a>
+                                        <a href="javascript:;" class="remove">
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="portlet-body menu-controle">
+                                    <div class="table-toolbar">
+                                        <div class="row">
+                                            <div class="col-xs-9 col-sm-6 col-md-6">
+                                                <div class="btn-group">
+                                                    <button ng-click="AddMenuControlDiv()" class="btn green">
+                                                        <i class="fa fa-plus-circle addicon"></i>
+
+                                                        Add New Permission
+                                                    </button>
+                                                </div>
+                                                <div class="btn-group">
+                                                    <button ng-click="AddBulkMenuControlDiv()" class="btn green">
+                                                        <i class="fa fa-plus-circle addicon"></i>
+                                                        Add Bulk Permission
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="col-xs-3 col-sm-6 col-md-6" id="custom_menucontrol">
+
+                                                <a href="~/MenuControl/BulkControlIndex" class="btn green pull-right">
+                                                    <i class="icon-link"></i>
+                                                    Bulk Control
+
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="tblresponsive">
+                                        <table class="table table-hover table-bordered datatable menucontrole-table">
+                                            <thead>
+                                                <tr>
+                                                    <th><b>SN</b></th>
+                                                    @*<th><b>Module Name</b></th>*@
+                                                    <th><b>Menu Name</b></th>
+                                                    <th><b>User Name</b></th>
+                                                    <th style="display:none;"><b>Branch Code</b></th>
+                                                    <th><b>Company Name</b></th>
+                                                    @*<th><b>Access Flag</b></th>*@
+                                                    <th><b>Permission</b></th>
+                                                    <th style="display:none;"><b>Menu No</b></th>
+                                                    <th style="display:none;"><b>User No</b></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr ng-repeat="menu in MenuControls">
+                                                    <td>
+                                                        {{$index+1}}
+                                                    </td>
+                                                    @*<td>
+                                                        {{menu.MODULE_EDESC}}
+                                                    </td>*@
+                                                    <td>
+                                                        {{menu.MENU_EDESC}}
+                                                    </td>
+                                                    <td>
+                                                        {{menu.LOGIN_EDESC}}
+                                                    </td>
+                                                    <td style="display:none;">
+                                                        {{menu.BRANCH_CODE}}
+                                                    </td>
+                                                    <td>
+                                                        {{menu.COMPANY_EDESC}}
+                                                    </td>
+                                                    @*<td>
+                                                            {{menu.ACCESS_FLAG}}
+                                                        </td>*@
+
+                                                    <td style="display:none;">
+                                                        {{menu.MENU_NO}}
+                                                    </td>
+                                                    <td style="display:none;">
+                                                        {{menu.USER_NO}}
+                                                    </td>
+
+                                                    <td>
+                                                        <span ng-click="editMenuControl(menu)" class="btn btn-primary">Edit</span>
+                                                        <span ng-click="setTemp(menu)" class="btn btn-danger" data-target="#divConfirm">Delete</span>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- END EXAMPLE TABLE PORTLET-->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- END PAGE CONTENT-->
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="~/Scripts/ngScript/ui-bootstrap-tpls-2.1.3.min.js"></script>
+<script src="~/Scripts/ngScript/angular ui select/select2.js"></script>
+<script src="@Scripts.Url("~/Scripts/ngScript/Module.js")"></script>
+<script src="@Scripts.Url("~/Scripts/ngScript/Service.js")"></script>
+<script src="@Scripts.Url("~/Scripts/ngScript/Controller.js")"></script>
+<script src="@Scripts.Url("~/JS/reportFilter.js")"></script>
+
+<script src="~/Scripts/plugins/dataTables/jquery.dataTables.js"></script>
+<script src="~/Scripts/plugins/dataTables/dataTables.bootstrap.js"></script>
+
+<script>
+    (function () {
+        testSelect2 = function (action) {
+            $('select.select2me').each(function (index, item) {
+                var val = $(item).select2('val');
+                $(item).select2('val', val);
+            });
+
+            if (action == 'Update')
+                $(".userno").attr('disabled', 'disabled');
+            else
+                $(".userno").attr('disabled', false)
+        }
+        RemoveDataTableGrid = function () {
+            var table = $('.datatable').DataTable();
+            table.destroy();
+        };
+        DataTableGrid = function () {
+            $('.datatable').DataTable();
+        }
+    })();
+
+
+</script>
+<script>
+    $(".applydp").on("click", function (evt) {
+        //var multiSelectedVal = $("#menuNameMultiSelect").data("kendoMultiSelect").value();
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    });
+    $("#loadAdvancedFilters").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    });
+    $("#RunQuery").click(function (evt) {
+        evt.preventDefault();
+        //GetAllMenuControl();
+        angular.element(document.getElementById('menuControlController')).scope().GetAllMenuControl()
+    });
+
+</script>
+
+
+
+
+

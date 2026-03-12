@@ -1,0 +1,193 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_LayoutNew.cshtml";
+}
+
+<style type="text/css">
+    .btnCustom {
+        float: right;
+    }
+
+
+    .imgbox img {
+        max-width: 130px;
+    }
+
+    .k-group.k-treeview-lines {
+        max-height: 368px !important;
+    }
+</style>
+<div class="page-content-wrapper" id="operationContent">
+    <div class="page-content full-width" style="min-height:310px">
+        <!-- BEGIN PAGE HEADER-->
+        <div class="page-bar">
+            <ul class="page-breadcrumb">
+                <li>
+                    <i class="icon-basket"></i>
+                    <a href="~/MenuSetting/Index">Item Image Settings</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>
+            </ul>
+        </div>
+        <!-- END PAGE HEADER-->
+        <div class="modal fade" id="itemimages" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="form-inline">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                        </div>
+                        <h4 class="modal-title">Item Image Upload</h4>
+                    </div>
+                    @using (Html.BeginForm("", "", FormMethod.Post, new { @id = "test", enctype = "multipart/form-data" }))
+                    {
+                        <div class="modal-body">
+                            <label>Upload File <b style="color:#26a69a">.jpg .jpeg and .png are only supported.</b></label>
+                            <br /><br />
+                            <input id="avatar" type="file" name="avatar" />
+                            <input type="hidden" id="itemcode" name="itemcode">
+                            <br />
+                            <div class="modal-footer">
+                                <button type="submit" class="btn green" id="uploadimages" data-dismiss="modal">Apply</button>
+                                <button type="button" class="btn dark btn-outline" data-dismiss="modal">Close</button>
+
+                            </div>
+                        </div>
+                       
+                    }
+
+                    
+                </div>
+            </div>
+        </div>
+
+        <!-- BEGIN PAGE CONTENT-->
+        <div class="row">
+
+
+            <div class="a col-lg-6 col-md-6">
+                <div class="divList">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <!-- BEGIN EXAMPLE TABLE PORTLET-->
+                            <div class="portlet portlet-sortable  light bordered">
+                                <div class="portlet-title ui-sortable-handle">
+                                    <div class="caption">
+                                        <i class="fa fa-globe"></i>
+                                        <span class="caption-subject bold uppercase font-green-haze">Item List</span>
+                                    </div>
+                                    <div class="tools">
+                                        <a href="javascript:;" class="collapse">
+                                        </a>
+                                        <a href="#portlet-config" data-toggle="modal" class="config">
+                                        </a>
+                                        <a href="javascript:;" class="reload">
+                                        </a>
+                                        <a href="javascript:;" class="remove">
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="portlet-body" style="height:400px !important">
+                                    @{
+                                        @Html.Partial("_ItemDetail")
+                                    }
+
+                                </div>
+
+                            </div>
+                            <!-- END EXAMPLE TABLE PORTLET-->
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+
+            <div class="col-md-6">
+                <div class="imgbox">
+                    <img id="image" src="" />
+                </div>
+
+            </div>
+        </div>
+        <!-- END PAGE CONTENT-->
+    </div>
+</div>
+@section Scripts{
+    <script type="text/javascript">
+        $(document).ready(function () {
+        });
+
+        $('#uploadimages').click(function () {
+            if (window.FormData !== undefined) {
+                var ItemCode = $('#itemcode').val();
+                var file_data = $("#avatar").prop("files")[0];   // Getting the properties of file from file field
+                var form_data = new FormData();                  // Creating object of FormData class
+                form_data.append("file", file_data)
+                form_data.append("itemcode", ItemCode)
+                $.ajax({
+                    url: '/ItemImage/ItemImageUpload',
+                    type: "POST",
+                    contentType: false,
+                    processData: false,
+                    data: form_data,
+                    success: function (result) {
+                        if (result == "Warning-up") {
+                            $('#itemimages').modal('show');
+                            displayPopupNotification("Uploader Should not be empty.", "warning");
+                        }
+                        else if (result == "Warning-jp") {
+                            displayPopupNotification("Only .jpg .jpeg and .png are supported.", "warning");
+                            $('#itemimages').modal('show');
+                        }
+                        else if (result == "Warning-item") {
+                            displayPopupNotification("Please select item to upload.", "warning");
+                            $('#itemimages').modal('show');
+                        }
+                        else {
+                            $('#image').attr('src', result)
+                            displayPopupNotification("Successfully Inserted Images.", "success");
+                            $('#avatar').val("");
+                        }
+                    },
+                    error: function (err) {
+                        displayPopupNotification(err.statusText, "error");
+                    }
+                });
+            } else {
+                alert("FormData is not supported.");
+            }
+        });
+
+        function ItemCode(obj) {
+            debugger;
+            $('#itemcode').val(obj.ItemCode);
+        }
+
+        function ImageDisplay(obj) {
+            var ItemCode = obj.ItemCode;
+            var itemdetail = { ItemCode: ItemCode }
+            var imageurl = window.location.protocol + "//" + window.location.host + "/Areas/NeoErp.Pos/Images/images.jpg"
+            $.ajax({
+                url: '/ItemImage/ItemImageDisplay',
+                type: "GET",
+                contentType: "application/json;charset=utf-8",
+                dataType: "json",
+                data: itemdetail,
+                success: function (result) {
+                    if (result != null) {
+                        var d = new Date();
+                        $('#image').attr('src', result + "?" + d.getTime());
+                    }
+                    else {
+                        $('#image').attr('src', imageurl)
+                    }
+                },
+                error: function (err) {
+                    alert(err.statusText);
+                }
+            });
+        }
+    </script>
+}

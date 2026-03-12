@@ -1,0 +1,264 @@
+﻿<style>
+    #divisionModal .modal-header {
+        padding: 10px !important;
+        background-color: #eee;
+    }
+
+  
+    /*#customerModal input {
+        width: auto !important;
+    }*/
+
+    #divisionModal .k-icon {
+        display: inline-block;
+    }
+
+
+
+    #productTreeViewdocument {
+        width: 40%;
+        float: left;
+        margin-right: 20px;
+    }
+
+
+
+    .verticalLine {
+        border-left: solid #ddd 1px;
+    }
+
+    .k-group.k-treeview-lines {
+        max-height: 230px !important;
+    }
+
+
+    #divisionGrid {
+        font-size: 9px;
+        /*height: 345px !important;*/
+    }
+
+
+
+    #topsearch input {
+        margin: 3px;
+        height: 27px !important;
+        margin-top: 0px;
+    }
+
+    .show-displaygrid {
+        display: none;
+    }
+
+
+    .btn-linkicon:hover {
+        background-color: #ccc;
+    }
+
+
+
+    .customcolumn-one {
+        width: 27%;
+    }
+
+    .columnbg {
+        background-color: #eee;
+    }
+
+    .customcolumn-two {
+        width: 73%;
+    }
+
+    .topsearch {
+        margin-right: 51px;
+    }
+
+    .input-group .addon-iconbox {
+        min-width: 23px;
+        padding: 0px;
+    }
+
+    #division-list li {
+        border-bottom: solid #ded5d5 1px;
+    }
+
+
+    input #filterText.form-control {
+        border: solid #ddd 1px !important;
+    }
+
+    #divisiontree ul li {
+        font-size: 12px;
+    }
+</style>
+<div ng-controller="divisionCtrl" id="divisionCtrl">
+    <div class="input-group">
+        <input id="division" ng-model="childModels[key][item.COLUMN_NAME]" name="division" class="division cdivision_{{key}}" style="width: 98%;" kendo-combo-box
+               k-placeholder="'Select Division'"
+               k-data-text-field="'DIVISION_EDESC'"
+               k-data-value-field="'DIVISION_CODE'"
+               k-filter="'contains'"
+               k-auto-bind="true"
+               k-suggest="false"
+               division-index="{{key}}"
+               k-on-change="DivisionCodeOnChange(kendoEvent)"
+               k-options="divisionCodeOption" 
+               k-min-length="3"
+               />
+        
+        <span class="input-group-addon addon-iconbox" style="cursor:pointer" ng-click="BrowseTreeListForDivision(key)">
+            <i class="fa fa-search" data-toggle="tooltip" title="Search division"></i>
+            @*<i class="fa fa-adjust"></i>*@
+        </span>
+    </div>
+    <div class="modal fade-out" id="divisionModal_{{key}}" data-backdrop="static" tabindex="-1" data-width="760">
+        <div class="modal-dialog  modal-dialog-box w-900">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <b>Division TreeView</b>
+                        <div type="button" class="close" data-dismiss="modal" aria-hidden="true" next-on-tab title="Close">&times;</div>
+                    </div>
+
+                </div>
+
+                <div class="modal-body modal-dialogbox-body">
+                    <div class="row">
+                        <div class="col-md-5 mingapright customcolumn-one columnbg">
+                            <input id="divisionFilterValue_{{key}}" class="form-control filterText divisionFilterValue" name="search" type="text" placeholder="Search categories" />
+                            <div id="divisiontree_{{key}}" kendo-tree-view="tree"
+                                 k-data-source="divisiontreeData"
+                                 k-options="divisionoptions"
+                                 k-data-bound="onDataBound">
+                                <span k-template>
+                                    {{dataItem.divisionName}}
+                                </span>
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-7 customcolumn-two mingapleft">
+                            <div class="expand verticalLine">
+                                <div class="row">
+                                    <div class="col-md-offset-8 col-md-4 search_box">
+                                        <div class="topsearch">
+                                            <a class="btn-linkicon fa fa-search" ng-click="BindSearchGrid()" title="Search list"></a>
+                                            <input class="k-textbox divisiontxtSearchString" type="text" id="diviontxtSearchString_{{key}}" ng-model="diviontxtSearchString" name="search" placeholder="enter search text..." />
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <kendo-grid id="divisionGrid_{{key}}" options="divisionCodeGridOptions" k-rebind="divisionCodeGridOptions" class="search-grid">
+
+                                </kendo-grid>
+                            </div>
+
+                        </div>
+                    </div>
+
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-default" data-dismiss="modal" ng-click="SubLedger_Cancel($index)" title="Cancel">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        setTimeout(function () {
+            $(".k-list").slimScroll({
+                position: 'right',
+                //alwaysVisible: false,
+               // height: '150',
+            });
+        }, 100)
+    });
+
+    $(".divisionFilterValue").keyup(function (e) {
+        
+        var mi = document.popupindex;
+        var FilterValue = $(this).val();
+        var value = FilterValue.substring(0, 1).toUpperCase() + FilterValue.substring(1);
+
+
+        if (FilterValue !== "") {
+            $(".selectAll").css("visibility", "hidden");
+
+            $("#divisiontree_"+mi+" .k-group .k-group .k-in").closest("li").hide();
+            $("#divisiontree_" + mi + " .k-group").closest("li").hide();
+            $("#divisiontree_" + mi + " .k-group .k-group .k-in:contains(" + value + ")").each(function () {
+                $(this).parents("ul, li").each(function () {
+                    var treeView = $("#divisiontree_" + mi).data("kendoTreeView");
+                    treeView.expand($(this).parents("li"));
+                    $(this).show();
+                });
+            });
+            $("#divisiontree_" + mi + " .k-group .k-in:contains(" + FilterValue + ")").each(function () {
+                $(this).parents("ul, li").each(function () {
+                    $(this).show();
+                });
+            });
+        }
+        else {
+            $("#divisiontree_" + mi + " .k-group").find("li").show();
+            var nodes = $("#divisiontree > .k-group > li");
+
+            $.each(nodes, function (i, val) {
+                if (nodes[i].getAttribute("data-expanded") == null) {
+                    $(nodes[i]).find("li").hide();
+                }
+            });
+            $(".selectAll").css("visibility", "visible");
+        }
+    });
+
+    $(".divisiontxtSearchString").keyup(function () {
+        
+        var mi = document.popupindex;
+        var val = $(this).val();
+        var grid = $("#divisionGrid_" + mi).data("kendoGrid");
+        if (grid != undefined) {
+            var tempServerFilter = grid.dataSource.options.serverFiltering;
+            grid.dataSource.options.serverFiltering = false;
+            var filter = [];
+            $.each(grid.columns, function (i, v) {
+                if (v.field != undefined) {
+                    var searchText = $.trim($("#diviontxtSearchString_" + mi).val());
+                    var model = grid.dataSource.options.schema.model.fields[v.field];
+                    var type = "string";
+                    if (model != undefined)
+                        type = model.type;
+                    if (type === "string")
+                        filter.push({ field: v.field, operator: "contains", value: searchText });
+                    else if (type === "number")
+                        filter.push({ field: v.field, operator: "eq", value: searchText });
+                    else if (type === "date") {
+                        var dateValue = new Date(searchText);
+                        searchText = dateValue == "Invalid Date" ? searchText : dateValue;
+                        filter.push({ field: v.field, operator: "eq", value: searchText });
+                    }
+                }
+
+            });
+            var filter = {
+                logic: "or",
+                filters: filter,
+            }
+
+            grid.dataSource.filter(filter);
+
+            if ($("#diviontxtSearchString_" + mi).val().length == 0)
+                grid.dataSource.filter([]);
+            grid.bind("dataBound", function () {
+                grid.dataSource.options.serverFiltering = tempServerFilter;
+            });
+        }
+    });
+
+
+
+
+</script>

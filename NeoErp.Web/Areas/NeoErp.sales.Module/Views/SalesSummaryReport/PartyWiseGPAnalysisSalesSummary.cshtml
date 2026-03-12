@@ -1,0 +1,557 @@
+﻿@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+@{ 
+    Layout = null;
+}
+<style>
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+        width: 183px !important;
+    }
+
+    .page-bar {
+        margin-bottom: 0px !important;
+    }
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+         font-size:11px;
+    }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }f
+
+    button#locationToggle {
+        height: 29px;
+    }
+</style>
+<div class="page-content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+            @*<li>
+                <i class="fa fa-home"></i>
+                <a href="/sales/SalesHome/Dashboard">Home</a>
+                <i class="fa fa-angle-right"></i>
+            </li>*@
+            @*<li>
+                <a href="#/Sales/PartyWiseGPAnalysisSalesSummary">PartyWise GP Analysis Report</a>
+                <i class="fa fa-angle-right"></i>
+            </li>*@
+            @*<li>
+                <a href="sales/saleshome/dashboard/Dashboard">Organiser</a>
+                <i class="fa fa-angle-right"></i>
+            </li>*@
+
+        </ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+
+                <div class="actions">
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                    </div>
+                    @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                   {
+                       //ShowCustomerFilter = true,
+                       ShowProductFilter = true,
+                       // ShowPartyTypeFilter = true,
+                       ShowCategoryFilter = true,
+                       // ShowLocationFilter = true,
+                       // ShowDocumentFilter = true,
+                       // ShowCompanyFilter = true,
+                       // ShowBranchFilter = true
+
+                   })
+                    </div>
+                    @Html.Partial("~/Views/Shared/Controls/_reportFilterSettings.cshtml", new ReportFilterSettingsModel()
+               {
+                   ShowAmountFigureFilter = true,
+                   ShowAmountFilter = true,
+                   ShowAmountRoundUpFilter = true,
+                   // ShowRangeAmountFilter = true
+               })
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                        <i class="icon-control-play"></i>
+                    </a>
+
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "PartyWiseGPAnalysisSalesSummary")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div id="grid"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+
+<script type="text/x-kendo-template" id="toolbar-template">
+    <div class="k-header k-grid-toolbar">
+        <a class="k-button k-button-icontext k-grid-excel" href="javascript:">
+            <i class="fa fa-file-excel-o"></i>
+        </a>
+        @*<a class="k-button k-button-icontext k-grid-pdf" href="javascript:">
+            <i class="fa fa-file-pdf-o"></i>
+        </a>*@
+    </div>
+</script>
+
+<script src="@Scripts.Url("~/JS/DateFilter.js?V0")" type="text/javascript"></script>
+<script src="@Scripts.Url("~/JS/dynamicReport.js?V2")" type="text/javascript"></script>
+<script>
+
+    var reportConfig = GetReportSetting("PartyWiseGPAnalysisSalesSummary");
+    function getDateFormat(date) {
+        return kendo.format("{0:" + reportConfig.dateFormat + "}", date)
+    }
+
+    //$("#supplierMultiSelect").closest(".row").hide();
+
+    $(".applydp").on("click", function (evt) {
+
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+        $(this).closest("#applydp").modal('hide');
+    });
+
+    $("#loadAdvancedFilters").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    });
+
+    $("#RunQuery").click(function (evt) {
+        evt.preventDefault();
+
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/SalesSummaryReportApi/GetPartyWiseGPAnalysisSales"
+        KendoGridRefresh(urltest);
+    });
+
+
+
+    function CalcGrossPercent(gp, lc) {
+        var grid = $("#grid").data("kendoGrid")
+        var a = 0;
+        if (lc != 0)
+             a = (gp * 100 / lc);
+        return kendo.toString(a, "n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString());
+    }
+
+    function BindGrid(readurl) {
+        var companyName = ('@workingContent.CurrentUserinformation.company_name');
+        var fromADdate = $("#FromDateVoucher").val()
+        var toADdate = $("#ToDateVoucher").val();
+        var fromBSdate = $("#fromInputDateVoucher").val();
+        var toBSdate = $("#toInputDateVoucher").val();
+        var branches = ReportFilter.getBranchs();
+
+        reportConfig = GetReportSetting("PartyWiseGPAnalysisSalesSummary");
+        var dataSource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: {
+                    url: readurl, // <-- Get data from here.
+                    dataType: "json", // <-- The default was "jsonp".
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8"
+                },
+                parameterMap: function (options, type) {
+                    var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+                    delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                    delete paramMap.$format; // <-- remove format parameter.
+                    return paramMap;
+                }
+            },
+
+            error: function (e) {
+                displayPopupNotification("Sorry error occured while processing data", "error");
+            },
+            serverFiltering: false,
+            serverAggregates: true,
+            schema: {
+                data: "PartyWiseGPAnalysisModel", // records are returned in the "data" field of the response
+                total: "total", // total number of records is in the "total" field of the response
+                aggregates: "AggregationResult",
+                model: {
+                    fields: {
+                        ITEM_CODE: { type: "string" },
+                        ITEM_EDESC: { type: "string" },
+                        UNIT: { type: "string" },
+                        QUANTITY: { type: "number" },
+                        RATE: { type: "number" },
+                        SALES_AMOUNT: { type: "number" },
+                        UNIT_COST: { type: "number" },
+                        LANDED_COST: { type: "number" },
+                        GROSS_PROFIT: { type: "number" },
+                        GROSS_PROFIT_PERCENTAGE: { type: "number" }
+                    }
+                }
+            },
+
+            aggregate: [
+                     { field: "QUANTITY", aggregate: "sum" },
+                        { field: "RATE", aggregate: "sum" },
+                        { field: "SALES_AMOUNT", aggregate: "sum" },
+                         { field: "UNIT_COST", aggregate: "sum" },
+                         { field: "LANDED_COST", aggregate: "sum" },
+                         { field: "GROSS_PROFIT", aggregate: "sum" },
+                         { field: "GROSS_PROFIT_PERCENTAGE", aggregate: "sum" }
+            ],
+            serverPaging: false,
+            serverSorting: false,
+            pageSize: reportConfig.defaultPageSize,
+        });
+
+
+        var grid = $("#grid").kendoGrid({
+            dataSource: dataSource,
+
+            toolbar: kendo.template($("#toolbar-template").html()),
+            excel:{
+                fileName:"Party wise GP anylysis Summary",
+                allPages:true,
+            },
+            excelExport: function (e) {
+                var sheet = e.workbook.sheets[0];
+                var datasource = $("#grid").data("kendoGrid");
+                var data = e.data;
+
+                var heardervalue = [];
+
+                heardervalue = sheet.rows[0].cells;
+
+                for (var i = 0; i < sheet.rows.length; i++) {
+                    for (var ci = 0; ci < sheet.rows[i].cells.length; ci++) {
+                        if (typeof (sheet.rows[i].cells[ci].value) == "undefined") {
+                            var index = i - 1;
+                            var headername = heardervalue[ci];
+                        }
+                        if (i == sheet.rows.length - 1) {
+
+                            sheet.rows[i].cells[ci].value = $(sheet.rows[i].cells[ci].value).text();
+                        }
+
+                    }
+                }
+
+                //adding unshift function for replace addding the cells and its values
+
+                var rows = e.workbook.sheets[0].rows;
+                rows.unshift({
+                    height: 20,
+                    cells: [{
+                        value: "Party Wise Analysis Summary Report".split('').join(' '),
+                        //background: "#FFFFFF",
+                        //textAlign: "center",
+                        colSpan: 10,
+                        fontSize: 12,
+                    }]
+                });
+                rows.unshift({
+                    height: 20,
+                    cells: [{
+                        value: "From :- " + fromADdate + "(" + fromBSdate + ")" + "\t To :- " + toADdate + "(" + toBSdate + ")",
+                        //background: "#FFFFFF",
+                        //textAlign: "center",
+                        colSpan: 10,
+                        fontSize: 12,
+                    }]
+                });
+                for (var companyCount = 0; companyCount < branches.length; companyCount++) {
+                    rows.unshift({
+                        height: 20,
+                        cells: [{
+                            value: branches[companyCount].Company + " :- " + branches[companyCount].Branches.join(','),
+                            //background: "#FFFFFF",
+                            //textAlign: "center",
+                            colSpan: 10,
+                            fontSize: 12,
+
+                        }]
+                    });
+                }
+                rows.unshift({
+                    height: 20,
+                    cells: [{
+                        value: companyName.split('').join(' '),
+                        //background: "#FFFFFF",
+                        //textAlign: "center",
+                        colSpan: 10,
+                        fontSize: 12,
+                    }]
+                });
+            },
+            pdf:{
+                fileName: "Party wise GP analysis Summakry",
+                avoidLinks: true,
+                pageSize:"auto",
+                margin: {
+                    top: "2m",
+                    right: "1m",
+                    left: "1m",
+                    buttom:"1m",
+                },
+                landscape: true,
+                repeatHeaders: true,
+                scale:0.8,
+
+            },
+            height: window.innerHeight - 50,
+            reorderable: true,
+            resizable: true,
+             sortable: true,
+            filterable: {
+                extra: false,
+                operators: {
+                    number: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "is greater than or equal to	",
+                        gt: "is greater than",
+                        lte: "is less than or equal",
+                        lt: "is less than",
+                    },
+                    string: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        startswith: "Starts with	",
+                        contains: "Contains",
+                        doesnotcontain: "Does not contain",
+                        endswith: "Ends with",
+                    },
+                    date: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "Is after or equal to",
+                        gt: "Is after",
+                        lte: "Is before or equal to",
+                        lt: "Is before",
+                    }
+                }
+            },  
+            columnMenu: true,
+            columnMenuInit: function (e) {
+                    wordwrapmenu(e);
+                    checkboxItem = $(e.container).find('input[type="checkbox"]');
+                },
+                columnShow: function (e) {
+                    if($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                        SaveReportSetting('PartyWiseGPAnalysisSalesSummary', 'grid');
+                },
+                columnHide: function (e) {
+                    if($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                        SaveReportSetting('PartyWiseGPAnalysisSalesSummary', 'grid');
+                },
+                pageable: {
+                    refresh: true,
+                    pageSizes: reportConfig.itemPerPage,
+                    buttonCount: 5
+                },
+            //  autoBind: true,
+            scrollable: {
+                virtual: true
+            },
+            dataBound: function (o) {
+                var grid = o.sender;
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.length;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    displayPopupNotification("No Data Found Given Date Filter.", "info");
+                }
+                else {
+                    var g = $("#grid").data("kendoGrid");
+                    for (var i = 0; i < g.columns.length; i++) {
+                        g.showColumn(i);
+                    }
+                    $("div.k-group-indicator").each(function (i, v) {
+                        g.hideColumn($(v).data("field"));
+                    });
+                }
+                 UpdateReportUsingSetting("PartyWiseGPAnalysisSalesSummary", "grid");
+            },
+            columns: [
+                          {
+                              field: "ITEM_EDESC",
+                              title: "Product Name",
+                              width: "100px",
+
+                          },
+
+                          {
+                              field: "UNIT",
+                              title: "Unit",
+                              width: "40px",
+                              footerTemplate: '<span style="float:right">#= "Grand Total" #</span>',
+                             // groupFooterTemplate: '<span style="float:right">#= "Total" #</span>',
+                          },
+                          {
+                              field: "QUANTITY",
+                              title: "Quantity",
+                              width: "70px",
+                              attributes: {
+                                  style: "text-align: right;"
+                              },
+                              format: "{0:n" + ReportFilter.parseDecimalPlace('AmountRoundUpFilter').toString() + "}",
+                              aggregates: ["sum"],
+                              footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()) #</span>',
+                             // groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum,"n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+
+
+                          },
+                          {
+                              field: "RATE",
+                              title: "Rate",
+                              width: "70px",
+                              attributes: {
+                                  style: "text-align: right;"
+                              },
+                              format: "{0:n" + ReportFilter.parseDecimalPlace('AmountRoundUpFilter').toString() + "}",
+                              aggregates: ["sum"],
+                              footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()) #</span>',
+                             // groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum,"n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()) #</span>',
+                          },
+                          {
+                              field: "SALES_AMOUNT",
+                              title: "Sales Amt.",
+                              width: "70px",
+                              attributes: {
+                                  style: "text-align: right;"
+                              },
+                              format: "{0:n" + ReportFilter.parseDecimalPlace('AmountRoundUpFilter').toString() + "}",
+                              aggregates: ["sum"],
+                              footerTemplate: '<span style="float:right">#= kendo.toString(sum,"n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()) #</span>',
+                             // groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum,"n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()) #</span>',
+                          },
+                           {
+                               field: "UNIT_COST",
+                               title: "Unit Cost",
+                               width: "70px",
+                               attributes: {
+                                   style: "text-align: right;"
+                               },
+                               format: "{0:n" + ReportFilter.parseDecimalPlace('AmountRoundUpFilter').toString() + "}",
+                               aggregates: ["sum"],
+                               footerTemplate: '<span style="float:right">#= kendo.toString(sum,"n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()) #</span>',
+                              // groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum,"n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()) #</span>',
+                           },
+                           {
+                               field: "LANDED_COST",
+                               title: "Landed Cost",
+                               width: "70px",
+                               attributes: {
+                                   style: "text-align: right;"
+                               },
+                               format: "{0:n" + ReportFilter.parseDecimalPlace('AmountRoundUpFilter').toString() + "}",
+                               aggregates: ["sum"],
+                               footerTemplate: '<span style="float:right">#= kendo.toString(sum,"n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()) #</span>',
+                               // groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum,"n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()) + " Cr"#</span>',
+                              // groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum,"n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()) #</span>',
+
+                           },
+                            {
+                                field: "GROSS_PROFIT",
+                                title: "Gross Profit",
+                                width: "70px",
+                                attributes: {
+                                    style: "text-align: right;"
+                                },
+                                format: "{0:n" + ReportFilter.parseDecimalPlace('AmountRoundUpFilter').toString() + "}",
+                                aggregates: ["sum"],
+                                footerTemplate: '<span style="float:right">#= kendo.toString(sum,"n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()) #</span>',
+                              //  groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum,"n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()) #</span>',
+                            },
+                             {
+                                 field: "GROSS_PROFIT_PERCENTAGE",
+                                 title: "GP %eg",
+                                 width: "60px",
+                                 attributes: {
+                                     style: "text-align: right;"
+                                 },
+                                // format: "{0:n" + ReportFilter.parseDecimalPlace('AmountRoundUpFilter').toString() + "}",
+                                 aggregates: ["sum"],
+                                 footerTemplate: '<span style="float:right">#= CalcGrossPercent(data.GROSS_PROFIT.sum, data.LANDED_COST.sum)  #</span>',
+
+                                // groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum,"n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()) #</span>',
+                             },
+            ]
+
+        });
+
+    };
+
+
+    function KendoGridRefresh(readUrl) {
+        $('#grid').val('');
+        $('#grid').html('');
+        BindGrid(readUrl)
+    }
+    $(document).ready(function () {
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/SalesSummaryReportApi/GetPartyWiseGPAnalysisSales"
+        DateFilter.init(function () {
+                  consolidate.init(function () {
+                    BindGrid(urltest);
+                });
+            });
+        //to load method eg: Landed Cost
+        var html = '<div class="row">';
+        html += '<div class="col-md-12">';
+        html += '<div class="form-group">';
+        html += '<div class="col-sm-10 col-md-10 col-xs-10">';
+        html += ' <select id="methodMultiSelect" class="form-control " style="width: 400px; height:30px;"><option>STD Rate</option><option selected="selected">Landed Cost</option><option>FIFO</option><option>WT Average</option></select>';
+        html += ' </div>';
+        html += '<div class="col-sm-2 col-md-2 col-xs-2">';
+        html += '</div>';
+        html += '</div><div class="br"></div></div></div>';
+        $('#filterModal').find('.modal-body').append(html);
+
+
+    });
+
+
+
+
+
+
+
+
+
+
+
+</script>
+

@@ -1,0 +1,1456 @@
+﻿@{
+    var myAreaName = string.Empty;
+    object areaObj;
+    Layout = null;
+    if (ViewContext.RouteData.Values.TryGetValue("area", out areaObj))
+    {
+        myAreaName = areaObj.ToString();
+    }
+}
+<style>
+    legend {
+        width: auto;
+    }
+
+    .main .k-dropdown-wrap {
+        height: 21px !important;
+        font-size: 12px !important;
+    }
+
+    .dropzone-download {
+        font-size: 17px !important;
+        position: absolute;
+        top: 112px;
+        right: 9px;
+    }
+
+    .btn-xs {
+        padding: 0px 5px;
+    }
+
+    .portlet.light.bordered.main {
+        min-height: 550px !important;
+    }
+
+    a.btn.btn-xs {
+        color: grey;
+    }
+
+    .k-grid-content.k-auto-scrollable {
+        height: 400px !important;
+    }
+
+    #ShipmentInvoiceForm input[type="text"] {
+        /*height: 24px !important;*/
+        /*width: 98%;*/
+        font-size: 11px !important;
+    }
+
+    #ShipmentInvoiceForm input [type="checkbox"] {
+        height: auto !important;
+    }
+
+    div#grid {
+        height: 500px;
+    }
+
+    .required {
+        color: #b94a48;
+    }
+
+    i.fa.fa-file-image-o.image {
+        margin: 1px;
+    }
+
+    .image-placeholder > img {
+        display: inline;
+        margin: 1px;
+        height: 40px;
+        width: 40px;
+    }
+
+    #shipmentitemsok {
+        float: right;
+    }
+
+    /*.btn {
+        height: 28px !important;
+    }*/
+
+    #ShipmentInvoiceForm .k-widget input {
+        height: 16px !important;
+    }
+
+
+    .form-group.image-placeholder > div {
+        display: inline-block;
+        float: left;
+        width: 78px;
+    }
+
+    .dropzone.dz-started .dz-message {
+        display: table-column;
+        opacity: 0;
+    }
+
+    .main .k-dropdown-wrap {
+        height: 22px;
+        font-size: 12px;
+    }
+    /*.form-control {
+        height: 28px !important;
+    }*/
+    .actionbutton {
+        color: white !important;
+    }
+
+    .k-clear-value {
+        display: none;
+    }
+
+    span.k-icon.k-i-loading {
+        display: none;
+    }
+
+    .addbuttonmargin {
+        margin-bottom: 22px;
+    }
+
+    .dropzone .dz-preview .dz-image {
+        width: 50px !important;
+        height: 50px !important;
+    }
+
+    .dz-message {
+        font-weight: 600 !important;
+        text-align: center !important;
+        margin: 2em 0;
+        font-size: 16px;
+    }
+
+    .dropzone .dz-preview, .dropzone-previews .dz-preview {
+        margin-top: -15px !important;
+    }
+
+    .top-gap {
+        margin-top: 18px;
+    }
+
+    .bottom-gap {
+        margin-bottom: 30px;
+    }
+
+    .main fieldset {
+        margin-bottom: 10px;
+    }
+
+    .k-dropdown-wrap.k-state-default {
+        /*height: 22px !important;*/
+        background-image: none !important;
+        background-color: #fff !important;
+        font-size: 11px !important;
+    }
+
+    .inputcontent {
+        width: 800px;
+    }
+    /*.main input.form-control {
+    height:23px !important;
+    }*/
+    .source h5, .destination h5 {
+        padding-left: 15px;
+        padding-top: 10px;
+    }
+
+    .source, .destination {
+        background-color: #ebe9e9;
+        margin-left: 15px;
+        margin-right: 15px;
+        margin-bottom: 15px;
+    }
+    .modal_lg_custom
+    {
+       
+        width:1017px;
+    }
+</style>
+<div ng-app="myApp">
+    <div ng-controller="LogisticsCtrl" id="LogisticsCtrl">
+
+
+        <div class="portlet light bordered main">
+            <div class="portlet-title titleheading">
+                <i class="fa fa-list-alt fontgreen"></i>
+                <span class="caption-subject fontgreen bold uppercase">
+                    Logistics Entry
+                </span>
+                <span class="pull-right" ng-show="!showFormPanel">
+                   <button type="button" id="addTarget" name="addTarget" ng-click="AddLogistics()" class="btn buttongreen btn-sm">[+] Add</button>
+                </span>
+
+                <span class="pull-right" ng-show="showFormPanel">
+                    <button type="submit" id="EditContent" name="EditContent" ng-hide="ContentModal" ng-click="EditContent()" class="btn btn-default btn-sm" data-toggle="modal" data-target="#ContentModal"> Edit Content</button>
+                    <button type="button" id="cancelsi" name="cancelsi" class="btn btn-default btn-sm" ng-click="cancelsi();">Cancel</button>
+                    <button type="submit" id="saveshipment" name="saveshipment" ng-click="createshipment(ShipmentInvoiceForm.$valid,'save')" class="btn buttongreen btn-sm">{{saveAction}}</button>
+                </span>
+
+            </div><!-- /portlet-title-->
+            <div class="portlet-body">
+                <div class="row">
+
+                    <form id="ShipmentInvoiceForm" name="ShipmentInvoiceForm" ng-show="showFormPanel" novalidate>
+
+                        <input type="hidden" id="LocCode" ng-model="pi.LocCode" />
+                        <div ng-hide="oneditshow">
+                            <div class="col-sm-6 col-md-3">
+                                <div class="form-group">
+                                    <label class="control-label">
+                                        Invoice Number<span style="color:red" ng-show="ShipmentInvoiceForm.pininvoice.$invalid">
+                                            <span ng-show="ShipmentInvoiceForm.pininvoice.$error.required">*</span>
+                                        </span>
+                                    </label>
+                                    <input id="perfomainvoiceautocomplete" ng-model="si.perfomainvoice" name="perfomainvoice" kendo-auto-complete
+                                           k-data-text-field="'INVOICE_NUMBER'"
+                                           k-data-value-field="'INVOICE_CODE'"
+                                           k-data-source="ipPurchaseOrder"
+                                           k-min-length="1"
+                                           k-value-primitive="true"
+                                           k-on-select="ItemsOnChange(kendoEvent)"
+                                           k-placeholder="'Select Commercial Number...'"
+                                           style="width: 100%" ng-disabled="profomainvoicedisabled" />
+
+                                </div>
+                            </div>
+
+                            <div ng-show="HideShippment">
+                                <div class="col-sm-12 col-md-12">
+                                    <fieldset>
+                                        <legend>Commercial Item</legend>
+                                     
+                                        <div class="portlet-body">
+                                       
+                                            <div class="tblresponsive">
+                                                <table class="table table-striped  table-hover ctable" id="items">
+                                                    <thead>
+                                                        <tr>
+                                                            <th width="5%">S.N.</th>
+                                                            <th>Invoice Date</th>
+                                                            <th>Item</th>
+                                                            <th>Qty</th>
+                                                            <th>Amount</th>
+                                                            <th>Total</th>
+
+                                                    <tbody>
+                                                        <tr style="font-size:10px;" ng-if="itemlist.length==0"><td colspan="11">No Items To Display..</td></tr>
+                                                        <tr style="font-size:10px;" ng-if="itemlist.length!=0" ng-repeat="items in itemlist">
+                                                            <td>{{$index +1}}</td>
+                                                            <td>{{items.INVOICE_DATE | date:'MM/dd/yyyy'}}</td>
+                                                            <td>{{items.ITEM_EDESC}}</td>
+                                                            <td style="text-align:right;">{{items.QUANTITY | number : fractionSize}}</td>
+                                                            <td style="text-align:right;">{{items.AMOUNT | currency :"": fractionSize}}</td>
+                                                            <td style="text-align:right;">{{ (items.QUANTITY) * (items.AMOUNT) |currency:"":fractionSize}}</td>
+
+                                                        </tr>
+                                                        <tr>
+                                                            <td></td>
+                                                            <td><b>Grand Total</b></td>
+                                                            <td></td>
+                                                            <td><b class="pull-right">{{Total_Quantity | number}}</b>  </td>
+                                                            <td>@*<b class="pull-right">{{Rate | number}}</b>*@ </td>
+                                                            <td><b class="pull-right">{{Total_Amount | number}} </b></td>
+                                                     
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </fieldset>
+                                </div>
+
+                                <div class="col-sm-12 col-md-12">
+                                    <fieldset>
+                                        <legend>Shipment Details</legend>
+                                        <div class="row">
+                                            <input type="hidden" ng-model="lctrackno" />
+
+
+                                            <div class="col-sm-12 col-md-3">
+                                                <div class="form-group">
+                                                    <label class="control-label">
+                                                        Shipment Type
+                                                    </label>
+                                                    <select id="shipmentType" k-value-primitive="true" k-on-change="OnChangeShipmentType(kendoEvent)" name="shipmentType" k-ng-model="si.shipmentType" ng-model="si.shiptype" kendo-drop-down-list style="width: 100%"
+                                                            k-options="shipmentType" ng-disabled="true"></select>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-sm-6 col-md-3" ng-show="commercialnumber">
+                                                <div class="form-group">
+                                                    <label class="control-label">
+                                                        Commercial Invoice Number
+                                                    </label>
+                                                    <input type="text" value="{{invoiceno}}" class="form-control input-sm" disabled />
+                                                </div>
+                                            </div>
+
+
+                                            <!------------------------------------------For Air-------------------------------------->
+                                            <div ng-show="showforair">
+                                                <div class="col-md-12">
+                                                    <h5><b><u>Air</u></b></h5>
+                                                </div>
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">
+                                                            Airway Bill No.
+                                                        </label>
+                                                        <input type="text" id="awb" name="awb" ng-model="si.awb" class="form-control input-sm" ng-disabled="!si_check_awb" />
+
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">Airway Bill Date</label>
+                                                        <input type="text" id="awbdate" name="awbdate" autocomplete="off" class="form-control maskdate" ng-model="si.awbdate" ng-disabled="!si_check_awbdate" />
+
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">
+                                                            Gross Weight Air
+                                                        </label>
+                                                        <input type="number" id="grosswhtair" name="grosswhtair" ng-model="si.grosswhtair" class="form-control input-sm" ng-disabled="!si_check_grosswhtair" />
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">
+                                                            Chargeable Weight Air
+                                                        </label>
+                                                        <input type="number" id="chargeablewhtair" name="chargeablewhtair" ng-model="si.chargeablewhtair" class="form-control input-sm" ng-disabled="!si_check_chargeablewhtair" />
+                                                    </div>
+
+                                                </div>
+
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">
+                                                          No. of Palettes
+                                                        </label>
+                                                        <input type="number" id="AIR_PACK" name="AIR_PACK" ng-model="si.airpack" class="form-control input-sm" ng-disabled="!si_check_airpack" />
+                                                    </div>
+
+                                                </div>
+
+
+
+                                            </div>
+                                            <!------------------------------------------For Sea-------------------------------------->
+                                            <div ng-show="showforsea">
+                                                <div class="col-md-12">
+                                                    <h5><b><u>Sea</u></b></h5>
+                                                </div>
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">
+                                                            Lading Bill No.
+                                                        </label>
+                                                        <input type="text" id="lading" name="lading" ng-model="si.lading" class="form-control input-sm" ng-disabled="!si_check_lading" />
+
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">Lading Bill Date</label>
+                                                        <input type="text" id="ladingdate" name="ladingdate" autocomplete="off" class="form-control maskdate" ng-model="si.ladingdate" ng-disabled="!si_check_ladingdate" />
+
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">
+                                                            Gross Weight Sea
+                                                        </label>
+                                                        <input type="number" id="grossweightsea" name="grossweightsea" ng-model="si.grossweightsea" class="form-control input-sm" ng-disabled="!si_check_grossweightsea" />
+
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">
+                                                            Measurement weight (CBM for sea)
+                                                        </label>
+                                                        <input type="number" id="cbmsea" name="cbmsea" ng-model="si.cbmsea" class="form-control input-sm" ng-disabled="!si_check_cbmsea" />
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">
+                                                            Vessel No
+                                                        </label>
+                                                        <input type="text" id="vesselno" name="vesselno" ng-model="si.vesselno" class="form-control input-sm" ng-disabled="!si_check_vesselno" />
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                            <!------------------------------------------For Road------------------------------------->
+                                            <div ng-show="showforroad">
+                                                <div class="col-md-12">
+                                                    <h5><b><u>Road</u></b></h5>
+                                                </div>
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">
+                                                            Road Bill No.
+                                                        </label>
+                                                        <input type="text" id="road" name="road" ng-model="si.road" class="form-control input-sm" ng-disabled="!si_check_road" />
+
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">Road Bill Date</label>
+                                                        <input type="text" id="roaddate" name="roaddate" autocomplete="off" class="form-control maskdate" ng-model="si.roaddate" ng-disabled="!si_check_roaddate" />
+
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">
+                                                            Truck No
+                                                        </label>
+                                                        <input type="text" id="truck" name="truck" ng-model="si.truck" class="form-control input-sm" ng-disabled="!si_check_truck" />
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">
+                                                            Transporter Name
+                                                        </label>
+                                                        <input type="text" id="transname" name="transname" ng-model="si.transname" class="form-control input-sm" ng-disabled="!si_check_transname" />
+
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">
+                                                            Transporter Address
+                                                        </label>
+                                                        <input type="text" id="transaddress" name="transaddress" ng-model="si.transaddress" class="form-control input-sm" ng-disabled="!si_check_transaddress" />
+
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                            <!------------------------------------------For Train------------------------------------>
+                                            <div ng-show="showfortrain">
+                                                <div class="col-md-12">
+                                                    <h5><b><u>Train</u></b></h5>
+                                                </div>
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">
+                                                            Train Bill No.
+                                                        </label>
+                                                        <input type="text" id="train" name="train" ng-model="si.train" class="form-control input-sm" ng-disabled="!si_check_train" />
+
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">Train Bill Date</label>
+                                                        <input type="text" id="traindate" name="traindate" autocomplete="off" class="form-control maskdate" ng-model="si.traindate" ng-disabled="!si_check_traindate" />
+
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                            <!------------------------------------------For Common------------------------------------>
+                                            <div class="row" style="margin:0px; padding:0px;" ng-show="showforcommon">
+                                                @*SUBIN FROM*@
+                                                <!--CommonColumnsStart For Air-->
+
+
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">
+                                                            Contractor Name
+                                                        </label>
+                                                        <select id="contractorName" k-value-primitive="true" name="contractorName" k-data-text-field="'CONTRACTOR_EDESC'" k-data-value-field="'CONTRACTOR_CODE'" k-ng-model="contractorCode" ng-model="contractorCode" kendo-drop-down-list style="width: 100%"
+                                                                k-data-source="contractorNameDatasource" k-option-label="'--Select  Contractor Name--'" ng-disabled="!si_check_contractorCode"></select>
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">
+                                                            Contractor Address
+                                                        </label>
+                                                        <input type="text" name="contractoraddress" ng-model="contractorAddress" class="form-control input-sm" ng-disabled="!si_check_contractorAddress" />
+
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">
+                                                            Contract Amount
+                                                        </label>
+                                                        <input type="number" name="contractAmt" ng-model="contractAmt" class="form-control input-sm" ng-disabled="!si_check_contractAmt" />
+
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">Contract Date </label>
+                                                        <input type="text" name="contractDate" autocomplete="off" class="form-control maskdate" ng-model="contractDate" ng-disabled="!si_check_contractDate" />
+
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">
+                                                            Job Order No
+                                                        </label>
+                                                        <input type="text" name="jobOrderNo" ng-model="jobOrderNo" class="form-control input-sm" ng-disabled="!si_check_jobOrderNo" />
+
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">
+                                                            Shipper Name
+                                                        </label>
+                                                        <input type="text" name="shipperName" ng-model="shipperName" class="form-control input-sm" ng-disabled="!si_check_shipperName" />
+                                                    </div>
+
+                                                </div>
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">
+                                                            Shipper Address
+                                                        </label>
+                                                        <input type="text" name="shipperAddress" ng-model="shipperAddress" class="form-control input-sm" ng-disabled="!si_check_shipperAddress" />
+                                                    </div>
+
+                                                </div>
+
+                                             
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">
+                                                            Issuing Carrier
+                                                        </label>
+                                                        <select id="issuingcarrer" k-value-primitive="true" name="issuingcarrer" k-data-text-field="'CARRIER_EDESC'" k-data-value-field="'CARRIER_CODE'" k-ng-model="si.issuingcarrer" ng-model="si.issuingcarrer" kendo-drop-down-list style="width: 100%"
+                                                                k-data-source="issuingCarrierDatasource" k-option-label="'--Select Issuing Carrier--'" ng-disabled="!si_check_issuingcarrer"></select>
+
+                                                    </div>
+                                                </div>
+
+
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">
+                                                            Clearing Agent
+                                                        </label>
+                                                        <select id="clearingAgent" k-value-primitive="true" name="clearingAgent" k-data-text-field="'CAGENT_EDESC'" k-data-value-field="'CAGENT_CODE'" k-ng-model="clearingAgent" ng-model="clearingAgent" kendo-drop-down-list style="width: 100%"
+                                                                k-data-source="clearingAgentDatasource" k-option-label="'--Select Clearing Agent--'" ng-disabled="!si_check_clearingAgent"></select>
+
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">
+                                                            Remarks
+                                                        </label>
+                                                        <input type="text" id="remarks" name="remarks" ng-model="si.remarks" class="form-control input-sm" ng-disabled="!si_check_remarks" />
+                                                    </div>
+                                                </div>
+
+
+                                         
+                                            </div>
+                                            <div ng-show="showforcommon">
+
+                                                <div class="source">
+                                                    <h5><b> Source</b></h5>
+                                                    <div class="row" style="margin:0px; padding:0px;">
+                                                        <div class="col-sm-6 col-md-3">
+                                                            <div class="form-group">
+                                                                <label class="control-label">
+                                                                    From Location<span style="color:red" ng-show="ShipmentInvoiceForm.fromLocation.$invalid">
+                                                                        <span ng-show="ShipmentInvoiceForm.fromLocation.$error.required">*</span>
+                                                                    </span>
+                                                                </label>
+                                                                <select id="fromlocation" k-value-primitive="true" name="fromLocation" k-data-text-field="'LOCATION_EDESC'" k-data-value-field="'LOCATION_CODE'" ng-model="fromLocation" kendo-drop-down-list style="width: 100%"
+                                                                        k-data-source="locationDatasource" k-option-label="'--Select Location--'" ng-change="LoadETA()" required ng-disabled="!si_check_fromLocation"></select>
+
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row" style="margin:0px; padding:0px;" ng-show="ShowContainer">
+                                                        <div class="col-sm-4 col-md-4">
+                                                            <div class="form-group">
+                                                                <label class="control-label">Estimated Time of Arrival (ETA)</label>
+                                                                <input type="text" name="etaDate" autocomplete="off" class="form-control maskdate" ng-model="SRC_ETA" ng-disabled="!si_check_SRC_ETA" />
+
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-4 col-md-4">
+                                                            <div class="form-group">
+                                                                <label class="control-label">Actual Time of Arrival (ATA)</label>
+                                                                <input type="text" name="ataDate" autocomplete="off" class="form-control maskdate" ng-model="SRC_ATA" ng-disabled="!si_check_SRC_ATA" />
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-4 col-md-4">
+                                                            <div class="form-group">
+                                                                <label class="control-label">Estimated Time of Delivery (EDD)</label>
+                                                                <input type="text" name="addDate" autocomplete="off" class="form-control maskdate" ng-model="SRC_ETD_DES" ng-disabled="!si_check_SRC_ETD_DES" />
+
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-4 col-md-4">
+                                                            <div class="form-group">
+                                                                <label class="control-label">Estimated Time of Departure (ETD)</label>
+                                                                <input type="text" name="addDate" autocomplete="off" class="form-control maskdate" ng-model="SRC_ETD" ng-disabled="!si_check_SRC_ETD" />
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-4 col-md-4">
+                                                            <div class="form-group">
+                                                                <label class="control-label">Actual Time of Departure (ATD)</label>
+                                                                <input type="text" name="etdDate" autocomplete="off" class="form-control maskdate" ng-model="SRC_ATD" ng-disabled="!si_check_SRC_ATD" />
+
+                                                            </div>
+                                                        </div>
+
+
+                                                    </div>
+                                                </div>
+
+                                                <div class="destination">
+                                                    <h5><b>Destination</b></h5>
+                                                    <div class="row" style="margin:0px; padding:0px;">
+                                                        <div class="row" style="margin:0px; padding:0px;">
+                                                            <div class="col-sm-6 col-md-3">
+                                                                <div class="form-group">
+                                                                    <label class="control-label">
+                                                                        To Location<span style="color:red" ng-show="ShipmentInvoiceForm.toLocation.$invalid">
+                                                                            <span ng-show="ShipmentInvoiceForm.toLocation.$error.required">*</span>
+                                                                        </span>
+                                                                    </label>
+                                                                    <select id="tolocation" k-value-primitive="true" name="toLocation" k-data-text-field="'LOCATION_EDESC'" k-data-value-field="'LOCATION_CODE'" ng-model="toLocation" kendo-drop-down-list style="width: 100%"
+                                                                            k-data-source="locationDatasource" k-option-label="'--Select Location--'" ng-change="CheckLogisticTolocation()" required ng-disabled="!si_check_toLocation"></select>
+
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row" style="margin:0px; padding:0px;" ng-show="ShowContainer">
+                                                            <div class="col-sm-4 col-md-4">
+                                                                <div class="form-group">
+                                                                    <label class="control-label">Estimated Time of Arrival (ETA)</label>
+                                                                    <input type="text" name="etaDate" autocomplete="off" class="form-control maskdate" ng-model="SRC_ETD_DES" ng-disabled="!si_check_DES_ETA" />
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-sm-4 col-md-4">
+                                                                <div class="form-group">
+                                                                    <label class="control-label">Actual Time of Arrival (ATA)</label>
+                                                                    <input type="text" name="ataDate" autocomplete="off" class="form-control maskdate" ng-model="DES_ATA" ng-disabled="!si_check_DES_ATA" />
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-sm-4 col-md-4">
+                                                                <div class="form-group">
+                                                                    <label class="control-label">Estimated Time of Delivery (EDD)</label>
+                                                                    <input type="text" name="addDate" autocomplete="off" class="form-control maskdate" ng-model="DES_EDD" ng-disabled="!si_check_DES_ETD_NEXT_DES" />
+
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-sm-4 col-md-4">
+                                                                <div class="form-group">
+                                                                    <label class="control-label">Estimated Time of Departure (ETD)</label>
+                                                                    <input type="text" name="addDate" autocomplete="off" class="form-control maskdate" ng-model="DES_ETD" ng-disabled="!si_check_DES_ETD" />
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-sm-4 col-md-4">
+                                                                <div class="form-group">
+                                                                    <label class="control-label">Actual Time of Departure (ATD)</label>
+                                                                    <input type="text" name="etdDate" autocomplete="off" class="form-control maskdate" ng-model="DES_ATD" ng-disabled="!si_check_DES_ATD" />
+
+                                                                </div>
+                                                            </div>
+
+
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+
+                                            <div ng-show="showforcommon">
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">Document Receive Date From Supplier</label>
+                                                        <input type="text" name="DOC_REC_SUP_DATE" autocomplete="off" class="form-control maskdate" ng-model="DOC.DOC_REC_SUP_DATE" ng-disabled="!editextradocument" />
+
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">Document Endorsement Date For Bank</label>
+                                                        <input type="text" name="DOC_END_BANK_DATE" autocomplete="off" class="form-control maskdate" ng-model="DOC.DOC_END_BANK_DATE" ng-disabled="!editextradocument" />
+
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">Document Sent Date To Agent </label>
+                                                        <input type="text" name="DOC_SEND_TOAGENT_DATE" autocomplete="off" class="form-control maskdate" ng-model="DOC.DOC_SEND_TOAGENT_DATE" ng-disabled="!editextradocument" />
+
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">Document Postage CN number</label>
+                                                        <input type="text" name="POSTAGE_CN" class="form-control" ng-model="DOC.POSTAGE_CN" ng-disabled="!editextradocument" />
+
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">Port/Custom Clearance Date </label>
+                                                        <input type="text" name="PORT_CLEAR_DATE" autocomplete="off" class="form-control maskdate" ng-model="DOC.PORT_CLEAR_DATE" ng-disabled="!editextradocument" />
+
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+
+                                    </fieldset>
+
+                                </div>
+
+                                <div class="col-sm-12 col-md-12" ng-show="ShowContainer">
+
+                                    <!-- container modal -->
+
+                                    <fieldset>
+                                        <legend>Carrier Details</legend>
+                                        <div class="tblresponsive">
+                                            <table class="table table-striped  table-hover ctable" id="items">
+                                                <thead>
+                                                    <tr>
+                                                        <th width="5%">S.N.</th>
+                                                        <th>Carrier</th>
+                                                        <th>Load Type</th>
+                                                        <th>Carrier Number</th>
+                                                        <th>Detention days</th>
+                                                        <th>Default Amount</th>
+                                                        <th>Per day Charge</th>
+                                                        <th>Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr style="font-size:10px;" ng-repeat="Data in LC_LOGISTIC_CONTAINER track by $index">
+                                                        <td> {{$index +1}}</td>
+                                                        <td width="14%">
+                                                            <select id="container_{{$index}}" class="container_{{$index}}" k-value-primitive="true" name="container" k-data-text-field="'CONTAINER_EDESC'" k-data-value-field="'CONTAINER_CODE'" k-ng-model="LC_LOGISTIC_CONTAINER[$index].CONTAINER_CODE" ng-model="LC_LOGISTIC_CONTAINER[$index].CONTAINER_CODE" kendo-drop-down-list style="width: 100%"
+                                                                    k-data-source="containerDatasource" k-option-label="'--Select Container--'" ng-disabled="!editcontainer"></select>
+                                                        </td>
+
+                                                        <td width="14%">
+                                                            <select id="shipmentload_{{$index}}" class="shipmentload_{{$index}}" k-value-primitive="true" name="shipmentload" k-ng-model="Data.LOAD_TYPE" ng-model="LC_LOGISTIC_CONTAINER[$index].LOAD_TYPE" kendo-drop-down-list style="width: 100%"
+                                                                    k-options="shipmentLoad" k-option-label="'--Select Load Type--'" ng-disabled="!editcontainer"></select>
+                                                        </td>
+                                                        <td><input type="text" id="CARRIER_NUMBER" name="CARRIER_NUMBER" ng-model="LC_LOGISTIC_CONTAINER[$index].CARRIER_NUMBER" ng-disabled="!editcontainer" class="form-control"></td>
+                                                        <td><input type="text" id="DETENTION_DAYS" name="DETENTION_DAYS" ng-model="LC_LOGISTIC_CONTAINER[$index].DETENTION_DAYS" ng-disabled="!editcontainer" class="form-control"></td>
+                                                        <td><input type="text" id="DEFAULT_AMOUNT" name="DEFAULT_AMOUNT" ng-model="LC_LOGISTIC_CONTAINER[$index].DEFAULT_AMOUNT" ng-disabled="!editcontainer" class="form-control"></td>
+                                                        <td><input type="text" id="PER_DAY_CHRAGE" name="PER_DAY_CHRAGE" ng-model="LC_LOGISTIC_CONTAINER[$index].PER_DAY_CHRAGE" ng-disabled="!editcontainer" class="form-control"></td>
+
+                                                        <td width="10%">
+                                                            <a href="" id="add_child_subledger" name="add_child_subledger" class="buttonadd" ng-click="add_childRouteContainer_element($index)"><i class="fa fa-plus"></i></a>
+                                                            <a href="javascript:void(0)" class="buttondelete" style="padding-top:0px !important;">
+                                                                <i class="fa fa-trash text-danger" data-tooltip="Remove item" ng-click="remove_childRouteContainer_element($index)"></i>
+                                                            </a>
+
+                                                        </td>
+
+                                                    </tr>
+
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                    </fieldset>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div ng-show="documentupload">
+                        <div class="col-sm-12 col-md-12">
+                            <div class="portlet-body">
+                                <fieldset class="bottom-margin">
+                                    <legend>Document Details</legend>
+                                    <div class="col-md-3">
+                                        <form action="~/Logistics/UploadImages" method="post" enctype="multipart/form-data" class="dropzone form-horizontal form-bordered" id="myAwesomeDropzone">
+                                            <div class="dz-message" data-dz-message><span>Drop files here or click to upload.</span></div>
+                                            <input type="text" style="display:none" ng-model="SerialNo" name="SerialNo" id="SerialNo" />
+                                            <input type="text" style="display:none" ng-model="lctrackno" name="lctrackno" id="lctrackno" />
+                                            <input type="text" style="display:none" ng-model="cinumber" name="cinumber" id="cinumber" />
+                                        </form>
+                                    </div>
+
+                                    <div class="col-md-9 top-gap bottom-gap" ng-repeat="issue in uploadfields">
+                                        <div class="col-sm-6 col-md-3">
+                                            <div class="form-group">
+                                                <label class="control-label">
+                                                    Document Name
+                                                </label>
+                                                <select class="documentname" k-value-primitive="true" k-data-text-field="'DOCUMENT_EDESC'" k-data-value-field="'DOCUMENT_CODE'" k-ng-model="uploadfields[$index].DOC_NAME" name="uploadfields[$index].DOC_NAME" ng-model="uploadfields[$index].DOC_NAME" kendo-drop-down-list style="width: 100%" k-option-label="'--Select Document Name--'"
+                                                        k-data-source="documentDatasource" ng-disabled="!editdocument"></select>
+
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6 col-md-3">
+                                            <div class="form-group">
+                                                <label class="control-label">Document Date</label>
+                                                <input type="text" name="uploadfields[$index].DOC_DATE" ng-model="uploadfields[$index].DOC_DATE" autocomplete="off" class="form-control maskdate maskdate_{{$index}}" ng-disabled="!editdocument" />
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6 col-md-3">
+                                            <div class="form-group">
+                                                <label class="control-label">
+                                                    Document Action
+                                                </label>
+                                                <select class="documentaction" k-value-primitive="true" k-ng-model="uploadfields[$index].DOC_ACTION" name="uploadfields[$index].DOC_ACTION" ng-model="uploadfields[$index].DOC_ACTION" kendo-drop-down-list style="width: 100%" k-data-source="docActionDatasource" ng-disabled="!editdocument"></select>
+
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6 col-md-3">
+                                            <div class="form-group">
+                                                <label class="control-label">Document Prepared Date</label>
+                                                <input type="text" name="docPreparedDate" ng-model="uploadfields[$index].DOC_PREPARED_DATE" autocomplete="off" class="form-control maskdate maskdate_{{$index}}" ng-disabled="!editdocument" />
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6 col-md-3">
+                                            <div class="form-group">
+                                                <label class="control-label">Estimated Received Date</label>
+                                                <input type="text" name="estReceivedDate" autocomplete="off" class="form-control maskdate maskdate_{{$index}}" ng-model="uploadfields[$index].DOC_EST_RECEIVED_DATE" ng-disabled="!editdocument" />
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6 col-md-3">
+                                            <div class="form-group">
+                                                <label class="control-label">Received Date</label>
+                                                <input type="text" name="ReceivedDate" autocomplete="off" class="form-control maskdate maskdate_{{$index}}" ng-model="uploadfields[$index].DOC_RECEIVED_DATE" ng-disabled="!editdocument" />
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6 col-md-3">
+                                            <div class="form-group">
+                                                <label class="control-label">Estimated Submitted Date</label>
+                                                <input type="text" name="estSubmittedDate" autocomplete="off" class="form-control maskdate maskdate_{{$index}}" ng-model="uploadfields[$index].DOC_EST_SUBMITTED_DATE" ng-disabled="!editdocument" />
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6 col-md-3">
+                                            <div class="form-group">
+                                                <label class="control-label">Submitted Date</label>
+                                                <input type="text" name="SubmittedDate" autocomplete="off" class="form-control maskdate maskdate_{{$index}}" ng-model="uploadfields[$index].DOC_SUBMITTED_DATE" ng-disabled="!editdocument" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="clearfix">
+                    </div>
+                    <div class="col-md-12">
+
+                        <kendo-grid id="grid" options="mainGridOptions" k-rebind="mainGridOptions">
+
+
+                            <div k-detail-template>
+
+                                <kendo-tabstrip>
+                                    <ul>
+                                        <li class="k-state-active">Info</li>
+                                        <li>Details</li>
+                                    </ul>
+
+                                    <div>
+                                        <div>
+                                            <div class="itemgrid" kendo-grid k-options="shipmentDetailitemGridOptions(dataItem)"></div>
+                                        </div>
+
+
+                                    </div>
+                                    <div>
+                                        <div class="details">
+
+                                            <table ng-repeat="items in dataItem.LOGISTIC_DETAILS" class="table-striped table-hover">
+                                                <tr>
+                                                    <td class="details-label"></td>
+                                                    <td class="details-value"></td>
+                                                    <td class="details-label"><b><u><i>Shipment Type</i></u></b></td>
+                                                    <td class="details-value"><b><u><i>{{items.SHIPMENT_TYPE}}</i></u></b></td>
+                                                    <td class="details-label"></td>
+                                                    <td class="details-value"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="details-label">Invoice Number:</td>
+                                                    <td class="details-value">{{items.INVOICE_NO}}</td>
+                                                    <td class="details-label">Contracter Name:</td>
+                                                    <td class="details-value">{{items.CONTRACTER_NAME}}</td>
+                                                    <td class="details-label">Contracter Address:</td>
+                                                    <td class="details-value">{{items.CONTRACTER_ADDRESS}}</td>
+                                                </tr>
+                                                <tr>
+                                                  
+                                                </tr>
+                                                <tr>
+                                                    <td class="details-label">Contract Amount:</td>
+                                                    <td class="details-value">{{items.CONTRACT_AMOUNT}}</td>
+                                                    <td class="details-label">Contracter Date:</td>
+                                                    <td class="details-value">{{items.CONTRACT_DATE | date:"MM/dd/yyyy"}}</td>
+                                                    <td class="details-label">Job Order No:</td>
+                                                    <td class="details-value">{{items.JOB_ORDER_NO}}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="details-label">Shipper Name:</td>
+                                                    <td class="details-value">{{items.SHIPPER_NAME}}</td>
+                                                    <td class="details-label">Shipper Address:</td>
+                                                    <td class="details-value">{{items.SHIPPER_ADDRESS}}</td>
+                                                </tr>
+                                                <tr> <td class="details-label">Source:</td></tr>
+                                                <tr>
+                                                    <td class="details-label">From Location:</td>
+                                                    <td class="details-value">{{items.FROM_LOCATION}}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="details-label">Source ETA:</td>
+                                                    <td class="details-value">{{items.SRC_ETA | date:"MM/dd/yyyy"}}</td>
+                                                    <td class="details-label">SourceATA:</td>
+                                                    <td class="details-value">{{items.SRC_ATA | date:"MM/dd/yyyy"}}</td>
+                                                    <td class="details-label">Source EDD:</td>
+                                                    <td class="details-value">{{items.SRC_ETD_DES | date:"MM/dd/yyyy"}}</td>
+
+                                                </tr>
+                                                <tr>
+                                                    <td class="details-label">Source ETD:</td>
+                                                    <td class="details-value">{{items.SRC_ETD | date:"MM/dd/yyyy"}}</td>
+                                                    <td class="details-label">Source ATA:</td>
+                                                    <td class="details-value">{{items.SRC_ATD | date:"MM/dd/yyyy"}}</td>
+                                                </tr>
+                                                <tr> <td class="details-label">Destination:</td></tr>
+                                                <tr>
+                                                    <td class="details-label">To Location:</td>
+                                                    <td class="details-value">{{items.TO_LOCATION}}</td>
+
+                                                </tr>
+                                                <tr>
+
+                                                    <td class="details-label">Destination ETA:</td>
+                                                    <td class="details-value">{{items.SRC_ETD_DES | date:"MM/dd/yyyy"}}</td>
+                                                    <td class="details-label">Destination ATA:</td>
+                                                    <td class="details-value">{{items.DES_ATA | date:"MM/dd/yyyy"}}</td>
+                                                    <td class="details-label">Destination EDD:</td>
+                                                    <td class="details-value">{{items.DES_ETD_NEXT_DES | date:"MM/dd/yyyy"}}</td>
+                                                </tr>
+                                                <tr>
+
+
+                                                    <td class="details-label">Destination ETD:</td>
+                                                    <td class="details-value">{{items.DES_ETD | date:"MM/dd/yyyy"}}</td>
+                                                    <td class="details-label">Destination ATD:</td>
+                                                    <td class="details-value">{{items.DES_ATD | date:"MM/dd/yyyy"}}</td>
+                                                </tr>
+
+                                                <tr ng-if="items.SHIPMENT_TYPE=='AIR'">
+                                                    <td class="details-label">Airway Bill No:</td>
+                                                    <td class="details-value">{{items.AIR_AWB_NO}}</td>
+                                                    <td class="details-label">Airway Bill Date:</td>
+                                                    <td class="details-value">{{items.AIR_AWB_DATE | date:"MM/dd/yyyy"}}</td>
+                                                    <td class="details-label">Gross Weight:</td>
+                                                    <td class="details-value">{{items.AIR_GROSS_WEIGHT}}</td>
+                                                </tr>
+                                                <tr ng-if="items.SHIPMENT_TYPE=='AIR'">
+                                                    <td class="details-label">Chargeable Weight:</td>
+                                                    <td class="details-value">{{items.AIR_CHARGEABLE_WEIGHT}}</td>
+                                                    <td class="details-label">No. oF Palettes:</td>
+                                                    <td class="details-value">{{items.AIR_PACK}}</td>
+                                                </tr>
+                                                <tr ng-if="items.SHIPMENT_TYPE=='SEA'">
+                                                    <td class="details-label">Lading No:</td>
+                                                    <td class="details-value">{{items.SEA_BL_NO}}</td>
+                                                    <td class="details-label">Lading Date:</td>
+                                                    <td class="details-value">{{items.SEA_BL_DATE | date:"MM/dd/yyyy"}}</td>
+                                                    <td class="details-label">Cbm Sea:</td>
+                                                    <td class="details-value">{{items.SEA_CBM}}</td>
+                                                </tr>
+                                                <tr ng-if="items.SHIPMENT_TYPE=='SEA'">
+                                                    <td class="details-label">Vessel No:</td>
+                                                    <td class="details-value">{{items.SEA_VESSEL_NO}}</td>
+                                                </tr>
+                                                <tr ng-if="items.SHIPMENT_TYPE=='TRAIN'">
+                                                    <td class="details-label">Train Bill No:</td>
+                                                    <td class="details-value">{{items.TRAIN_RR_NO}}</td>
+                                                    <td class="details-label">Train Bill Date:</td>
+                                                    <td class="details-value">{{items.TRAIN_RR_DATE | date:"MM/dd/yyyy"}}</td>
+
+                                                </tr>
+                                                <tr ng-if="items.SHIPMENT_TYPE=='ROAD'">
+                                                    <td class="details-label">Road Bill No:</td>
+                                                    <td class="details-value">{{items.ROAD_LR_NO}}</td>
+                                                    <td class="details-label">Road Bill Date:</td>
+                                                    <td class="details-value">{{items.ROAD_LR_DATE | date:"MM/dd/yyyy"}}</td>
+                                                    <td class="details-label">Road Truck No:</td>
+                                                    <td class="details-value">{{items.ROAD_TRUCK_NO}}</td>
+                                                </tr>
+                                                <tr ng-if="items.SHIPMENT_TYPE=='ROAD'">
+                                                    <td class="details-label">Road Transporter Name:</td>
+                                                    <td class="details-value">{{items.ROAD_TRANSPORTER_NAME}}</td>
+                                                    <td class="details-label">Road Bill Date:</td>
+                                                    <td class="details-value">{{items.ROAD_TRANSPORTER_NAME}}</td>
+
+                                                </tr>
+                                            </table>
+
+
+
+
+                                        </div>
+                                    </div>
+
+                                </kendo-tabstrip>
+                            </div>
+
+                        </kendo-grid>
+                        @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                        <div class="modal fade" id="historymodal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel">
+                            <div class="modal-dialog modal_lg_custom">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <div class="form-inline">
+
+                                        </div>
+                                        <h4 class="modal-title">Document History</h4>
+                                    </div>
+                                    <div id="example" ng-app="KendoDemos">
+                                        <div class="demo-section k-content">
+
+                                            <div kendo-tab-strip k-content-urls="[ null, null]">
+                                                <!-- tab list -->
+                                                <ul>
+                                                    <li class="k-state-active">Logistic Detail History</li>
+                                                    <li>Document History</li>
+                                                </ul>
+
+                                                <div style="padding: 1em">
+                                                    <div class="historyitemgrid" k-rebind="historyitemGridOptions" kendo-grid k-options="historyitemGridOptions(dataItem)"></div>
+                                                </div>
+
+                                                
+
+                                                <div style="padding: 1em">
+                                                    <div class="historydocumentgrid" k-rebind="historydocumentGridOptions" kendo-grid k-options="historydocumentGridOptions(dataItem)"></div>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-success pull-right" data-dismiss="modal" aria-hidden="true">Ok</button>
+
+                                    </div>
+                                </div>
+
+
+                            </div>
+                        </div>
+                        <div class="modal fade" id="FilterModal" role="dialog">
+                            <div class="modal-dialog">
+
+                                <!-- Filter Modal content-->
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                        <h4 class="modal-title">Filter</h4>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="row">
+                                            <div class="col-sm-12 col-md-12">
+                                                <div class="form-group">
+                                                    <label class="control-label">
+                                                        Invoice Number
+                                                    </label>
+                                                    <input id="filterDataInvoiceNumber" ng-model="filterData.InvoiceNumber" name="InvoiceNumber" kendo-auto-complete
+                                                           k-data-text-field="'INVOICE_NUMBER'"
+                                                           k-data-value-field="'INVOICE_CODE'"
+                                                           k-data-source="ipPurchaseOrderfilter"
+                                                           k-min-length="1"
+                                                           k-value-primitive="true"
+                                                           k-placeholder="'Select Commercial Number...'"
+                                                           style="width: 100%" />
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="submit" ng-click="Filter()" class="btn buttongreen btn-sm">Filter</button>
+                                        <button type="button" class="btn btn-default" ng-click="CancelFilter()" data-dismiss="modal">Cancel</button>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div><!--/portlet-body-->
+        </div><!-- /portlet-->
+        <!--container start -->
+        <!-- Trigger the modal with a button -->
+        <!--Container Modal -->
+        <div class="modal fade" id="ContentModal" role="dialog">
+            <div class="modal-dialog inputcontent">
+
+                <!-- Modal content-->
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Enable/Disable</h4>
+                    </div>
+                    <div class="modal-body">
+                        <!------------------------------------------For All Enable/Disable------------------------------------>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <input type="checkbox" ng-change='AllcheckboxEnableDisable()' id="Allcheckbox" ng-model="Allcheckbox" />
+                                All
+                            </div>
+                        </div>
+                        <!------------------------------------------For Air-------------------------------------->
+                        <div ng-show="showforair">
+                            <input type="checkbox" ng-model="si_check_awb" class="enabledisable" />
+                            Airway Bill No. <br>
+
+                            <input type="checkbox" ng-model="si_check_awbdate" class="enabledisable" />
+                            Airway Bill Date <br>
+
+                            <input type="checkbox" ng-model="si_check_grosswhtair" class="enabledisable" />
+                            Gross Weight Air <br>
+
+                            <input type="checkbox" ng-model="si_check_chargeablewhtair" class="enabledisable" />
+                            Chargeable Weight Air <br>
+
+                            <input type="checkbox" ng-model="si_check_airpack" class="enabledisable" />
+                            No. of Palettes <br>
+
+                        </div>
+                        <!------------------------------------------For Sea-------------------------------------->
+                        <div ng-show="showforsea">
+                            <input type="checkbox" ng-model="si_check_lading" class="enabledisable" />
+                            Lading Bill No. <br>
+
+                            <input type="checkbox" ng-model="si_check_ladingdate" class="enabledisable" />
+                            Lading Bill Date <br>
+
+                            <input type="checkbox" ng-model="si_check_grossweightsea" class="enabledisable" />
+                            Gross Weight Sea <br>
+
+                            <input type="checkbox" ng-model="si_check_cbmsea" class="enabledisable" />
+                            Measurement weight (CBM for sea) <br>
+
+                            <input type="checkbox" ng-model="si_check_vesselno" class="enabledisable" />
+                            Vessel No <br>
+                        </div>
+                        <!------------------------------------------For Road------------------------------------->
+                        <div ng-show="showforroad">
+                            <input type="checkbox" ng-model="si_check_road" class="enabledisable" />
+                            Road Bill No. <br>
+
+                            <input type="checkbox" ng-model="si_check_roaddate" class="enabledisable" />
+                            Road Bill Date <br>
+
+                            <input type="checkbox" ng-model="si_check_truck" class="enabledisable" />
+                            Truck No <br>
+
+                            <input type="checkbox" ng-model="si_check_transname" class="enabledisable" />
+                            Transporter Name <br>
+
+                            <input type="checkbox" ng-model="si_check_transaddress" class="enabledisable" />
+                            Transporter Address <br>
+
+                        </div>
+                        <!------------------------------------------For Train------------------------------------>
+                        <div ng-show="showfortrain">
+                            <input type="checkbox" ng-model="si_check_train" class="enabledisable" />
+                            Train Bill No. <br>
+
+
+                            <input type="checkbox" ng-model="si_check_traindate" class="enabledisable" />
+                            Train Bill Date <br>
+
+                        </div>
+                        <!------------------------------------------For Common------------------------------------>
+                        <div ng-show="showforcommon">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <input type="checkbox" ng-model="si_check_fromLocation" class="enabledisable" />
+                                    From Location
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="checkbox" ng-model="si_check_toLocation" class="enabledisable" />
+                                    To Location
+                                </div>
+                              
+                            </div>
+
+                            <!------------------------------------------Date Time------------------------------------>
+                            <div ng-show="!showforair">
+                                <!------------------------------------------Source------------------------------------>
+                                <div>
+                                    <h5><b>Source </b></h5>
+
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <input type="checkbox" ng-model="si_check_SRC_ETA" class="enabledisable" />
+                                            Estimated Time of Arrival (ETA)
+                                        </div>
+                                        <div class="col-md-4">
+                                            <input type="checkbox" ng-model="si_check_SRC_ATA" class="enabledisable" />
+                                            Actual Time of Arrival (ATA)
+                                        </div>
+                                        <div class="col-md-4">
+                                            <input type="checkbox" ng-model="si_check_SRC_ETD_DES" class="enabledisable" />
+                                            Estimated Time of Delivery (EDD)
+                                        </div>
+                                        <div class="col-md-4">
+                                            <input type="checkbox" ng-model="si_check_SRC_ETD" class="enabledisable" />
+                                            Estimated Time of Departure (ETD)
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <input type="checkbox" ng-model="si_check_SRC_ATD" class="enabledisable" />
+                                            Actual Time of Departure (ATD)
+                                        </div>
+
+                                    </div>
+                                </div>
+                                <!------------------------------------------Destination------------------------------------>
+                                <div style="margin-bottom:15px;">
+                                    <h5><b> Destination</b></h5>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <input type="checkbox" ng-model="si_check_DES_ETA" class="enabledisable" />
+                                            Estimated Time of Arrival (ETA)
+                                        </div>
+                                        <div class="col-md-4">
+                                            <input type="checkbox" ng-model="si_check_DES_ATA" class="enabledisable" />
+                                            Actual Time of Arrival (ATA)
+                                        </div>
+                                        <div class="col-md-4">
+                                            <input type="checkbox" ng-model="si_check_DES_ETD_NEXT_DES" class="enabledisable" />
+                                            Estimated Time of Delivery (EDD)
+                                        </div>
+                                        <div class="col-md-4">
+                                            <input type="checkbox" ng-model="si_check_DES_ETD" class="enabledisable" />
+                                            Estimated Time of Departure (ETD)
+                                        </div>
+                                        <div class="col-md-4">
+                                            <input type="checkbox" ng-model="si_check_DES_ATD" class="enabledisable" />
+                                            Actual Time of Departure (ATD)
+                                        </div>
+                                    </div>
+
+                                </div>
+
+
+                                <div class="row" style="margin-bottom:15px;">
+                                    <div class="col-md-4">
+                                        <input type="checkbox" ng-model="si_check_contractorCode" class="enabledisable" />
+                                        Contractor Name
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="checkbox" ng-model="si_check_contractorAddress" class="enabledisable" />
+                                        Contractor Address
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="checkbox" ng-model="si_check_contractAmt" class="enabledisable" />
+                                        Contract Amount
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="checkbox" ng-model="si_check_contractDate" class="enabledisable" />
+                                        Contract Date
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="checkbox" ng-model="si_check_jobOrderNo" class="enabledisable" />
+                                        Job Order No
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="checkbox" ng-model="si_check_shipperName" class="enabledisable" />
+                                        Shipper Name
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="checkbox" ng-model="si_check_shipperAddress" class="enabledisable" />
+                                        Shipper Address
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="checkbox" ng-model="si_check_issuingcarrer" class="enabledisable" />
+                                        Issuing Carrier
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="checkbox" ng-model="si_check_clearingAgent" class="enabledisable" />
+                                        Clearing Agent
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="checkbox" ng-model="si_check_remarks" class="enabledisable" />
+                                        Remarks
+                                    </div>
+
+                                </div>
+
+
+                            </div>
+
+                            <!------------------------------------------For Container------------------------------------>
+                            <div class="row" ng-show="!showforair">
+                                <div class="col-md-4">
+                                    <input type="checkbox" ng-model="editcontainer" class="enabledisable" />
+                                    Container
+                                </div>
+                            </div>
+
+                            <!------------------------------------------For Document------------------------------------>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <input type="checkbox" ng-model="editdocument" class="enabledisable" />
+                                    Document
+                                </div>
+                            </div>
+                            <!------------------------------------------For extra Document------------------------------------>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <input type="checkbox" ng-model="editextradocument" class="enabledisable" />
+                                    Logistic Document
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" data-dismiss="modal">Ok</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <!--container end -->
+        </div>
+    </div>
+
+
+    <script type="text/javascript">
+
+        $("#check").click(function () {
+            alert("yes");
+        });
+        $('.nav-tabs a').on('click', function (e) {
+
+            e.preventDefault();
+
+        });
+
+        var count = 1;
+        myDropzone = new Dropzone('#myAwesomeDropzone', { // Make the whole body a dropzone
+            thumbnailWidth: 50,
+            thumbnailHeight: 50,
+            autoDiscover: false,
+            autoProcessQueue: false,
+            addRemoveLinks: true,
+            paramName: "inputFiles",
+            uploadMultiple: true,
+            parallelUploads: 100,
+            maxFiles: 100,
+            maxFileSize: 10,
+        });
+
+        myDropzone.on("success", function (file, responseText) {
+
+           
+
+        });
+        myDropzone.on("addedfile", function (file, responseText, option) {
+
+            if (responseText != "edit") {
+                var lengths = myDropzone.files.length;
+                file["lengths"] = lengths;
+                angular.element('#LogisticsCtrl').scope().addIssue();
+                $(".dz-message").css({ "display": "none" });
+            }
+        });
+        myDropzone.on("removedfile", function (file) {
+
+            var totallengths = myDropzone.files.length;
+            file["lengths"] = totallengths;
+            angular.element('#LogisticsCtrl').scope().RemoveIssue(file.lengths, totallengths);
+            var $this = $(this);
+            if (file.hasOwnProperty("LC_TRACK_NO")) {
+                var imageremovedetails = {
+                    SNO: file.SNO,
+                    LC_TRACK_NO: file.LC_TRACK_NO,
+                    INVOICE_NO: file.INVOICENO,
+                };
+
+                $.ajax({
+                    url: "/api/Logistics/RemoveLogisticImage",
+                    type: "POST",
+                    dataType: "json",
+                    data: imageremovedetails,
+                    success: function (result) {
+                        RefreshGrid();
+
+                        displayPopupNotification("Succesfully Removed File.", "Success");
+                    },
+                    error: function (result) {
+
+                    }
+                });
+            }
+        });
+        myDropzone.on("complete", function (file) {
+
+            myDropzone.removeFile(file);
+        });
+        $(document).on('click', '.maskdate', function () {
+            var me = $(this);
+
+            me.datepicker({
+                showOn: 'focus',
+                altFormat: "mm/dd/yy",
+                dateFormat: "mm/dd/yy",
+                changeMonth: true,
+                changeYear: true,
+                showButtonPanel: true
+
+            }).focus();
+        }).on('focus', '.maskdate', function () {
+            var me = $(this);
+            me.mask('99/99/9999');
+        }).on('change', '.maskdate', function () {
+            var date = $(this).val();
+            var arr = date.split('/');
+            var month = (arr[0]);
+            var day = (arr[1]);
+            if (month > 12 || day > 32) {
+
+                $(this).val(new Date('mm/dd/yy'));
+            }
+
+
+        });
+        function RefreshGrid() {
+            $("#grid").data("kendoGrid").dataSource.read();
+        }
+
+    </script>

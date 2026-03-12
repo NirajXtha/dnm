@@ -1,0 +1,650 @@
+﻿@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+<style>
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+        width: 183px !important;
+    }
+
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+         font-size:11px;
+    }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+</style>
+<div class="page-content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+            @*<li>
+                <i class="fa fa-home"></i>
+                <a href="/sales/SalesHome/Dashboard">Home</a>
+                <i class="fa fa-angle-right"></i>
+            </li>*@
+            @*<li>
+                <a href="#/ScheduleReport/PaymentScheduleReport">Payment Schedule Report</a>
+                <i class="fa fa-angle-right"></i>
+            </li>*@
+            @*<li>
+                <a href="sales/saleshome/dashboard/Dashboard">Organiser</a>
+                <i class="fa fa-angle-right"></i>
+            </li>*@
+        </ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+
+                <div class="actions">
+                    @*<div class="btn-group">
+            @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+        </div>*@
+                    @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                   {
+                       ShowSupplierFilter = true,
+                       //ShowCustomerFilter = true,
+                       //ShowProductFilter = true,
+                       //ShowCategoryFilter = true,
+                       //ShowLocationFilter = true,
+                       //ShowDocumentFilter = true,
+                       //ShowPartyTypeFilter = true,
+                       //ShowCompanyFilter = true,
+                       //ShowBranchFilter = true
+                   })
+                    </div>
+                    @Html.Partial("~/Views/Shared/Controls/_reportFilterSettings.cshtml", new ReportFilterSettingsModel()
+               {
+                   ShowAmountFigureFilter = true,
+                   ShowAmountFilter = true,
+                   ShowAmountRoundUpFilter = true,
+                   ShowRangeAmountFilter = true
+               })
+                    @Html.Partial("~/Views/Shared/Controls/ComposeMail.cshtml")
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#" data-placement="left" data-toggle="tooltip" data-html="true" title="Refresh">
+                        <i class="icon-control-play"></i>
+                    </a>
+
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "PaymentSchedule")
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+@Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div id="grid"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+<script src="@Scripts.Url("~/JS/DateFilter.js?V5")" type="text/javascript"></script>
+<script src="@Scripts.Url("~/JS/dynamicReport.js?V2")" type="text/javascript"></script>
+<script type="text/javascript">
+    var fileMailSender = new ManualEmailSender({
+        GridName: "grid",
+        GridRefreshTriggerName: "RunQuery",
+        reportName: "ReceiptSchedule",
+    });
+    fileMailSender.init();
+</script>
+<script type="text/javascript">
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+
+</script>
+<script>
+
+    var reportConfig = GetReportSetting("PaymentSchedule");
+    function getDateFormat(date) {
+        return kendo.format("{0:" + reportConfig.dateFormat + "}", date);
+    }
+
+    $(".applydp").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+        $(this).closest("#applydp").modal('hide');
+    });
+
+    $("#loadAdvancedFilters").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+        //Date-filter-range display on top
+        if ($("#fromInputDateVoucher").val() != undefined && $("#fromInputDateVoucher").val() != "") {
+            var value =  $("#fromInputDateVoucher").val() + " To " + $("#toInputDateVoucher").val();
+            if (value != " To ") {
+                $("#date-filter-value").html("<span class='date-filter-icon'>" + value + "</span>");
+            }
+            else {
+                $("#date-filter-value").html();
+            }
+
+        }
+        else {
+            $("#date-filter-value").html();
+        }
+    });
+
+    $("#RunQuery").click(function (evt) {
+        evt.preventDefault();
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/Schedule/GetSupplierWisePaymentSchedule"
+        KendoGridRefresh(urltest);
+    });
+    // this function is called by excelexport
+    function myCustomFunction(arrey, header) {
+        var result = $.grep(arrey, function (e) { return e.CHARGE_CODE === header; });
+
+        var value = 0;
+        if (result.length == 0) {
+
+        } else if (result.length == 1) {
+            value = result[0].CHARGE_AMOUNT
+        }
+        return value;
+    }
+    function myCustomFunctionWithTitle(arrey, header) {
+        var result = $.grep(arrey, function (e) { return e.CHARGE_EDESC === header.value; });
+
+        var value = 0;
+        if (result.length == 0) {
+
+        } else if (result.length == 1) {
+            value = result[0].CHARGE_AMOUNT
+        }
+        return value;
+    };
+
+    function CalcDate(Date, Days, add) {
+
+        var startdate = moment(Date).format("DD.MM.YYYY");
+        var new_date = moment(startdate, "DD-MM-YYYY").add('days', Days);
+        if (add == true) {
+            var tempDate = moment(new_date, reportConfig.dateFormat).format(reportConfig.dateFormat.toUpperCase())
+            return kendo.format("{0:" + reportConfig.dateFormat + "}", tempDate);
+        }
+
+        else {
+            var now = moment();
+            var overDueDays = now.diff(new_date, "days");
+            return overDueDays;
+        }
+    }
+
+
+    function CalcBalanceAmount(grandTotal, dr, cr) {
+        var ds = $("#grid").data("kendoGrid").dataSource;
+        if (grandTotal == true)
+        {
+            var aggregates = ds.aggregates();
+            var grandSum = aggregates.BillAmount.sum - aggregates.RecAmount.sum;
+            if (grandSum > 0)
+                return kendo.toString(grandSum,"n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter")) + " Dr";
+            else
+                return kendo.toString(Math.abs(grandSum), "n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter")) + " Cr";
+
+        }
+        else {
+            var grandSum = dr - cr;
+            if (grandSum > 0)
+                return kendo.toString(grandSum, "n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter")) + " Dr";
+            else
+                return kendo.toString(Math.abs(grandSum), "n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter")) + " Cr";
+        }
+
+    }
+
+    function balanceAmount(amount)
+    {
+        if (amount > 0)
+            return kendo.toString(amount, "n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter")) + " Dr";
+        else
+            return kendo.toString(Math.abs(amount), "n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter")) + " Cr";
+    }
+
+    function BindGrid(readurl) {
+        var companyName = ('@workingContent.CurrentUserinformation.company_name');
+        var fromADdate = $("#FromDateVoucher").val()
+        var toADdate = $("#ToDateVoucher").val();
+        var fromBSdate = $("#fromInputDateVoucher").val();
+        var toBSdate = $("#toInputDateVoucher").val();
+        var branches = ReportFilter.getBranchs();
+
+        reportConfig = GetReportSetting("PaymentSchedule");
+        var dataSource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: {
+                    url: readurl, // <-- Get data from here.
+                    dataType: "json", // <-- The default was "jsonp".
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8"
+                },
+                parameterMap: function (options, type) {
+                    var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+                    delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                    delete paramMap.$format; // <-- remove format parameter.
+                    return paramMap;
+                }
+            },
+
+            error: function (e) {
+                displayPopupNotification("Sorry error occured while processing data", "error");
+            },
+            serverFiltering: false,
+            serverAggregates: true,
+            schema: {
+                data: "PaymentScheduleModel", // records are returned in the "data" field of the response
+                total: "total", // total number of records is in the "total" field of the response
+                aggregates: "AggregationResult",
+                model: {
+                    fields: {
+                        Voucher_Date: { type: "date" },
+                        Credit_Days: { type: "number" },
+                        Due_Date: { type: "date" },
+                        BillAmount: { type: "number" },
+                        RecAmount: { type: "number" },
+                        BalanceAmount: { type: "number" },
+                        OverDueDays: {type: "number"}
+                    }
+                }
+            },
+            group: {
+                field: "SupplierName", aggregates: [
+                     { field: "BillAmount", aggregate: "sum" },
+                     { field: "RecAmount", aggregate: "sum" },
+                     { field: "BalanceAmount", aggregate: "sum" }
+                ]
+            },
+            aggregate: [
+                        { field: "BillAmount", aggregate: "sum" },
+                        { field: "RecAmount", aggregate: "sum" },
+                        { field: "BalanceAmount", aggregate: "sum" },
+            ],
+            serverPaging: false,
+            serverSorting: false,
+            pageSize: reportConfig.defaultPageSize,
+        });
+
+
+        var grid = $("#grid").kendoGrid({
+            dataSource: dataSource,
+            height: window.innerHeight - 50,
+            sortable: true,
+            reorderable: true,
+            groupable: true,
+            resizable: true,
+            filterable: {
+                extra: false,
+                operators: {
+                    number: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "is greater than or equal to	",
+                        gt: "is greater than",
+                        lte: "is less than or equal",
+                        lt: "is less than",
+                    },
+                    string: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        startswith: "Starts with	",
+                        contains: "Contains",
+                        doesnotcontain: "Does not contain",
+                        endswith: "Ends with",
+                    },
+                    date: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "Is after or equal to",
+                        gt: "Is after",
+                        lte: "Is before or equal to",
+                        lt: "Is before",
+                    }
+                }
+            },
+            columnMenu: true,
+            columnMenuInit: function (e) {
+                    wordwrapmenu(e);
+                    checkboxItem = $(e.container).find('input[type="checkbox"]');
+                },
+                columnShow: function (e) {
+                    if($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                        SaveReportSetting('PaymentSchedule', 'grid');
+                },
+                columnHide: function (e) {
+                    if($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                        SaveReportSetting('PaymentSchedule', 'grid');
+                },
+                pageable: {
+                    refresh: true,
+                    pageSizes: reportConfig.itemPerPage,
+                    buttonCount: 5
+                },
+            //  autoBind: true,
+            scrollable: {
+                virtual: true
+            },
+
+            //excel and pdf (dushant)
+
+            toolbar: kendo.template($("#toolbar-template").html()),
+            excel:{
+                fileName: "Payment schedule",
+                allPages:true,
+            },
+
+            excelExport: function (e) {
+                var sheet = e.workbook.sheets[0];
+                var datasource = $("#grid").data("kendoGrid");
+                //var data = datasource.dataSource.data().fetch();
+                var data = e.data;
+
+                var heardervalue = [];
+                var template = kendo.template(this.columns[3].template);
+                var template2 = kendo.template(this.columns[7].template);
+
+
+                for (var i = 0; i < sheet.rows.length; i++) {
+
+
+                    if (i === 0)
+                        continue;
+
+                    var row = sheet.rows[i];
+                    if (row.cells.length == 9) {
+
+                        if (row.cells[1].value != undefined && row.cells[2].value != undefined) {
+                            var dataItem = {
+                                //Due_Date: row.cells[3].value,
+                                Voucher_Date: row.cells[2].value,
+                                Credit_Days: row.cells[3].value
+                            };
+
+                            row.cells[4].value = template(dataItem);
+                            row.cells[8].value = template2(dataItem);
+                        }
+                        else {
+                            for (var b = 0; b < row.cells.length; b++) {
+
+                                if (row.cells[b] != undefined)
+                                    row.cells[b].value = $(row.cells[b].value).text();
+
+                            }
+
+                        }
+
+                    }
+                }
+
+                //adding header for the exported excel report
+                var rows = e.workbook.sheets[0].rows;
+                rows.unshift({
+                    height: 20,
+                    cells: [{
+                        value: "Payment Schedule Report".split('').join(' '),
+                        //background: "#FFFFFF",
+                        //textAlign: "center",
+                        colSpan: 10,
+                        fontSize: 12,
+                    }]
+                });
+                //rows.unshift({
+                //    height: 20,
+                //    cells: [{
+                //        value: "From :- " + fromADdate + "(" + fromBSdate + ")" + "\t To :- " + toADdate + "(" + toBSdate + ")",
+                //        //background: "#FFFFFF",
+                //        //textAlign: "center",
+                //        colSpan: 10,
+                //        fontSize: 12,
+                //    }]
+                //});
+                //for (var companyCount = 0; companyCount < branches.length; companyCount++) {
+                //    rows.unshift({
+                //        height: 20,
+                //        cells: [{
+                //            value: branches[companyCount].Company + " :- " + branches[companyCount].Branches.join(','),
+                //            //background: "#FFFFFF",
+                //            //textAlign: "center",
+                //            colSpan: 10,
+                //            fontSize: 12,
+
+                //        }]
+                //    });
+                //}
+                //rows.unshift({
+                //    height: 20,
+                //    cells: [{
+                //        value: companyName.split('').join(' '),
+                //        //background: "#FFFFFF",
+                //        //textAlign: "center",
+                //        colSpan: 10,
+                //        fontSize: 12,
+                //    }]
+                //});
+                var filterText = $("#AdvanceFilter").attr('data-original-title');
+                if (filterText.indexOf('|') < 0) {
+                    filterText = $((filterText).replace(/<strong>/g, "|")).text().replace('|', '').split('|').reverse();;
+                    $.each(filterText, function (k, item) {
+                        rows.unshift({
+                            cells: [{ value: item, colSpan: 10 }]
+                        });
+                    });
+                }
+                if (filterText.toString().indexOf('Date Range') < 0) {
+                    rows.unshift({
+                        cells: [{ value: "From :- " + fromADdate + "(" + fromBSdate + ")" + "\t To :- " + toADdate + "(" + toBSdate + ")", colSpan: 10 }]
+                    });
+                }
+                for (var companyCount = 0; companyCount < branches.length; companyCount++) {
+                    rows.unshift({
+                        cells: [{ value: branches[companyCount].Company + " :- " + branches[companyCount].Branches.join(','), colSpan: 10 }]
+                    });
+                }
+                rows.unshift({
+                    cells: [{ value: companyName.split('').join(' '), colSpan: 10 }]
+                });
+            },
+
+            pdf:{
+                FileName: "Payment Schedule",
+                allPages: true,
+                pageSize: "auto",
+                avoidLinks: true,
+                margin:
+                    {
+                        top: "2m",
+                        right: "1m",
+                        left: "1m",
+                        buttom:"1m",
+                    },
+                landscape: true,
+                repeatHeaders: true,
+                scale:0.8,
+            },
+
+            dataBound: function (o) {
+                var grid = o.sender;
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.length;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    displayPopupNotification("No Data Found Given Date Filter.", "info");
+                }
+                else {
+                    var g = $("#grid").data("kendoGrid");
+                    for (var i = 0; i < g.columns.length; i++) {
+                        g.showColumn(i);
+                    }
+                    $("div.k-group-indicator").each(function (i, v) {
+                        g.hideColumn($(v).data("field"));
+                    });
+                }
+                 UpdateReportUsingSetting("PaymentSchedule", "grid");
+            },
+            columns: [
+
+                          {
+                              field: "Voucher_No",
+                              title: "Bill No.",
+                              width: "70px",
+                          },
+                          {
+                              field: "Voucher_Date",
+                              title: "Bill Date",
+                              width: "90px",
+                              format: "{0:" + reportConfig.dateFormat + "}",
+                              attributes: {
+                                  style: "text-align: right;"
+                              },
+
+                          },
+                          {
+                              field: "Credit_Days",
+                              title: "Credit Days",
+                              width: "90px",
+
+                              attributes: {
+                                  style: "text-align: right;"
+                              },
+                          },
+                          {
+                              field: "Due_Date",
+                              title: "Due Date",
+                              width: "90px",
+                              template: "#= CalcDate(Voucher_Date,Credit_Days, true) #",
+                              format: "{0:dd-MMM-yyyy}",
+                              attributes: {
+                                  style: "text-align: right;"
+                              },
+                              footerTemplate: '<span style="float:right">#= "Grand Total" #</span>',
+                              groupFooterTemplate: '<span style="float:right">#= "Total" #</span>',
+
+                          },
+                          {
+                              field: "BillAmount",
+                              title: "Bill Amt",
+                              width: "90px",
+                              attributes: {
+                                  style: "text-align: right;"
+                              },
+                              format: "{0:n" + ReportFilter.parseDecimalPlace('AmountRoundUpFilter').toString() + "}",
+                              aggregates: ["sum"],
+                              footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()) + " Dr"#</span>',
+                              groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum,"n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()) + " Dr"#</span>',
+                          },
+                          {
+                              field: "RecAmount",
+                              title: "Paid Amt",
+                              width: "90px",
+                              attributes: {
+                                  style: "text-align: right;"
+                              },
+                              format: "{0:n" + ReportFilter.parseDecimalPlace('AmountRoundUpFilter').toString() + "}",
+                              aggregates: ["sum"],
+                              footerTemplate: '<span style="float:right">#= kendo.toString(sum,"n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()) + " Cr"#</span>',
+                              groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum,"n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()) + " Cr"#</span>',
+                          },
+                           {
+                               field: "BalanceAmount",
+                               title: "Balance Amt",
+                               width: "90px",
+                               attributes: {
+                                   style: "text-align: right;"
+                               },
+                               template: '#: balanceAmount(BalanceAmount)#',
+                               aggregates: ["sum"],
+                               footerTemplate: '<span style="float:right">#= CalcBalanceAmount(true,0,0)#</span>',
+                               groupFooterTemplate: '<span style="float:right">#=CalcBalanceAmount(false,data.BillAmount.sum,data.RecAmount.sum)#</span>',
+
+                           },
+                            {
+                                field: "OverDueDays",
+                                title: "Over Due Days",
+                                width: "90px",
+                                template: "#= CalcDate(Voucher_Date,Credit_Days, false) #",
+                                attributes: {
+                                    style: "text-align: right;"
+                                },
+                            },
+            ]
+
+        });
+
+        var companyName = @Html.Raw(Json.Encode(workingContent.CurrentUserinformation.company_name));
+         var branchName = @Html.Raw(Json.Encode(workingContent.CurrentUserinformation.branch_name));
+
+        UniversalGridPrint.init({
+            reportName: "Payment Schedule Report",
+            companyName: companyName,
+            branchName: branchName
+        });
+
+    };
+
+
+    function KendoGridRefresh(readUrl) {
+        $('#grid').val('');
+        $('#grid').html('');
+        BindGrid(readUrl)
+    }
+    $(document).ready(function () {
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/Schedule/GetSupplierWisePaymentSchedule"
+        var partialUrl = window.location.protocol + "//" + window.location.host + "/Report/GetDateField";
+        $.get(partialUrl, true, function (data) {
+            $('#filterModal').find('.modal-body').append("<div class='btn-group'>" + data + "</div>");
+            DateFilter.init();
+             consolidate.init();
+        });
+
+        $("#filterModal").modal('show');
+
+    });
+
+</script>
+

@@ -1,0 +1,357 @@
+﻿@using NeoErp.Core.Models;
+
+<style>
+    .collectionDetail {
+        width: 90%;
+    }
+
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+    }
+
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+         font-size:11px;
+    }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    a.k-button.k-button-icontext.k-grid-excel {
+        float: right;
+    }
+
+    tr.k-group-footer {
+        text-align: right !important;
+    }
+</style>
+
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb"></ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+
+                <div class="actions">
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                    </div>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                   {
+                       ShowDistEmployeeFilter = true,
+                       ShowItemBrandFilter=true,
+                   })
+                    </div>
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery">
+                        <i class="icon-control-play"></i>
+                    </a>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "spRouteReport")
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <div class="pull-right text-danger" style="margin-top:10px;margin-right:10px;">
+            <div id="distnceTravelled">Distance Travelled = 0.0 KM</div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div id="map" style="height:500px;border: 2px solid #242222;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+<script>
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+</script>
+<script src="@Scripts.Url("~/JS/reportFilter.js")"></script>
+<script src="@Scripts.Url("~/JS/DateFilter.js?V5")" type="text/javascript"></script>
+<script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js?V2")"></script>
+<script>
+    var reportConfig = GetReportSetting("spRouteReport");
+
+    function createSourceFilter() {
+        //adding a new select in existing model
+        var FilterModelBody = $("#filterModal").find(".modal-body")[0];
+        $(FilterModelBody).append('<div class="row"><div class="col-md-12"><div class="form-group"><div class="col-sm-10 col-md-11 col-xs-10">\
+                <select id="LocationSourceMultiSelect" name="LocationSourceMultiSelect" style="width:100%;"></select>\
+                <div class="col-sm-2 col-md-11 col-xs-2"></div>\
+                </div></div></div></div>');
+
+        $('#LocationSourceMultiSelect').kendoMultiSelect({
+            dataTextField: "TEXT",
+            dataValueField: "VALUE",
+            height: 600,
+            headerTemplate: '<div class="col-md-offset-4"><strong>..Employee..</strong></div>',
+            placeholder: "Select Source...",
+            autoClose: false,
+            maxSelectedItems: 1,
+            value: ["V"],
+            dataSource: [
+                { TEXT: "Visit Track", VALUE: "V" },
+                { TEXT: "Location Track", VALUE: "L" },
+                { TEXT: "Both", VALUE: "B" },
+            ],
+        });
+    }
+
+</script>
+
+<!--Google Map scripts-->
+<script type="text/javascript">
+    function initMap() {
+        var map = new google.maps.Map(document.getElementById('map'), {
+            zoom: 8,
+            center: { lat: 27.710234, lng: 85.328426 }
+        });
+        var allMarkers = [];
+        var poly = new google.maps.Polyline({ strokeColor: '#4986E7' }); //Set the Path and Stroke Color
+        function addMarkerToolTipParent(entity, marker) {
+            //for title
+            var contentString = '<p style="color:Black;"><b>' + entity.customername + '</b>';
+            contentString += "<br/>Remarks: " + entity.remarks;
+            contentString += "<br/>Last Seen (" + entity.customername + "): " + entity.updatedate;
+
+
+
+            infowindow = new google.maps.InfoWindow({
+                content: '<p style="color:black;">' + contentString + '</p>'
+            });
+
+            google.maps.event.addListener(marker, 'click', (function (marker, contentString, infowindow) {
+                return function () {
+                    infowindow.setContent('<p style="color:black;">' + contentString + '</p>');
+                    infowindow.open(map, marker);
+                };
+            })(marker, contentString, infowindow));
+        }
+        $('.applydp, #loadAdvancedFilters, #RunQuery').on('click', function (e) {
+            var totalDistance = 0;
+            var filters = ReportFilter.filterAdditionalData();
+            var Source = $('#LocationSourceMultiSelect').data("kendoMultiSelect").value();
+            if (filters.ReportFilters.DistEmployeeFilter.length != 0) {
+                $.ajax({
+                    url: window.location.protocol + "//" + window.location.host + "/api/Report/GetSPRouteReport?source=" + Source[0],
+                    type: "POST",
+                    data: JSON.stringify(filters),
+                    dataType: "json",
+                    contentType: "application/json; charset=utf-8",
+                    success: function (response) {
+                        console.log(allMarkers.length);
+                        console.log(response);
+                        //reinitialize map
+                        for (var i = 0; i < allMarkers.length; i++) {
+                            allMarkers[i].setMap(null);
+                        }
+                        allMarkers = [];
+                        poly.setMap(null);
+
+                        var count = 0;
+                        var path = new google.maps.MVCArray();
+                        var bounds = new google.maps.LatLngBounds();
+
+                        //Initialize the Direction Service
+                        var service = new google.maps.DirectionsService();
+
+                        poly.setMap(map); //set the polyLine to map
+                        poly.setPath(path)
+                        var previousCustomre = [];
+                        //Loop and Draw Path Route between the Points on MAP
+                        for (var i = 0; i < response.length; i = i + 10) {
+                            var wayPoints = [];
+                            var j;
+                            for (j = i; (j < i + 10 && j < response.length); j++) { //dividing the locations to group of 10 elements
+                                var address = '';
+                                var marker = "";
+
+                                if (response[j].customer_edesc == "TRK") {
+                                    var icon = {
+                                        url: baseUrl + "/thumbtackGreen.png",
+                                        scaledSize: new google.maps.Size(55, 55), // scaled size
+                                        origin: new google.maps.Point(0, 0), // origin
+                                        anchor: new google.maps.Point(0, 0), // anchor,
+                                        labelOrigin: new google.maps.Point(28, 28)
+                                    };
+                                    marker = new google.maps.Marker({
+                                        position: new google.maps.LatLng(response[j].LATITUDE, response[j].LONGITUDE),
+                                        map: map,
+                                        icon: {
+                                            path: google.maps.SymbolPath.CIRCLE,
+                                            scale: 3,
+                                            strokeWeight: 0.2,
+                                            strokeColor: 'red',
+                                            strokeOpacity: 3,
+                                            fillColor: "#ff9900",
+                                            fillOpacity: 0.85,
+                                            primaryColor: "#ff9900"
+                                        },
+                                        animation: google.maps.Animation.DROP,
+                                    });
+                                }
+                                else if (response[j].customer_edesc == "ATN") {
+                                    var icon = {
+                                        url: baseUrl + "/thumbtackBlue.png",
+                                        scaledSize: new google.maps.Size(55, 55), // scaled size
+                                        origin: new google.maps.Point(0, 0), // origin
+                                        anchor: new google.maps.Point(0, 0), // anchor,
+                                        labelOrigin: new google.maps.Point(28, 28)
+                                    };
+                                    marker = new google.maps.Marker({
+                                        position: new google.maps.LatLng(response[j].LATITUDE, response[j].LONGITUDE),
+                                        map: map,
+                                        icon: icon,
+                                        animation: google.maps.Animation.DROP,
+                                    });
+                                }
+                                else if (response[j].customer_edesc == "EOD") {
+                                    var icon = {
+                                        url: baseUrl + "/thumbtackRed.png",
+                                        scaledSize: new google.maps.Size(55, 55), // scaled size
+                                        origin: new google.maps.Point(0, 0), // origin
+                                        anchor: new google.maps.Point(0, 0), // anchor,
+                                        labelOrigin: new google.maps.Point(28, 28)
+                                    };
+                                    marker = new google.maps.Marker({
+                                        position: new google.maps.LatLng(response[j].LATITUDE, response[j].LONGITUDE),
+                                        map: map,
+                                        icon: icon,
+                                        animation: google.maps.Animation.DROP,
+                                    });
+                                }
+                                else if (response[j].customer_edesc == "Extra Visit") {
+                                    count = count + 1;
+                                    console.log("ExtraVisit", count);
+                                    marker = new google.maps.Marker({
+                                        position: new google.maps.LatLng(response[j].LATITUDE, response[j].LONGITUDE),
+                                        map: map,
+                                        icon: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=' + (count).toString() + '|ca2121',
+
+                                    });
+                                }
+                                else {
+
+                                    if (previousCustomre.indexOf(response[j].customer_edesc) == -1) {
+                                        count = count + 1;
+                                    }
+
+                                    previousCustomre.push(response[j].customer_edesc);
+                                    marker = new google.maps.Marker({
+                                        position: new google.maps.LatLng(response[j].LATITUDE, response[j].LONGITUDE),
+                                        map: map,
+                                        icon: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=' + (count).toString() + '|00e44c',
+                                    });
+                                }
+                                //var marker = new google.maps.Marker({
+                                //    position: new google.maps.LatLng(response[j].LATITUDE, response[j].LONGITUDE),
+                                //    map: map
+                                //});
+                                var entity = { customername: response[j].customer_edesc, updatedate: response[j].UPDATE_DATE1, remarks: response[j].remarks };
+
+                                addMarkerToolTipParent(entity, marker);
+                                allMarkers.push(marker);
+                                bounds.extend(new google.maps.LatLng(response[j].LATITUDE, response[j].LONGITUDE)); //for auto zoom and auto center
+                                wayPoints.push({ location: new google.maps.LatLng(response[j].LATITUDE, response[j].LONGITUDE) });
+                            }
+                            if (j >= response.length) //for last iteration of outer loop j is equal to the length of response array
+                                j--;  //decrement j to get the last index else continue
+
+                            var idx = i == 0 ? 0 : i - 1; //start from 0th index and go on linking it to the last index of previous iteration
+
+                            service.route({
+                                origin: new google.maps.LatLng(response[idx].LATITUDE, response[idx].LONGITUDE),
+                                destination: new google.maps.LatLng(response[j].LATITUDE, response[j].LONGITUDE),
+                                waypoints: wayPoints,
+                                optimizeWaypoints: true,
+                                travelMode: google.maps.DirectionsTravelMode.DRIVING
+                            }, function (result, status) {
+                                console.log(status);
+                                if (status == google.maps.DirectionsStatus.OK) {
+                                    for (var i = 0, len = result.routes[0].overview_path.length; i < len; i++) {
+                                        if (i < result.routes[0].overview_path.length - 1)
+                                            totalDistance += getDistance(result.routes[0].overview_path[i], result.routes[0].overview_path[i + 1]);
+                                        path.push(result.routes[0].overview_path[i]); // Create a path
+                                        poly.setPath(path); //push the path to polyLine; creates path line on the map
+                                    }
+                                }
+                                $("#distnceTravelled").html("Distance Travelled = " + totalDistance.toFixed(3) + " KM");
+                            });
+                            map.fitBounds(bounds); //automatically fit the map according the current data
+                        }
+                    },
+                    error: function () {
+                        displayPopupNotification("Sorry!!! Error occured while processing request", "error");
+                    }
+                });
+            }
+            else {
+                e.preventDefault();
+                displayPopupNotification("Please select a employee", "warning");
+            }
+        });
+    }
+
+    var rad = function (x) {
+        return x * Math.PI / 180;
+    };
+
+    var getDistance = function (p1, p2) {
+        var R = 6378137; // Earth’s mean radius in meter
+        var dLat = rad(p2.lat() - p1.lat());
+        var dLong = rad(p2.lng() - p1.lng());
+        var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(rad(p1.lat())) * Math.cos(rad(p2.lat())) *
+            Math.sin(dLong / 2) * Math.sin(dLong / 2);
+        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        var d = R * c;
+        return d / 1000; // returns the distance in meter
+    };
+
+    $(document).ready(function () {
+        DateFilter.init(function () {
+            initMap();
+        });
+        createSourceFilter();
+        $("#filterModal").modal("show");// initially load employee filter
+    });
+</script>

@@ -1,0 +1,79 @@
+﻿@using NeoErp.Core
+@using NeoErp.Core.Infrastructure
+@using NeoErp.Core.Plugins
+@model List<NeoErp.Core.Plugins.PluginDescriptor>
+    @{
+        var webHelper = EngineContext.Current.Resolve<IWebHelper>();
+}
+<div id="loadinga" style="display:none;">
+    <span style="color:red;">Loading</span>
+</div>
+<div class="page-quick-sidebar-chat-users" data-rail-color="#ddd" data-wrapper-class="page-quick-sidebar-list">
+    <ul class="media-list list-items">
+        @foreach (var plugindescriptor in Model)
+        {
+            <li class="media">
+                <img class="media-object" src="@plugindescriptor.GetLogoUrl(webHelper)">
+                <div class="media-body">
+                    <h4 class="media-heading">@plugindescriptor.FriendlyName - @plugindescriptor.Group</h4>
+                    <div class="media-heading-sub">
+                        @plugindescriptor.PluginType
+                    </div>
+                </div>
+                @if (plugindescriptor.Installed)
+                {
+                <input type="submit" value="Uninstall" class="unstall btn btn-danger" data-systemname="@plugindescriptor.SystemName" />
+                }
+                else
+                {
+                <input type="submit" value="install" class="install btn btn-success" data-systemname="@plugindescriptor.SystemName" />
+                }
+            </li>
+           
+           
+        }
+    </ul>
+    
+</div>
+    <script>
+        $(function () {
+
+            $(document).ajaxStart(function () {
+                //show a progress modal of your choosing
+                $("#loadinga").show();
+            });
+            $(document).ajaxStop(function () {
+                //hide it
+                $("#loadinga").hide();
+            });
+            $(".unstall").on("click", function () {
+                var systemname = $(this).data("systemname");
+                $.ajax({
+                    url: '@Html.Raw(Url.Action("Uninstall", "main"))',
+                    data: { systemname: systemname },
+                    success: function (data) {
+                        @*debugger;
+                        $("#partialplugin").load('@Url.Action("pluginLists", "Main", new { area = "" })');*@
+                        window.location = '@Url.Action("GlobalDashboard", "main")';
+                           @*window.location = '@Url.Action("NeoGlobalDashboard", "main")';*@
+                    }
+                });
+            });
+            $(".install").on("click", function () {
+                var systemname = $(this).data("systemname");
+                $.ajax({
+                    url: '@Html.Raw(Url.Action("install", "main"))',
+                    data: { systemname: systemname },
+                    success: function (data) {
+                        @*debugger;
+                        $("#partialplugin").load('@Url.Action("pluginLists", "Main", new { area = "" })');*@
+
+                        window.location = '@Url.Action("GlobalDashboard", "main")';
+                         @*window.location = '@Url.Action("NeoGlobalDashboard", "main")';*@
+                    }
+                });
+            });
+
+        });
+
+    </script>

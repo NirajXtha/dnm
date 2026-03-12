@@ -1,0 +1,695 @@
+﻿
+@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    Layout = null;
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+    var FileUrl = System.Configuration.ConfigurationManager.AppSettings["baseUrl"] + @"Areas/NeoErp.Distribution/Images/QAFiles/";
+}
+<style>
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+        // width: 183px !important;
+    }
+
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+             font-size:11px;
+        }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    a.k-button.k-button-icontext.k-grid-excel {
+        float: right;
+    }
+</style>
+
+<div class="modal fade" id="surveyModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close right-dismis" data-dismiss="modal" aria-hidden="true"></button>
+                <h4 class="modal-title" id="filterModalLabel"><span class="fa fa-filter"></span>Filter</h4>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <div class="col-sm-10 col-md-11 col-xs-10">
+                                <select id="surveySelect" multiple="multiple" style="width: 100%"></select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-green" id="applySurvey" data-dismiss="modal">Apply</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb"></ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+                <div class="actions">
+                    <button class="btn btn-circle btn-icon-only btn-default" data-toggle="modal" data-target="#surveyModal">
+                        <i class="fa fa-filter"></i>
+                    </button>
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                        <i class="icon-control-play"></i>
+                    </a>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "QuestionaireReport")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div id="grid"></div>
+                        <script type="text/x-kendo-template" id="template">
+                            <div class="tabstrip">
+                                <div>
+                                    <div class="Questions"></div>
+                                </div>
+                            </div>
+                        </script>
+                        @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+<script>
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+</script>
+<script src="@Scripts.Url("~/JS/reportFilter.js")"></script>
+
+<script src="@Scripts.Url("~/JS/DateFilter.js?V5")" type="text/javascript"></script>
+
+<script>
+    var reportConfig = GetReportSetting("QuestionaireReport");
+    function getDateFormat(date) {
+        return kendo.format("{0:" + reportConfig.dateFormat + "}", new Date(date));
+    }
+
+    $(".applydp").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+        $(this).closest("#applydp").modal('hide');
+    });
+
+    $("#loadAdvancedFilters").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    });
+
+    $("#RunQuery").click(function (evt) {
+        evt.preventDefault();
+        $("#grid").data("kendoGrid").dataSource.read();
+    });
+
+
+
+
+
+    function getAnswer(Answer, Type, CELL_TYPE, Options) {
+        var template = "";
+        if (Type == "Simple") {
+            template = Answer;
+        }
+        else if (CELL_TYPE == "LBL") {
+            template = '<div class="col-md-7">' + Answer + '</div><div class="col-md-3"><b>' + Options + '</b></div>';
+        }
+        else if (CELL_TYPE == "FILE") {
+            @*template = '<div class="col-md-7"><a class="fancybox" href="@FileUrl' + Options + '" data-fancybox="group_' + Options + '" class="sr-only" data-caption="' + Options + '"> ' +
+            '<img src="@FileUrl' + Options + '" style="height:14px;" /></a></div>';*@
+            template = '<div class="col-md-7">' + Answer + '</div><div class="col-md-3">\
+             <a class="fancybox" href="@FileUrl' + Options + '" data-fancybox="group_' + Options + '" class="sr-only" data-caption="' + Options + '">\
+            <img src="@FileUrl' + Options + '" style="height:20px;" /></a></div>';
+        }
+        else {
+            template = '<div class="col-md-7">' + Answer + '</div><div class="col-md-3"><input type="text" value=' + Options + ' disabled/></div>';
+        }
+        return template;
+    }
+
+    var detailExportPromises = [];
+    function BindGrid(readurl) {
+        var companyName = ('@workingContent.CurrentUserinformation.company_name');
+        var fromADdate = $("#FromDateVoucher").val()
+        var toADdate = $("#ToDateVoucher").val();
+        var fromBSdate = $("#fromInputDateVoucher").val();
+        var toBSdate = $("#toInputDateVoucher").val();
+
+
+        var branches = ReportFilter.getBranchs();
+        reportConfig = GetReportSetting("QuestionaireReport");
+        var dataSource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: {
+                    url: readurl, // <-- Get data from here.
+                    dataType: "json", // <-- The default was "jsonp".
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8"
+                },
+                parameterMap: function (options, type) {
+                    var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+                    delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                    delete paramMap.$format; // <-- remove format parameter.
+                    return paramMap;
+                }
+            },
+            error: function (e) {
+                displayPopupNotification("Sorry error occured while processing data", "error");
+            },
+            //serverFiltering: false,
+            //serverAggregates: false,
+            //serverPaging: false,
+            //serverSorting: false,
+            pageSize: reportConfig.defaultPageSize,
+            schema: {
+                model: {
+                    id: "CUSTOMER_CODE",
+                    fields: {
+                        CUSTOMER_NAME: { nullable: true },
+                        CUSTOMER_CODE: { nullable: true },
+                        GROUP_EDESC: { nullable: true },
+
+                    }
+                },
+            },
+            group: {
+                field: "GROUP_EDESC",
+                dir: "asc",
+                headerTemplate: "#= value #"
+            },
+        });
+
+
+        var grid = $("#grid").kendoGrid({
+            dataSource: dataSource,
+            toolbar: kendo.template($("#toolbar-template").html()),
+
+            // Modified excelExport function (Point 1)
+excelExport: function (e) {
+    e.preventDefault();
+    var workbook = e.workbook;
+    var surveyCodes = $("#surveySelect").data("kendoMultiSelect").value();
+
+    // Check if survey is selected
+    //if (!surveyCodes || surveyCodes.length === 0) {
+    //    displayPopupNotification("Please select at least one survey before exporting.", "warning");
+    //    return;
+    //}
+
+    //formatting master rows
+    var sheet = workbook.sheets[0];
+    for (var rowIndex = 1; rowIndex < sheet.rows.length; rowIndex++) {
+        var row = sheet.rows[rowIndex];
+        for (var cellIndex = 0; cellIndex < row.cells.length; cellIndex++) {
+            row.cells[cellIndex].bold = true;
+        }
+    }
+
+    // Reset detail export promises
+    detailExportPromises = [];
+
+    // Get ALL data from the grid's dataSource (Point 3 - Export ALL rows)
+    var allData = this.dataSource.data();
+
+    // Export detail data for ALL rows, not just expanded ones
+    for (var rowIndex = 0; rowIndex < allData.length; rowIndex++) {
+        exportChildData(allData[rowIndex].ENTITY_CODE, allData[rowIndex].ENTITY_TYPE, surveyCodes.join(","), rowIndex);
+    }
+
+    $.when.apply(null, detailExportPromises)
+        .then(function () {
+            var detailExports = $.makeArray(arguments);
+
+            detailExports.sort(function (a, b) {
+                return a.masterRowIndex - b.masterRowIndex;
+            });
+
+            workbook.sheets[0].columns.unshift({
+                width: 30
+            });
+
+            for (var i = 0; i < workbook.sheets[0].rows.length; i++) {
+                workbook.sheets[0].rows[i].cells.unshift({});
+            }
+
+          
+            for (var i = detailExports.length - 1; i >= 0; i--) {
+                var masterRowIndex = detailExports[i].masterRowIndex + 1; 
+
+                var sheet = detailExports[i].sheet;
+
+                for (var ci = 0; ci < sheet.rows.length; ci++) {
+                    if (sheet.rows[ci].cells[0].value) {
+                        sheet.rows[ci].cells.unshift({});
+                    }
+                }
+
+                [].splice.apply(workbook.sheets[0].rows, [masterRowIndex + 1, 0].concat(sheet.rows));
+            }
+
+            //Add filter information
+            var companyName = ('@workingContent.CurrentUserinformation.company_name');
+            var surveyName = $("#surveySelect").getKendoMultiSelect().dataItems().map(function (elem) { return elem.SURVEY_EDESC; }).join(",");
+
+            workbook.sheets[0].rows.unshift({
+                cells: [{ value: "Questionnaire Report".split('').join(' '), colSpan: 7 }]
+            });
+
+            workbook.sheets[0].rows.unshift({
+                cells: [{ value: "Survey :- " + surveyName, colSpan: 7 }]
+            });
+
+            workbook.sheets[0].rows.unshift({
+                cells: [{ value: "Company :- " + companyName, colSpan: 7 }]
+            });
+
+            kendo.saveAs({
+                dataURI: new kendo.ooxml.Workbook(workbook).toDataURL(),
+                fileName: "Questionnaire Report.xlsx"
+            });
+        })
+        .fail(function() {
+            displayPopupNotification("Error occurred while exporting detail data", "error");
+        });
+},
+            pdf: {
+                allPages: true,
+                avoidLinks: true,
+                pageSize: "auto",
+                //paperSize: [1100 , 1430],
+                margin: {
+                    top: "2m",
+                    left: "1cm",
+                    right: "1cm",
+                    bottom: "1cm"
+                },
+                landscape: true,
+                repeatHeaders: true,
+                scale: 0.8
+            },
+
+            height: window.innerHeight - 50,
+            sortable: true,
+            reorderable: true,
+            groupable: true,
+            resizable: true,
+            filterable: {
+                extra: false,
+                operators: {
+                    number: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "is greater than or equal to	",
+                        gt: "is greater than",
+                        lte: "is less than or equal",
+                        lt: "is less than",
+                    },
+                    string: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        startswith: "Starts with	",
+                        contains: "Contains",
+                        doesnotcontain: "Does not contain",
+                        endswith: "Ends with",
+                    },
+                    date: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "Is after or equal to",
+                        gt: "Is after",
+                        lte: "Is before or equal to",
+                        lt: "Is before",
+                    }
+                }
+            },
+            columnMenu: true,
+            columnMenuInit: function (e) {
+                wordwrapmenu(e);
+                checkboxItem = $(e.container).find('input[type="checkbox"]');
+            },
+            columnShow: function (e) {
+                if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                    SaveReportSetting('QuestionaireReport', 'grid');
+            },
+            columnHide: function (e) {
+                if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                    SaveReportSetting('QuestionaireReport', 'grid');
+            },
+            pageable: {
+                refresh: true,
+                pageSizes: reportConfig.itemPerPage,
+                buttonCount: 5
+            },
+
+            //scrollable: {
+            //    virtual: true
+            //},
+            dataBound: function (o) {
+                detailExportPromises = [];
+                var grid = o.sender;
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.length;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    displayPopupNotification("No Data Found Given Date Filter.", "info");
+                }
+                else {
+                    var g = $("#grid").data("kendoGrid");
+                    for (var i = 0; i < g.columns.length; i++) {
+                        g.showColumn(i);
+                    }
+                    $("div.k-group-indicator").each(function (i, v) {
+                        g.hideColumn($(v).data("field"));
+                    });
+                }
+
+                UpdateReportUsingSetting("QuestionaireReport", "grid");
+                $('div').removeClass('.k-header k-grid-toolbar');
+
+                $(".fancybox").fancybox({
+                    afterShow: function () {
+                        var click = 0;
+                        var toolbar = this.$content.parent().parent().parent().find(".fancybox-toolbar");
+                        var imageDiv = this.$content.find(".fancybox-image");
+                        toolbar.prepend('<button data-fancybox-rotate="" class="fancybox-button" id="rotate_button" title="rotate"><span class="fa fa-undo"></span></button>')
+                            .on('click', '#rotate_button', function () {
+                                var n = 90 * ++click;
+                                imageDiv.css({ '-ms-transform': 'rotate(' + -n + 'deg)', '-webkit-transform': 'rotate(' + -n + 'deg)', 'transform': 'rotate(' + -n + 'deg)' });
+                            });
+                    }
+                });
+            },
+            detailTemplate: kendo.template($("#template").html()),
+            detailInit: detailInit,
+            columns: [{
+                field: "GROUP_EDESC",
+                groupHeaderTemplate: "#= value #"
+            },{
+                field: "ENTITY_NAME",
+                title: "Name",
+            }, {
+                field: "ADDRESS",
+                title: "Address",
+            }, {
+                field: "CONTACT_NO",
+                title: "Contact No",
+                template: '#= (CONTACT_NO ==", ") ? "-" : CONTACT_NO#',
+            }, {
+                field: "AREA_NAME",
+                title: "Area",
+            }, {
+                field: "FULL_NAME",
+                title: "Salesperson",
+            }, {
+                    field: "ENTITY_TYPE",
+                    title: "Type",
+                    template: function (data) {
+                        if (data.ENTITY_TYPE == 'R')
+                            return "Reseller";
+                        if (data.ENTITY_TYPE == 'D')
+                            return "Distributor";
+                        if (data.ENTITY_TYPE == 'P')
+                            return "Dealer";
+                        else
+                            return "";
+                    }
+            }]
+        });
+    };
+
+    function exportChildData(id, type, surveyCodes, rowIndex) {
+            var deferred = $.Deferred();
+            detailExportPromises.push(deferred);
+
+            var localDS = new kendo.data.DataSource({
+                type: "json",
+                batch: true,
+                transport: {
+                    read: {
+                        url: window.location.protocol + "//" + window.location.host + "/api/Report/GetQuestionaireReport?CustomerCode=" + id + "&CustomerType=" + type + "&surveyCode=" + surveyCodes,
+                        dataType: "json", // <-- The default was "jsonp".
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8"
+                    },
+                    parameterMap: function (options, type) {
+                        var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+                    },
+                },
+                error: function (e) {
+                    displayPopupNotification("Sorry error occured while processing data", "error");
+                },
+                serverFiltering: false,
+                serverGrouping: false,
+                serverAggregates: false,
+                serverPaging: false,
+                schema: {
+                    parse: function (response) {
+                        for (i = 0; i < response.length; i++){
+                            if (response[i].Question.trim() == "")
+                                response[i].Question = '"';
+                            if (response[i].Type == 'Simple') {
+                                response[i].Options = response[i].Answer;
+                                response[i].Answer = "";
+                            }
+                        }
+                        return response;
+                    },
+                    model: {
+                        id: "CUSTOMER_CODE",
+                        fields: {
+                            CUSTOMER_NAME: { editable: false, nullable: true },
+                            CUSTOMER_CODE: { editable: false, nullable: true },
+
+                        }
+                    }
+                },
+            });
+
+            var exporter = new kendo.ExcelExporter({
+                columns: [
+                    { field: "Question", title: "Question" },
+                    { field: "Answer", title: "Answer" },
+                    { field: "Options", title: "Options" },
+                    { field: "Type", title: "Type" },
+                    { field: "CELL_TYPE", title: "Cell Type" }
+                ],
+                dataSource: localDS
+            });
+
+            exporter.workbook().then(function (book, data) {
+                deferred.resolve({
+                    masterRowIndex: rowIndex,
+                    sheet: book.sheets[0]
+                });
+            });
+        }
+
+    function detailInit(e) {
+        var detailRow = e.detailRow;
+        var Rowdata = e.data;
+        var id = Rowdata.ENTITY_CODE;
+        var type = Rowdata.ENTITY_TYPE;
+        var surveyCodes = $("#surveySelect").data("kendoMultiSelect").value();
+        var dataSourceITem = new kendo.data.DataSource({
+            type: "json",
+            batch: true,
+            transport: {
+                read: {
+                    url: window.location.protocol + "//" + window.location.host + "/api/Report/GetQuestionaireReport?CustomerCode=" + id + "&CustomerType=" + type + "&surveyCode=" + surveyCodes.join(","),
+                    dataType: "json", // <-- The default was "jsonp".
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8"
+                },
+                parameterMap: function (options, type) {
+                    var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+                    delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                    delete paramMap.$format; // <-- remove format parameter.
+                    return paramMap;
+                }
+            },
+            error: function (e) {
+                displayPopupNotification("Sorry error occured while processing data", "error");
+            },
+            serverFiltering: false,
+            serverGrouping: false,
+            serverAggregates: false,
+            serverPaging: false,
+            schema: {
+                model: {
+                    id: "CUSTOMER_CODE",
+                    fields: {
+                        CUSTOMER_NAME: { editable: false, nullable: true },
+                        CUSTOMER_CODE: { editable: false, nullable: true },
+
+                    }
+                }
+            },
+            pageSize: 100,
+        });
+        detailRow.find(".Questions").kendoGrid({
+            dataSource: dataSourceITem,
+            height: 400,
+            sortable: true,
+            pageable: false,
+            sortable: true,
+            reorderable: true,
+            resizable: true,
+            scrollable: {
+                virtual: true
+            },
+            columns: [
+                          {
+                              field: "Question",
+                              title: "Question",
+                              template: " #= Question #"
+                          },
+
+                          {
+                              field: "Answer",
+                              title: "Answers",
+                              //template: " #= Answer# <input type='text'  #= (Type=='Simple') ? 'class=\"pull-right sr-only\"'  : 'class=pull-right' # value =#= Options # disabled/>"
+                              template: "#= getAnswer(Answer,Type,CELL_TYPE,Options) #"
+                          },
+            ],
+            dataBound: function (e) {
+                var myClass = "";
+                var flag = true;
+                $.each(e.sender.table.find("tr"), function (index, node) {
+                    $(node).removeClass("k-alt")
+                });
+                $.each(e.sender.table.find("tr"), function (index, node) {
+                    if ($(node).children("td:first").text() != " ")
+                    {
+                        if (flag)
+                        {
+                            myClass = "k-alt";
+                            $(node).addClass(myClass);
+                            flag = false;
+                        }
+                        else {
+                            myClass = "";
+                            $(node).addClass(myClass);
+                            flag = true;
+                        }
+
+                    }
+                    else
+                    {
+                        $(node).addClass(myClass);
+                    }
+
+
+                });
+
+                var grid = e.sender;
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.length;
+                    $(e.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger"> NO ANSWERED  YET</td></tr>');
+                    //$(e.sender.table.closest(".Questions")).css({ 'height': '50px' })
+                }
+            }
+        });
+    };
+
+
+    function KendoGridRefresh(readUrl) {
+        $('#grid').val('');
+        $('#grid').html('');
+        BindGrid(readUrl)
+    }
+
+    $(document).ready(function () {
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/Report/GetQuestionaireCustomerReport"
+        BindGrid(urltest);
+    });
+
+    $("#surveySelect").kendoMultiSelect({
+        dataTextField: "SURVEY_EDESC",
+        dataValueField: "SURVEY_CODE",
+        height: 600,
+        valuePrimitive: true,
+        headerTemplate: '<div class="col-md-offset-3"><strong>Surveys...</strong></div>',
+        placeholder: "Select Survey...",
+        autoClose: true,
+        dataBound: function (e) {
+            var current = this.value();
+            this._savedOld = current.slice(0);
+            $("#" + e.sender.element[0].id + "_listbox").slimScroll({ 'height': '179px', 'scroll': 'scroll' });
+        },
+        dataSource: {
+            transport: {
+                read: {
+                    url: window.location.protocol + "//" + window.location.host + "/api/Report/GetSurveyList",
+                    dataType: "json"
+                }
+            }
+        }
+    });
+
+    $("#applySurvey").on("click", function (evt) {
+        var surveyCodes = $("#surveySelect").data("kendoMultiSelect").value();
+        var grid = $("#grid").data("kendoGrid");
+        grid.dataSource.transport.options.read.url = window.location.protocol + "//" + window.location.host + "/api/Report/GetQuestionaireCustomerReport?surveyCode=" + surveyCodes.join(",");
+        grid.dataSource.read();
+    });
+</script>
+<script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js?V2")"></script>

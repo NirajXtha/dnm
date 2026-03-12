@@ -1,0 +1,402 @@
+﻿@using NeoErp.Core.Models;
+@{
+    var actionPageId = "ProductLevelSku1";
+    var chartID = "ProductLevelchart";
+    var headerName = "Product Level Report";
+    var screenSize = "portlet-fullscreen";
+}
+<style>
+    .slimScrollBar {
+        border-radius: 5px !important;
+        background-color: #333 !important;
+    }
+
+    .slimScrollDiv, #customerMultiSelect {
+        height: auto !important;
+    }
+
+    ul.dropdown-menu.custom {
+        margin-top: 8px !important;
+        border: none;
+        box-shadow: none !important;
+    }
+
+    .dropdown-menu.custom:before {
+        left: 58px !important;
+    }
+
+    .download-btn {
+        margin: 0px !important;
+        padding-top: -2px !important;
+        padding-left: 0px;
+        padding-right: 0px;
+        margin-top: -5px !important;
+        margin-left: 5px !important;
+    }
+
+    .dropdown-menu.custom {
+        left: -27px !important;
+        top: 20px !important;
+    }
+
+    .dropdown > .dropdown-menu:before, .dropdown-toggle > .dropdown-menu:before, .btn-group > .dropdown-menu:before {
+        position: absolute;
+        top: -8px;
+        left: 30px;
+        right: auto;
+        display: inline-block !important;
+        border-right: 8px solid transparent;
+        border-bottom: 8px solid #e0e0e0;
+        border-left: 8px solid transparent;
+        content: '';
+    }
+
+    i.icon-arrow-down {
+        color: #acacac;
+    }
+
+    .btn-group-custom button.btn {
+        padding: 7px 7px !important;
+        float: left;
+    }
+
+    .dropdown-menu.custom {
+        left: -55px !important;
+    }
+
+    .k-grid-toolbar .k-button {
+        float: right;
+    }
+
+    #SalesAnalysisgrid {
+        font-size: 8px;
+        margin: -15px;
+    }
+
+        #SalesAnalysisgrid thead, #SalesAnalysisgrid tbody {
+            font-size: 8px !important;
+        }
+
+            #SalesAnalysisgrid thead th {
+                text-align: center !important;
+            }
+
+        #SalesAnalysisgrid > tr {
+            font-size: 8px;
+        }
+
+    .portlet.portlet-sortable {
+        min-height: 0px;
+        padding-bottom: 20px;
+    }
+
+    #HigherSelling table {
+        font-size: 10px;
+    }
+
+    #HigherSelling .k-pager-wrap.k-grid-pager.k-widget.k-floatwrap {
+        font-size: 10px;
+    }
+    text {
+        word-wrap: break-word;
+    }
+</style>
+
+<div class="modal fade" id="Model_@actionPageId" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog custom-chart">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                <h4 class="modal-title"><span class="fa fa-bar-chart"></span> Product Level</h4>
+            </div>
+            <div class="modal-body bottom-gappingtwo">
+                <div class="row">
+                    <div class="chart_button clearfix">
+                        <div class="col-sm-6 col-md-6">
+                            <div class="ftitle">
+                                <h5>Display Top Items</h5>
+                            </div>
+                            <input type="number" value="10" name="customInput" class="form-control customInput" placeholder="ie. Top 10 Items" onchange="handleChange(this);" />
+                        </div>
+                        <div class="col-sm-6 col-md-6"style="margin-top:20px;">
+                            <div class="input-group chart-option">
+                                <div class="icheck-inline">
+                                    <label>
+                                        <input id="showlables_SlowMovingChart" type="checkbox" autocomplete="off" /> Show Labels
+                                    </label>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-green applydp" data-dismiss="modal" id="apply_@actionPageId">Apply</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="portlet portlet-sortable  light bordered" id="ProductLevelSku">
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="icon-bar-chart font-green-haze"></i>
+            <span class="caption-subject bold uppercase font-green-haze custom-modal">@headerName</span>
+        </div>
+        <div class="tools">
+            <a class="btnGrid btnCategoryDatagrid" href="javascript:;" data-type="@chartID" data-title="Grid">
+                <i class="fa fa-table"></i>
+            </a>
+            <a href="#Model_@actionPageId" data-toggle="modal" class="config"></a>
+            <a href="javascript:;" class="reload">
+            </a>
+            <a href="javascript:;" class="collapse">
+            </a>
+            <a href="javascript:;" class="fullscreen">
+            </a>
+            <a href="javascript:;" class="remove">
+            </a>
+        </div>
+    </div>
+    <div class="portlet-body">
+        <div class="k-content wide">
+            <div id="@actionPageId"></div>
+            <script type="text/x-kendo-template" id="toolbar-template">
+                <div class="k-header k-grid-toolbar">
+
+                    <a class="k-button k-button-icontext k-grid-excel" href="javascript:">
+                        <i class="fa fa-file-excel-o"></i>
+                    </a>
+                </div>
+            </script>
+            <div id="@chartID"></div>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function () {
+            gridRefresh();
+            //chartRefresh();
+        });
+
+        function BindGrid(gridUrl) {
+            var dataSource = new kendo.data.DataSource({
+                transport: {
+                    read: {
+                        url: gridUrl,
+                    },
+                },
+                error: function (e) {
+                    displayPopupNotification("Sorry error occured while processing data", "error");
+                },
+                serverFiltering: false,
+                serverPaging: false,
+                pageSize: 100,
+            });
+            $("#@actionPageId").kendoGrid({
+                height: $("#@actionPageId").hasClass("@screenSize") ? 550 : 350,
+                dataSource: dataSource,
+                //  height: 380,
+                sortable: true,
+                reorderable: true,
+                groupable: false,
+                resizable: true,
+                columnMenu: true,
+                pageable: true,
+                autoBind: true,
+                columns: [{
+                    field: "PRODUCT",
+                    title: "Product Name"
+                }, {
+                        field: "QUANTITY",
+                    title: "Quantity"
+                },],
+            });
+        }
+
+        function KendoChart(urlPath) {
+
+            var MasterTemp = {
+                field: "QUANTITY",
+                dir: "asc",
+
+            };
+
+
+            $("#@chartID").kendoChart({
+                height: $("#@chartID").hasClass("@screenSize") ? 550 : 350,
+                dataSource: {
+                    transport: {
+                        read: {
+                            url: urlPath,
+                            dataType: "json",
+                            contentType: "application/json; charset=utf-8"
+                        }
+                    },
+                    sort: {
+                        field: MasterTemp.field,
+                        dir: MasterTemp.dir,
+                    }
+                },
+                legend: {
+                    position: "top"
+                },
+                seriesDefaults: {
+                    type: "column",
+
+                    labels: {
+                        visible: $("#showlables_SlowMovingChart").prop("checked"),
+                        template: "#=FormatSeriesLabels(value)#",
+                        rotation: '270',
+                        padding: {
+                            left: -5
+                        },
+                    },
+                    style: "smooth",
+                },
+
+                chartArea: {
+                    //  width: 500,
+                    height: ($("#@chartID").hasClass("@screenSize")) ? 550 : 350,
+                },
+                legend: {
+                    position: "bottom"
+                },
+                series:
+                [{
+                    field: MasterTemp.field,
+                    name: "Quantity",
+
+                },],
+                categoryAxis: {
+                    field: "PRODUCT",
+                    labels: {
+                        rotation: -20
+                    },
+                    majorGridLines: {
+                        visible: false
+                    }
+                },
+                valueAxis: {
+                    labels: {
+                       // format: "N0"
+                        rotation: 'auto',
+                        template: "#= FormatSeriesLabels(value)#"
+                    },
+                    line: {
+                        visible: false
+                    }
+                },
+                pannable: {
+                    lock: "y"
+                },
+                zoomable: {
+                    mousewheel: {
+                        lock: "y"
+                    },
+                    selection: {
+                        lock: "y"
+                    },
+                },
+                tooltip: {
+                    visible: true,
+                    template: "Quantity: #=FormatSeriesLabels(value)#",
+                }
+            });
+
+        }
+        $(".fullscreen").click(function () {
+            clearData();
+            chartRefresh();
+        });
+        $('.btnCategoryDatagrid').click(function () {
+            debugger
+
+            var isGrid = $('.btnCategoryDatagrid').data("type");
+            if ($("#@chartID").hasClass('meGrid')) {
+                //clearData();
+                //chartRefresh();
+                     $('#@chartID').height('0px');
+                    $('#@chartID').val('');
+                    $('#@chartID').html('');
+                    $("#@chartID").removeClass('meGrid')
+                    $("#@chartID").removeClass('k-grid k-widget k-display-block k-reorderable')
+                gridRefresh();
+            }
+            else {
+                if (isGrid == "@chartID") {
+                    @*$('#@chartID').height('0px');
+                    $('#@chartID').val('');
+                    $('#@chartID').html('');
+                    $("#@chartID").addClass('meGrid')
+                    $("#@chartID").removeClass('k-grid k-widget k-display-block k-reorderable')*@
+                   // gridRefresh();
+                    clearData();
+                    chartRefresh();
+                   
+                }
+            }
+        })
+        $("#apply_ProductLevelSku").click(function () {
+            chartRefresh();
+        })
+        //reload chart
+        $('.reload').click(function () {
+            clearData();
+            chartRefresh();
+        })
+
+        function chartRefresh() {
+            var selectedItem = parseInt($('.customInput').val());
+            var urlPath = window.location.protocol + "//" + window.location.host + "/api/SalesSummaryReportApi/GetProductLevel?selectedItem=" + selectedItem;
+            KendoChart(urlPath);
+        }
+
+        function gridRefresh() {
+            var selectedItem = parseInt($('.customInput').val());
+            var gridUrl = window.location.protocol + "//" + window.location.host + "/api/SalesSummaryReportApi/GetProductLevel?selectedItem=" + selectedItem;
+            BindGrid(gridUrl);
+        }
+
+        function clearData() {
+            $('#@actionPageId').height('0px')
+            $('#@actionPageId').val('');
+            $('#@actionPageId').html('');
+            $("#@actionPageId").removeClass('k-grid k-widget k-display-block k-reorderable')
+            $("#@chartID").addClass('meGrid')
+        }
+
+        function handleChange(input) {
+            
+            if (input.value > 200) {
+               displayPopupNotification('Input value exceeded', 'warning')
+               
+            }
+        }
+        function FormatSeriesLabels(value) {
+            if (isNaN(value))
+                value = 0;
+            var decimalPlaces = 2;
+            if (ReportFilter.filterAdditionalData().ReportFilters.AmountRoundUpFilter != "" && ReportFilter.filterAdditionalData().ReportFilters.AmountRoundUpFilter != undefined) {
+                if (ReportFilter.filterAdditionalData().ReportFilters.AmountRoundUpFilter.split(".").length > 1)
+                    decimalPlaces = ReportFilter.filterAdditionalData().ReportFilters.AmountRoundUpFilter.split(".")[1].length;
+                else
+                    decimalPlaces = 0;
+            }
+
+            if (ReportFilter.filterAdditionalData().ReportFilters.AmountFigureFilter == "Lakh") {
+                value = (value / 100000).toFixed(decimalPlaces) + " L";
+            } else if (ReportFilter.filterAdditionalData().ReportFilters.AmountFigureFilter == "Thousand") {
+                value = (value / 1000).toFixed(decimalPlaces) + " K";
+            }
+            else if (ReportFilter.filterAdditionalData().ReportFilters.AmountFigureFilter == "Crore") {
+                value = (value / 10000000).toFixed(decimalPlaces) + " C";
+            }
+            else {
+                value = (value / 100000).toFixed(decimalPlaces) + " L";
+            }
+            return kendo.format("{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString() + "}", value);
+        }
+    </script>
+</div>

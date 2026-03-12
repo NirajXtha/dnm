@@ -1,0 +1,519 @@
+﻿
+@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    Layout = null;
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+<style>
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+        // width: 183px !important;
+    }
+
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+         font-size:11px;
+    }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    a.k-button.k-button-icontext.k-grid-excel {
+        float: right;
+    }
+
+    .bootbox-form {
+        padding: 3px !important;
+    }
+
+    .bootbox-input.bootbox-input-text.form-control {
+        height: 27px !important;
+    }
+
+    .col-space {
+        margin-bottom: 10px;
+    }
+
+    .modal-title span.fa {
+        padding-right: 5px;
+    }
+
+    .description {
+        font-size: 12px;
+    }
+
+    .k-footer-template div {
+        border-bottom: none !important;
+    }
+</style>
+<script>
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+</script>
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb"></ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+
+                <div class="actions">
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                    </div>
+                    @*@Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)*@
+                    @*<div class="btn-group">
+                            @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                            {
+                                ShowCustomerFilter = false,
+                                // ShowEmployeeFilter = true
+                            })
+                        </div>*@
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                        <i class="icon-control-play"></i>
+                    </a>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "SummaryReport")
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div id="grid"></div>
+                        @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE CONTENT-->
+</div>
+
+<script src="@Scripts.Url("~/JS/reportFilter.js")"></script>
+
+<script src="@Scripts.Url("~/JS/DateFilter.js?V5")" type="text/javascript"></script>
+
+<script>
+
+    //var reportConfig = GetReportSetting("VisitSummaryReport");
+
+
+    function getDateFormat(date) {
+        var test = new Date(date);
+        if (test.getFullYear() == '1970')
+            return '-';
+        return kendo.format("{0:" + reportConfig.dateFormat + "}", new Date(date));
+    }
+    function getTimeFormat(date) {
+        var test = new Date(date);
+        if (test.getFullYear() == '1970')
+            return '-';
+        return kendo.format("{0:hh:mm tt}", moment(date)._d)
+    }
+    function ExportToExcel(e) {
+        var SheetRow = [];//array to store the rows
+        SheetRow.push({ //Header
+            cells: [
+                { value: "Group Name", background: "#A9A7A6", },
+                { value: "Full Name", background: "#A9A7A6", },
+                { value: "Total Visit", background: "#A9A7A6", },
+                { value: "Total Collection", background: "#A9A7A6", },
+                { value: "Total Sales", background: "#A9A7A6", },
+                { value: "Effective Calls", background: "#A9A7A6", },
+            ]
+        });
+        //WriteData(e.data);
+
+        //recursive function to write the grouped/ungrouped data
+        function WriteData(array) {
+            array.forEach(function (row, index) {
+                if (typeof (row.items) != "undefined") { //if array contains nested items, write a row with group field and enter recursion
+                    Mvalue = row.value;
+                    MField = row.field;
+                    if (MField == "Visit_Date") {
+                        Mvalue = getDateFormat(Mvalue);
+                        MField="Date"
+                    }
+                    else if (MField == "ASSIGN_DATE") {
+                        Mvalue = getDateFormat(Mvalue);
+                        MField = "Assign Date"
+                    }
+                    else if (row.field == "Visit_Time") {
+                        Mvalue = getTimeFormat(Mvalue);
+                        MField = "Visit Time"
+                    }
+                    SheetRow.push({
+                        cells: [{
+                            value: MField + " : " + Mvalue,
+                            background: "#E1E1E1",
+                            colSpan: 10,//to span the total number of columns
+                            fontSize: 12,
+                        }]
+                    });
+                    WriteData(row.items);
+                }
+                else {
+                    var dist = differenceDownload(row.CUST_LAT, row.CUST_LONG, row.VISIT_LAT, row.VISIT_LONG, 'K', row.Visit_Type);
+                    var distColor = dist < 0.3 ? "#008000" : "#ff0000";
+                    SheetRow.push({ //Header
+                        cells: [
+                            { value: row.CUSTOMER_NAME },
+                            { value: customerType(row.CUSTOMER_TYPE) },
+                            { value: (row.Assigned_ROUTE !== null && row.Assigned_ROUTE != '-') ? row.Assigned_ROUTE_NAME + '(' + row.Assigned_ROUTE + ')' : '-' },
+                            { value: row.Assigned_Employee },
+                            { value: row.Visit_Type },
+                            { value: row.VISIT_BY },
+                            { value: getDateFormat(row.ASSIGN_DATE) },
+                            { value: getTimeFormat(row.Visit_Time) },
+                            { value: dist, color: distColor },
+                            { value: row.REMARKS },
+                        ]
+                    });
+                }
+            });
+        }
+        //initializing a workbook with above prepared rows
+        var Workbook = new kendo.ooxml.Workbook({
+            sheets: [{
+                columns: [
+                    @for(int i=0;i<10; i++)
+                    {
+                        <text>{ autoWidth: true },</text>
+                    }
+                ],
+                rows: SheetRow,
+            }]
+        });
+        //finally saving the excel sheet
+        kendo.saveAs({
+            dataURI: Workbook.toDataURL(),
+            fileName: "Summary Report.xlsx"
+        });
+    }
+
+    $(".applydp").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+        $(this).closest("#applydp").modal('hide');
+    });
+
+    $("#loadAdvancedFilters").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    });
+
+    $("#RunQuery").click(function (evt) {
+        evt.preventDefault();
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/Report/GetAllSummaryReport";
+        KendoGridRefresh(urltest);
+    });
+
+
+    $("#Savefavriote").on("click", function () {
+        bootbox.prompt({
+            title: '<span class="fa fa-save"></span> Save Report',
+            placeholder: 'Enter Favroite Name to save',
+            buttons: {
+                confirm: {
+                    label: 'Save'
+                }
+            },
+            callback: function (value) {
+
+                SaveReportConfigSetting({
+                    gridName:"grid",
+                    reportName: value,
+                    isFavroite: true,
+                    virtualPath: window.location.hash,
+                });
+            }
+        });
+
+    });
+
+    function BindGrid(readurl) {
+        var companyName = ('@workingContent.CurrentUserinformation.company_name');
+        var fromADdate = $("#FromDateVoucher").val()
+        var toADdate = $("#ToDateVoucher").val();
+        var fromBSdate = $("#fromInputDateVoucher").val();
+        var toBSdate = $("#toInputDateVoucher").val();
+
+
+        var branches = ReportFilter.getBranchs();
+        reportConfig = GetReportSetting("SummaryReport");
+
+        var dataSource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: {
+                    url: readurl, // <-- Get data from here.
+                    dataType: "json", // <-- The default was "jsonp".
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8"
+                },
+                parameterMap: function (options, type) {
+
+                    var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+                    delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                    delete paramMap.$format; // <-- remove format parameter.
+                    return paramMap;
+                }
+            },
+
+            error: function (e) {
+                displayPopupNotification("Sorry error occured while processing data", "error");
+            },
+            schema: {
+                model: {
+                    id: "DIST_OUTLET_NAME",
+                    fields: {
+                        GROUP_NAME: { type: "string", nullable: true },
+                        FULL_NAME: { ype: "string", nullable: true },
+                        TOTAL_VISIT: { type: "number", },
+                        TOTAL_OUTLET: { type: "number", },
+                        TOTAL_COLLECTION: { type: "number", },
+                        TOTAL_SALES: { type: "number" },
+                        EFFECTIVECALLS: { type: "number" },
+                    }
+                },
+            },
+            aggregate: [{ field: "TOTAL_VISIT", aggregate: "sum" },
+                { field: "TOTAL_OUTLET", aggregate: "sum" },
+            { field: "TOTAL_COLLECTION", aggregate: "sum" },
+            { field: "TOTAL_SALES", aggregate: "sum" },
+            { field: "EFFECTIVECALLS", aggregate: "sum" }],
+
+            pageSize: reportConfig.defaultPageSize,
+        });
+
+
+        var grid = $("#grid").kendoGrid({
+            dataSource: dataSource,
+            toolbar: kendo.template($("#toolbar-template").html()),
+            excel: {
+                fileName: "Summary Report",
+                allPages: true,
+            },
+            excelExport: function (e) {
+                    var rows = e.workbook.sheets[0].rows;
+                    for (var ri = 0; ri < rows.length; ri++) {
+                        var row = rows[ri];
+                        if (row.type == "group-footer" || row.type == "footer") {
+                            for (var ci = 0; ci < row.cells.length; ci++) {
+                                var cell = row.cells[ci];
+                                // Use jQuery.fn.text to remove the HTML and get only the text
+                                // must have a <div> or it blows
+                                if (cell.value) {
+                                    cell.value = $(cell.value).text();
+                                    // Set the alignment
+                                    cell.hAlign = "right";
+                                }
+                            }
+                        }
+                    }
+            },
+            pdf: {
+                fileName: "Summary Report",
+                allPages: true,
+                avoidLinks: true,
+                pageSize: "auto",
+                margin: {
+                    top: "2m",
+                    right: "1m",
+                    left: "1m",
+                    buttom: "1m",
+                },
+
+                landscape: true,
+                repeatHeaders: true,
+                scale: 0.8,
+            },
+            height: window.innerHeight - 150,
+            sortable: true,
+            reorderable: true,
+            groupable: true,
+            resizable: true,
+            filterable: {
+                extra: false,
+                operators: {
+                    number: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "is greater than or equal to	",
+                        gt: "is greater than",
+                        lte: "is less than or equal",
+                        lt: "is less than",
+                    },
+                    string: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        startswith: "Starts with	",
+                        contains: "Contains",
+                        doesnotcontain: "Does not contain",
+                        endswith: "Ends with",
+                    },
+                    date: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "Is after or equal to",
+                        gt: "Is after",
+                        lte: "Is before or equal to",
+                        lt: "Is before",
+                    }
+                }
+            },
+            columnMenu: true,
+            columnMenuInit: function (e) {
+                wordwrapmenu(e);
+                checkboxItem = $(e.container).find('input[type="checkbox"]');
+            },
+            columnShow: function (e) {
+                if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                    SaveReportSetting('SummaryReport', 'grid');
+            },
+            pageable: {
+                refresh: true,
+                pageSizes: reportConfig.itemPerPage,
+                buttonCount: 5
+            },
+            dataBound: function (o) {
+                var grid = o.sender;
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.length;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    displayPopupNotification("No Data Found Given Date Filter.", "info");
+                }
+                else {
+                    var g = $("#grid").data("kendoGrid");
+                    for (var i = 0; i < g.columns.length; i++) {
+                        g.showColumn(i);
+                    }
+                    $("div.k-group-indicator").each(function (i, v) {
+                        g.hideColumn($(v).data("field"));
+                    });
+                }
+
+                UpdateReportUsingSetting("SummaryReport", "grid");
+                $('div').removeClass('.k-header k-grid-toolbar');
+
+                $(".images").on("click", function () {
+                    var grid = $("#grid").data("kendoGrid");
+                    var dataItem = grid.dataItem($(this).closest("tr"));
+                    getImage(dataItem);
+                });
+
+            },
+            columns: [
+                {
+                    field: "GROUP_NAME",
+                    title: "Group Name",
+                    width: "107px"
+                },
+                {
+                    field: "FULL_NAME",
+                    title: "Employee Name",
+                    width: "107px",
+                    footerTemplate: '<div style="text-align:right;">Total :</div>'
+                },
+                {
+                    field: "TOTAL_VISIT",
+                    title: "Total Visited",
+                    width: "75px",
+                    attributes: { style: "text-align:right;" },
+                    template: '#= kendo.toString(TOTAL_VISIT, "n0") #',
+                    footerTemplate: '<div style="text-align:right;">#=kendo.toString(sum, "n0")#</div>'
+                },
+                {
+                    field: "TOTAL_OUTLET",
+                    title: "Total Outlet",
+                    width: "107px",
+                    attributes: { style: "text-align:right;" },
+                    template: '#= kendo.toString(TOTAL_OUTLET, "n0") #',
+                    footerTemplate: '<div style="text-align:right;">#=kendo.toString(sum, "n0")#</div>'
+                },
+                {
+                    field: "TOTAL_COLLECTION",
+                    title: "Total Collection",
+                    width: "80px",
+                    attributes: { style: "text-align:right;" },
+                    template: '#= kendo.toString(TOTAL_COLLECTION, "n2") #',
+                    footerTemplate: '<div style="text-align:right;">#=kendo.toString(sum, "n2")#</div>'
+                },
+                {
+                    field: "TOTAL_SALES",
+                    title: "Total Sales",
+                    width: "78px",
+                    template: '#= kendo.toString(TOTAL_SALES, "n2") #',
+                    attributes: { style: "text-align:right;" },
+                    footerTemplate: '<div style="text-align:right;">#=kendo.toString(sum, "n0")#</div>'
+                },
+                {
+                    field:"EFFECTIVECALLS",
+                    title: "Effective Calls",
+                    width: "100px",
+                    template: '#= kendo.toString(EFFECTIVECALLS, "n0") #',
+                    attributes: { style: "text-align:right;" },
+                    footerTemplate: '<div style="text-align:right;">#=kendo.toString(sum, "n0")#</div>'
+                },
+            ]
+        });
+    }
+
+    function KendoGridRefresh(readUrl) {
+        $('#grid').val('');
+        $('#grid').html('');
+        BindGrid(readUrl)
+    }
+
+    $(document).ready(function () {
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/Report/GetAllSummaryReport"
+        DateFilter.init(function () {
+            //consolidate.init(function () {
+                BindGrid(urltest);
+            //});
+        });
+    });
+</script>
+<script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js")"></script>

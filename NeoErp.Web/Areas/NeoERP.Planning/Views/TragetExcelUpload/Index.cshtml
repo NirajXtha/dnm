@@ -1,0 +1,986 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+    Layout = null;    
+    }
+
+    <style>
+        .upload-area {
+            border: 2px dashed #43A32E;
+            border-radius: 8px;
+            text-align: center;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+            .upload-area:hover {
+                background: #e9ecef;
+                border-color: #246f14;
+            }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #43A32E;
+            margin-bottom: 15px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            margin: 5px 0;
+        }
+
+            .file-input-wrapper input[type=file] {
+                position: absolute;
+                opacity: 0;
+                width: 100%;
+                height: 100%;
+                cursor: pointer;
+            }
+
+        .btn-choose-file {
+            padding: 5px 10px;
+            background: #43A32E;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s ease;
+        }
+
+            .btn-choose-file:hover {
+                background: #67B755;
+            }
+
+        .preview-section {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .summary-cards {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .summary-card {
+            flex: 1;
+            min-width: 150px;
+            padding: 0px 5px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+            .summary-card.total {
+                background: linear-gradient(135deg, #5C8D89 0%, #43A32E 100%);
+                color: white;
+            }
+
+            .summary-card.valid {
+                background: linear-gradient(135deg, #43A32E 0%, #67B755 100%);
+                color: white;
+            }
+
+            .summary-card.invalid {
+                background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+                color: white;
+            }
+
+            .summary-card h3 {
+                margin: 0;
+                font-size: 17px;
+                font-weight: bold;
+            }
+
+            .summary-card p {
+                margin: 0;
+                font-size: 10px;
+                opacity: 0.95;
+                font-weight: 500;
+            }
+
+        .table-responsive-custom {
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+            .data-table thead {
+                background: #43A32E;
+                color: white;
+                position: sticky;
+                top: 0;
+                z-index: 10;
+            }
+
+            .data-table th {
+                padding: 12px 8px;
+                text-align: left;
+                font-weight: 600;
+                border-bottom: 2px solid #dee2e6;
+            }
+
+            .data-table td {
+                padding: 2px 3px;
+                border-bottom: 1px solid #dee2e6;
+            }
+
+            .data-table tr.valid {
+                background: #d4edda;
+            }
+
+            .data-table tr.invalid {
+                background: #f8d7da;
+            }
+
+            .data-table tr:hover {
+                background: #e9ecef;
+            }
+
+        .status-icon {
+            font-size: 18px;
+            margin-right: 5px;
+        }
+
+            .status-icon.valid {
+                color: #43A32E;
+            }
+
+            .status-icon.invalid {
+                color: #dc3545;
+            }
+
+        .validation-errors {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+            .validation-errors ul {
+                margin: 0;
+                padding-left: 20px;
+            }
+
+        .field-invalid {
+            background-color: #ffe6e6 !important;
+            font-weight: bold;
+        }
+
+        .field-valid {
+            background-color: #e6ffe6 !important;
+        }
+
+        .loader-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+            .loader-overlay.active {
+                display: flex;
+            }
+
+        .loader-content {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #43A32E;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @@keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loader-text {
+            font-size: 18px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* Tab Styles */
+        .nav-tabs {
+            border-bottom: 2px solid #43A32E;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: row;
+            list-style: none;
+            padding-left: 0;
+        }
+
+            .nav-tabs > li {
+                margin-bottom: -2px;
+                display: inline-block;
+                float: none;
+            }
+
+                .nav-tabs > li > a {
+                    border: 1px solid transparent;
+                    border-radius: 4px 4px 0 0;
+                    color: #555;
+                    padding: 10px 20px;
+                    font-weight: 500;
+                    display: block;
+                    cursor: pointer;
+                    text-decoration: none;
+                }
+
+                    .nav-tabs > li > a:hover {
+                        border-color: #e9ecef #e9ecef #43A32E;
+                        background-color: #f8f9fa;
+                        color: #43A32E;
+                    }
+
+                .nav-tabs > li.active > a,
+                .nav-tabs > li.active > a:hover,
+                .nav-tabs > li.active > a:focus {
+                    color: #fff;
+                    background-color: #43A32E;
+                    border: 1px solid #43A32E;
+                    border-bottom-color: transparent;
+                }
+
+        .tab-content {
+            padding: 0;
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+            .tab-pane.active {
+                display: block;
+            }
+    </style>
+
+    <div class="content">
+        <div class="page-bar">
+            <ul class="page-breadcrumb">
+            </ul>
+        </div>
+    </div>
+
+    @*<i class="fa fa-file-excel-o font-green-haze"></i>*@
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-title">
+                    <div class="caption">
+
+                        <i class="fa fa-cloud-upload font-green-haze" style="font-size:20px;color:green;"></i>
+                        <span class="caption-subject font-green-haze bold uppercase">Target Excel Upload</span>
+                    </div>
+                    <div class="actions pull-right">
+
+                    </div>
+                </div>
+
+                <style>
+                    .btns-circle {
+                        /* width: 30px; */
+                        /* height: 30px; */
+                        /* padding: 6px 0; */
+                        border-radius: 15px;
+                        text-align: center;
+                        font-size: 12px;
+                        line-height: 1.428571429;
+                </style>
+
+
+
+
+                <div class="portlet-body form">
+                    <!-- Tab Navigation -->
+                    <ul class="nav nav-tabs" role="tablist">
+                        <li class="active">
+                            <a href="#uploadTab" data-toggle="tab" style="font-size:12px;">
+                                <i class="fa fa-cloud-upload"></i> Upload Targets
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#viewTab" data-toggle="tab" style="font-size:12px;">
+                                <i class="fa fa-search"></i> View Targets
+                            </a>
+                        </li>
+                    </ul>
+
+                    <!-- Tab Content -->
+                    <div class="tab-content">
+                        <!-- Upload Tab -->
+                        <div class="tab-pane active" id="uploadTab">
+                            <!-- Upload Section -->
+                            <div class="upload-section">
+                                <div class="upload-area">
+                                    <div class="row">
+                                        <div class="col-md-8" style="padding:20px;">
+                                            <p style="color: #6c757d; margin-bottom: 5px;">
+                               Required columns: From Date , To Date, Employee, Distributor, Item Code, Quantity, Price , Branch
+                                            </p>
+
+                                            <div style="float:left;">
+                                                <button type="button" class="btn btns-circle btn-default btn-sm " id="btnReset" style="display: none;">
+                                                    <i class="fa fa-refresh"></i> Reset
+                                                </button>
+                                                <button type="button" class="btn btns-circle btn-primary btn-sm" id="btnView" disabled style="display:none;">
+                                                    <i class="fa fa-eye"></i> View
+                                                </button>
+                                                <button type="button" class="btn btns-circle btn-green btn-sm" id="btnSave" disabled style="display:none;">
+                                                    <i class="fa fa-save"></i> Save Valid Records
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="file-input-wrapper">
+                                                <button class="btn-choose-file">
+                                                    <i class="fa fa-folder-open"></i> Choose File
+                                                </button>
+                                                <input type="file" id="excelFile" accept=".xlsx,.xls" />
+                                            </div>
+                                            <p id="fileName" style="margin-top: 4px; color: #43A32E; font-weight: 500;"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Preview Section -->
+                            <div class="preview-section" id="previewSection">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                    <h4 style="margin: 0;">
+                                        <i class="fa fa-table"></i> Data Preview & Validation
+                                    </h4>
+
+                                    <!-- Summary Cards -->
+                                    <div class="summary-cards" style="margin-bottom: 0; flex: 0 1 auto; max-width: 600px;">
+                                        <div class="summary-card total">
+                                            <h3 id="totalRows">0</h3>
+                                            <p>Total Rows</p>
+                                        </div>
+                                        <div class="summary-card valid">
+                                            <h3 id="validRows">0</h3>
+                                            <p>Valid Rows</p>
+                                        </div>
+                                        <div class="summary-card invalid">
+                                            <h3 id="invalidRows">0</h3>
+                                            <p>Invalid Rows</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Data Table -->
+                                <div class="table-responsive-custom">
+                                    <table class="data-table" id="dataTable">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 40px;">#</th>
+                                                <th style="width: 60px;">Status</th>
+                                                <th>From Date</th>
+                                                <th>To Date</th>
+                                                <th>Employee</th>
+                                                <th>Distributor</th>
+                                                <th>Item</th>
+                                                <th>Qty</th>
+                                                <th>Price</th>
+                                                <th>Branch</th>
+                                                <th style="width: 200px;">Errors</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="dataTableBody">
+                                            <!-- Data will be populated here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- View Tab -->
+                        <div class="tab-pane" id="viewTab">
+                            <!-- Search Section -->
+                            <div class="upload-section">
+                                <div class="upload-area">
+                                    <div class="row">
+                                        <div class="col-md-8" style="padding:20px;">
+                                            <p style="color: #6c757d; margin-bottom: 15px;">
+                                                Search and view target data by employee code
+                                            </p>
+
+                                            <div class="form-group">
+                                                <label for="empCodeDropdown">Select Employee:</label>
+                                                <select class="form-control" id="empCodeDropdown" style="max-width: 400px; display: inline-block; margin-right: 10px;">
+                                                    <option value="">-- Select Employee --</option>
+                                                </select>
+                                                <button type="button" class="btn btn-green btn-sm" id="btnLoadTargets" style="margin-left: 10px;">
+                                                    <i class="fa fa-search"></i> Load Targets
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- View Results Section -->
+                            <div class="preview-section" id="viewResultsSection" style="display:none;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                    <h4 style="margin: 0;">
+                                        <i class="fa fa-table"></i> Target Data
+                                    </h4>
+
+                                    <!-- Summary Cards -->
+                                    <div class="summary-cards" style="margin-bottom: 0; flex: 0 1 auto; max-width: 600px;">
+                                        <div class="summary-card total">
+                                            <h3 id="viewTotalRows">0</h3>
+                                            <p>Total Records</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Data Table -->
+                                <div class="table-responsive-custom">
+                                    <table class="data-table" id="viewDataTable">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 40px;">#</th>
+                                                <th>Target ID</th>
+                                                <th>From Date</th>
+                                                <th>To Date</th>
+                                                <th>Employee</th>
+                                                <th>Distributor</th>
+                                                <th>Item</th>
+                                                <th>Qty</th>
+                                                <th>Price</th>
+                                                <th>Branch</th>
+                                                <th style="width: 80px;">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="viewDataTableBody">
+                                            <!-- Data will be populated here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+
+
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Loader Overlay -->
+    <div class="loader-overlay" id="loaderOverlay">
+        <div class="loader-content">
+            <div class="spinner"></div>
+            <div class="loader-text" id="loaderText">Processing...</div>
+        </div>
+    </div>
+
+    <script>
+        let uploadedData = [];
+
+        // Helper function to format ISO 8601 date strings
+        function formatDate(dateString) {
+            if (!dateString) return '';
+
+            // Parse the ISO 8601 date string (e.g., "2026-07-12T00:00:00")
+            const date = new Date(dateString);
+
+            // Check if date is valid
+            if (isNaN(date.getTime())) return '';
+
+            // Format as MM/DD/YYYY or use your preferred format
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const year = date.getFullYear();
+
+            return `${month}/${day}/${year}`;
+        }
+
+        // Notification helper function with fallback
+        function showNotification(message, type) {
+            if (typeof displayPopupNotification === 'function') {
+                displayPopupNotification(message, type);
+            } else {
+                alert(message);
+            }
+        }
+
+        $(document).ready(function () {
+            // Button click to trigger file input
+            $('.btn-choose-file').on('click', function () {
+                $('#excelFile').click();
+            });
+
+            // File input change event
+            $('#excelFile').on('change', function (e) {
+                const file = e.target.files[0];
+                if (file) {
+                    $('#fileName').text('Selected: ' + file.name);
+                    uploadFile(file);
+                }
+            });
+
+            // Reset button
+            $('#btnReset').on('click', function () {
+                resetForm();
+            });
+
+            // View button - triggers validation
+            $('#btnView').on('click', function () {
+                if (uploadedData.length > 0) {
+                    validateData(uploadedData);
+                }
+            });
+
+            // Save button
+            $('#btnSave').on('click', function () {
+                saveData();
+            });
+        });
+
+        function showLoader(text) {
+            $('#loaderText').text(text);
+            $('#loaderOverlay').addClass('active');
+        }
+
+        function hideLoader() {
+            $('#loaderOverlay').removeClass('active');
+        }
+
+        function uploadFile(file) {
+            showLoader('Uploading and reading Excel file...');
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            $.ajax({
+                url: '/Planning/TragetExcelUpload/UploadExcel',
+                type: 'POST',
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function (response) {
+                    hideLoader();
+                    if (response.success) {
+                        uploadedData = response.data;
+                        console.log("uploadedData", uploadedData);
+                        // Show action buttons after upload
+                        $('#btnView').show().prop('disabled', false);
+                        $('#btnReset').show();
+                        showNotification('File uploaded successfully! Click "View" to validate data.', 'success');
+                    } else {
+                        showNotification('Error: ' + response.message, 'error');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    hideLoader();
+                    showNotification('Upload failed: ' + error, 'error');
+                }
+            });
+        }
+
+        function validateData(data) {
+            showLoader('Validating data against database...');
+
+            $.ajax({
+                url: '/Planning/TragetExcelUpload/ValidateData',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (response) {
+                    hideLoader();
+                    if (response.success) {
+                        uploadedData = response.data;
+                        displayData(response.data, response.summary);
+                    } else {
+                        showNotification('Validation Error: ' + response.message, 'error');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    hideLoader();
+                    showNotification('Validation failed: ' + error, 'error');
+                }
+            });
+        }
+
+        function displayData(data, summary) {
+            // Update summary
+            $('#totalRows').text(summary.total);
+            $('#validRows').text(summary.valid);
+            $('#invalidRows').text(summary.invalid);
+
+            // Show/enable action buttons
+            $('#btnReset').show();
+            $('#btnSave').show();
+
+            // Enable save button if there are valid rows
+            if (summary.valid > 0) {
+                $('#btnSave').prop('disabled', false);
+            } else {
+                $('#btnSave').prop('disabled', true);
+            }
+
+            // Populate table
+            const tbody = $('#dataTableBody');
+            tbody.empty();
+
+            data.forEach(function (row, index) {
+                // Debug: Log the first row to see actual property names
+                if (index === 0) {
+                    console.log('First row data:', row);
+                    console.log('FROM_DATE:', row.FROM_DATE);
+                    console.log('TO_DATE:', row.TO_DATE);
+                    console.log('All keys:', Object.keys(row));
+                }
+
+                const tr = $('<tr>').addClass(row.IsValid ? 'valid' : 'invalid');
+
+                // Row number
+                tr.append($('<td>').text(index + 1));
+
+                // Status
+                const statusIcon = row.IsValid
+                    ? '<i class="fa fa-check-circle status-icon valid"></i>'
+                    : '<i class="fa fa-times-circle status-icon invalid"></i>';
+                tr.append($('<td>').html(statusIcon));
+
+                // From Date - try different property name variations
+                const fromDate = row.FROM_DATE || row.from_DATE || row.fromDate || row.From_Date;
+                console.log('From Date value for row', index + 1, ':', fromDate);
+                tr.append($('<td>').text(formatDate(fromDate)));
+
+                // To Date - try different property name variations
+                const toDate = row.TO_DATE || row.to_DATE || row.toDate || row.To_Date;
+                console.log('To Date value for row', index + 1, ':', toDate);
+                tr.append($('<td>').text(formatDate(toDate)));
+
+                // Employee
+                const empClass = row.IsEmployeeValid ? 'field-valid' : 'field-invalid';
+                const empText = row.EMP_NAME ? row.EMP_CODE + ' - ' + row.EMP_NAME : row.EMP_CODE || '';
+                tr.append($('<td>').addClass(empClass).text(empText));
+
+                // Distributor
+                const distClass = row.IsDistributorValid ? 'field-valid' : 'field-invalid';
+                const distText = row.DISTRIBUTOR_NAME ? row.DISTRIBUTOR_CODE + ' - ' + row.DISTRIBUTOR_NAME : row.DISTRIBUTOR_CODE || '';
+                tr.append($('<td>').addClass(distClass).text(distText));
+
+                // Item
+                const itemClass = row.IsItemValid ? 'field-valid' : 'field-invalid';
+                const itemText = row.ITEM_NAME ? row.ITEM_CODE + ' - ' + row.ITEM_NAME : row.ITEM_CODE || '';
+                tr.append($('<td>').addClass(itemClass).text(itemText));
+
+                // Qty
+                tr.append($('<td>').text(row.QTY || ''));
+
+                // Price
+                tr.append($('<td>').text(row.PRICE || ''));
+
+                // Branch
+                const branchClass = row.IsBranchValid ? 'field-valid' : 'field-invalid';
+                const branchText = row.BRANCH_NAME ? row.BRANCH_CODE + ' - ' + row.BRANCH_NAME : row.BRANCH_CODE || '';
+                tr.append($('<td>').addClass(branchClass).text(branchText));
+
+                // Errors
+                const errorsTd = $('<td>');
+                if (row.ValidationErrors && row.ValidationErrors.length > 0) {
+                    const errorsList = $('<ul>').addClass('validation-errors');
+                    row.ValidationErrors.forEach(function (error) {
+                        errorsList.append($('<li>').text(error));
+                    });
+                    errorsTd.append(errorsList);
+                }
+                tr.append(errorsTd);
+
+                tbody.append(tr);
+            });
+
+            // Show preview section
+            $('#previewSection').slideDown();
+        }
+
+        function saveData() {
+            const validRows = uploadedData.filter(r => r.IsValid);
+
+            if (validRows.length === 0) {
+                showNotification('No valid rows to save!', 'warning');
+                return;
+            }
+
+            if (!confirm('Are you sure you want to save ' + validRows.length + ' valid records?')) {
+                return;
+            }
+
+            showLoader('Saving valid records to database...');
+
+            $.ajax({
+                url: '/Planning/TragetExcelUpload/SaveData',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(validRows),
+                success: function (response) {
+                    hideLoader();
+                    if (response.success) {
+                        showNotification(response.message, 'success');
+                        resetForm();
+                    } else {
+                        showNotification('Save Error: ' + response.message, 'error');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    hideLoader();
+                    showNotification('Save failed: ' + error, 'error');
+                }
+            });
+        }
+
+        function resetForm() {
+            uploadedData = [];
+            $('#excelFile').val('');
+            $('#fileName').text('');
+            $('#previewSection').slideUp();
+            $('#dataTableBody').empty();
+            $('#totalRows').text('0');
+            $('#validRows').text('0');
+            $('#invalidRows').text('0');
+            $('#btnView').prop('disabled', true).hide();
+            $('#btnSave').prop('disabled', true).hide();
+            $('#btnReset').hide();
+        }
+
+        // ==================== TAB SWITCHING (PREVENT REDIRECT) ====================
+
+        $('.nav-tabs a').click(function (e) {
+            e.preventDefault();
+            
+            // Remove active from all tabs
+            $('.nav-tabs li').removeClass('active');
+            $('.tab-pane').removeClass('active');
+            
+            // Add active to clicked tab
+            $(this).parent('li').addClass('active');
+            
+            // Show corresponding tab content
+            var target = $(this).attr('href');
+            $(target).addClass('active');
+
+            // Load employee list when View Targets tab is opened
+            if (target === '#viewTab') {
+                loadEmployeeDropdown();
+            }
+        });
+
+        // ==================== VIEW TAB FUNCTIONS ====================
+
+        var employeeListLoaded = false;
+        var selectedEmployeeCode = '';
+
+        // Load employee dropdown when View Targets tab is opened
+        if ($('#viewTab').hasClass('active')) {
+            loadEmployeeDropdown();
+        }
+
+        // Populate employee dropdown
+        function loadEmployeeDropdown() {
+            if (employeeListLoaded) return;
+
+            $.ajax({
+                url: '/Planning/TragetExcelUpload/GetEmployeeFilterList',
+                type: 'GET',
+                data: { limit: 50 },
+                success: function (response) {
+                    if (response.success && response.data) {
+                        var $dropdown = $('#empCodeDropdown');
+                        $dropdown.empty();
+                        $dropdown.append('<option value="">-- Select Employee --</option>');
+                        
+                        response.data.forEach(function (emp) {
+                            var optionText = emp.EMPLOYEE_CODE + ' - ' + emp.EMPLOYEE_NAME;
+                            var $option = $('<option></option>')
+                                .val(emp.EMPLOYEE_CODE)
+                                .text(optionText)
+                                .data('name', emp.EMPLOYEE_NAME);
+                            $dropdown.append($option);
+                        });
+                        
+                        employeeListLoaded = true;
+                    }
+                },
+                error: function (xhr, status, error) {
+                    showNotification('Failed to load employee list: ' + error, 'error');
+                }
+            });
+        }
+
+        // Handle dropdown selection
+        $('#empCodeDropdown').change(function () {
+            selectedEmployeeCode = $(this).val();
+        });
+
+        // Load Targets Button Click
+        $('#btnLoadTargets').click(function () {
+            var empCode = selectedEmployeeCode || $('#empCodeDropdown').val();
+            if (!empCode) {
+                showNotification('Please select an employee', 'error');
+                return;
+            }
+            loadEmployeeTargets(empCode);
+        });
+
+        // Enter key on employee search
+        $('#empCodeDropdown').keypress(function (e) {
+            if (e.which === 13) {
+                $('#btnLoadTargets').click();
+            }
+        });
+
+        function loadEmployeeTargets(empCode) {
+            showLoader('Loading target data...');
+
+            $.ajax({
+                url: '/Planning/TragetExcelUpload/GetEmployeeData',
+                type: 'GET',
+                data: { empCode: empCode },
+                success: function (response) {
+                    hideLoader();
+                    if (response.success) {
+                        displayViewData(response.data, response.summary);
+                        showNotification('Target data loaded successfully', 'success');
+                    } else {
+                        showNotification('Error: ' + response.message, 'error');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    hideLoader();
+                    showNotification('Failed to load target data: ' + error, 'error');
+                }
+            });
+        }
+
+        function displayViewData(data, summary) {
+            // Update summary
+            $('#viewTotalRows').text(summary.total);
+
+            // Clear existing data
+            $('#viewDataTableBody').empty();
+
+            if (data.length === 0) {
+                $('#viewResultsSection').slideDown();
+                $('#viewDataTableBody').html('<tr><td colspan="11" style="text-align:center;padding:20px;color:#999;">No target data found for this employee</td></tr>');
+                return;
+            }
+
+            // Populate table
+            data.forEach(function (row, index) {
+                var fromDate = row.FROM_DATE ? new Date(row.FROM_DATE).toLocaleDateString() : '';
+                var toDate = row.TO_DATE ? new Date(row.TO_DATE).toLocaleDateString() : '';
+
+                var tr = $('<tr></tr>');
+                tr.append('<td>' + (index + 1) + '</td>');
+                tr.append('<td>' + (row.TARGETID || '') + '</td>');
+                tr.append('<td>' + fromDate + '</td>');
+                tr.append('<td>' + toDate + '</td>');
+                tr.append('<td>' + (row.EMP_CODE || '') + ' - ' + (row.EMP_NAME || '') + '</td>');
+                tr.append('<td>' + (row.DISTRIBUTOR_CODE || '') + ' - ' + (row.DISTRIBUTOR_NAME || '') + '</td>');
+                tr.append('<td>' + (row.ITEM_CODE || '') + ' - ' + (row.ITEM_NAME || '') + '</td>');
+                tr.append('<td>' + (row.QTY || '') + '</td>');
+                tr.append('<td>' + (row.PRICE || '') + '</td>');
+                tr.append('<td>' + (row.BRANCH_CODE || '') + ' - ' + (row.BRANCH_NAME || '') + '</td>');
+                tr.append('<td><button class="btn btn-danger btn-xs btn-delete-target" data-targetid="' + row.TARGETID + '"><i class="fa fa-trash"></i></button></td>');
+
+                $('#viewDataTableBody').append(tr);
+            });
+
+            $('#viewResultsSection').slideDown();
+        }
+
+        // Delete button click handler (delegated)
+        $(document).on('click', '.btn-delete-target', function () {
+            var targetId = $(this).data('targetid');
+            var $row = $(this).closest('tr');
+
+            if (confirm('Are you sure you want to delete this target record (ID: ' + targetId + ')?')) {
+                deleteTarget(targetId, $row);
+            }
+        });
+
+        function deleteTarget(targetId, $row) {
+            showLoader('Deleting target...');
+
+            $.ajax({
+                url: '/Planning/TragetExcelUpload/DeleteByTargetId',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ targetId: targetId }),
+                success: function (response) {
+                    hideLoader();
+                    if (response.success) {
+                        // Remove row from table
+                        $row.fadeOut(300, function () {
+                            $(this).remove();
+                            // Update total count
+                            var currentTotal = parseInt($('#viewTotalRows').text());
+                            $('#viewTotalRows').text(currentTotal - 1);
+
+                            // Check if table is empty
+                            if ($('#viewDataTableBody tr').length === 0) {
+                                $('#viewDataTableBody').html('<tr><td colspan="11" style="text-align:center;padding:20px;color:#999;">No target data found</td></tr>');
+                            } else {
+                                // Re-number rows
+                                $('#viewDataTableBody tr').each(function (index) {
+                                    $(this).find('td:first').text(index + 1);
+                                });
+                            }
+                        });
+                        showNotification('Target deleted successfully', 'success');
+                    } else {
+                        showNotification('Error: ' + response.message, 'error');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    hideLoader();
+                    showNotification('Delete failed: ' + error, 'error');
+                }
+            });
+        }
+    </script>

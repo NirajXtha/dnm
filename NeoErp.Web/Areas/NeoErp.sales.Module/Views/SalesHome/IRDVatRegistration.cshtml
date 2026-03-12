@@ -1,0 +1,991 @@
+﻿
+@using NeoErp.Core.Models;
+@using NeoErp.Core.Models.CustomModels
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    ViewBag.Title = "Home Page";
+}
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+<style>
+   
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+    }
+
+    .k-hidden {
+        display: none;
+    }
+
+    .k-grid table {
+        table-layout: fixed;
+        width: 1700px
+    }
+
+    .no-data {
+        background-color: red;
+    }
+
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+</style>
+<div class="page-content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb"></ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+
+                <div class="actions">
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                    </div>
+                    @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                   {
+                       ShowCustomerFilter = true,
+                       ShowProductFilter = false,
+                       ShowPartyTypeFilter = false,
+                       ShowCategoryFilter = false,
+                       ShowLocationFilter = false,
+                       ShowDocumentFilter = true,
+                       ShowEmployeeFilter = false,
+                       ShowAgentFilter = false,
+                       ShowDivisionFilter=false,
+                       ShowAreaFilter=false,
+
+                       //ShowCompanyFilter = true,
+                       //ShowBranchFilter = true
+                   })
+                    </div>
+                    @Html.Partial("~/Views/Shared/Controls/_reportFilterSettings.cshtml", new ReportFilterSettingsModel()
+               {
+                   ShowAmountFigureFilter = true,
+                   ShowAmountFilter = true,
+                   ShowAmountRoundUpFilter = true,
+                   ShowRangeAmountFilter = true,
+                   ShowRangeQuantityFilter = true,
+                   ShowRangeRateFilter = true
+               })
+
+
+                    @Html.Partial("~/Views/Shared/Controls/ComposeMail.cshtml", new FileMailAttachment() { })
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#" data-toggle="tooltip" data-html="true" title="Refresh" data-placement="left">
+                        <i class="icon-control-play"></i>
+                    </a>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "MaterilizedViewReport")
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div id="grid"></div>
+                        
+                        @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+<script src="@Scripts.Url("~/JS/DateFilter.js?V5")" type="text/javascript"></script>
+<script src="@Scripts.Url("~/JS/dynamicReport.js?V3")" type="text/javascript"></script>
+<script type="text/javascript">
+    var fileMailSender = new ManualEmailSender({
+        gridName: "grid",
+        gridRefreshTriggerName: "RunQuery",
+        reportName: "MaterilizedViewReport"
+    });
+
+
+</script>
+<script type="text/javascript">
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+
+</script>
+<script>
+    var reportConfig = GetReportSetting("MaterilizedViewReport");
+    var urltest = window.location.protocol + "//" + window.location.host + "/api/SalesHome/GetVatRegistrationIRDReport"
+
+    function myCustomFunction(arrey, header) {
+        var result = $.grep(arrey, function (e) { return e.CHARGE_CODE === header; });
+
+        var value = 0;
+        if (result.length == 0) {
+
+        } else if (result.length == 1) {
+            value = result[0].CHARGE_AMOUNT
+        }
+        return value;
+    }
+
+    function getDateFormat(date) {
+        return kendo.format("{0:" + reportConfig.dateFormat + "}", date)
+    }
+
+    function myCustomiTEMFunction(arrey, header) {
+        var result = $.grep(arrey, function (e) { return e.CHARGE_CODE === header; });
+
+        var value = 0;
+        if (result.length == 0) {
+
+        } else if (result.length == 1) {
+            value = result[0].CHARGE_AMOUNT
+        }
+        return value;
+    }
+    function myCustomFunctionWithTitle(arrey, header) {
+
+        var result = $.grep(arrey, function (e) { return e.CHARGE_EDESC === header; });//previosly header.value
+        var value = 0;
+        if (result.length == 0) {
+
+        } else if (result.length == 1) {
+            value = result[0].CHARGE_AMOUNT
+        }
+        return value;
+    };
+    function getSum(value) {
+        var datasource = $("#grid").data("kendoGrid").dataSource;
+        var result;
+        //loops through the dataSource view
+        $(datasource.view()).each(function (index, element) {
+            //compares view value with the current template value
+            if (element.value === value) {
+                result = element.aggregates.size.sum; //gets the aggregate value
+            }
+        });
+
+        return result;
+    }
+    function ExportToExcel(e) {
+
+        //Report header details
+        var companyName = ('@workingContent.CurrentUserinformation.company_name');
+        var fromADdate = $("#FromDateVoucher").val()
+        var toADdate = $("#ToDateVoucher").val();
+        var fromBSdate = $("#fromInputDateVoucher").val();
+        var toBSdate = $("#toInputDateVoucher").val();
+        var branches = ReportFilter.getBranchs();
+
+        //create a footer row to display totals
+        var footer = [];
+        footer.push({ value: "Total", colSpan: 4, textAlign: "center", bold: true, })
+        var footerTemp = e.workbook.sheets[0].rows[e.workbook.sheets[0].rows.length - 1].cells;
+        for (var i = 0; i < footerTemp.length; i++) {
+            if (typeof (footerTemp[i].value) != "undefined" && footerTemp[i].value != "<span>Total</span>")
+                footer.push({ value: $(footerTemp[i].value).text(), textAlign: "right", bold: true });
+        }
+        var SheetRow = [];//array to store the rows
+        //push the header to row array
+        SheetRow.push({
+            cells: [
+                {value: "Date", background: "#A9A7A6" },
+                { value: "Miti", background: "#A9A7A6", },
+                { value: "Invoice No", background: "#A9A7A6", },
+                { value: "Customer Name", background: "#A9A7A6", },
+                {value: "Gross Amount", background: "#A9A7A6", aggregates: "count",
+                 groupHeaderTemplate: "Sum size of #= value #: #= getSum(value) #"  },
+
+
+
+                { value: "Net Amount", background: "#A9A7A6", },
+
+
+                { value: "Invoice Total", background: "#A9A7A6", },
+            ]
+        });
+
+        WriteData(e.data);
+
+        //recursive function to write the grouped/ungrouped data
+        function WriteData(array) {
+            array.forEach(function (row, index) {
+                if (typeof (row.items) != "undefined") { //if array contains nested items, write a row with group field and enter recursion
+                    SheetRow.push({
+                        cells: [{
+                            value: row.field + " : " + row.value,
+                            background: "#E1E1E1",
+                            colSpan: footerTemp.length,//to span the total number of columns
+                            fontSize: 12,
+                        }]
+                    });
+                    WriteData(row.items);
+                }
+                else { //if array contains no nested items write the row to excelsheet
+                    SheetRow.push({
+                        cells: [{
+                            value: getDateFormat(row.SalesDate),
+                        }, {
+                            value: row.Miti,
+                        }, {
+                            value: row.InvoiceNumber,
+                        }, {
+                            value: row.CustomerName,
+                        }, {
+                            value: row.GrossAmount.toFixed(2), textAlign:"right",
+                        },
+
+
+                            {
+                                value: row.NetAmount.toFixed(2), textAlign:"right",
+                            },
+
+
+                        {
+                            value: row.InvoiceAmount.toFixed(2), textAlign:"right",
+                        }]
+                    });
+                }
+            });
+        }
+
+        //push the footer variable containing total values
+        SheetRow.push({
+            cells: footer,
+        });
+
+        //pushing Report header details
+        SheetRow.unshift({
+            cells: [{ value: "Sales Register Analysis".split('').join(' '), colSpan: footerTemp.length }]
+        });
+
+        var filterText = $("#AdvanceFilter").attr('data-original-title');
+        if (filterText.indexOf('|') < 0) {
+            filterText = $((filterText).replace(/<strong>/g, "|")).text().replace('|', '').split('|');
+            $.each(filterText, function (k,item) {
+                SheetRow.unshift({
+                    cells: [{ value: item, colSpan: footerTemp.length }]
+                });
+            });
+        }
+        if (filterText.indexOf('Date Range') < 0) {
+            SheetRow.unshift({
+                cells: [{ value: "From :- " + fromADdate + "(" + fromBSdate + ")" + "\t To :- " + toADdate + "(" + toBSdate + ")", colSpan: footerTemp.length }]
+            });
+        }
+        for (var companyCount = 0; companyCount < branches.length; companyCount++) {
+            SheetRow.unshift({
+                cells: [{ value: branches[companyCount].Company + " :- " + branches[companyCount].Branches.join(','), colSpan: footerTemp.length }]
+            });
+        }
+        //initializing a workbook with above prepared rows
+        var Workbook = new kendo.ooxml.Workbook({
+            sheets: [{
+                columns: [
+                    { width: 110 },
+                    @*@for(int i=0;i<(Model.Where(x => x.ChargesHeaderNo != "VTD").Count()+ Model.Where(x => x.ChargesHeaderNo == "VTD").Count() + 6); i++)
+                    {
+                        <text>{ autoWidth: true },</text>
+                    }*@
+                ],
+                rows: SheetRow,
+            }]
+        });
+        //finally saving the excel sheet
+        kendo.saveAs({
+            dataURI: Workbook.toDataURL(),
+            fileName: "Materilized View Report.xlsx"
+        });
+    }
+
+    $(".applydp").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    });
+    $("#loadAdvancedFilters").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    });
+
+    $(document).ready(function () {
+        // init function for the data load
+
+        DateFilter.init(function () {
+            consolidate.init(function () {
+                BindGrid(urltest);
+            });
+        });
+
+
+
+
+
+
+        $("#RunQuery").click(function (evt) {
+            evt.preventDefault();
+            KendoGridRefresh(urltest);
+        });
+
+        fileMailSender.init();
+
+
+    });
+    function BindGrid(readurl) {
+        //reportConfig = GetReportSetting("FinalSalesReport");
+        reportConfig = GetReportSetting("MaterilizedViewReport");
+        console.log(reportConfig);
+
+        var dataSource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: {
+                    url: readurl, // <-- Get data from here.
+                    dataType: "json", // <-- The default was "jsonp".
+                    type: "POST",
+
+
+
+
+                    contentType: "application/json; charset=utf-8"
+                },
+                parameterMap: function (options, type) {
+
+                    var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+                    delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                    delete paramMap.$format; // <-- remove format parameter.
+                    return paramMap;
+
+                }
+            },
+            error: function (e) {
+                displayPopupNotification("Sorry error occured while processing data", "error");
+            },
+            serverFiltering: true,
+            serverSorting: true,
+            serverGrouping: false,
+            serverAggregates: true,
+            serverPaging: true,
+            schema: {
+                data: "gridSalesRegReport", // records are returned in the "data" field of the response
+                total: "total", // total number of records is in the "total" field of the response
+                aggregates: "AggregationResult",
+                model: {
+                    fields: {
+
+                        MITI: { type: "string" },
+                        INVOICE_NO: { type: "string" },
+                        PARTY_NAME: { type: "string" },
+                        VAT_NO: { type: "string" },
+                        GROSS_SALES: { type: "number" },
+                        TAXABLE_SALES: { type: "number" },
+                        VAT: { type: "number" },
+                        TOTAL_SALES: { type: "number" },
+                        SALES_DISCOUNT: { type: "number" },
+                        CREDIT_DAYS: { type: "string" },
+                        DELETED_FLAG: { type: "string" },
+                        MANUAL_NO: { type: "string" },
+                    }
+                }
+            },
+
+            aggregate: [
+                { field: "GROSS_SALES", aggregate: "sum" },
+                { field: "TAXABLE_SALES", aggregate: "sum" },
+                { field: "VAT", aggregate: "sum" },
+                { field: "TOTAL_SALES", aggregate: "sum" },
+                { field: "ZERO_RATE_EXPORT", aggregate: "sum" },
+
+            ],
+            pageSize: reportConfig.defaultPageSize,
+        });
+
+        var grid = $("#grid").kendoGrid({
+            dataSource: dataSource,
+            toolbar: kendo.template($("#toolbar-template").html()),
+            excel: {
+                fileName: "Materilized View Report",
+                //proxyURL: "//demos.telerik.com/kendo-ui/service/export",
+                allPages: true
+            },
+            excelExport: function (e) {
+
+                //ExportToExcel(e);
+                e.preventDefault();
+                var workbook = e.workbook;
+                detailExportPromises = [];
+                var masterData = e.data;
+               
+                $.when.apply(null, detailExportPromises)
+                    .then(function () {
+                        // get the export results
+
+                        var detailExports = $.makeArray(arguments);
+                        // sort by masterRowIndex
+                        detailExports.sort(function (a, b) {
+                            return a.masterRowIndex - b.masterRowIndex;
+                        });
+                        // add an empty column
+                        workbook.sheets[0].columns.unshift({
+                            width: 90
+                        });
+
+                     
+                        for (var len = 1; len < workbook.sheets[0].columns.length; len++) {
+                            workbook.sheets[0].columns[len].length = 160;
+                        }
+
+                        //Add filter information
+                        var companyName = ('@workingContent.CurrentUserinformation.company_name');
+                        var fromADdate = $("#FromDateVoucher").val()
+                        var toADdate = $("#ToDateVoucher").val();
+                        var fromBSdate = $("#fromInputDateVoucher").val();
+                        var toBSdate = $("#toInputDateVoucher").val();
+                        var branches = ReportFilter.getBranchs();
+
+                        workbook.sheets[0].rows.unshift({
+                            cells: [{ value: "Vat Registration Report".split('').join(' '), colSpan: 7 }]
+                        });
+                        var filterText = $("#AdvanceFilter").attr('data-original-title');
+                        if (filterText.indexOf('|') < 0) {
+                            filterText = $((filterText).replace(/<strong>/g, "|")).text().replace('|', '').split('|').reverse();;
+                            $.each(filterText, function (k, item) {
+                                workbook.sheets[0].rows.unshift({
+                                    cells: [{ value: item, colSpan: 7 }]
+                                });
+                            });
+                        }
+                        if (filterText.toString().indexOf('Date Range') < 0) {
+                            workbook.sheets[0].rows.unshift({
+                                cells: [{ value: "From :- " + fromADdate + "(" + fromBSdate + ")" + "\t To :- " + toADdate + "(" + toBSdate + ")", colSpan: 7 }]
+                            });
+                        }
+                        for (var companyCount = 0; companyCount < branches.length; companyCount++) {
+                            workbook.sheets[0].rows.unshift({
+                                cells: [{ value: branches[companyCount].Company + " :- " + branches[companyCount].Branches.join(','), colSpan: 7}]
+                            });
+                        }
+
+                        // save the workbook
+                        kendo.saveAs({
+                            dataURI: new kendo.ooxml.Workbook(workbook).toDataURL(),
+                            fileName: "Vat Registration.xlsx"
+                        });
+
+
+                    });
+            },
+
+            pdf: {
+                allPages: true,
+                avoidLinks: true,
+                pageSize: "auto",
+                //paperSize: [1100 , 1430],
+                margin: {
+                    top: "2m",
+                    left: "1cm",
+                    right: "1cm",
+                    bottom: "1cm"
+                },
+                landscape: true,
+                repeatHeaders: true,
+                scale: 0.8
+            },
+            allowCopy: true,
+            height: window.innerHeight - 100,
+            pageable: {
+                refresh: true,
+                pageSizes: reportConfig.itemPerPage,
+                buttonCount: 5
+            },
+            sortable: true,
+            height: 550,
+
+            reorderable: true,
+            groupable: true,
+            resizable: true,
+           
+            columnMenu: true,
+            
+            scrollable: true,
+            dataBound: function (o) {
+
+                var grid = o.sender;
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.length + 1;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    displayPopupNotification("No Data Found Given Date Filter.", "info");
+                }
+                else {
+                    debugger
+                    var g = $("#grid").data("kendoGrid");
+                    for (var i = 0; i < g.columns.length; i++) {
+                        g.showColumn(i);
+                    }
+                    $("div.k-group-indicator").each(function (i, v) {
+                        g.hideColumn($(v).data("field"));
+                    });
+
+                    var data = g.dataSource.data();
+                    $.each(data, function (i, row) {
+                        if (row.DELETED_FLAG == "Y") {
+                            var element = $('tr[data-uid="' + row.uid + '"] ');
+                            $(element).css("background-color", "#ff726f");;
+                        }
+                    });
+                }
+                $('div').removeClass('.k-header k-grid-toolbar');
+
+
+                //UpdateReportUsingSetting("FinalSalesReport", "grid");
+                UpdateReportUsingSetting("MaterilizedViewReport", "grid");
+            },
+            columns: [
+                            {
+                                field: " MITI",
+                                title: "Miti",
+                                width: "120",
+                                //format: "{0:" + reportConfig.dateFormat + "}",
+                               // template: "kendo.toString(kendo.parseDate(SalesDate, 'yyyy-MM-dd')",
+                            },
+                          {
+                              field: "INVOICE_NO",
+                              title: "Invoice No",
+                              width: "200",
+                          },
+                          {
+                              field: "PARTY_NAME",
+                              title: "PartyName/CustomerName",
+                              width: "120",
+
+                          },
+                          {
+                              field: "VAT_NO",
+                              title: "Vat No",
+                              width: "150",
+                              footerTemplate: "<span>Total</span>"
+                            },
+                            
+                           {
+                               field: "GROSS_SALES",
+                               title: "Net Sales",
+                               width: "90",
+                               attributes:
+                                {
+                                    style: "text-align:right;"
+                                },
+                               //attributes: {
+                               //    style: "text-align: left;"
+                               //},
+                               format: "{0:n}",
+                               aggregates: ["sum"],
+                               groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                               footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+
+                           },
+
+
+                           {
+                               field: "TAXABLE_SALES",
+                               title: "Tax Exemp Sales",
+                               width: "100",
+                               attributes: {
+                                   style: "text-align: right;"
+                               },
+                               format: "{0:n}",
+                               aggregates: ["count", "min", "sum"],
+                               groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                               footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>'
+
+                           },
+                           {
+                               field: "ZERO_RATE_EXPORT",
+                               title: "Zero Rate Export",
+                               width: "100",
+                               attributes: {
+                                   style: "text-align: right;"
+                               },
+                               format: "{0:n}",
+                               aggregates: ["count", "min", "sum"],
+                               groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                               footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>'
+
+                           },
+
+                            {
+                                field: "TOTAL_SALES",
+                                title: "Taxable Value",
+                                width: "100",
+                                attributes: {
+                                    style: "text-align: right;"
+                                },
+                                format: "{0:n}",
+                                aggregates: ["count", "min", "sum"],
+                                groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                                footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                        },
+                        {
+                            field: "VAT",
+                            title: "Vat Amount",
+                            width: "100",
+                            attributes: {
+                                style: "text-align: right;"
+                            },
+                            format: "{0:n}",
+                            aggregates: ["count", "min", "sum"],
+                            groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                                    footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                        },
+                        
+                        {
+                            field: "DELETED_FLAG",
+                            title: "Delete Flag",
+                        }
+            ]
+        });
+
+        function exportChildData(InvoiceNumber, rowIndex, Company_Code) {
+            var deferred = $.Deferred();
+            detailExportPromises.push(deferred);
+            var localDS = new kendo.data.DataSource({
+                type: 'json',
+                batch: true,
+                transport: {
+                    read: {
+                        async: false,
+                        url: window.location.protocol + "//" + window.location.host + "/" + "api/SalesHome/GetSalesRegisterChilds?SalesNo=" + InvoiceNumber + "&CompanyCode=" + Company_Code, // <-- Get data from here.
+                        dataType: 'json',
+                        type: 'POST',
+                        contentType: 'application/json; charset=utf-8'
+                    },
+                    parameterMap: function (options, type) {
+                        var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+
+                    },
+                    error: function (e) {
+                        displayPopupNotification("Sorry error occured while processing data", "error");
+                    },
+                    schema: {
+                        model: {
+                            id: "ITEM_CODE",
+                            fields: {
+                                ProductName: { editable: false, nullable: true },
+                                Quanity: { editable: false, nullable: true },
+                                Rate: { editable: false, nullable: true },
+                                GrossAmount: { editable: false, nullable: true },
+                                Discount: { editable: false, nullable: true },
+                                NetAmount: { editable: false, nullable: true },
+                                INVOICENo: { editable: false, nullable: true },
+                                UNIT: { editable: false, nullable: true },
+                                ITEM_CODE: { editable: false, nullable: true },
+                            }
+                        }
+                    },
+                   aggregate: [
+                            { field: "GrossAmount", aggregate: "sum" },
+                            //{ field: "Discount", aggregate: "sum" },
+                            { field: "NetAmount", aggregate: "sum" },
+
+
+            ],
+                }
+            });
+            //localDS.filter({ field: "InvoiceNumber", operator: "eq", value: InvoiceNumber });
+            var exporter = new kendo.ExcelExporter({
+                columns: [
+                     {
+                                field: " FISCAL_YEAR",
+                                title: "Fiscal year",
+                                width: "90",
+                                //format: "{0:" + reportConfig.dateFormat + "}",
+                               // template: "kendo.toString(kendo.parseDate(SalesDate, 'yyyy-MM-dd')",
+                            },
+                          {
+                              field: "BILL_NO",
+                              title: "Bill No",
+                          },
+                          {
+                              field: "CUSTOMER_NAME",
+                              title: "Customer Name",
+
+                          },
+                          {
+                              field: "CUSTOMER_PLAN",
+                              title: "Customer Plan",
+                              //width: "150",
+                              footerTemplate: "<span>Total</span>"
+
+                              //template: '<span style="float:right">#= kendo.toString(CR_OPENING, "n") #</span>'
+                            },
+                            {
+                                field: "BILL_DATE",
+                                title: "Bill Date",
+                               // width: "150",
+
+                            },
+                           {
+                               field: "AMOUNT",
+                               title: "Amount",
+                               width: "70",
+                               attributes:
+                                {
+                                    style: "text-align:right;"
+                                },
+                               //attributes: {
+                               //    style: "text-align: left;"
+                               //},
+                               format: "{0:n}",
+                               aggregates: ["sum"],
+                               groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                               footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+
+                           },
+
+
+                           {
+                               field: "DISCOUNT",
+                               title: "Discount",
+                               width: "100",
+                               attributes: {
+                                   style: "text-align: right;"
+                               },
+                               format: "{0:n}",
+                               aggregates: ["count", "min", "sum"],
+                               groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                               footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>'
+
+                           },
+
+                            {
+                                field: "TAXABLE_AMOUNT",
+                                title: "Taxable Amount",
+                                width: "100",
+                                attributes: {
+                                    style: "text-align: right;"
+                                },
+                                format: "{0:n}",
+                                aggregates: ["count", "min", "sum"],
+                                groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                                footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                        },
+                        {
+                            field: "TAX_AMOUNT",
+                            title: "Tax Amount",
+                            width: "100",
+                            attributes: {
+                                style: "text-align: right;"
+                            },
+                            format: "{0:n}",
+                            aggregates: ["count", "min", "sum"],
+                            groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                                    footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                        },
+                        {
+                            field: "TOTAL_AMOUNT",
+                            title: "Total Amount",
+                            width: "100",
+                            attributes: {
+                                style: "text-align: right;"
+                            },
+                            format: "{0:n}",
+                            aggregates: ["count", "min", "sum"],
+                            groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                            footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                            },
+                            {
+                                field: "SYNC_WITH_IRD",
+                                title: "Sync With IRD",
+                                // width: "150",
+
+                            },
+                            {
+                                field: "IS_BILL_PRINTED",
+                                title: "Is Bill Printed",
+                                // width: "150",
+
+                            },
+                            {
+                                field: "IS_BILL_ACTIVE",
+                                title: "Is Bill Active",
+                                // width: "150",
+
+                            },
+                            {
+                                field: "PRINTED_TIME",
+                                title: "Printed Time"
+                            },
+                            {
+                                field: "ENTERED_BY",
+                                title: "Entered By"
+                            },
+
+                            {
+                                field: "PRINTED_BY",
+                                title: "Printed By"
+                            },
+                            {
+                                field: "IS_REAL_TIME",
+                                title: "Is Real Time"
+                            },
+                   ],
+                dataSource: localDS
+            });
+
+            exporter.workbook().then(function (book, data) {
+                $.each(book.sheets[0].rows, function (i, item) {
+                    if (i > 0 && data[i - 1].charges.length > 0) {
+                        item.cells[5].value = data[i - 1].charges[0].CHARGE_AMOUNT;
+                    }
+                });
+                deferred.resolve({
+                    masterRowIndex: rowIndex,
+                    sheet: book.sheets[0]
+                });
+            });
+        }
+    }
+
+
+
+    function KendoGridRefresh(readUrl) {
+        $('#grid').val('');
+        $('#grid').html('');
+        BindGrid(readUrl);
+
+    }
+    //function detailInit(e) {
+
+    //    var detailRow = e.detailRow;
+    //    var Rowdata = e.data;
+    //    var id = Rowdata.InvoiceNumber;
+    //    var companyCode = Rowdata.COMPANY_CODE;
+
+    //    var dataSourceITem = new kendo.data.DataSource({
+    //        type: "json",
+
+    //        transport: {
+    //            read: {
+    //                url: window.location.protocol + "//" + window.location.host + "/" + "api/SalesHome/GetSalesRegisterChilds?SalesNo=" + id + "&CompanyCode=" + companyCode, // <-- Get data from here.
+    //                dataType: "json", // <-- The default was "jsonp".
+    //                type: "POST",
+    //                contentType: "application/json; charset=utf-8"
+    //            },
+    //            parameterMap: function (options, type) {
+    //                var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+    //                delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+    //                delete paramMap.$format; // <-- remove format parameter.
+    //                return paramMap;
+
+    //            }
+    //        },
+    //        error: function (e) {
+    //            displayPopupNotification("Sorry error occured while processing data", "error");
+    //        },
+    //        serverFiltering: false,
+    //        serverGrouping: false,
+    //        serverAggregates: false,
+    //        serverPaging: false,
+
+
+    //        aggregate: [
+    //                        { field: "GrossAmount", aggregate: "sum" },
+    //                        //{ field: "Discount", aggregate: "sum" },
+    //                        { field: "NetAmount", aggregate: "sum" },
+
+
+    //        ],
+    //        pageSize: 100,
+    //    });
+    //    detailRow.find(".orders").kendoGrid({
+    //        dataSource: dataSourceITem,
+          
+    //        sortable: true,
+    //        pageable: false,
+    //        sortable: true,
+    //        reorderable: true,
+    //        resizable: true,
+    //        columns: [
+    //            {
+    //                field: "ProductName",
+    //                title: "Product Name",
+    //                // width: "55",
+    //                //footerTemplate: '<span style="float:right">Total Amount</span>',
+    //            },
+    //            {
+    //                field: "UNIT",
+    //                title: "Unit",
+    //                width: "5%",
+    //                attributes: {
+    //                    style: "text-align: center;"
+    //                },
+    //            },
+    //            {
+    //                field: "Quanity",
+    //                title: "Qty",
+    //                attributes: {
+    //                    style: "text-align: right;"
+    //                },
+    //                width: "5%",
+    //                //footerTemplate: '<span style="float:right">#= sum#</span>',
+    //            },
+    //            {
+    //                field: "Rate",
+    //                title: "Rate",
+    //                attributes: {
+    //                    style: "text-align: right;"
+    //                },
+    //                width: "10%",
+    //            },
+    //            {
+    //                field: "GrossAmount",
+    //                title: "Gross Amount",
+    //                attributes: {
+    //                    style: "text-align: right;"
+    //                },
+    //                width: "10%",
+    //                //footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+    //            },
+
+
+    //                       {
+    //                           field: "NetAmount",
+    //                           title: "Net Amount",
+    //                           width: "15%",
+    //                           attributes: {
+    //                               style: "text-align: right;"
+    //                           },
+    //                           format: "{0:n}",
+    //                           aggregates: ["count", "min", "sum"],
+    //                           //footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>'
+
+    //                       }
+    //        ]
+    //    });
+    //};
+
+</script>
+

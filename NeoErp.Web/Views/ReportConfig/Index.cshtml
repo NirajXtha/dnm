@@ -1,0 +1,536 @@
+﻿
+@{
+    ViewBag.Title = "Ledger Statement";
+    Layout = "~/Views/Shared/_LayoutNew.cshtml";
+}
+
+<style>
+    legend {
+        width: 9%;
+    }
+
+
+
+
+    input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    .k-grid-content.k-auto-scrollable {
+        height: 400px !important;
+    }
+
+
+    input[type="number"] {
+        -moz-appearance: textfield;
+    }
+
+
+
+    i.fa.fa-file-image-o.image {
+        margin: 1px;
+    }
+
+    .image-placeholder > img {
+        display: inline;
+        margin: 1px;
+        height: 40px;
+        width: 40px;
+    }
+
+    div#grid {
+        height: 500px;
+    }
+
+
+
+    .main .k-dropdown-wrap {
+        height: 22px;
+        font-size: 12px;
+    }
+
+    .k-list.k-reset {
+        max-height: 200px !important;
+        overflow: auto !important;
+    }
+
+    .form-group.image-placeholder > div {
+        display: inline-block;
+        float: left;
+        width: 78px;
+    }
+
+    /*#grid {
+        font-size: 11px;
+    }*/
+
+    .k-item {
+        font-size: 11px !important;
+    }
+
+
+    .contact-info-form {
+        list-style-type: none;
+        margin: 30px 0;
+        padding: 0;
+    }
+
+        .contact-info-form li {
+            margin: 10px 0;
+        }
+
+        .contact-info-form label {
+            display: inline-block;
+            width: 100px;
+            text-align: right;
+            font-weight: bold;
+        }
+    /*.k-icon{
+          display:none;
+      }*/
+    .k-clear-value {
+        display: none;
+    }
+
+    span.k-icon.k-i-loading {
+        display: none;
+    }
+
+    .k-state-default > .k-select {
+        /* border-color: #f9f6f6; */
+        display: none;
+    }
+
+    .alert {
+        margin-bottom: 0px;
+        height: 21px;
+        line-height: 20px;
+        padding: 0px 15px;
+    }
+
+    .alert-dismissable .close, .alert-dismissible .close {
+        right: -12px;
+    }
+    .portlet > .portlet-title > .caption > i
+    {
+        margin-top:5px !important;
+    }
+    .k-grid-header th {
+        font-size: 11px;
+    }
+    .k-grid-content tr td {
+        font-size:10px;
+    }
+</style>
+
+
+
+  <div class="main-contain-box">
+    <div id="PurchaseOrderController" class="col-sm-12 col-md-12 col-lg-12 margin-top-10">
+        <div class="portlet light bordered main">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-list-alt fontgreen"></i>
+                    <span class="caption-subject fontgreen bold uppercase">
+                        Report Configurations List
+                    </span>
+                </div>
+            </div><!-- /portlet-title-->
+            <div class="portlet-body">
+                <div class="row">
+
+
+                </div>
+                <div class="clearfix">
+                </div>
+
+
+                @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                <div id="grid"></div>
+            </div>
+            <div class="modal fade" data-backdrop="static" id="usersmodal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close right-dismis" data-dismiss="modal" aria-hidden="true"></button>
+                            <h4 class="modal-title"> Options</h4>
+
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+
+                                <div class="form-group">
+                                    <label class="control-label col-md-2">
+                                        User List
+                                    </label>
+                                    <div class="col-md-9">
+                                        <div>
+                                            <select id="userMultiSelects" multiple="multiple" style="width: 400px;"></select>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" id="saveUsers" name="savePerformaInvoice" class="btn btn-success btn-sm ng-binding">Save</button>
+                            <button type="button" data-dismiss="modal" id="cancellc" name="cancellc" class="btn btn-default btn-sm">Cancel</button>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+        </div><!--/portlet-body-->
+    </div><!-- /portlet-->
+
+</div>
+<script>
+    var autoCompletedataSource = [];
+    var urltest = window.location.protocol + "//" + window.location.host + "/ReportConfig/GetReportsSettings";
+    var userName = "";
+    var reportName = "";
+    $(document).ready(function () {
+
+        BindGrid(urltest);
+        BindMultiSelects();
+        $(".UserMultiSelect").live("click", function () {
+            
+            var grid = $("#grid").data("kendoGrid");
+            userName = grid.dataItem(this.closest("tr")).User;
+            reportName = grid.dataItem(this.closest("tr")).reportName;
+            $('#usersmodal').modal('show');
+        });
+
+        $("#saveUsers").on("click", function () {
+            var multipleuserId = [];
+            var multiselect = $("#userMultiSelects").data("kendoMultiSelect");
+            multipleuserId = multiselect.value();
+            $.ajax({
+                url: window.location.protocol + "//" + window.location.host + "/ReportConfig/SaveReportConfig?multipleuserId=" + multipleuserId + "&UserName=" + userName + "&reportName=" + reportName,
+                dataType: 'json',
+                type: 'post',
+                contentType: 'application/x-www-form-urlencoded',
+                data: $(this).serialize(),
+                success: function (data, textStatus, jQxhr) {
+                    $('#usersmodal').modal('hide');
+                    $('#grid').data('kendoGrid').dataSource.read();
+                    displayPopupNotification("Successfully added the configuration.", "success");
+                },
+                error: function (jqXhr, textStatus, errorThrown) {
+                    console.log(errorThrown);
+                }
+            });
+        });
+
+
+    })
+
+
+    function BindGrid(urltest) {
+        var dataSource = new kendo.data.DataSource({
+
+            type: "json",
+            transport: {
+                read: {
+                    url: urltest, // <-- Get data from here.
+                    dataType: "json", // <-- The default was "jsonp".
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8"
+                },
+                update: {
+                    url: window.location.protocol + "//" + window.location.host + "/api/CommercialInvoice/UpdateQuantity",
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    complete: function (e) {
+
+                        if (e.status == 200) {
+
+                            displayPopupNotification("Successfully Updated Item Quantity.", "success");
+                        }
+                    }
+
+                },
+                parameterMap: function (options, operation) {
+                    if (operation !== "read" && options) {
+                        var data = options;
+                        return JSON.stringify(data);
+                    }
+                },
+            },
+            error: function (e) {
+                displayPopupNotification("Sorry error occured while processing data", "error");
+            },
+            serverFiltering: true,
+            serverGrouping: false,
+            serverAggregates: false,
+            serverPaging: true,
+            group: { field: "Report" },
+            schema: {
+                model: {
+                    id: "defaultPageSize",
+                    fields: {
+                        User: { type: "string", editable: true },
+                        Report: { type: "string", editable: false },
+                        defaultPageSize: { type: "string", editable: false },
+                        dateFormat: { type: "string", editable: false },
+                        virtualPath: { type: "string", editable: false },
+                        itemPerPage: { type: "string", editable: false },
+                        isFavroite: { type: "string", editable: false },
+                        icon: { type: "string", editable: false },
+                        color: { type: "string", editable: false },
+                        parentMenu: { type: "string", editable: false },
+                        description: { type: "string", editable: false },
+                    }
+                }
+            },
+
+            pageSize: 100,
+        });
+        var grid = $("#grid").kendoGrid({
+            dataSource: dataSource,
+            toolbar: kendo.template($("#toolbar-template").html()),
+            excel: {
+                fileName: "Due Invoice Report",
+                allPages: true
+            },
+            excelExport: function (e) {
+                var sheet = e.workbook.sheets[0];
+                var datasource = $("#grid").data("kendoGrid");
+                var data = e.data;
+                var heardervalue = [];
+
+                heardervalue = sheet.rows[0].cells;
+                for (var i = 0; i < sheet.rows.length; i++) {
+                    // sheet.rows[i].cells.reverse();
+
+                    for (var ci = 0; ci < sheet.rows[i].cells.length; ci++) {
+
+                        //  if (sheet.rows[i].cells[ci].value==)
+                        if (typeof (sheet.rows[i].cells[ci].value) == "undefined") {
+                            var index = i - 1;
+                            var headername = heardervalue[ci];
+
+                            if (typeof (data[index]) != "undefined") {
+                                var charges = data[index].charges;
+                                var test = myCustomFunctionWithTitle(charges, headername);
+                                sheet.rows[i].cells[ci].value = test;
+                            }
+
+                        }
+                        if (i == sheet.rows.length - 1) {
+
+                            sheet.rows[i].cells[ci].value = $(sheet.rows[i].cells[ci].value).text();
+                        }
+
+
+                        // console.log("abc");
+                        // sheet.rows[i].cells[ci].hAlign = "right";
+                    }
+                }
+                var rows = e.workbook.sheets[0].rows;
+                rows.unshift({
+                    height: 20,
+                    cells: [{
+                        value: "Due Invoice Report",
+                        background: "#3fd5c0",
+                        textAlign: "center",
+                        colSpan: 10,
+                        fontSize: 15,
+
+                    }]
+                });
+            },
+
+            pdf: {
+                allPages: true,
+                avoidLinks: true,
+                pageSize: "auto",
+                //paperSize: [1100 , 1430],
+                margin: {
+                    top: "2m",
+                    left: "1cm",
+                    right: "1cm",
+                    bottom: "1cm"
+                },
+                landscape: true,
+                repeatHeaders: true,
+                scale: 0.8
+            },
+            allowCopy: true,
+            //height: 600,
+            sortable: true,
+            reorderable: true,
+            groupable: true,
+            resizable: true,
+            filterable: {
+                extra: false,
+                operators: {
+                    number: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "is greater than or equal to	",
+                        gt: "is greater than",
+                        lte: "is less than or equal",
+                        lt: "is less than",
+                    },
+                    string: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        startswith: "Starts with	",
+                        contains: "Contains",
+                        doesnotcontain: "Does not contain",
+                        endswith: "Ends with",
+                    },
+                    date: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "Is after or equal to",
+                        gt: "Is after",
+                        lte: "Is before or equal to",
+                        lt: "Is before",
+                    }
+                }
+            },
+            columnMenu: true,
+            columnMenuInit: function (e) {
+                wordwrapmenu(e);
+                checkboxItem = $(e.container).find('input[type="checkbox"]');
+            },
+            columnShow: function (e) {
+                if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                    SaveReportSetting('Due Invoice Report', 'grid');
+            },
+            columnHide: function (e) {
+                if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                    SaveReportSetting('Due Invoice Report', 'grid');
+            },
+            pageable: true,
+            //scrollable: {
+            //    virtual: true
+            //},
+            dataBound: function (o) {
+                var grid = o.sender;
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.length + 1;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    displayPopupNotification("No Data Found Given Date Filter.", "info");
+                }
+                else {
+                    var g = $("#grid").data("kendoGrid");
+                    for (var i = 0; i < g.columns.length; i++) {
+                        g.showColumn(i);
+                    }
+                    $("div.k-group-indicator").each(function (i, v) {
+                        g.hideColumn($(v).data("field"));
+                    });
+                }
+                $('div').removeClass('.k-header k-grid-toolbar');
+
+            },
+            dataBinding: function () {
+                record = (this.dataSource.page() - 1) * this.dataSource.pageSize();
+            },
+            columns: [
+
+                {
+                    field: "User",
+                    title: "User Name",
+                    width: "200px",
+
+                },
+                {
+                    field: "Report",
+                    title: "Report Name",
+
+                },
+
+                {
+                    field: "defaultPageSize",
+                    title: "Default Page Size",
+
+                },
+                {
+                    field: "itemPerPage",
+                    title: "Items Per Page",
+
+                },
+                {
+                    field: "dateFormat",
+                    title: "Date Format",
+
+                }, {
+                    field: "isFavroite",
+                    title: "Is Favourite",
+                    width: "70px"
+                }, {
+                    field: "virtualPath",
+                    title: "Virtual Path",
+
+                }, {
+                    field: "icon",
+                    title: "Icon",
+
+                }, {
+                    field: "color",
+                    title: "Color",
+
+                }, {
+                    field: "parentMenu",
+                    title: "Parent Menu",
+
+                }, {
+                    field: "description",
+                    title: "Description",
+
+                },
+                {
+                    field: "ID", title: "Action", sortable: false, filterable: false, width: "70px",
+                    template: '<a class="glyphicon glyphicon-edit UserMultiSelect"  title="Edit" style="color:grey;"><span class="sr-only"></span> </a>'
+                },
+            ],
+
+        });
+    }
+
+    function BindMultiSelects() {
+
+
+        var autoCompleteurl = window.location.protocol + "//" + window.location.host + "/api/ReportConfig/GetUserLists";
+        var autoCompletedataSource = new kendo.data.DataSource({
+            transport: {
+                read: {
+                    url: autoCompleteurl,
+                    dataType: "json"
+                }
+            }
+            //serverFiltering: true
+        });
+
+        $("#userMultiSelects").kendoMultiSelect({
+            dataSource: autoCompletedataSource,
+            dataTextField: "LOGIN_CODE",
+            dataValueField: "LOGIN_CODE",
+            height: 600,
+            headerTemplate: '<div class="col-md-offset-4"><strong>User Names...</strong></div>',
+            filter: "contains",
+            placeholder: "Search Users...",
+            autoClose: false,
+        });
+    }
+
+    function KendoGridRefresh(readUrl) {
+        $('#grid').val('');
+        $('#grid').html('');
+        BindGrid(readUrl);
+
+    }
+
+</script>
+
+

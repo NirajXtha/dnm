@@ -1,0 +1,895 @@
+﻿@using NeoErp.Core.Models;
+@{
+    var actionPageId = "monthlySalesTarget";
+}
+
+<style>
+    .checkbox input[type=checkbox], .checkbox-inline input[type=checkbox], .radio input[type=radio], .radio-inline input[type=radio] {
+        margin-left: -10px !important;
+    }
+
+    ul.dropdown-menu.custom {
+        margin-top: 8px !important;
+        border: none;
+        box-shadow: none !important;
+    }
+
+    .dropdown-menu.custom:before {
+        left: 58px !important;
+    }
+
+    .download-btn {
+        margin: 0px !important;
+        padding-top: -2px !important;
+        padding-left: 0px;
+        padding-right: 0px;
+        margin-top: -5px !important;
+        margin-left: 5px !important;
+    }
+
+    .dropdown-menu.custom {
+        left: -27px !important;
+        top: 20px !important;
+    }
+
+    .dropdown > .dropdown-menu:before, .dropdown-toggle > .dropdown-menu:before, .btn-group > .dropdown-menu:before {
+        position: absolute;
+        top: -8px;
+        left: 30px;
+        right: auto;
+        display: inline-block !important;
+        border-right: 8px solid transparent;
+        border-bottom: 8px solid #e0e0e0;
+        border-left: 8px solid transparent;
+        content: '';
+    }
+
+    i.icon-arrow-down {
+        color: #acacac;
+    }
+
+    .btn-group-custom button.btn {
+        padding: 7px 7px !important;
+        float: left;
+    }
+
+    .dropdown-menu.custom {
+        left: -55px !important;
+    }
+
+    a.btnDataGrid_monthlySalesTarget {
+        color: #acacac !important;
+    }
+</style>
+
+<div class="modal fade" id="Model_@actionPageId" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog custom-chart">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                <h4 class="modal-title"><span class="fa fa-bar-chart"></span> Monthly Sales Target</h4>
+            </div>
+            <div class="modal-body bottom-gappingtwo form-horizontal">
+                <div class="row">
+                    <div class="monthlysales-target">
+                        <div class="chart_button clearfix">
+                            <div class="col-sm-12 col-md-12 btn-group sales-target-options responsivegap" data-toggle="buttons">
+                                <button type="button" class="btn btn-sm default red-stripe">
+                                    <i class="fa fa-bar-chart"></i>
+                                    <input id="typeColumn" name="seriesType_Salestarget"
+                                           type="radio" value="column" autocomplete="off" />column
+                                </button>
+                                <button type="button" class="btn btn-sm default green-stripe ">
+                                    <i class="fa fa-bar-chart"></i>
+                                    <input id="typeBar" name="seriesType_Salestarget"
+                                           type="radio" value="bar" autocomplete="off" />bar
+                                </button>
+                                <button type="button" class="btn btn-sm default purple-stripe">
+                                    <i class="fa fa-line-chart"></i>
+                                    <input id="typeLine" name="seriesType_Salestarget"
+                                           type="radio" value="line" autocomplete="off" checked="checked" />Line
+                                </button>
+                                @*<button type="button" class="btn btn-sm default blue-stripe ">
+                                        <i class="fa fa-area-chart"></i>
+                                        <input id="typearea" name="seriesType_Salestarget"
+                                               type="radio" value="area" autocomplete="off" />area
+                                    </button>*@
+
+                            </div>
+                            <input type="hidden" id="hiddenMonth" />
+                            <input type="hidden" id="hiddenMonthInt" />
+                            <div class="col-md-12 col-sm-12">
+                                <!-- show label & Stack option-->
+                                <div class="input-group gapspace">
+                                    <div class="icheck-inline">
+                                        <label>
+                                            <input id="showlables_monthlySalestarget" type="checkbox" autocomplete="off" /> Show Labels
+                                        </label>
+                                        <label>
+                                            <input id="salestargetInStack" type="checkbox" /> Stack
+                                        </label>
+                                        @*<label>
+                                                <input type="radio" id="ADFormat" name="DateFormat_Salestarget" value="AD" /> AD
+                                            </label>*@
+                                        <label>
+                                            <input type="radio" id="BSFormat" name="DateFormat_Salestarget" checked="checked" value="BS" /> BS
+                                        </label>
+                                        <label>
+                                            <input id="showzerovalue_monthlySalestarget" type="checkbox" checked="checked" autocomplete="off" /> Show Zero values series
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="filter_title">
+                    <label class="filter-label">Advance Filter</label>
+                </div>
+                @Html.Partial("~/Views/Shared/Controls/DashboardChartFilter/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+           {
+               ShowCustomerFilter = false,
+               ShowProductFilter = false,
+               ShowPartyTypeFilter = false,
+               ShowCategoryFilter = false,
+               ShowLocationFilter = false,
+               ShowDocumentFilter = false,
+               ShowCompanyFilter = false,
+               ShowBranchFilter = true,
+               ShowFiscalYearFilter=true,
+               IsPopUp = false,
+               ActionPageId = actionPageId
+           })
+
+
+            </div>
+
+
+            <div class="modal-footer">
+                @*<button type="button" class="btn default" data-dismiss="modal">Close</button>*@
+                <button type="button" class="btn btn-green applydp" data-dismiss="modal" id="apply_@actionPageId">Apply</button>
+            </div>
+        </div>
+        <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+</div>
+
+<div class="portlet portlet-sortable  light bordered" id="monthlySalesTarget">
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="icon-bar-chart font-green-haze"></i>
+            <span class="caption-subject bold uppercase font-green-haze custom-modal">Monthly Sales Target</span>
+        </div>
+        <div class="tools">
+            <a href="javascript:;" class="collapse"></a>
+            <a class="btnGrid btnDataGrid_monthlySalesTarget" data-type="Chart" data-title="Grid">
+                <i class="fa fa-table"></i>
+            </a>
+            <div class="btn-group">
+                <a class="btn dropdown-toggle download-btn" title="Download" data-toggle="dropdown" href="#">
+                    <i class="icon-arrow-down Firstcustom"></i>
+
+                </a>
+                <ul class="dropdown-menu custom">
+                    <div class="btn-group-custom">
+                        <button type="button" data-id="SalesTargetChart" class="export-pdf btn default blue-stripe"><i class="fa fa-file-pdf-o"></i> PDF</button>
+                        <button type="button" data-id="SalesTargetChart" class="export-img btn default red-stripe"><i class="fa fa-image-o"></i>Image</button>
+                        <button type="button" data-id="SalesTargetChart" class="export-svg btn default green-stripe">SVG</button>
+                    </div>
+                </ul>
+            </div>
+            <a href="#Model_@actionPageId" data-toggle="modal" class="config">
+            </a>
+            <a href="javascript:;" class="reload">
+            </a>
+            <a href="javascript:;" class="fullscreen">
+            </a>
+            <a href="javascript:;" class="remove">
+            </a>
+        </div>
+    </div>
+    <div class="portlet-body">
+        <script type="text/x-kendo-template" id="toolbar-template">
+            <div class="k-header k-grid-toolbar pull-right">
+
+                <a class="k-button k-button-icontext k-grid-excel" href="javascript:">
+                    <i class="fa fa-file-excel-o"></i>
+                </a>
+            </div>
+        </script>
+        <div class="k-content wide">
+            <div id="SalesTargetChart"></div>
+            <div class="AmountFigureType"></div>
+            <div class="DisplayFilterContent"><a href="javascript:;" data-toggle="tooltip" title=""></a></div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="SeriesModel_@actionPageId" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog custom-chart">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close btn btn-danger" data-dismiss="modal" aria-hidden="true"></button>
+                <h4 class="modal-title">Choose Options</h4>
+            </div>
+            <div class="modal-body bottom-gappingtwo">
+                <div class="row">
+                    <div class="clearfix">
+                        <div class="col-md-12">
+                            <div class="br"><div class="br"></div> </div>
+                            <div class="clearfix">
+                                <div class="SeriesOptions_@actionPageId">
+                                    <label>
+                                        <input type="radio" id="Day" name="SeriesOption_@actionPageId" checked="checked" value="Day" /> Daywise
+                                    </label>
+                                    <label>
+                                        <input type="radio" id="Item" name="SeriesOption_@actionPageId" value="Item" /> ItemWise
+                                    </label>
+                                </div>
+                                <input type="hidden" id="hiddenMonth" />
+                                <input type="hidden" id="hiddenMonthInt" />
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn green" data-dismiss="modal" id="seriesApply_@actionPageId">Apply</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    //$('.portlet-body').show();
+    var pageId_MonthlySalesTarget = '@actionPageId';
+    var dataProvider = [];
+    var series_monthlySalesTarget = [
+        {
+            field: "Target",
+            name: "Target"
+        }, {
+            field: "Sales",
+            name: "Sales"
+        }];
+    var IsStack = true;
+    var colors = ["#428bca", "#da3b36", "#e67d4a", "#5bc0de", "#5cb85c", "#f2b661"];
+    var toggleFlag_monthlySalesTarget = true;
+
+    $('#SalesTargetChart').closest('.portlet').find('.reload').click(function () {
+        createMonthlySalesTargetChart();
+        RefreshChartFilterControl('@actionPageId');
+        $('.btnDataGrid_monthlySalesTarget').data("catagoryAxis", "MonthYear");
+    });
+
+    $('#SalesTargetChart').closest('.portlet').find('.fullscreen').click(function () {
+        if ($(this).hasClass("on")) {
+            $("#SalesTargetChart").data("kendoChart").options.chartArea.height = 350;
+        }
+        else {
+            $("#SalesTargetChart").data("kendoChart").options.chartArea.height = 550;
+        }
+        $("#SalesTargetChart").data("kendoChart").dataSource.read();
+        $("#SalesTargetChart").data("kendoChart").refresh();
+    });
+    $('#SalesTargetChart').closest('.portlet').find('.config').click(function () {
+        $(this).closest('.portlet').css('zIndex', 10040);
+    });
+
+    $('#SalesTargetChart').closest('.portlet').find('.icon-arrow-down').click(function () {
+        $(this).closest('.portlet').css('zIndex', 10040);
+    });
+
+
+    function createMonthlySalesTargetChart(urlData) {
+        
+        urlData = (urlData == undefined) ? "?customerCode=&itemCode=&categoryCode=&companyCode=&branchCode=" + branchCodes + "&partyTypeCode=&formCode=" : urlData;
+        var dateformat = $("input[name=DateFormat_Salestarget]:checked").val();
+        var catagoryAxisName = "MonthYear", sortaxix = "Month";
+        $('.btnDataGrid_monthlySalesTarget').data("catagoryAxis", catagoryAxisName);
+        var mainUrl = window.location.protocol + "//" + window.location.host + "/api/SalesDashboard/GetSalesTargetMonthlyReport";
+        var daywiseUrl = window.location.protocol + "//" + window.location.host + "/api/SalesDashboard/GetSalestargetDailyReport";
+        var IsDataGrid = $('.btnDataGrid_monthlySalesTarget').data("type");
+        reportFilter = reportFilter == undefined ? ReportFilter.filterAdditionalData() : reportFilter;
+        var dataSource = new kendo.data.DataSource({
+            transport: {
+                read: {
+                    url: mainUrl + "?DateFormat=" + dateformat,
+                    dataType: "json", // <-- The default was "jsonp".
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8"
+                },
+                parameterMap: function (options, type) {
+                    var paramMap = JSON.stringify($.extend(options, reportFilter));
+                    delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                    delete paramMap.$format; // <-- remove format parameter.
+                    return paramMap;
+                }
+            },
+            requestStart: function () {
+                if (IsDataGrid != "Grid") {
+                    kendo.ui.progress($("#SalesTargetChart"), true);
+                }
+            },
+            requestEnd: function () {
+                kendo.ui.progress($("#SalesTargetChart"), false);
+            },
+            schema: {
+                parse: function (items) {
+
+                    var item,
+                        result = [];
+                    var showzerovalue = $("#showzerovalue_monthlySalestarget").prop("checked");
+
+                    if (showzerovalue) {
+                        for (var i = 0; i < items.length; i++) {
+                            item = items[i];
+
+                            result.push(item);
+
+                        }
+
+                    }
+                    else {
+                        for (var i = 0; i < items.length; i++) {
+                            item = items[i];
+                            if (item.Target !== 0 && item.Sales !== 0) {
+                                result.push(item);
+                            }
+                        }
+                    }
+
+
+                    return result;
+                }
+            }
+
+        });
+        dataProvider = dataSource;
+        $("#monthlySalesTarget .DisplayFilterContent a").text("");
+        $(this).parent($("#SalesTargetChart")).html('')
+        $("#SalesTargetChart").html('');
+        // data-grid set option on ceate funciton
+        if (IsDataGrid == "Grid") {
+            LoadDataGrid_monthlySalesTarget(dataSource);
+            return;
+        }
+
+
+        LoadMonthlySalesTargetChart(dataSource);
+
+    }
+    function LoadMonthlySalesTargetChart(dataSource) {
+        
+        type = $("input[name=seriesType_Salestarget]:checked").val();
+        var daywiseUrl = window.location.protocol + "//" + window.location.host + "/api/SalesDashboard/GetSalestargetDailyReport";
+        var seriesFilter = [];
+        if (type == "bar") {
+            seriesFilter = series_monthlySalesTarget;
+        }
+        else if (type == "column") {
+            seriesFilter = series_monthlySalesTarget;
+        }
+        else {
+            seriesFilter = [
+                {
+                    type: "line",
+                    field: series_monthlySalesTarget[0].field,
+                    stack: true,
+                    name: "Target"
+                },
+                {
+                    type: "column",
+                    field: series_monthlySalesTarget[1].field,
+                    stack: true,
+                    name: "Sales"
+                }];
+        }
+
+        $("#SalesTargetChart").kendoChart({
+            chartArea: {
+                height: $("#monthlySalesTarget").hasClass("portlet-fullscreen") ? 550 : 350
+            },
+            legend: {
+                position: "bottom"
+            },
+            seriesDefaults: {
+                type: $("input[name=seriesType_Salestarget]:checked").val(),
+                style: "smooth",
+                stack: $("#salestargetInStack").prop("checked"),
+                labels: {
+                    visible: $("#showlables_monthlySalestarget").prop("checked"),
+                    template: "#= FormatSeriesLabels(value)#",
+                    rotation: '270',
+                    padding: {
+                        left: -5
+                    },
+                },
+            },
+            dataSource: dataSource,
+            onDrag: function (e) {
+                console.log(dataSource);
+                var chart = e.sender;
+                var ds = chart.dataSource;
+                var options = chart.options;
+
+                var categoryRange = e.axisRanges.CategoryAxis;
+
+                if (categoryRange) {
+                    var xMin = categoryRange.min;
+                    var xMax = categoryRange.max;
+                    options.categoryAxis.min = xMin;
+                    options.categoryAxis.max = xMax;
+                    ds.filter(viewModel.getFilter(xMin, xMax));
+                }
+            },
+
+            pannable: {
+                lock: "y"
+            },
+            zoomable: {
+                mousewheel: {
+                    lock: "y"
+                },
+                selection: {
+                    lock: "y"
+                }
+            },
+            // series: series_monthlySalesTarget,
+            series: seriesFilter,
+           
+            valueAxis: {
+                line: {
+                    visible: true,
+                },
+                labels: {
+                    template: "#= FormatSeriesLabels(value)#"
+                },
+                title: { text: amountFigureType }
+            },
+            valueAxes: [{
+                title: { text: amountFigureType },
+                labels: {
+                    template: "#= FormatSeriesLabels(value)#"
+                },
+                line: {
+                    visible: true,
+                },
+            },
+            ],
+            seriesColors: colors,
+            categoryAxis: {
+                field: $('.btnDataGrid_monthlySalesTarget').data("catagoryAxis"),
+                labels: {
+                    rotation: -45,
+                },
+                axisCrossingValues: [0, 12]
+            },
+            tooltip: {
+                visible: true,
+                format: "{0}",
+                template: "#= category #: \n #= FormatSeriesLabels(value)#"
+            },
+            dataBound: function (e) {
+                
+            },
+            seriesClick: function (e) {
+                
+                if (!isNaN(e.category) || e.dataItem.MonthInt == null) {
+                    return;
+                }
+                $("#SeriesModel_" + pageId_MonthlySalesTarget).modal("show");
+                $("#seriesApply_" + pageId_MonthlySalesTarget).unbind("click");
+                $('.btnDataGrid_monthlySalesTarget').data("catagoryAxis", "Month");
+                $("#hiddenMonth").val(e.dataItem.Month);
+                $("#hiddenMonthInt").val(e.dataItem.MonthInt);
+                $('#seriesApply_monthlySalesTarget').bind("click", seriesApplyEvent);
+                var dateformat = $("input[name=DateFormat_Salestarget]:checked").val();
+                if (e.dataItem.Month == undefined || e.dataItem.Month == null)
+                    return false;
+
+
+            },
+        });
+    }
+
+    function seriesApplyEvent(e) {
+        
+        var checkedValue = $("input[name=SeriesOption_monthlySalesTarget]:checked").val();
+        if (checkedValue == "Day") {
+            $('.btnDataGrid_monthlySalesTarget').data("catagoryAxis", "day");
+        }
+        else {
+            $('.btnDataGrid_monthlySalesTarget').data("catagoryAxis", "Month");
+        }
+        var category = "";
+        var dateformat = $("input[name=DateFormat_Salestarget]:checked").val();
+        var month = $("#hiddenMonth").val();
+        var monthInt = $("#hiddenMonthInt").val();
+        var daywiseUrl = window.location.protocol + "//" + window.location.host + "/api/SalesDashboard/GetSalestargetDailyReport";
+        var checkedValue = $("input[name=SeriesOption_monthlySalesTarget]:checked").val();
+        var dataSourcetest = new kendo.data.DataSource({
+            transport: {
+                read: {
+                    url: daywiseUrl + "?monthName=" + month + "&DateFormat=" + dateformat + "&checkedValue=" + checkedValue + "&monthInt=" + monthInt,
+                    dataType: "json", // <-- The default was "jsonp".
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8"
+                },
+                parameterMap: function (options, type) {
+                    var paramMap = JSON.stringify($.extend(options, reportFilter));
+                    delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                    delete paramMap.$format; // <-- remove format parameter.
+                    return paramMap;
+                }
+            },
+            requestStart: function () {
+                kendo.ui.progress($("#SalesTargetChart"), true);
+            },
+            requestEnd: function () {
+                kendo.ui.progress($("#SalesTargetChart"), false);
+            },
+            sort: {
+                field: "day",
+                dir: "asc"
+            }
+        });
+        var chart = $("#SalesTargetChart").data("kendoChart");
+        var fieldname = "";
+        var templatename = "";
+        if (checkedValue == "Day") {
+            fieldname = "day";
+            templatename = "Day";
+        }
+        else {
+            fieldname = "Month";
+            templatename = "Item";
+        }
+        var seriesFilter = [];
+        var type = $("input[name=seriesType_Salestarget]:checked").val()
+        if (type == "bar") {
+            seriesFilter = series_monthlySalesTarget;
+        }
+        else if (type == "column") {
+            seriesFilter = series_monthlySalesTarget;
+        }
+        else {
+            seriesFilter = [
+                {
+                    type: "line",
+                    field: series_monthlySalesTarget[0].field,
+                    stack: true,
+                    name: "Target"
+                },
+                {
+                    type: "column",
+                    field: series_monthlySalesTarget[1].field,
+                    stack: true,
+                    name: "Sales"
+                }];
+        }
+        
+        chart.setOptions({
+            series: seriesFilter,
+            seriesColors: ["#5cb85c", "#da3b36", "#e67d4a", "#5bc0de", "#428bca", "#f2b661"],
+            categoryAxis: {
+                field: fieldname,
+                labels: {
+                    rotation: -45,
+                },
+                title: { text: e.category }
+            },
+            tooltip: {
+                template: "" + templatename + " #= category #: \n #= FormatSeriesLabels(value)#"
+            },
+        });
+        chart.setDataSource(dataSourcetest);
+        chart.refresh();
+    }
+
+    function refreshMonthlySalesTargetChart() {
+        
+        if ($('.btnDataGrid_monthlySalesTarget').data("type") == "Grid")// data-grid toogle chart option in data-grid attribute in div
+        {
+            $('.btnDataGrid_monthlySalesTarget').data("type", "Chart");
+            createMonthlySalesTargetChart();
+            return;
+        }
+        var chart = $("#SalesTargetChart").data("kendoChart"),
+            type = $("input[name=seriesType_Salestarget]:checked").val(),
+            stack = $("#salestargetInStack").prop("checked"),
+            IsShowLevel = $("#showlables_monthlySalestarget").prop("checked");
+
+        for (var i = 0; i < series_monthlySalesTarget.length; i++) {
+
+            series_monthlySalesTarget[i].stack = stack;
+            series_monthlySalesTarget[i].type = type;
+        };
+        if (type == "bar") {
+            chart.setOptions({
+                series: series_monthlySalesTarget,
+                valueAxis: {
+                    labels: {
+                        rotation: -45
+                    }
+                },
+            });
+        }
+        else if (type == "line") {
+            chart.setOptions({
+                //series: series_monthlySalesTarget,
+                series: [
+                    {
+                        type: "line",
+                        field: series_monthlySalesTarget[0].field,
+                        stack: true,
+                        name: "Target"
+                    },
+                    {
+                        type: "column",
+                        field: series_monthlySalesTarget[1].field,
+                        stack: true,
+                        name: "Sales"
+                    }],
+            });
+        }
+        else {
+            chart.setOptions({
+                series: series_monthlySalesTarget,
+
+            });
+        }
+
+        chart.options.series[0].labels.visible = IsShowLevel;
+        chart.options.series[1].labels.visible = IsShowLevel;
+        if (type == "column") {
+            //chart.options.series[0].labels.position = "top";
+            chart.options.series[0].labels.rotation = -90;
+            chart.options.series[1].labels.rotation = -90;
+        }
+        if (type == "bar") {
+            //  chart.options.series[0].labels.position = "center";
+            chart.options.series[0].labels.rotation = 0;
+            chart.options.series[1].labels.rotation = 0;
+        }
+        chart.refresh();
+    }
+
+    var defaultDateFormat_MonthlySalesTarget = "";
+    $('#apply_@actionPageId').click(function () {
+        debugger;
+        var checkedDateFormat = $('input[name=DateFormat_Salestarget]:checked').val();
+        var IsDateChanged = false;
+        if (defaultDateFormat_MonthlySalesTarget != checkedDateFormat) {
+            IsDateChanged = true;
+            defaultDateFormat_MonthlySalesTarget = checkedDateFormat;
+        }
+        ChartFilter('@actionPageId', "createMonthlySalesTargetChart", IsDateChanged);
+    });
+    $("#showzerovalue_monthlySalestarget").on("change", function () {
+        createMonthlySalesTargetChart();
+        RefreshChartFilterControl('@actionPageId');
+    });
+
+
+    //LoadDataGrid function for data-grid
+    function LoadDataGrid_monthlySalesTarget(dataSource) {
+        
+        $("#SalesTargetChart").html('');
+        $('.btnDataGrid_monthlySalesTarget').data("type", "Grid");
+        var monthTitle = "Month";
+        var monthField = "";
+        dataSource = dataSource == undefined ? $("#SalesTargetChart").data("kendoChart").dataSource : dataSource;
+        if ($("input[name=DateFormat_Salestarget]:checked").val() == "BS") {
+            if (dataSource.data().length > 0 && dataSource.data()[0].MonthInt != null) {
+                monthField = "Month";
+                monthTitle = "days [month : " + dataSource.data()[0].Month + "]";
+            }
+            else if (dataSource.data()[0].MonthNo != null) {
+                monthField = "day";
+                monthTitle = "days [month : " + dataSource.data()[0].Month + "]";
+            }
+            else {
+                monthField = "Month";
+                monthTitle = "Items Name"
+            }
+        }
+        
+
+        $("#SalesTargetChart").kendoGrid({
+            dataSource: dataSource,
+            height: $("#monthlySalesTarget").hasClass("portlet-fullscreen") ? 550 : 350,
+            groupable: false,
+            sortable: true,
+            selectable: "multiple",
+            toolbar: [{ template: kendo.template($("#toolbar-template").html()) }],
+            excel: {
+                fileName: "Monthly Sales VS Target Report",
+                allPages: true
+            },
+            columns: [{
+                field: monthField,
+                title: monthTitle,
+                width: 240
+            }, {
+                field: "Sales",
+                title: "Sales",
+                format: "{0:n}",
+                attributes: {
+                    style: "text-align: right;"
+                },
+            }, {
+                field: "Target",
+                title: "Target",
+                format: "{0:n}",
+                attributes: {
+                    style: "text-align: right;"
+                },
+            }]
+
+        });
+
+    }
+
+
+    function ChartData_monthlySalesTarget() {
+        
+        $('.btnDataGrid_monthlySalesTarget').data("type", "Chart");
+        createMonthlySalesTargetChart();
+        RefreshChartFilterControl('@actionPageId');
+    };
+
+    $(".btnDataGrid_monthlySalesTarget").click(function () {
+        
+        var datasource = $("#SalesTargetChart").data("kendoChart").dataSource;
+        var type = $('.btnDataGrid_monthlySalesTarget').data("type");
+        if (type == "Chart") {
+            LoadDataGrid_monthlySalesTarget(datasource);
+            $('.btnDataGrid_monthlySalesTarget').data("type", "Grid");
+        }
+        else {
+           
+            LoadMonthlySalesTargetChart(datasource);
+
+            $('.btnDataGrid_monthlySalesTarget').data("type", "Chart");
+        }
+        //$('.btnDataGrid_monthlySalesTarget').data("type") == "Chart" ? LoadDataGrid_monthlySalesTarget() : ChartData_monthlySalesTarget();;
+        $("i", this).toggleClass("icon-bar-chart");
+    });
+
+    //load ChildGrid when dblClick on row
+    $("#SalesTargetChart").on('dblclick', ".k-state-selected", function (e) {
+        
+        var grid = $("#SalesTargetChart").data("kendoGrid");
+        var selectedItem = grid.dataItem(grid.select());
+        var dateformat = $("input[name=DateFormat_Salestarget]:checked").val();
+        if (dateformat == "BS")
+            selectedItem.Month = selectedItem.Month;
+        if (selectedItem.Month != null) {
+            var daywiseUrl = window.location.protocol + "//" + window.location.host + "/api/SalesDashboard/GetSalestargetDailyReport";
+            var dataSourcetest = new kendo.data.DataSource({
+                transport: {
+                    read: {
+                        url: daywiseUrl + "?monthName=" + selectedItem.Month + "&DateFormat=" + dateformat,
+                        dataType: "json", // <-- The default was "jsonp".
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8"
+                    },
+                    parameterMap: function (options, type) {
+                        var paramMap = JSON.stringify($.extend(options, reportFilter));
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+                    }
+                },
+                sort: {
+                    field: "day",
+                    dir: "asc"
+                }
+            });
+            console.log(dataSourcetest);
+            //
+            $("#SalesTargetChart").html('');
+            $("#SalesTargetChart").kendoGrid({
+                dataSource: dataSourcetest,
+                height: ($("#SalesTargetChart").hasClass("portlet-fullscreen")) ? 550 : 350,
+                groupable: false,
+                sortable: true,
+                selectable: "multiple",
+                toolbar: [{ template: kendo.template($("#toolbar-template").html()) }],
+                excel: {
+                    fileName: "Monthly Sales VS Target Report",
+                    allPages: true
+                },
+                columns: [{
+                    field: "day",
+                    title: "days [month : " + selectedItem.Month + "]",
+                },
+                {
+                    field: "Sales",
+                    title: "Sales",
+                    format: "{0:n}",
+                    attributes: {
+                        style: "text-align: right;"
+                    },
+                }, {
+                    field: "Target",
+                    title: "Target",
+                    format: "{0:n}",
+                    attributes: {
+                        style: "text-align: right;"
+                    },
+                }]
+            });
+        }
+    })
+</script>
+<script>
+
+    $(document).ready(function () {
+        
+        defaultDateFormat_MonthlySalesTarget = $('input[name=DateFormat_Salestarget]:checked').val();
+        $('[title="Download"]').tooltip({
+            trigger: 'hover'
+        });
+        $('.icon-arrow-down.Firstcustom').click(function () {
+
+            $('.dropdown-menu.custom.Firstslidetoggle').slideToggle(200);
+        });
+
+        ReportFilter.init('@actionPageId');
+
+        $("checkbox").not("#salestargetInStack").uniform();
+        createMonthlySalesTargetChart();
+        $(document).bind("kendo:skinChange", createMonthlySalesTargetChart);
+
+
+        $(".sales-target-options").bind("change", function () {
+            if ($('.btnDataGrid_monthlySalesTarget').data("type") == "Chart")
+                refreshMonthlySalesTargetChart();
+            else
+                chart_grid_option_change("btnDataGrid_monthlySalesTarget", 'createMonthlySalesTargetChart');
+        });
+        $("#showlables_monthlySalestarget").bind("change", function () {
+            var temp = $('.btnDataGrid_monthlySalesTarget').data("type");
+            $('.btnDataGrid_monthlySalesTarget').data("type", "temp");
+            refreshMonthlySalesTargetChart();
+            $('.btnDataGrid_monthlySalesTarget').data("type", temp);
+        });
+        $('#salestargetInStack').on('click', function () {
+
+            var temp = $('.btnDataGrid_monthlySalesTarget').data("type");
+            $('.btnDataGrid_monthlySalesTarget').data("type", "temp");
+            refreshMonthlySalesTargetChart();
+            $('.btnDataGrid_monthlySalesTarget').data("type", "temp");
+        });
+    });
+
+    function FormatSeriesLabels(value) {
+        if (isNaN(value))
+            value = 0;
+        var decimalPlaces = 2;
+        if (ReportFilter.filterAdditionalData().ReportFilters.AmountRoundUpFilter != "" && ReportFilter.filterAdditionalData().ReportFilters.AmountRoundUpFilter != undefined) {
+            if (ReportFilter.filterAdditionalData().ReportFilters.AmountRoundUpFilter.split(".").length > 1)
+                decimalPlaces = ReportFilter.filterAdditionalData().ReportFilters.AmountRoundUpFilter.split(".")[1].length;
+            else
+                decimalPlaces = 0;
+        }
+
+        if (ReportFilter.filterAdditionalData().ReportFilters.AmountFigureFilter == "Lakh") {
+            value = (value / 100000).toFixed(decimalPlaces) + " L";
+        } else if (ReportFilter.filterAdditionalData().ReportFilters.AmountFigureFilter == "Thousand") {
+            value = (value / 1000).toFixed(decimalPlaces) + " K";
+        }
+        else if (ReportFilter.filterAdditionalData().ReportFilters.AmountFigureFilter == "Crore") {
+            value = (value / 10000000).toFixed(decimalPlaces) + " C";
+        }
+        else {
+            value = (value / 100000).toFixed(decimalPlaces) + " L";
+        }
+        return kendo.format("{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString() + "}", value);
+    }
+
+</script>

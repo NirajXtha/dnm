@@ -1,0 +1,208 @@
+﻿@{
+    ViewBag.Title = "Task Message Log Report";
+    Layout = "~/Views/Shared/_LayoutNew.cshtml";
+}
+<style>
+.main input.form-control{
+    height:24px;
+    border:solid #ddd 1px;
+    padding:0px 3px;
+
+}
+    .k-widget.k-multiselect.k-header
+    {
+        border-color:#ddd;
+    }
+    .k-multiselect-wrap.k-floatwrap
+    {
+        min-height:22px !important;
+    }
+    .k-multiselect-wrap li {
+        font-size: 10px;
+    }
+    textarea {
+        resize: vertical;
+        max-height:260px;
+    }
+</style>
+<div class="page-content-wrapper" id="operationContent">
+    <div class="page-content full-width" style="min-height:310px">
+        <div ng-app="mobileWebApp" class="">
+            <div id="menuSettingController" ng-controller="mobileWebCtrl">
+                <!-- BEGIN PAGE HEADER-->
+                <div class="page-bar">
+                    <ul class="page-breadcrumb">
+                        <li>
+                            <i class="fa fa-cog"></i>
+                            <a href="~/MobileWeb/TaskMsgLogReport">Task Message Log Report</a>
+                            <i class="fa fa-angle-right"></i>
+                        </li>
+                    </ul>
+                </div>
+                <div class="portlet light bordered main" style="display: block;" stop-digest>
+                    <div class="portlet-body common_form customdesign">
+                        <div id="grid" class="tablegride" style="margin-top:15px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function setAction(taskName, msgFormat, userId, deviceId, taskDate, taskId) {
+        var html = '';
+        msgFormat = msgFormat.replace(/'/g, "''");
+        html += '<button type="submit" onclick="sendNotification(\'' + taskName + '\',\'' + userId + '\',\'' + taskDate + '\',\'' + taskId + '\')" name="notification" class="btn btn-green btn-circle btn-sm" style="margin-top:20px;"> Send Msg</button>';
+        return html;
+    }
+    function sendNotification(taskName, userId, taskDate, taskId) {
+        var gridDataArray = $('#grid').data('kendoGrid')._data;
+        var msgFormat="";
+        for (var index = 0; index < gridDataArray.length; index++) {
+            if (taskId == gridDataArray[index]["TASK_ID"] && taskName == gridDataArray[index]["TASK_NAME"] && userId == gridDataArray[index]["USER_NO"] && taskDate == gridDataArray[index]["TASK_DATE"])
+                msgFormat = gridDataArray[index]["MESSAGE_FORMAT"];
+        };
+        if (msgFormat == "")
+            return;
+        var url = window.location.protocol + "//" + window.location.host + "/Api/MobileServer/getTaskWiseMsgByUser?userNo=" + userId + "&taskName=" + taskName + "&taskDate=" + taskDate + "&msg=" + msgFormat + "&taskId=" + taskId;
+        $.ajax({
+            url: url,
+            type: "GET",
+            dataType: 'JSON',
+            success: function (data) {
+                toastr.success('Msg send Successfully!!!')
+            },
+            error: function (jqxhr) {
+                toastr.error('There is error while saving.')
+            }
+        });
+    }
+
+    var app = angular.module('mobileWebApp', ['kendo.directives', 'ngMessages']);
+    app.controller('mobileWebCtrl', function ($scope, $http) {
+
+        
+       
+        var grid,
+            createGrid = function () {
+                grid = $("#grid").kendoGrid({
+                    dataSource: {
+                        type: "json",
+                        transport: {
+                            read: window.location.protocol + "//" + window.location.host + "/Api/MobileWebApi/GetAllMobileWebLog",
+                        },
+                        pageSize: 20,
+                        requestEnd: function () {
+                            //hideloader();
+                        },
+                    },
+                    height: window.innerHeight - 200,
+                    groupable: false,
+                    resizable: true,
+                    filterable: {    // filter for the null and is not null etc
+                        extra: false,// extra false means there is 2 different filter inside the filter
+                        operators: {   // the number is data type for the net sales column , and string for the MITI
+                            number: {
+
+                                eq: "Is equal to",
+                                neq: "Is not equal to",
+                                gte: "is greater than or equal to	",
+                                gt: "is greater than",
+                                lte: "is less than or equal",
+                                lt: "is less than",
+
+                            },
+                            string: {
+
+                                eq: "Is equal to",
+                                neq: "Is not equal to",
+                                startswith: "Starts with	",
+                                contains: "Contains",
+                                doesnotcontain: "Does not contain",
+                                endswith: "Ends with",
+                            },
+                            date: {
+
+                                eq: "Is equal to",
+                                neq: "Is not equal to",
+                                gte: "Is after or equal to",
+                                gt: "Is after",
+                                lte: "Is before or equal to",
+                                lt: "Is before",
+                            }
+                        }
+                    },
+                    sortable: true,
+                    pageable: true,
+                    columnMenu: false,
+                    dataBinding: function () {
+                        record = (this.dataSource.page() - 1) * this.dataSource.pageSize();
+                    },
+                    dataBound: function (o) {
+                        var grid = o.sender;
+                        if (grid.dataSource.total() == 0) {
+                            var colCount = grid.columns.length;
+                            $(o.sender.wrapper)
+                                .find('tbody')
+                                .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                            displayPopupNotification("No Data Found.", "info");
+                            $scope.visibleSavebtn = false;
+                            $scope.visibleGenerateBtn = true;
+                        }
+
+                    },
+                    columns: [
+                        { title: "SN", template: "#= ++record #", width: "15px" },
+                        {
+                            field: "TASK_ID",
+                            title: "Task Id",
+                            width: "30px",
+                        },
+                        {
+                            field: "TASK_NAME",
+                            title: "Task Name",
+                            width: "30px",
+                        },
+                        {
+                            field: "USER_NO",
+                            title: "User No",
+                            width: "20px",
+                        },
+                        {
+                            field: "LOGIN_EDESC",
+                            title: "User Name",
+                            width: "60px",
+                        },
+                        {
+                            field: "TASK_DATE",
+                            title: "Task Date",
+                            //format: "{0:yyyy-MMM-dd}",
+                             width: "35px",
+                        },
+                        {
+                            field: "MESSAGE_FORMAT",
+                            title: "Message",
+                            width: "150px",
+                        },
+                        //{
+                        //    field: "DEVICEID",
+                        //    title: "Device Id",
+                        //    width: "150px",
+                        //},
+                        {
+                            field: "TASK_NAME", title: "Action", sortable: false, filterable: false, width: "90px",
+                            template: "#= setAction(TASK_NAME,MESSAGE_FORMAT,USER_NO,DEVICEID,TASK_DATE, TASK_ID) #",
+                            groupable: false,
+                            width: "40px",
+                        },
+                        
+                    ],
+                }).data("kendoGrid");
+
+            };
+
+        createGrid();
+    });
+</script>
+

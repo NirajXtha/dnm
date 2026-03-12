@@ -1,0 +1,215 @@
+﻿@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+    ViewBag.Title = "Scheme User Setup";
+    Layout = null;
+}
+
+<style>
+    #offerForm div + div {
+        margin-bottom: 5px;
+    }
+</style>
+
+<script>
+
+    $(document).ready(function () {
+        var url = window.location.protocol + "//" + window.location.host + "/api/mobileDistribution/SchemeApi/";
+        // Fetch data via jQuery AJAX
+        function fetchData() {
+            $.ajax({
+                method: 'POST',
+                url: url,
+                contentType: "application/json",
+                data: JSON.stringify({
+                    "action": "getSchemes",
+                    "data": {
+
+                    }
+                }),
+                success: function (response) {
+
+                    console.log(response);
+
+                    if (response.response) {
+                        console.log("Success response");
+                    }
+
+                    if (response.result && response.result.Data) {
+                        initKendoGrid(response.result.Data);
+                    }
+                },
+                error: function (xhr, status, error) {
+
+                    console.error("Error fetching users:", error);
+                }
+            });
+        }
+
+        fetchData();
+
+
+        function initKendoGrid(data) {
+            $("#offerGrid").kendoGrid({
+                dataSource: {
+                    data: data,
+                    pageSize: 10
+                },
+                height: 350,
+                scrollable: true,
+                sortable: true,
+                filterable: true,
+                pageable: {
+                    refresh: true,
+                    pageSizes: [5, 10, 20],
+                    buttonCount: 5
+                },
+                columns: [
+                    { field: "OFFER_ID", title: "ID", width: "100px" },
+                    { field: "OFFER_NAME", title: "Offer Name" },
+                    { field: "OFFER_DESC", title: "Description" },
+                    {
+                        field: "VALID_FROM",
+                        title: "Valid From",
+                        width: "150px",
+                        template: function (dataItem) {
+                            if (!dataItem.VALID_FROM) {
+                                return "";
+                            }
+
+                            // Ensure it's a string
+                            var str = dataItem.VALID_FROM.toString();
+
+                            // Split into [date, time]
+                            var parts = str.split("T");
+
+                            // Example: "2025-08-17 14:25:00"
+                            return parts[0] + " " + (parts[1] ? parts[1].split(".")[0] : "");
+                        }
+                    },
+                    {
+                        field: "VALID_TO",
+                        title: "Valid To",
+                        width: "150px",
+                        template: function (dataItem) {
+                            if (!dataItem.VALID_TO) {
+                                return "";
+                            }
+
+                            // Ensure it's a string
+                            var str = dataItem.VALID_TO.toString();
+
+                            // Split into [date, time]
+                            var parts = str.split("T");
+
+                            // Example: "2025-08-17 14:25:00"
+                            return parts[0] + " " + (parts[1] ? parts[1].split(".")[0] : "");
+                        }
+                    },
+                    { field: "REQUIRED_POINTS", title: "Points" },
+                    //{ field: "OFFER_IMAGE", title: "Image" }
+                ]
+            });
+        }
+
+      
+
+        // Handle form submission
+        $("#offerForm").submit(function (e) {
+
+            e.preventDefault(); // Prevent default form submission
+
+            var formData = {
+                OFFER_NAME: $("#OFFER_NAME").val(),
+                OFFER_DESC: $("#OFFER_DESC").val(),
+                VALID_FROM: $("#VALID_FROM").val() ? new Date($("#VALID_FROM").val()) : null,
+                VALID_TO: $("#VALID_TO").val() ? new Date($("#VALID_TO").val()) : null,
+                REQUIRED_POINTS: parseInt($("#REQUIRED_POINTS").val()),
+                OFFER_IMAGE: $("#OFFER_IMAGE").val()
+            };
+
+            $.ajax({
+                url: url,
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({
+                    "action": "createOffer",
+                    "data": {
+                        "offer": formData
+                    }
+                }),
+                success: function () {
+                    fetchData();
+                },
+                error: function (xhr, status, error) {
+                    alert("Error adding offer: " + error);
+                }
+            });
+        });
+    });
+</script>
+
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+        </ul>
+    </div>
+    <div>
+        <div class="row collapse in" id="demo">
+            <div class="col-md-12">
+                <div class="portlet light">
+                    <div class="portlet-body form">
+                        <div class="row kendo_table">
+                            <form id="offerForm" class="container mt-4 p-4 rounded">
+
+                                <div class="mb-3">
+                                    <label for="OFFER_NAME" class="form-label">Offer Name</label>
+                                    <input type="text" class="form-control" id="OFFER_NAME" name="OFFER_NAME" placeholder="Enter offer name" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="OFFER_DESC" class="form-label">Description</label>
+                                    <textarea class="form-control" id="OFFER_DESC" name="OFFER_DESC" rows="3" placeholder="Enter offer description" required></textarea>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="VALID_FROM" class="form-label">Valid From</label>
+                                        <input type="date" class="form-control" id="VALID_FROM" name="VALID_FROM">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="VALID_TO" class="form-label">Valid To</label>
+                                        <input type="date" class="form-control" id="VALID_TO" name="VALID_TO">
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="REQUIRED_POINTS" class="form-label">Required Points</label>
+                                    <input type="number" class="form-control" id="REQUIRED_POINTS" name="REQUIRED_POINTS" placeholder="Enter points" required>
+                                </div>
+
+                                <!-- Optional future image field -->
+                                <!--
+        <div class="mb-3">
+            <label for="OFFER_IMAGE" class="form-label">Image URL</label>
+            <input type="text" class="form-control" id="OFFER_IMAGE" name="OFFER_IMAGE" placeholder="Enter image URL">
+        </div>
+        -->
+
+                                <button type="submit" class="btn btn-primary w-100" style="margin: 10px 0">Add Offer</button>
+                            </form>
+
+
+                            <div id="offerGrid"></div>
+                            @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js?V2")"></script>
+</div>

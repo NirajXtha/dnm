@@ -1,0 +1,94 @@
+﻿@* Product Info Hover Tooltip - Dynamic Data Loading *@
+@*
+    Usage with item code for dynamic loading:
+    <div product-info-hover="{{item.ITEM_CODE}}">
+        <i class="fa fa-info-circle" style="font-size: 16px; color: #3498db;"></i>
+    </div>
+*@
+
+<div class="product-info-hover" product-info-hover="{{itemCode}}">
+    <i class="fa fa-info-circle" style="font-size: 16px; color: #3498db;"></i>
+    <div class="product-info-tooltip">
+
+        <!-- Loading Indicator -->
+        <div ng-if="loading" style="padding: 20px; text-align: center;">
+            <i class="fa fa-spinner fa-spin" style="font-size: 24px; color: #3498db;"></i>
+            <p>Loading product information...</p>
+        </div>
+
+        <!-- Error State -->
+        <div ng-if="error && !loading" style="padding: 20px; text-align: center; color: #e74c3c;">
+            <i class="fa fa-exclamation-triangle" style="font-size: 24px;"></i>
+            <p>Error loading product information</p>
+        </div>
+
+        <!-- Product Info Data -->
+        <div ng-if="!loading && !error && productData">
+            <!-- Current Product Info -->
+            <div class="info-section">
+                <div class="section-header product-header">Current Product Info</div>
+                <div class="product-name-header">{{productData.ProductInfo.ProductName || 'N/A'}}</div>
+                <table class="info-table">
+                    <tr>
+                        <td>Product Code / ID</td>
+                        <td>{{productData.ProductInfo.ProductCode || 'N/A'}} / [ {{productData.ProductInfo.AltMuCode || 'N/A'}} ]</td>
+                    </tr>
+                    <tr>
+                        <td>Unit</td>
+                        <td>{{productData.ProductInfo.Unit || 'N/A'}}</td>
+                    </tr>
+                    <tr>
+                        <td>Category</td>
+                        <td>{{productData.ProductInfo.Category || 'N/A'}}</td>
+                    </tr>
+                    <tr>
+                        <td>HS Code</td>
+                        <td>{{productData.ProductInfo.HsCode || 'N/A'}}</td>
+                    </tr>
+                    <tr>
+                        <td>Created By</td>
+                        <td>{{productData.ProductInfo.CreatedBy || 'N/A'}}</td>
+                    </tr>
+                    <tr>
+                        <td>Created Date</td>
+                        <td>{{productData.ProductInfo.CreatedDate | date:'MM/dd/yyyy HH:mm:ss' || 'N/A'}}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Closing Stock - Location wise -->
+            <div class="info-section">
+                <div class="section-header sales-header">Closing Stock - Location wise</div>
+                <table class="info-table">
+                    <tr ng-repeat="stock in productData.StockByLocation">
+                        <td>{{stock.LocationName}}</td>
+                        <td>{{stock.Stock | number:2}}</td>
+                    </tr>
+                    <tr ng-if="!productData.StockByLocation || productData.StockByLocation.length === 0">
+                        <td colspan="2" style="text-align: center; color: #999;">No stock data available</td>
+                    </tr>
+                </table>
+
+                <!-- Sales Rate History -->
+                <div class="subsection-header">Sales Rate History</div>
+                <table class="info-table">
+                    <tr ng-repeat="sale in productData.SalesHistory | limitTo:3">
+                        <td ng-if="$index === 0">Last Customer Name</td>
+                        <td ng-if="$index === 1">2nd Last Customer Name</td>
+                        <td ng-if="$index === 2">3rd Last Customer Name</td>
+                        <td>{{sale.CustomerName}}</td>
+                    </tr>
+                    <tr ng-repeat="sale in productData.SalesHistory | limitTo:3">
+                        <td ng-if="$index === 0">Last Sales Price</td>
+                        <td ng-if="$index === 1">2nd Last Sales Price</td>
+                        <td ng-if="$index === 2">3rd Last Sales Price</td>
+                        <td>{{sale.SalesPrice | number:2}}</td>
+                    </tr>
+                    <tr ng-if="!productData.SalesHistory || productData.SalesHistory.length === 0">
+                        <td colspan="2" style="text-align: center; color: #999;">No sales history available</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,817 @@
+﻿@using NeoErp.Core.Models;
+
+
+
+<style>
+    .collectionDetail {
+        width: 90%;
+    }
+
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+    }
+
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+         font-size:11px;
+    }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    a.k-button.k-button-icontext.k-grid-excel {
+        float: right;
+    }
+
+    tr.k-group-footer {
+        text-align: right !important;
+    }
+
+    .slider-container {
+        display: flex;
+        flex-direction: row;
+        gap: 2px;
+        margin: 5px 0;
+    }
+
+    #mapSlider {
+        width: 40px; /* Set the width to 25% of the container */
+    }
+</style>
+
+<head>
+    <link href="@Styles.Url("https://unpkg.com/leaflet@1.9.4/dist/leaflet.css")" rel="stylesheet" />
+</head>
+
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb"></ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+
+                <div class="actions">
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                    </div>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                        {
+                        ShowDistEmployeeFilter = true,
+                        })
+                    </div>
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery">
+                        <i class="icon-control-play"></i>
+                    </a>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "spRouteReport")
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <div class="row collapse in">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div style="display:flex; flex-direction: row; justify-content: space-between;">
+                    <div style="display: flex; flex-wrap: wrap; align-items: center;">
+                        <div style="display: flex; align-items: center; margin-right: 10px;">
+                            <img id="thumbtackBlue" alt="Attendance" style="width: 20px; height: 20px; margin-right: 5px;">
+                            <span>Attendance</span>
+                        </div><div style="display: flex; align-items: center; margin-right: 10px;">
+                            <img id="thumbtackRed" alt="EOD" style="width: 20px; height: 20px; margin-right: 5px;">
+                            <span>EOD</span>
+                        </div>
+                        <div style="display: flex; align-items: center; margin-right: 10px;">
+                            <div style="background:#800080; height: 15px; width: 15px;"></div>
+                            <span>Outlets</span>
+
+                        </div>
+
+                    </div>
+
+                    <div class="slider-container">
+                        <span id="OSM">Open Street Map</span>
+                        <input type="range" id="mapSlider" min="0" max="1" step="1" value="0">
+                        <span id="googleMap">Google Map </span>
+                        <button id="refreshMap" style="margin-left: 10px;">Refresh Map </button>
+                    </div>
+
+                </div>
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div id="map" style="height:500px;border: 2px solid #242222;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+<script>
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+</script>
+<script src="@Scripts.Url(" ~/JS/reportFilter.js")"></script>
+<script src="@Scripts.Url(" ~/JS/DateFilter.js?V5")" type="text/javascript"></script>
+<script src="@Scripts.Url(" ~/Areas/NeoErp.Distribution/js/MenuNavigation.js?V2")"></script>
+<script>
+    var reportConfig = GetReportSetting("MRVisitMap");
+
+    function createSourceFilter() {
+        //adding a new select in existing model
+        var FilterModelBody = $("#filterModal").find(".modal-body")[0];
+        $(FilterModelBody).append('<div class="row"><div class="col-md-12"><div class="form-group"><div class="col-sm-10 col-md-11 col-xs-10">\
+                <select id="LocationSourceMultiSelect" name="LocationSourceMultiSelect" style="width:100%;"></select>\
+                <div class="col-sm-2 col-md-11 col-xs-2"></div>\
+                </div></div></div></div>');
+
+        $('#LocationSourceMultiSelect').kendoMultiSelect({
+            dataTextField: "TEXT",
+            dataValueField: "VALUE",
+            height: 600,
+            headerTemplate: '<div class="col-md-offset-4"><strong>..Employee..</strong></div>',
+            placeholder: "Select Source...",
+            autoClose: false,
+            maxSelectedItems: 1,
+            value: ["V"],
+            dataSource: [
+                { TEXT: "Visit Track", VALUE: "V" },
+                { TEXT: "Location Track", VALUE: "L" },
+                { TEXT: "Both", VALUE: "B" },
+            ],
+        });
+    }
+
+</script>
+
+<!--Google Map scripts-->
+<script type="text/javascript">
+    var map = null;
+
+    function initMap() {
+        var map = new google.maps.Map(document.getElementById('map'), {
+            zoom: 8,
+            center: { lat: 27.710234, lng: 85.328426 }
+        });
+        var allMarkers = [];
+        var poly = new google.maps.Polyline({ strokeColor: '#4986E7' });
+
+        var polyLine = new google.maps.Polyline({ strokeColor: '#18ed4d' });
+
+        function addMarkerToolTipParent(entity, marker) {
+            //for title
+            var contentString = '<p style="color:Black;"><b>' + entity.customername + '</b>';
+            contentString += "<br/>Remarks: " + entity.remarks;
+            contentString += "<br/>Last Seen (" + entity.customername + "): " + entity.updatedate;
+
+            infowindow = new google.maps.InfoWindow({
+                content: '<p style="color:black;">' + contentString + '</p>'
+            });
+
+            google.maps.event.addListener(marker, 'click', (function (marker, contentString, infowindow) {
+                return function () {
+                    infowindow.setContent('<p style="color:black;">' + contentString + '</p>');
+                    infowindow.open(map, marker);
+                };
+            })(marker, contentString, infowindow));
+        }
+
+        $('.applydp, #loadAdvancedFilters, #RunQuery').on('click', function (e) {
+            debugger;
+            var totalDistance = 0;
+            var filters = ReportFilter.filterAdditionalData();
+            if (filters.ReportFilters.DistEmployeeFilter.length != 0) {
+                $.ajax({
+
+
+
+                    url: window.location.protocol + "//" + window.location.host + "/api/Report/GetSPRouteReport?source=B",
+                    type: "POST",
+                    data: JSON.stringify(filters),
+                    dataType: "json",
+                    contentType: "application/json; charset=utf-8",
+                    success: function (response) {
+                        //reinitialize map
+                        for (var i = 0; i < allMarkers.length; i++) {
+                            allMarkers[i].setMap(null);
+                        }
+                        allMarkers = [];
+                        poly.setMap(null);
+
+                        var count = 0;
+                        var path = new google.maps.MVCArray();
+                        var bounds = new google.maps.LatLngBounds();
+
+                        //Initialize the Direction Service
+                        var service = new google.maps.DirectionsService();
+                        var bound = new google.maps.LatLngBounds();
+                        var paths = new google.maps.MVCArray();
+                        polyLine.setMap(map);
+                        polyLine.setPath(paths)
+                        poly.setMap(map);
+                        poly.setPath(path)
+                        var previousCustomre = [];
+                        //Loop and Draw Path Route between the Points on MAP
+                        for (var i = 0; i < response.length; i = i + 10) {
+                            debugger;
+                            var wayPoints = [];
+                            var j;
+                            for (j = i; (j < i + 10 && j < response.length); j++) {
+                                var address = '';
+                                var marker = "";
+                                //if (j == 0) {
+                                //    marker = new google.maps.Marker({
+                                //        position: new google.maps.LatLng(response[j].LATITUDE, response[j].LONGITUDE),
+                                //        map: map,
+                                //        icon: 'https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png',
+                                //        label: 'F',
+                                //        labelStyle: { opacity: 0.90 }
+                                //    });
+                                //}
+                                //else if (j == response.length - 1) {
+                                //    marker = new google.maps.Marker({
+                                //        position: new google.maps.LatLng(response[j].LATITUDE, response[j].LONGITUDE),
+                                //        map: map,
+                                //        icon: 'https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png',
+                                //        label: 'L',
+                                //        labelStyle: { opacity: 0.90 }
+                                //    });
+                                //}
+                                if (response[j].customer_edesc == "TRK") {
+                                    var icon = {
+                                        url: baseUrl + "/thumbtackGreen.png",
+                                        scaledSize: new google.maps.Size(55, 55),
+                                        origin: new google.maps.Point(0, 0),
+                                        anchor: new google.maps.Point(0, 0),
+                                        labelOrigin: new google.maps.Point(28, 28)
+                                    };
+                                    marker = new google.maps.Marker({
+                                        position: new google.maps.LatLng(response[j].LATITUDE, response[j].LONGITUDE),
+                                        map: map,
+                                        icon: {
+                                            path: google.maps.SymbolPath.CIRCLE,
+                                            scale: 3,
+                                            strokeWeight: 0.2,
+                                            strokeColor: 'red',
+                                            strokeOpacity: 3,
+                                            fillColor: "#ff9900",
+                                            fillOpacity: 0.85,
+                                            primaryColor: "#ff9900"
+                                        },
+                                        animation: google.maps.Animation.DROP,
+                                    });
+                                }
+                                else if (response[j].customer_edesc == "ATN") {
+                                    var icon = {
+                                        url: baseUrl + "/thumbtackBlue.png",
+                                        scaledSize: new google.maps.Size(55, 55),
+                                        origin: new google.maps.Point(0, 0),
+                                        anchor: new google.maps.Point(0, 0),
+                                        labelOrigin: new google.maps.Point(28, 28)
+                                    };
+                                    marker = new google.maps.Marker({
+                                        position: new google.maps.LatLng(response[j].LATITUDE, response[j].LONGITUDE),
+                                        map: map,
+                                        icon: icon,
+                                        animation: google.maps.Animation.DROP,
+                                    });
+                                }
+                                else if (response[j].customer_edesc == "EOD") {
+                                    var icon = {
+                                        url: baseUrl + "/thumbtackRed.png",
+                                        scaledSize: new google.maps.Size(55, 55),
+                                        origin: new google.maps.Point(0, 0),
+                                        anchor: new google.maps.Point(0, 0),
+                                        labelOrigin: new google.maps.Point(28, 28)
+                                    };
+                                    marker = new google.maps.Marker({
+                                        position: new google.maps.LatLng(response[j].LATITUDE, response[j].LONGITUDE),
+                                        map: map,
+                                        icon: icon,
+                                        animation: google.maps.Animation.DROP,
+                                    });
+                                }
+                                else if (response[j].customer_edesc == "Extra Visit") {
+                                    count = count + 1;
+                                    marker = new google.maps.Marker({
+                                        position: new google.maps.LatLng(response[j].LATITUDE, response[j].LONGITUDE),
+                                        map: map,
+                                        icon: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=' + (count).toString() + '|ca2121',
+                                    });
+                                }
+                                else {
+
+                                    if (previousCustomre.indexOf(response[j].customer_edesc) == -1) {
+                                        count = count + 1;
+                                    }
+                                    var icon = {
+                                        url: baseUrl + "/greenmarker.png",
+                                        scaledSize: new google.maps.Size(37, 37),
+                                        origin: new google.maps.Point(0, 0),
+                                        anchor: new google.maps.Point(18, 37),
+                                        labelOrigin: new google.maps.Point(19, 14),
+                                    };
+                                    var position = new google.maps.LatLng(response[j].LATITUDE, response[j].LONGITUDE);
+                                    previousCustomre.push(response[j].customer_edesc);
+                                    marker = new google.maps.Marker({
+                                        position: position,
+                                        map: map,
+                                        label: {
+                                            text: count.toString(),
+                                            color: "#000000",
+                                            fontSize: "13px",
+                                            fontWeight: "bold"
+                                        },
+                                        icon: icon
+                                    });
+                                    paths.push(position);
+                                    bound.extend(position);
+                                }
+
+
+                                if (polyLine instanceof google.maps.Polyline) {
+                                    polyLine.setMap(null);
+                                }
+                                // Reinitialize polyline
+                                polyLine = new google.maps.Polyline({
+                                    map: map,
+                                    path: paths,
+                                    strokeWeight: 3,
+                                    strokeColor: '#0bbd38',
+                                    strokeOpacity: 1,
+                                    zIndex: 10,
+                                    icons: [{
+                                        icon: {
+                                            path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                                            scale: 4,
+                                            strokeColor: '#0bbd38',
+                                            offset: '100%'
+                                        }
+                                    }],
+                                    isVisible: true
+                                });
+                                function animatePath(line) {
+                                    var count = 0;
+                                    window.setInterval(function () {
+                                        count = (count + 1) % 200;
+
+                                        var icons = line.get('icons');
+                                        icons[0].offset = (count / 2) + '%';
+                                        line.set('icons', icons);
+                                    }, 50);
+                                }
+                                animatePath(polyLine);
+                                if (!bound.isEmpty()) {
+                                    map.fitBounds(bound);
+                                }
+                                var entity = {
+                                    customername: response[j].customer_edesc,
+                                    updatedate: response[j].UPDATE_DATE1 + "(" + moment(response[j].UPDATE_DATE).format('hh:mm:ss A') + ")",
+                                    remarks: response[j].remarks
+                                };
+
+                                addMarkerToolTipParent(entity, marker);
+                                allMarkers.push(marker);
+                                bounds.extend(new google.maps.LatLng(response[j].LATITUDE, response[j].LONGITUDE)); //for auto zoom and auto center
+                                wayPoints.push({ location: new google.maps.LatLng(response[j].LATITUDE, response[j].LONGITUDE) });
+                            }
+                            if (j >= response.length) //for last iteration of outer loop j is equal to the length of response array
+                                j--;  //decrement j to get the last index else continue
+
+                            var idx = i == 0 ? 0 : i - 1; //start from 0th index and go on linking it to the last index of previous iteration
+
+                            service.route({
+                                origin: new google.maps.LatLng(response[idx].LATITUDE, response[idx].LONGITUDE),
+                                destination: new google.maps.LatLng(response[j].LATITUDE, response[j].LONGITUDE),
+                                waypoints: wayPoints,
+                                optimizeWaypoints: true,
+                                travelMode: google.maps.DirectionsTravelMode.DRIVING
+                            }, function (result, status) {
+                                if (status == google.maps.DirectionsStatus.OK) {
+                                    for (var i = 0, len = result.routes[0].overview_path.length; i < len; i++) {
+                                        if (i < result.routes[0].overview_path.length - 1)
+                                            totalDistance += getDistance(result.routes[0].overview_path[i], result.routes[0].overview_path[i + 1]);
+                                        path.push(result.routes[0].overview_path[i]); // Create a path
+                                        poly.setPath(path); //push the path to polyLine; creates path line on the map
+                                    }
+                                }
+                                $("#distnceTravelled").html("Distance Travelled = " + totalDistance.toFixed(3) + " KM");
+                            });
+                            map.fitBounds(bounds); //automatically fit the map according the current data
+                        }
+                    },
+                    error: function () {
+                        displayPopupNotification("Sorry!!! Error occured while processing request", "error");
+                    }
+                });
+            }
+            else {
+                e.preventDefault();
+                displayPopupNotification("Please select a employee", "warning");
+            }
+        });
+
+        function loadLastLocation() {
+            $('.ajax-loading').show();
+            $.ajax({
+                url: window.location.protocol + "//" + window.location.host + "/api/Distribution/GetLastLocations",
+                dataType: 'json',
+                contentType: 'application/json; charset=UTF-8',
+                type: 'GET',
+                complete: function (response, status) {
+                    $.each(response.responseJSON, function (i, item) {
+                        lastLocation = item.LAT_LON.split(',');
+                        var icon = {
+                            url: baseUrl + "/thumbtackBlue.png",
+                            scaledSize: new google.maps.Size(55, 55),
+                            origin: new google.maps.Point(0, 0), // origin
+                            anchor: new google.maps.Point(0, 0), // anchor,
+                            labelOrigin: new google.maps.Point(28, 28)
+                        };
+                        marker = new google.maps.Marker({
+                            position: new google.maps.LatLng(lastLocation[0], lastLocation[1]),
+                            map: map,
+                            icon: icon,
+                            animation: google.maps.Animation.DROP,
+                        });
+                        var entity = {
+                            customername: item.FULL_NAME,
+                            updatedate: moment(item.UPDATE_DATE).format('DD-MMM-YYYY') + "(" + item.UPDATE_TIME + ")",
+                            remarks: ''
+                        };
+
+                        addMarkerToolTipParent(entity, marker);
+                        allMarkers.push(marker);
+                    });
+                    $('.ajax-loading').hide();
+                }
+            });
+        }
+
+        loadLastLocation();
+    }
+
+
+    function initOSMmap() {
+        if (map != null) {
+            map.remove();
+            map = null;
+        }
+        map = L.map('map').setView([27.710234, 85.328426], 8);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        var allMarkers = [];
+        var polyline = L.polyline([], { color: '#18ed4d' }).addTo(map);
+        var path = [];
+
+        function addMarkerToolTipParent(entity, marker) {
+            var contentString = '<p style="color:Black;"><b>' + entity.customername + '</b>';
+            contentString += "<br/>Remarks: " + entity.remarks;
+            contentString += "<br/>Last Seen (" + entity.customername + "): " + entity.updatedate;
+
+            //marker.bindPopup(contentString);
+        }
+
+        $('.applydp, #loadAdvancedFilters, #RunQuery, #refreshMap').on('click', function (e) {
+            var totalDistance = 0;
+            var filters = ReportFilter.filterAdditionalData();
+            if (filters.ReportFilters.DistEmployeeFilter.length != 0) {
+                $.ajax({
+                    url: window.location.protocol + "//" + window.location.host + "/api/Report/GetSPRouteReport?source=B",
+                    type: "POST",
+                    data: JSON.stringify(filters),
+                    dataType: "json",
+                    contentType: "application/json; charset=utf-8",
+                    success: function (response) {
+                        allMarkers.forEach(function (marker) {
+                            map.removeLayer(marker);
+                        });
+                        allMarkers = [];
+                        if (polyline) {
+                            map.removeLayer(polyline);
+                            path = [];
+                        }
+                        //polyline.setLatLngs([]);
+                        var count = 0;
+                        var trackCount = 0;
+                        var bounds = L.latLngBounds();
+                        var initialPosition;
+                        var outlet;
+
+                        let abc = 0; 
+                        while (abc < response.length) {
+                            if (response[abc].customer_edesc === 'ATN') {
+                                break;
+
+                            }
+
+                            response.shift(); 
+                        }
+
+                                                // Loop and Draw Path Route between the Points on MAP
+                        for (var i = 0; i < response.length; i++) {
+
+                            var marker;
+                            var position = [response[i].LATITUDE, response[i].LONGITUDE];
+
+                            var dateTime = new Date(response[i].UPDATE_DATE);
+                            var date = moment(dateTime).format('DD-MMM-YYYY');
+                            var time = dateTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
+
+                            //if (i === 0) {
+                            //    marker = L.marker(position, {
+                            //        icon: L.icon({
+                            //            iconUrl: 'https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png',
+                            //            iconSize: [25, 41],
+                            //            iconAnchor: [12, 41],
+                            //            popupAnchor: [1, -34],
+                            //            shadowSize: [41, 41]
+                            //        }),
+                            //        title: 'Start'
+                            //    }).addTo(map);
+                            //} else if (i === response.length - 1) {
+                            //    marker = L.marker(position, {
+                            //        icon: L.icon({
+                            //            iconUrl: 'https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png',
+                            //            iconSize: [25, 41],
+                            //            iconAnchor: [12, 41],
+                            //            popupAnchor: [1, -34],
+                            //            shadowSize: [41, 41]
+                            //        }),
+                            //        title: 'End'
+                            //    }).addTo(map);
+                            //}
+                            if (response[i].customer_edesc === 'TRK') {
+                                
+                            } else if (response[i].customer_edesc == "ATN") {
+                                icon = L.icon({
+                                    iconUrl: baseUrl + "/thumbtackBlue.png",
+                                    iconSize: [25, 41],
+                                    iconAnchor: [12, 41],
+                                    popupAnchor: [1, -34],
+                                    shadowSize: [41, 41]
+                                });
+
+
+                                var contentString = '<p><b>Employee Name: </b>' + response[i].EMPLOYEE_EDESC + ' <br> <b>Attendance: </b>' + date + ' (' + time + ')</p>';
+
+                                marker = L.marker(position, { icon: icon }).addTo(map);
+                                marker.bindPopup(contentString);
+
+                            } else if (response[i].customer_edesc == "EOD") {
+                                icon = L.icon({
+                                    iconUrl: baseUrl + "/thumbtackRed.png",
+                                    iconSize: [25, 41],
+                                    iconAnchor: [12, 41],
+                                    popupAnchor: [1, -34],
+                                    shadowSize: [41, 41]
+                                });
+
+                                //const [date, time] = response[i].UPDATE_DATE.split('T');
+
+                                var contentString = '<p><b>Employee Name: </b>' + response[i].EMPLOYEE_EDESC + '<br> <b>EOD: </b>' + date + ' (' + time + ')</p>';
+
+                                marker = L.marker(position, { icon: icon }).addTo(map);
+                                marker.bindPopup(contentString);
+
+                            } else if (response[i].customer_edesc == "Extra Visit") {
+                                icon = L.icon({
+                                    iconUrl: baseUrl + "/thumbtackRed.png",
+                                    iconSize: [25, 41],
+                                    iconAnchor: [12, 41],
+                                    popupAnchor: [1, -34],
+                                    shadowSize: [41, 41]
+                                });
+
+                                const [date, time] = response[i].UPDATE_DATE.split('T');
+
+                                var contentString = '<p><b>Employee Name: </b>' + response[i].EMPLOYEE_EDESC + '<br> <b>Extra Visit: </b>' + date + ' (' + time + ')</p>';
+
+                                marker = L.marker(position, { icon: icon }).addTo(map);
+                                marker.bindPopup(contentString);
+
+                            }
+                            else {
+                                count = count + 1;
+                                outlet = true;
+
+                                icon = L.divIcon({
+                                    className: 'custom-marker',
+                                    html: '<div style="color: white; background:#800080; text-align: center; border-radius: 50%; font-weight: bold; font-size: 16px;">' + count + '</div>',
+                                    iconSize: [30, 30],
+                                    iconAnchor: [15, 15]
+                                });
+
+                                var contentString = '<p><b>' + response[i].customer_edesc + '</b> <br> Updated: <b>' + date + ' (' + time + ')</b></p>';
+
+                                marker = L.marker(position, { icon: icon, title: response[i].customer_edesc }).addTo(map);
+                                marker.bindPopup(contentString);
+                            }
+
+
+                            var entity = {
+                                customername: response[i].customer_edesc,
+                                updatedate: response[i].UPDATE_DATE1 + "(" + moment(response[i].UPDATE_DATE).format('hh:mm:ss A') + ")",
+                                remarks: response[i].remarks
+                            };
+
+                            addMarkerToolTipParent(entity, marker);
+                            allMarkers.push(marker);
+                            bounds.extend(position);
+                            //path.push(position);
+
+
+                            if (response[i].customer_edesc == "ATN" || outlet) {
+                                initialPosition = position;
+                                path.push(position);
+                                outlet = false;
+                            }
+                            else {
+                                if (isDistanceGreater(initialPosition, position, 30)) {
+                                    path.push(position);
+                                    initialPosition = position;
+
+                                }
+                            }
+                        }
+
+                        // Reinitialize polyline
+                        polyline = L.polyline(path, {
+                            color: '#00008B',
+                            weight: 3,
+                            opacity: 1,
+                        }).addTo(map);
+
+
+                        map.fitBounds(bounds);
+                    },
+                    error: function () {
+                        displayPopupNotification("Sorry!!! Error occurred while processing request", "error");
+                    }
+                });
+            } else {
+                e.preventDefault();
+                displayPopupNotification("Please select an employee", "warning");
+            }
+        });
+
+        function loadLastLocation() {
+            $('.ajax-loading').show();
+            $.ajax({
+                url: window.location.protocol + "//" + window.location.host + "/api/Distribution/GetLastLocations",
+                dataType: 'json',
+                contentType: 'application/json; charset=UTF-8',
+                type: 'GET',
+                complete: function (response, status) {
+                    $.each(response.responseJSON, function (i, item) {
+                        var lastLocation = item.LAT_LON.split(',');
+                        var marker = L.marker([lastLocation[0], lastLocation[1]], {
+                            icon: L.icon({
+                                iconUrl: baseUrl + "/thumbtackBlue.png",
+                                iconSize: [25, 41],
+                                iconAnchor: [12, 41],
+                                popupAnchor: [1, -34],
+                                shadowSize: [41, 41]
+                            })
+                        }).addTo(map);
+                        allMarkers.push(marker);
+                        var entity = {
+                            customername: item.FULL_NAME,
+                            updatedate: moment(item.UPDATE_DATE).format('DD-MMM-YYYY') + "(" + item.UPDATE_TIME + ")",
+                        };
+                        var popupContent = `
+        <div>
+            <strong>Customer Name:</strong> ${entity.customername}<br>
+            <strong>Update Date:</strong> ${entity.updatedate}<br>
+        </div>
+    `;
+
+                        marker.bindPopup(popupContent);
+                        //addMarkerToolTipParent(entity, marker);
+                    });
+                    $('.ajax-loading').hide();
+                }
+            });
+        }
+
+        loadLastLocation();
+    }
+
+    function isDistanceGreater(point1, point2, meters) {
+        const R = 6371000; // Earth's radius in meters
+        const toRad = (angle) => (angle * Math.PI) / 180;
+
+        // Extract latitude and longitude from arrays
+        const [lat1, lon1] = point1;
+        const [lat2, lon2] = point2;
+
+        // Convert degrees to radians
+        const lat1Rad = toRad(lat1);
+        const lon1Rad = toRad(lon1);
+        const lat2Rad = toRad(lat2);
+        const lon2Rad = toRad(lon2);
+
+        // Differences
+        const dLat = lat2Rad - lat1Rad;
+        const dLon = lon2Rad - lon1Rad;
+
+        // Haversine formula
+        const a = Math.sin(dLat / 2) ** 2 +
+            Math.cos(lat1Rad) * Math.cos(lat2Rad) * Math.sin(dLon / 2) ** 2;
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        const distance = R * c; // Distance in meters
+        return distance > meters;
+    }
+
+
+
+    var rad = function (x) {
+        return x * Math.PI / 180;
+    };
+
+    var getDistance = function (p1, p2) {
+        var R = 6378137; // Earth’s mean radius in meter
+        var dLat = rad(p2.lat() - p1.lat());
+        var dLong = rad(p2.lng() - p1.lng());
+        var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(rad(p1.lat())) * Math.cos(rad(p2.lat())) *
+            Math.sin(dLong / 2) * Math.sin(dLong / 2);
+        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        var d = R * c;
+        return d / 1000; // returns the distance in meter
+    };
+
+    async function loadLeaflet() {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+            script.type = "text/javascript";
+            script.async = true;
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+        });
+    }
+
+    (async function () {
+        await loadLeaflet();
+        $(document).ready(function () {
+            DateFilter.init(function () {
+                document.getElementById("thumbtackBlue").src = baseUrl + "/thumbtackBlue.png";
+                document.getElementById("thumbtackRed").src = baseUrl + "/thumbtackRed.png";
+
+                initOSMmap();
+                $('#mapSlider').on('input', function () {
+                    const value = $(this).val();
+                    if (value == 0) {
+                        //$('#mapTypeLabel').text('OSM Map');
+
+                        initOSMmap();
+                    } else {
+                        //$('#mapTypeLabel').text('Google Map');
+
+                        initMap();
+                    }
+                });
+            });
+        });
+    })();
+</script>
+
+

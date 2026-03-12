@@ -1,0 +1,227 @@
+﻿<style>
+    #supplierModal .modal-header {
+        padding: 10px !important;
+        background-color: #eee;
+    }
+
+ 
+    /*#customerModal input {
+        width: auto !important;
+    }*/
+
+    #supplierModal .k-icon {
+        display: inline-block;
+    }
+
+  
+
+    #supplierTreeViewdocument {
+        width: 40%;
+        float: left;
+        margin-right: 20px;
+    }
+
+ 
+    .verticalLine {
+        border-left: solid #ddd 1px;
+    }
+
+    .k-group.k-treeview-lines {
+        max-height: 230px !important;
+    }
+
+ 
+
+    #supplierGrid {
+        font-size: 9px;
+        /*height: 345px !important;*/
+    }
+
+  
+ 
+
+    .show-displaygrid {
+        display: none;
+    }
+
+        .btn-linkicon:hover {
+            background-color: #ccc;
+        }
+ 
+
+
+    .customcolumn-one {
+        width: 27%;
+    }
+
+    .columnbg {
+        background-color: #eee;
+    }
+
+    .customcolumn-two {
+        width: 73%;
+    }
+
+    .topsearch {
+        margin-right: 51px;
+    }
+
+  
+
+    /*#supplier-list li {
+        border-bottom: solid #ded5d5 1px;
+    }*/
+</style>
+<div ng-controller="supplierCtrl" id="supplierCtrl">
+   
+        <label for="element">{{element.COLUMN_HEADER}} <i class="fa fa-info-circle font-green" data-toggle="tooltip" title="{{element.HELP_DESCRIPTION}}"></i><span style="color:red">{{suppliercodeerror}}</span></label>
+   
+    <div class="input-group">
+        <input id="supplier" ng-model="masterModels[element.COLUMN_NAME]" name="supplier" class="supplier msupplier w-100" kendo-combo-box
+               k-placeholder="'Select Supplier Code'"
+               k-data-text-field="'SUPPLIER_EDESC'"
+               k-data-value-field="'SUPPLIER_CODE'"
+               k-filter="'contains'"
+               k-auto-bind="true"
+               k-suggest="false"
+               k-options="supplierCodeOption"
+               k-on-change="supplierCodeOnChange(kendoEvent)"
+               k-min-length="3" />
+        <span class="input-group-addon addon-iconbox" style="cursor:pointer" ng-click="BrowseTreeListForSupplier() ">
+            <i class="fa fa-search" data-toggle="tooltip" title="Search supplier"></i>
+            @*<i class="fa fa-user"></i>*@
+        </span>
+    </div>
+
+    <div class="modal fade-out" id="supplierModal" data-backdrop="static" tabindex="-1" data-width="760">
+        <div class="modal-dialog  modal-dialog-box">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <b>Supplier TreeView</b>
+                        <div type="button" class="close" data-dismiss="modal" aria-hidden="true" next-on-tab data-toggle="tooltip" title="Close">&times;</div>
+                    </div>
+
+                </div>
+
+                <div class="modal-body modal-dialogbox-body">
+                    <div class="row">
+                        <div class="col-md-5 mingapright customcolumn-one columnbg">
+                            <input id="supplierfilterText" class="form-control filterText" name="search" type="text" placeholder="Search categories" />
+                            <div id="suppliertree" kendo-tree-view="tree"
+                                 k-data-source="treeData"
+                                 k-options="options"
+                                 k-data-bound="onDataBound">
+                                <span k-template>
+                                    {{dataItem.supplierName}}
+                                </span>
+                            </div>
+
+                        </div>
+                        <div class="col-md-7 customcolumn-two mingapleft">
+                            <div class="expand verticalLine">
+                                <div class="row">
+                                    <div class="col-md-offset-8 col-md-4 search_box">
+                                        <div class="topsearch">
+                                            <a class="btn-linkicon fa fa-search" ng-click="BindSearchGrid()" data-toggle="tooltip" title="Search list"></a>
+                                            <input class="k-textbox txtSearchString" type="text" id="suppliertxtSearchString" ng-model="txtSearchString" name="search" placeholder="enter search text..." />
+
+                                        </div>
+                                    </div>
+                                </div>
+                                <kendo-grid id="supplierGrid" options="supplierGridOptions" k-rebind="supplierGridOptions" class="search-grid">
+
+                                </kendo-grid>
+                            </div>
+
+                        </div>
+                    </div>
+
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-default" data-dismiss="modal" ng-click="SubLedger_Cancel($index)" data-toggle="tooltip" title="Cancel">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $("#supplierfilterText").keyup(function (e) {
+
+        var FilterValue = $(this).val();
+        var value = FilterValue.substring(0, 1).toUpperCase() + FilterValue.substring(1);
+        if (value !== "") {
+            $(".selectAll").css("visibility", "hidden");
+
+            $("#suppliertree .k-group .k-group .k-in").closest("li").hide();
+            $("#suppliertree .k-group").closest("li").hide();
+            $("#suppliertree .k-group .k-group .k-in:contains(" + value + ")").each(function () {
+                $(this).parents("ul, li").each(function () {
+                    var treeView = $("#suppliertree").data("kendoTreeView");
+                    treeView.expand($(this).parents("li"));
+                    $(this).show();
+                });
+            });
+            $("#suppliertree .k-group .k-in:contains(" + value + ")").each(function () {
+                $(this).parents("ul, li").each(function () {
+                    $(this).show();
+                });
+            });
+        }
+        else {
+            $("#suppliertree .k-group").find("li").show();
+            var nodes = $("#suppliertree > .k-group > li");
+
+            $.each(nodes, function (i, val) {
+                if (nodes[i].getAttribute("data-expanded") == null) {
+                    $(nodes[i]).find("li").hide();
+                }
+            });
+            $(".selectAll").css("visibility", "visible");
+        }
+    });
+
+    $("#suppliertxtSearchString").keyup(function () {
+        
+        var val = $(this).val();
+        var grid = $("#supplierGrid").data("kendoGrid");
+        if (grid != undefined) {
+            var tempServerFilter = grid.dataSource.options.serverFiltering;
+            grid.dataSource.options.serverFiltering = false;
+            var filter = [];
+            $.each(grid.columns, function (i, v) {
+                if (v.field != undefined) {
+                    var searchText = $.trim($("#suppliertxtSearchString").val());
+                    var model = grid.dataSource.options.schema.model.fields[v.field];
+                    var type = "string";
+                    if (model != undefined)
+                        type = model.type;
+                    if (type === "string")
+                        filter.push({ field: v.field, operator: "contains", value: searchText });
+                    else if (type === "number")
+                        filter.push({ field: v.field, operator: "eq", value: searchText });
+                    else if (type === "date") {
+                        var dateValue = new Date(searchText);
+                        searchText = dateValue == "Invalid Date" ? searchText : dateValue;
+                        filter.push({ field: v.field, operator: "eq", value: searchText });
+                    }
+                }
+
+            });
+            var filter = {
+                logic: "or",
+                filters: filter,
+            }
+
+            grid.dataSource.filter(filter);
+
+            if ($("#suppliertxtSearchString").val().length == 0)
+                grid.dataSource.filter([]);
+            grid.bind("dataBound", function () {
+                grid.dataSource.options.serverFiltering = tempServerFilter;
+            });
+        }
+    });
+</script>
+

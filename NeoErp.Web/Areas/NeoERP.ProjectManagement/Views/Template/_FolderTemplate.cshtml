@@ -1,0 +1,424 @@
+﻿@model NeoERP.DocumentTemplate.Service.Models.WebDesktop
+
+@{
+    ViewBag.Title = "WebDesktopManagement";
+
+}
+<style>
+    .fontdesign {
+        color: #ffffff;
+        margin: 10px;
+    }
+
+    .tools {
+        margin-right: 10px;
+    }
+
+    .portlet-title {
+        margin-bottom: 0px !important;
+    }
+    /*.portlet {
+     min-height: 555px;
+    }*/
+</style>
+
+@{
+    var Model = ViewBag.Record;
+}
+
+@{int i = 1;}
+
+@if (Model.WebDesktopFolder.Count > 0)
+{
+    foreach (var item in Model.WebDesktopFolder)
+    {
+
+
+
+        <div class="col-md-6 draggable-element">
+            <div class="portlet light border portlet_bg_dm" style="display: block;" stop-digest>
+                <div class="portlet-title" style="background-color:@item.FOLDER_COLOR" id="PortletTitle">
+                    <div class="caption">
+                        @*<i class="@item.ICON"></i>*@
+                        <span class="caption-subject bold uppercase fontgreen Dragtitle"><Font class="fontdesign">@item.FOLDER_NAME</Font></span>
+                        <span class="FOLDER_ORDER" style="display:none;">@item.FOLDER_ID</span>
+                        <span class="caption-helper"></span>
+                    </div>
+                    @{
+                        var folder = item.FOLDER_NAME;
+                    }
+                    <div class="tools">
+                        @*<a href="javascript:;" class="collapse" data-original-title="" title=""> </a>*@
+                        <a href="" class="fullscreen" data-original-title="" title=""> </a>
+                        @if (folder == "Draft Template (TIP)" || folder == "Saved Draft Template" || folder == "Document Template(sales)" || folder == "Document Template(Finance)" || folder == "Document Template(Inventory)" || folder== "Document Template(Production)" || folder == "Master")
+                        {
+
+                        }
+                        else
+                        {
+                            <a class="removefolder" id="remove_@item.FOLDER_ID" onclick="RemoveFolder(@item.FOLDER_ID)"></a>
+                        }
+
+                    </div>
+                </div>
+
+
+
+
+
+                <div class="portlet-body erp-iconlist modulebg1 page-sidebar-menu page-sidebar-menu-light" foldername="@item.FOLDER_NAME" ondrop="drop(event)" ondragover="allowDrop(event)">
+                    <ul class="menu-icon-ui sub-menu SearchIcon">
+
+                        @foreach (var data in Model.WebDesktopManagement)
+                        {
+                            ++i;
+                            string drag_id = "";
+                            if (data.NEW_FOLDER_NAME == item.FOLDER_NAME)
+                            {
+
+
+                                @functions{
+                                    //get abbr color
+                                    public string ChangeColor(string COLOR)
+                                    {
+                                        if (COLOR == "#269BAC")   //draft
+                                            return "#0E5293";
+                                        else if (COLOR == "#3623AF")//saved draft
+                                            return "#1F9400";
+                                        else if (COLOR == "#1F9400") //sales
+                                            return "#F2A400";
+                                        else if (COLOR == "#730032")//finance
+                                            return "#E00707";
+                                        else if (COLOR == "#0E5293")//inventory
+                                            return "#1F9400";
+                                        else if (COLOR == "#3E93DE")
+                                            return "#FFA500";  
+                                        else if (COLOR == "#F57600") return "#F57600";  //production
+                                        else
+                                            return "";
+
+
+
+                                    }
+                                    //get abbr color
+                                    public string GetAbbr(string Abbr)
+                                    {
+                                        if (Abbr != null)
+                                        {
+                                            string a = Abbr.Split(' ')[0].Substring(0, 1);
+                                            ////before changes
+                                            //var b = Abbr.Split(' ')[1].Substring(0, 1);
+                                            //return (a + ' ' + b);
+
+
+                                            //subin changes start
+                                            if (Abbr.Split(' ').Length > 1)
+                                            {
+                                                var b = Abbr.Split(' ')[1].Substring(0, 1);
+                                                return (a + ' ' + b);
+                                            }
+                                            else
+                                            {
+                                                return (a + ' ' + a);
+                                            }
+                                            //subin changes end
+                                        }
+                                        else
+                                        {
+                                            return Abbr;
+                                        }
+
+                                    }
+
+                                }
+
+
+                                if (data.TEMPLATE_CODE != null)
+                                {
+                                    drag_id = @i + "-drag_" + data.TEMPLATE_CODE;
+                                }
+                                if (data.MENU_NO != null)
+                                {
+                                    drag_id = @i + "-drag_" + data.MENU_DESC;
+                                }
+                                if (data.FORM_CODE != null)
+                                {
+                                    drag_id = @i + "-drag_" + data.FORM_CODE;
+                                }
+                                if (data.SIDEBAR_ID != "0")
+                                {
+                                    drag_id = @i + "-drag_" + data.SIDEBAR_ID;
+                                }
+                        <li class="bordericon" id="@drag_id" draggable="true" ondragstart="drag(event)">
+                            @if (data.TEMPLATE_CODE == null)
+                            {
+                                if (data.MENU_EDESC == null)
+                                {
+                                    if (@data.MODULE_CODE == "1")
+                                    {
+                                        <span style="display:none;">@data.NEW_FOLDER_NAME & /DocumentTemplate/Home/Index#!DT/FinanceVoucher?formCode=@data.FORM_CODE & @data.FORM_TYPE & @data.COLOR & @data.ICON_PATH & @data.UNIQUE_ID</span>
+                                    }
+                                    if (@data.MODULE_CODE == "2")
+                                    {
+                                        <span style="display:none;">@data.NEW_FOLDER_NAME & /DocumentTemplate/Home/Index#!DT/Inventory?formcode=@data.FORM_CODE & @data.FORM_TYPE & @data.COLOR & @data.ICON_PATH & @data.UNIQUE_ID</span>
+                                    }
+                                    if (@data.MODULE_CODE == "3")
+                                    {
+                                        <span style="display:none;">@data.NEW_FOLDER_NAME & /DocumentTemplate/Home/Index#!DT/Inventory?formcode=@data.FORM_CODE & @data.FORM_TYPE & @data.COLOR & @data.ICON_PATH & @data.UNIQUE_ID</span>
+                                    }
+                                    if (@data.MODULE_CODE == "4")
+                                    {
+                                        <span style="display:none;">@data.NEW_FOLDER_NAME & /DocumentTemplate(sales)/DocumentTemplate/Home/Index#!DT/formtemplate/@data.FORM_CODE & @data.FORM_TYPE & @data.COLOR & @data.ICON_PATH & @data.UNIQUE_ID</span>
+                                    }
+
+                                    <a href=@data.HREF data-abbr="@data.FORM_TYPE" id="@i-drag_@data.FORM_CODE" draggable="true" ondragstart="drag(event)">
+                                        <div class="circle" style="background-color:@data.COLOR">
+                                            <i class="@data.ICON_PATH" aria-hidden="true"></i> <span style="display:none;">@data.NEW_FOLDER_NAME</span>
+                                            <div class="icondescription" style="background-color:@ChangeColor(@data.COLOR)">
+                                                @GetAbbr(data.FORM_EDESC)
+                                            </div>
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(@data.FORM_EDESC))
+                                        {
+                                            <h6 class="title">@data.FORM_EDESC </h6>
+                                        }
+
+                                        @if (!string.IsNullOrEmpty(@data.MENU_EDESC))
+                                        {
+                                            <h6 class="title">@data.MENU_EDESC  </h6>
+                                        }
+
+
+
+                                    </a>
+                                }
+                                else
+                                {
+                                    if (data.SIDEBAR_ID == "0")
+                                    {
+                                        <span style="display:none;">@data.NEW_FOLDER_NAME & @data.HREF & @data.MENU_NO & @data.COLOR & @data.ICON_PATH & @data.MENU_EDESC & @data.UNIQUE_ID</span>
+                                        <a href=@data.HREF data-abbr="@data.FORM_TYPE" id="@i-drag_@data.MENU_DESC" draggable="true" ondragstart="drag(event)">
+                                            <div class="circle" style="background-color:@data.COLOR">
+                                                <i class="@data.ICON_PATH" aria-hidden="true"></i> <span style="display:none;"><Font style="color:@item.FOLDER_COLOR;">@item.FOLDER_NAME</Font></span>
+                                                <div class="icondescription" style="background-color:@ChangeColor(@data.COLOR)">
+                                                    @GetAbbr(data.FORM_EDESC)
+                                                </div>
+                                            </div>
+
+                                            @if (!string.IsNullOrEmpty(@data.FORM_EDESC))
+                                            {
+                                                <h6 class="title">@data.FORM_EDESC  </h6>
+                                            }
+
+                                            @if (!string.IsNullOrEmpty(@data.MENU_EDESC))
+                                            {
+                                                <h6 class="title">@data.MENU_EDESC </h6>
+                                            }
+
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        string SIDEBAR = "SIDEBAR_" + @data.SIDEBAR_ID;
+                                        <span style="display:none;">@data.NEW_FOLDER_NAME & @data.HREF & @SIDEBAR & @data.COLOR & @data.ICON_PATH & @data.MENU_EDESC & @data.UNIQUE_ID</span>
+                                        <a href=@data.HREF data-abbr="@data.FORM_TYPE" id="@i-drag_@data.SIDEBAR_ID" draggable="true" ondragstart="drag(event)">
+                                            <div class="circle" style="background-color:@data.COLOR">
+                                                <i class="@data.ICON_PATH" aria-hidden="true"></i> <span style="display:none;"><Font style="color:@item.FOLDER_COLOR;">@item.FOLDER_NAME</Font></span>
+                                                <div class="icondescription" style="background-color:@ChangeColor(@data.COLOR)">
+                                                    @GetAbbr(data.FORM_EDESC)
+                                                </div>
+                                            </div>
+
+                                            @if (!string.IsNullOrEmpty(@data.FORM_EDESC))
+                                            {
+                                                <h6 class="title">@data.FORM_EDESC  </h6>
+                                            }
+
+                                            @if (!string.IsNullOrEmpty(@data.MENU_EDESC))
+                                            {
+                                                <h6 class="title">@data.MENU_EDESC </h6>
+                                            }
+
+
+
+
+
+                                        </a>
+                                    }
+
+
+                                }
+
+                            }
+                            else
+                            {
+                                <span style="display:none;">@data.NEW_FOLDER_NAME & @data.FUNCTION_LINK & @data.FORM_TYPE & @data.COLOR & @data.ICON_PATH & @data.TEMPLATE_CODE & @data.UNIQUE_ID</span>
+                                <a data-abbr="@data.FORM_TYPE" ng-click="@data.FUNCTION_LINK"
+                                   id="@i-drag_@data.FORM_CODE" draggable="true" ondragstart="drag(event)">
+                                    <div class="circle" style="background-color:@data.COLOR">
+                                        <i class="@data.ICON_PATH" aria-hidden="true"></i> <span style="display:none;"><font color="@item.FOLDER_COLOR">@item.FOLDER_NAME</font> </span>
+                                        <div class="icondescription" style="background-color:@ChangeColor(@data.COLOR)">
+                                            @GetAbbr(data.FORM_EDESC)
+                                        </div>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(@data.FORM_EDESC))
+                                    {
+                                        <h6 class="title">@data.FORM_EDESC  </h6>
+                                    }
+
+                                    @if (!string.IsNullOrEmpty(@data.MENU_EDESC))
+                                    {
+                                        <h6 class="title">@data.MENU_EDESC  </h6>
+                                    }
+
+
+
+
+
+                                </a>
+
+                            }
+                            @if (data.SIDEBAR_ID == "0")
+                            {
+
+                                if (data.MENU_NO == null && data.TEMPLATE_CODE == null)
+                                {
+
+                                <div class="icon-button">
+
+
+                                    @if (@data.CREATE_FLAG == "Y")
+                                    {
+                                        if (@data.MODULE_CODE == "1" && @data.MENU_NO == null)
+                                        {
+                                            <a href="/DocumentTemplate/Home/Index#!DT/FinanceVoucher?formcode=@data.FORM_CODE" data-abbr="@data.FORM_TYPE" class="btn" style="background-color:@data.COLOR;padding:2px;">
+                                                <font size="1">New</font>
+                                            </a>
+                                        }
+                                        if (@data.MODULE_CODE == "2" && @data.MENU_NO == null)
+                                        {
+                                            <a href="/DocumentTemplate/Home/Index#!DT/Inventory?formcode=@data.FORM_CODE" data-abbr="@data.FORM_TYPE" class="btn" style="background-color:@data.COLOR;padding:2px;">
+                                                <font size="1">New</font>
+                                            </a>
+                                        }
+                                        if (@data.MODULE_CODE == "3" && data.MENU_NO == null)
+                                        {
+                                            <a href="/DocumentTemplate/Home/Index#!DT/Inventory?formcode=@data.FORM_CODE" data-abbr="@data.FORM_TYPE" class="btn" style="background-color:@data.COLOR;padding:2px;">
+                                                <font size="1">New</font>
+                                            </a>
+                                        }
+                                        if (@data.MODULE_CODE == "4" && @data.MENU_NO == null)
+                                        {
+                                            <a href="/DocumentTemplate/Home/Index#!DT/formtemplate/@data.FORM_CODE" data-abbr="@data.FORM_TYPE" class="btn" style="background-color:@data.COLOR;padding:2px;">
+                                                <font size="1">New</font>
+                                            </a>
+                                        }
+                                    }
+                                    @if (@data.UPDATE_FLAG == "Y")
+                                    {
+                                        if (@data.MENU_NO == null)
+                                        {
+                                            string modulecode = "0" + @data.MODULE_CODE;
+                                            <a href="/DocumentTemplate/Template/SplitterIndex#!DT/MenuSplitter/@modulecode" data-abbr="@data.FORM_TYPE" class="btn" style="background-color:@data.COLOR;padding:2px;">
+                                                <font size="1"> Document Finder</font>
+                                            </a>
+                                        }
+
+                                    }
+                                </div>
+
+
+                                }
+                            }
+                        </li>
+
+
+                            }
+                        }
+
+                    </ul>
+                </div>
+
+                <div class="clear-both clearfix"></div>
+            </div>
+        </div>
+
+                            }
+                        }
+
+
+
+<script src="~/Areas/NeoERP.DocumentTemplate/Scripts/drag-arrange.min.js"></script>
+
+<script>
+    var togglediv = "";
+    $(".fullscreen").click(function () {
+        setTimeout(function () {
+            $(togglediv).show();
+        }, 1);
+
+    });
+
+    $(".portlet-title").click(function () {
+    
+        togglediv = $($($($(this)).parent()).find("div")[3]).find("div")[0];
+        var div=$(togglediv).hasClass("portlet-body");
+        if (!div) {
+            togglediv = $($($(this)).parent()).find("div")[3];
+        }
+        $(togglediv).toggle();
+        if (remove) {
+            $(togglediv).show();
+            remove=false;
+        };
+    });
+
+
+    var remove = false;
+    function RemoveFolder(FolderId) {
+        var dialog = bootbox.dialog({
+            title: 'Remove Folder',
+            message: "Are you sure to remove folder?",
+            buttons: {
+                cancel: {
+                    label: "Cancel",
+                    className: 'btn-danger',
+                    callback: function(){
+                        dialog.modal('hide');
+                        return false;
+                    }
+                },
+                ok: {
+                    label: "Ok",
+                    className: 'btn-info',
+                    callback: function(){
+                        $.ajax({
+                            type: "POST",
+                            url: "/Template/RemoveFolderTemplate?FolderId=" + FolderId,
+                            dataType: "html",
+                            success: function (response) {
+                                dialog.modal('hide');
+                                $("#FolderTemplate").html("");
+                                $("#FolderTemplate").html(response);
+                                window.menutarget = "";
+                                RESET();
+                            },
+                            error: function (response) {
+
+                            }
+
+
+                        });
+                        remove=true;
+                    }
+                }
+            }
+        });
+
+
+
+
+
+
+    };
+</script>

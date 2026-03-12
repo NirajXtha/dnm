@@ -1,0 +1,317 @@
+﻿<style>
+    #customerModal .modal-header {
+        padding: 10px !important;
+        background-color: #eee;
+    }
+
+
+    /*#customerModal input {
+        width: auto !important;
+    }*/
+
+    #customerModal .k-icon {
+        display: inline-block;
+    }
+
+
+
+    #customerTreeViewdocument {
+        width: 40%;
+        float: left;
+        margin-right: 20px;
+    }
+
+
+    .verticalLine {
+        border-left: solid #ddd 1px;
+    }
+
+    .k-group.k-treeview-lines {
+        max-height: 230px !important;
+    }
+
+
+
+
+
+    #customerGrid {
+        font-size: 9px;
+        /*height: 345px !important;*/
+    }
+
+
+    .show-displaygrid {
+        display: none;
+    }
+
+    .btn-linkicon:hover {
+        background-color: #ccc;
+    }
+
+
+    .customcolumn-one {
+        width: 27%;
+    }
+
+    .columnbg {
+        background-color: #eee;
+    }
+
+    .customcolumn-two {
+        width: 73%;
+    }
+
+    .topsearch {
+        margin-right: 51px;
+    }
+
+
+    #customers-list li {
+        /*border-bottom: solid #ded5d5 1px;*/
+    }
+
+    .k-context-menu {
+        font-size: 11px !important;
+        min-width: 27%;
+    }
+
+    #customerDetailModal .modal-dialog-box, #customerProductInfoModal .modal-dialog-box {
+        width: 98% !important;
+    }
+
+    #customerDetailModal .modal-dialogbox-body, #customerProductInfoModal .modal-dialogbox-body {
+        min-height: 570px;
+        max-height: 570px;
+    }
+</style>
+<div id="customerCtrl" ng-controller="customerSchemeCtrl">
+
+    
+
+    <div class="input-group">
+        <input id="customers" ng-model="Scheme.CUSTOMER_CODE" name="customer" class="cust customer mcustomer  " kendo-combo-box
+               k-placeholder="'Enter customer'"
+               k-data-text-field="'CustomerName'"
+               k-data-value-field="'CustomerCode'"
+               k-filter="'contains'"
+               @*k-on-select="CustomerOnSelect(kendoEvent)"*@
+               k-auto-bind="false"
+               k-on-change="customerCodeOnChange(kendoEvent)"
+               k-options="customerCodeOption"
+               k-suggest="false"
+               k-min-length="3" />
+        <span class="input-group-addon addon-iconbox" style="cursor:pointer" ng-click="BrowseTreeListForCustomers()">
+            <i class="fa fa-search" data-toggle="tooltip" title="Search Customers"></i>
+            @*<i class="fa fa-users"></i>*@
+        </span>
+    </div>
+
+    <div class="modal fade-out" id="customerModal" data-backdrop="static" tabindex="-1" data-width="760">
+        <div class="modal-dialog modal-dialog-box">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <b>Customers</b>
+                        <div type="button" class="close" data-dismiss="modal" aria-hidden="true" next-on-tab data-toggle="tooltip" title="Close">&times;</div>
+                    </div>
+
+                </div>
+
+                <div class="modal-body modal-dialogbox-body">
+                    <div class="row">
+                        <div class="col-md-5 mingapright customcolumn-one columnbg">
+                            <input id="custmasterfilterText" class="form-control filterText" name="search" type="text" placeholder="Search categories" />
+                            <div id="customertree" kendo-tree-view="tree"
+                                 k-data-source="treeData"
+                                 k-options="options"
+                                 k-data-bound="onDataBound">
+                                <span k-template>
+                                    {{dataItem.customerName}}
+                                </span>
+                            </div>
+
+                        </div>
+                        <div class="col-md-7 customcolumn-two mingapleft">
+                            <div class="expand verticalLine">
+                                <div class="row">
+                                    <div class="col-md-offset-8 col-md-4 search_box">
+                                        <div class="topsearch" style="display:block;">
+                                            <a class="btn-linkicon fa fa-search" ng-click="BindSearchGrid()" data-toggle="tooltip" title="Search list"></a>
+                                            <input class="k-textbox txtSearchString" type="text" id="custmastertxtSearchString" ng-model="txtSearchString" name="search" placeholder="enter search text..." />
+
+                                        </div>
+                                    </div>
+                                </div>
+                                <kendo-grid id="customerGrid" options="customerGridOptions" k-rebind="customerGridOptions" class="search-grid hasMenu">
+
+                                </kendo-grid>
+                                <ul kendo-context-menu
+                                    k-target="'.hasMenu'"
+                                    k-filter="'tr[data-uid]'"
+                                    k-on-open="OnCustomerMenuOpen(kendoEvent)"
+                                    k-on-close="menuOpen = menuOpen - 1"
+                                    k-on-select="onCustomerContextSelect(kendoEvent)">
+                                    <li>More Details</li>
+                                    <li>Product Info.</li>
+
+
+
+                                </ul>
+                            </div>
+
+                        </div>
+                    </div>
+
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-default" data-dismiss="modal" ng-click="SubLedger_Cancel($index)" data-toggle="tooltip" title="Cancel">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade-out" id="customerDetailModal" data-backdrop="static" tabindex="-1" data-width="760">
+        <div class="modal-dialog modal-dialog-box">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <b>Customer Details</b>
+                        <div type="button" class="close" ng-click="CustomerDetailCancel()" data-dismiss="modal" aria-hidden="true" next-on-tab data-toggle="tooltip" title="Close">&times;</div>
+                    </div>
+
+                </div>
+
+                <div class="modal-body modal-dialogbox-body">
+
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-default" data-dismiss="modal" ng-click="CustomerDetailCancel()" data-toggle="tooltip" title="Cancel">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade-out" id="customerProductInfoModal" data-backdrop="static" tabindex="-1" data-width="760">
+        <div class="modal-dialog modal-dialog-box">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <b>Customer Product Info</b>
+                        <div type="button" class="close" ng-click="CustomerProductInfoCancel()" data-dismiss="modal" aria-hidden="true" next-on-tab data-toggle="tooltip" title="Close">&times;</div>
+                    </div>
+
+                </div>
+
+                <div class="modal-body modal-dialogbox-body">
+
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-default" data-dismiss="modal" ng-click="CustomerProductInfoCancel()" data-toggle="tooltip" title="Cancel">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+        $(".k-list").slimScroll({
+            position: 'right',
+            //alwaysVisible: false,
+            height: '150',
+        });
+
+        $("#custmasterfilterText").keyup(function (e) {
+
+
+            var FilterValue = $(this).val();
+            var value = FilterValue.substring(0, 1).toUpperCase() + FilterValue.substring(1);
+
+            if (FilterValue !== "") {
+                $(".selectAll").css("visibility", "hidden");
+
+                $("#customertree .k-group .k-group .k-in").closest("li").hide();
+                $("#customertree .k-group").closest("li").hide();
+                $("#customertree .k-group .k-group .k-in:contains(" + value + ")").each(function () {
+                    $(this).parents("ul, li").each(function () {
+                        var treeView = $("#customertree").data("kendoTreeView");
+                        treeView.expand($(this).parents("li"));
+                        $(this).show();
+                    });
+                });
+                $("#customertree .k-group .k-in:contains(" + FilterValue + ")").each(function () {
+                    $(this).parents("ul, li").each(function () {
+                        $(this).show();
+                    });
+                });
+            }
+            else {
+                $("#customertree .k-group").find("li").show();
+                var nodes = $("#customertree > .k-group > li");
+
+                $.each(nodes, function (i, val) {
+                    if (nodes[i].getAttribute("data-expanded") == null) {
+                        $(nodes[i]).find("li").hide();
+                    }
+                });
+                $(".selectAll").css("visibility", "visible");
+            }
+        });
+
+        $("#custmastertxtSearchString").keyup(function () {
+
+            var val = $(this).val();
+            var grid = $("#customerGrid").data("kendoGrid");
+            if (grid != undefined) {
+                var tempServerFilter = grid.dataSource.options.serverFiltering;
+                grid.dataSource.options.serverFiltering = false;
+                var filter = [];
+                $.each(grid.columns, function (i, v) {
+                    if (v.field != undefined) {
+                        var searchText = $.trim($("#custmastertxtSearchString").val());
+                        var model = grid.dataSource.options.schema.model.fields[v.field];
+                        var type = "string";
+                        if (model != undefined)
+                            type = model.type;
+                        if (type === "string")
+                            filter.push({ field: v.field, operator: "contains", value: searchText });
+                        else if (type === "number")
+                            filter.push({ field: v.field, operator: "eq", value: searchText });
+                        else if (type === "date") {
+                            var dateValue = new Date(searchText);
+                            searchText = dateValue == "Invalid Date" ? searchText : dateValue;
+                            filter.push({ field: v.field, operator: "eq", value: searchText });
+                        }
+                    }
+
+                });
+                var filter = {
+                    logic: "or",
+                    filters: filter,
+                }
+
+                grid.dataSource.filter(filter);
+                if ($("#custmastertxtSearchString").val().length == 0)
+                    grid.dataSource.filter([]);
+                grid.bind("dataBound", function () {
+                    grid.dataSource.options.serverFiltering = tempServerFilter;
+                });
+            }
+        });
+
+            //function formatValue(value, type, text) {
+            //    if (type == null)
+            //        type = "";
+            //    if (text != undefined)
+            //        if (text.indexOf("#") > -1)
+            //            text = text.split("#")[1];
+            //    var textMatcher = new RegExp(text, "ig");
+            //    var val = value.replace(textMatcher, function (match) {
+            //        return "<u><strong>" + match + "</strong></u>";
+            //    });
+            //    return "<span class='comboBoxedescName'>"+val + "</span> <span class='rightallign'>" + type + "</span> "  ;
+            //}
+</script>
+
+

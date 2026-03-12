@@ -1,0 +1,250 @@
+﻿
+<style>
+    #OutletsForm h4 {
+        margin-top: 0px !important;
+    }
+
+    #outletSetup .k-auto-scrollable {
+        overflow: hidden !important;
+    }
+
+    .k-splitter {
+        min-height: 404px;
+    }
+
+    .form-control {
+        width: 97% !important;
+    }
+
+    .custom-panel-body {
+        padding: 7px 30px 0px 10px !important;
+        height: 182px;
+    }
+
+
+        .custom-panel-body .caption {
+            font-size: 12px !important;
+            padding: 5px 0 6px 0 !important;
+        }
+
+        .custom-panel-body .portlet-title {
+            min-height: auto !important;
+        }
+
+    .control-label {
+        font-size: 12px !important;
+    }
+
+    .tblresponsive {
+        border: 1px solid #e1e1e1 !important;
+    }
+
+    .table thead tr th {
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    button#cancelOutlet {
+        padding-bottom: 3px !important;
+        margin-right: 12px !important
+    }
+
+    input#outletCode {
+        font-size: 12px;
+    }
+
+    input#outletName {
+        font-size: 12px;
+    }
+
+    #outletSetup .k-grid-header {
+        padding-right: 0px !important
+    }
+
+    .ctable thead th {
+        border-right: solid #ddd 1px !important;
+        border-bottom: solid #ddd 1px !important;
+    }
+
+    .ctable th {
+        padding-left: 10px !important;
+    }
+
+    .ctable td:last-child {
+        border-right: none;
+    }
+
+    .ctable td {
+        border-right: solid #ddd 1px;
+        border-bottom: solid #ddd 1px;
+        border-top: none !important;
+    }
+
+    .ctable input.form-control {
+        height: 26px !important;
+    }
+</style>
+
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+            <li>
+                <i class="fa fa-home"></i>
+                <a href="/Distribution/Home/Dashboard#!Distribution/">Home</a>
+                <i class="fa fa-angle-right"></i>
+            </li>
+            <li>
+                <a href="#">Create Purchase Order </a>
+            </li>
+
+        </ul>
+    </div>
+
+</div>
+
+<div class="portlet light bordered main" ng-controller="mvcCRUDCtrl">
+    <form id="PurchaseOrderForm" name="PurchaseOrderForm" novalidate>
+        <div class="portlet-title titleheading">
+            <span class="caption-subject font-green bold uppercase text-center" style="text-align: center">
+                <i class="fa fa-list-alt"></i>
+                Purchase Order Form
+            </span>
+            <span class="pull-right">
+
+                <button type="button" class="btn btn-success btn-sm" ng-click="UpdatePo()">Save</button>
+
+
+            </span>
+            <span class="pull-right">
+                <button type="button" id="cancelOutlet" name="cancelOutlet" ng-click="CancelledItem($index)" class="btn btn-default btn-sm">Cancel</button>
+            </span>
+
+        </div>
+        <div class="row">
+            <div class="col-md-3 col-sm-3">
+                <div class="form-group">
+                    <label class="control-label" for="orderNumber">
+                        Order Number
+                    </label>
+                    <input id="orderNumber" name="orderNumber" ng-model="PurchaseOrderList.ORDER_NO" class="form-control input-sm" disabled="">
+                </div>
+            </div>
+            @*<div class="col-md-3 col-sm-3">
+                    <div class="form-group">
+                        <label class="control-label" for="Customer">
+                            Customer
+                        </label>
+                        <input id="Customer" name="Customer" ng-model="PurchaseOrderList.CUSTOMER_EDESC" class="form-control input-sm" disabled="">
+                    </div>
+                </div>*@
+            <div class="col-md-3 col-sm-3">
+                <div class="form-group">
+                    <label class="control-label" for="orderNumber">
+                        Customer
+                    </label>
+                    <select id="customerByDealer" ng-model="customerByDealerModel" k-value-primitive="true" k-ng-model="customerByDealerModel" name="customerByDealerModel" kendo-drop-down-list
+                            k-options="customerByDealerOptions"
+                            style="width: 100%">
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-6 col-sm-6">
+                <div class="form-group">
+                    <label class="control-label" for="remarks">
+                        Remarks
+                    </label>
+                    <input id="remarks" name="remarks" ng-model="PurchaseOrderList.REMARKS" class="form-control input-sm">
+                </div>
+            </div>
+        </div>
+        <div class="tblresponsive">
+
+            <table class="table table-striped  table-hover ctable" id="items">
+
+                <thead class="table-info" style="background-color:#eee">
+
+                    <tr>
+                        <th style="width:9%;">S.N.</th>
+                        <th style="width:28%;">
+                            Items <small style="opacity:0.6"></small>
+                        </th>
+                        <th style="width:9%; display:none">Conversion Factor</th>
+                        <th style="width:9%;">Req. Unit</th>
+                        <th style="width:9%;">Req. Qty</th>
+                        <th style="width:9%;">Unit Price</th>
+                        <th style="width:9%;">C. Unit</th>
+                        <th style="width:9%;">C. Qty</th>
+                        <th style="width:9%;">Total Price</th>
+
+                        <th style="width:9%;">
+                            <a href="javascript:void(0)" ng:click="AddPurchaseOrder()" class="btn btn-xs btn-success myClass">
+                                [<i class="fa fa-plus"></i>] Add
+
+                            </a>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="font-size:10px;" ng-if="Outlets.length==0">
+                        <td colspan="8">No Items To Display..</td>
+                    </tr>
+                    <tr style="font-size:12px; text-align:right" ng-repeat="out in PurchaseOrder">
+                        <td>{{$index+1}}</td>
+                        <td style="width:28%;">
+                            <select id="distItemsSelect" class="distItemsSelect" name="distItemsSelect" kendo-multi-select k-options="distItemsSelectOptions" ng-model="out.selectedItems"></select>
+                        </td>
+
+                        <td style="width:9%; display:none;">
+                            <input type="text" class="form-control input-sm reqUnita" id="reqUnita" name="reqUnita" ng-model="out.CONVERSION_FACTOR" disabled>
+
+                        </td>
+
+                        <td style="width:9%;">
+                            <input type="text" class="form-control input-sm reqUnit" id="reqUnit" name="reqUnit" ng-model="out.reqUnit" disabled>
+
+                        </td>
+                        <td style="width:9%;">
+                            <input type="number" class="form-control reqQuantity" id="reqQuantity" ng-change="reqChangeFunction($index)" name="reqQuantity" ng-model="out.reqQuantity">
+
+                        </td>
+                        <td style="width:9%;">
+                            <input type="text" class="form-control unitPrice" id="unitPrice" name="unitPrice" ng-model="out.unitPrice" disabled>
+
+                        </td>
+                        <td style="width:9%;">
+                            <input type="text" class="form-control cUnit" id="cUnit" name="cUnit" ng-model="out.cUnit" disabled>
+
+                        </td>
+                        <td style="width:9%;">
+                            <input type="text" class="form-control cQuantity" id="cQuantity" name="cQuantity" ng-model="out.cQuantity" disabled>
+
+                        </td>
+                        <td style="width:9%;">
+                            <input type="text" class="form-control totalPrice" id="totalPrice" name="totalPrice" ng-model="out.totalPrice" disabled>
+
+                        </td>
+                        <td style="width:9%;">
+                            <button class="btn btn-xs btn-danger pull-right" ng-click="RemovePurchaseOrder($index)"> [<i class="fa fa-times"></i>] </button>
+                        </td>
+
+
+                        <td ng-show="additems" style="width:9%;">
+                            <a href="javascript:void(0)" ng:click="AddPurchaseOrder()" class="btn btn-xs btn-success pull-right">
+                                [<i class="fa fa-plus"></i>] Add
+
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </form>
+
+
+    <div class="divider"></div>
+
+
+
+</div>
+
+

@@ -1,0 +1,1047 @@
+﻿@model NeoErp.Distribution.Service.Model.DetailColumnModel
+
+@using NeoErp.Core.Models.CustomModels;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@using NeoErp.Core.Models;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>
+    ();
+    }
+
+    <style>
+            div.k-grid-header th.k-header, tr.k-filter-row > th {
+                text-align: center;
+            }
+
+            .k-footer-template div {
+                border-bottom: none;
+            }
+
+            /*.page-bar {
+            margin-bottom: 0px !important;
+        }*/
+
+            .k-grid table {
+                table-layout: fixed;
+            }
+
+            .no-data {
+                background-color: red;
+            }
+            /*#grid thead{
+             font-size:11px;
+        }*/
+            .k-grid td {
+                white-space: nowrap;
+                text-overflow: ellipsis;
+            }
+
+            .k-grid table thead th {
+                font-size: 11px;
+            }
+
+            .k-grid table td {
+                font-size: 10px;
+            }
+            /*.k-grid-content {
+            font-size: 10px;
+        }
+
+        .k-grid-footer {
+            font-size: 10px;
+        }*/
+            .floatright {
+                float: right;
+                margin-top: 2px !important;
+            }
+
+            /*a.k-button.k-button-icontext.k-grid-excel {
+            float: right;
+        }*/
+
+            .bootbox-form {
+                padding: 3px !important;
+            }
+
+            .bootbox-input.bootbox-input-text.form-control {
+                height: 27px !important;
+            }
+            /*.k-grid-header {
+            font-size: 11px;
+        }
+        .k-grouping-header {
+            font-size: 12px;
+        }*/
+            .k-state-active, .k-state-active:hover, .k-active-filter, .k-tabstrip .k-state-active {
+                border-color: #7c736e !important;
+            }
+    </style>
+
+    <script>
+        var a = location.hash;
+        var b = location.pathname;
+        var url = (b + a);
+        $(".active").removeClass();
+        $("a[href='" + url + "']").parent().addClass("active");
+        $("a[href='" + url + "']").parent().parent().slideDown("slow");
+    </script>
+
+    <div class="content">
+        <div class="page-bar">
+            <ul class="page-breadcrumb"></ul>
+            <div class="page-toolbar">
+                <div class="btn-group pull-right">
+
+                    <div class="actions">
+
+                        <div class="btn-group">
+                            @Html.Partial("~/Views/Shared/Controls/DatePicker.cshtml", new DatePickerModel() { IsPopUp = true })
+                        </div>
+                        @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+                        @*<div class="btn-group">
+                            @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                            {
+                            ShowDistEmployeeFilter = true,
+                           // ShowItemBrandFilter=true,
+                            })
+                        </div>*@
+                        <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                            <i class="icon-control-play"></i>
+                        </a>
+                        <div class="btn-group">
+                            @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "BrandingEmployeeWisePerformanceDetail")
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row collapse in" id="demo">
+            <div class="col-md-12">
+                <div class="portlet light bordered">
+                    <div class="portlet-body form">
+                        <div class="row">
+                            <div id="grid"></div>
+                            <script type="text/x-kendo-template" id="template">
+                                <div class="details" style="width:40%"></div>
+                            </script>
+                            @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="@Scripts.Url(" ~/JS/reportFilter.js")"></script>
+    <script src="@Scripts.Url(" ~/JS/DateFilter.js")" type="text/javascript"></script>
+    <script src="@Scripts.Url(" ~/Areas/NeoErp.Distribution/js/MenuNavigation.js?V2")"></script>
+
+    <script>
+
+        getDateFormat = function (date) {
+            var test = new Date(date);
+            if (test.getFullYear() == '1970')
+                return '-';
+            return kendo.format("{0:" + reportConfig.dateFormat + "}", new Date(date));
+        }
+
+        $(".applydp").on("click", function (evt) {
+            evt.preventDefault();
+            $("#RunQuery").trigger("click");
+            $('[data-toggle="tooltip"].date-tooltip').attr("data-original-title", $("#datePickerBs").val() + "(" + $("#datePickerAd").val() + ")");
+            $(this).closest("#applydp").modal('hide');
+        });
+
+        $("#loadAdvancedFilters").on("click", function (evt) {
+            evt.preventDefault();
+            $("#RunQuery").trigger("click");
+        });
+
+        $("#RunQuery").click(function (evt) {
+            evt.preventDefault();
+            KendoGridRefresh();
+        });
+
+        // used to wait for the children to finish async export
+        var detailExportPromises = [];
+
+        //used for serial number
+        var recordCount = 0;
+
+        function BindGrid() {
+            reportConfig = GetReportSetting("BrandingEmployeeWisePerformanceDetail");
+            var grid = $("#grid").kendoGrid({
+                dataSource: {
+                    type: "json",
+                    transport: {
+                        read: {
+                            url: window.location.protocol + "//" + window.location.host + "/api/Report/DetailBrandingEmpReport",
+                            dataType: "json",
+                            type: "POST",
+                            contentType: "application/json; charset=utf-8"
+                        },
+                        parameterMap: function (options, type) {
+                            var report = $.extend({}, true, ReportFilter.filterAdditionalData());
+                            report.ReportFilters.FromDate = moment($("#datePickerAd").val()).format('YYYY-MMM-DD');
+                            report.ReportFilters.ToDate = moment($("#datePickerAd").val()).format('YYYY-MMM-DD');
+
+                            var paramMap = JSON.stringify(report);
+                            delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                            delete paramMap.$format; // <-- remove format parameter.
+                            return paramMap;
+                        }
+                    },
+
+                    error: function (e) {
+                        displayPopupNotification("Sorry error occured while processing data", "error");
+                    },
+                    schema: {
+                        parse: function (response) {
+                            var result = [];
+                            var temp = {};
+                            response.forEach(function (item, idx) {
+                                @foreach(var col in Model.OutletTypes)
+                            {
+                                <text>
+                                    temp = _.filter(item.OUTLET_TYPE, function (x) { return x.EDESC == htmlDecode("@col.Header") });
+                                    item.@col.FieldName = temp.length > 0 ? temp[0].QUANTITY : '';
+                                </text>
+                            }
+                            @foreach(var col in Model.OutletSubTypes)
+            {
+                <text>
+                    temp = _.filter(item.OUTLET_SUB_TYPE, function (x) { return x.EDESC == htmlDecode("@col.Header") });
+                    item.@col.FieldName = temp.length > 0 ? temp[0].QUANTITY : '';
+                                </text>
+            }
+            @foreach(var col in Model.Brands)
+            {
+                <text>
+                    temp = _.filter(item.BRANDWISE, function (x) { return x.EDESC == htmlDecode("@col.Header") });
+                    item.@col.FieldName = temp.length > 0 ? temp[0].QUANTITY : '';
+                                </text>
+            }
+
+            item.typeTotal = _.reduce(item.OUTLET_TYPE, function (memo, x) { return memo + x.QUANTITY; }, 0);
+            item.subTypeTotal = _.reduce(item.OUTLET_SUB_TYPE, function (memo, x) { return memo + x.QUANTITY; }, 0);
+            item.brandTotal = _.reduce(item.BRANDWISE, function (memo, x) { return memo + x.QUANTITY; }, 0);
+            item.brandTotalAmt = _.reduce(item.BRANDWISE, function (memo, x) { return memo + x.TOTAL_AMOUNT; }, 0);
+            result.push(item);
+        });
+        return result;
+                        }
+                    },
+        model: {
+            fields: {
+                GROUP_EDESC: { type: "string" },
+                EMPLOYEE_EDESC: { type: "string" },
+                ROUTE_NAME: { type: "string" },
+                TARGET: { type: "number" },
+                VISITED: { type: "number" },
+                NOT_VISITED: { type: "number" },
+                PJP_PRODUCTIVE: { type: "number" },
+                TOTAL_PJP: { type: "number" },
+                PJP_NON_PRODUCTIVE: { type: "number" },
+                EXTRA: { type: "number" },
+                PERCENT_EFFECTIVE_CALLS: { type: "number" },
+                PERCENT_PRODUCTIVE_CALLS: { type: "number" },
+                TOTAL_QUENTITY: { type: "number" },
+                TOTAL_AMOUNT: { type: "number" },
+
+                WORKING_HOURS: { type: "number" },
+                EOD_TIME: { type: "string" },
+                ATN_TIME: { type: "string" },
+                @foreach(var col in Model.OutletTypes)
+                {
+                    <text>
+                        @col.FieldName : {type: "number" },
+                                </text>
+                }
+                @foreach(var col in Model.OutletSubTypes)
+                {
+                    <text>
+                        @col.FieldName : {type: "number" },
+                                </text>
+                }
+                @foreach(var col in Model.Brands)
+                {
+                    <text>
+                        @col.FieldName : {type: "number" },
+                                </text>
+                }
+                typeTotal: { type: "number" },
+                subTypeTotal: { type: "number" },
+                brandTotal: { type: "number" },
+                brandTotalAmt: { type: "number" },
+
+            },
+        },
+        pageSize: reportConfig.defaultPageSize,
+            group: {
+            field: "GROUP_EDESC",
+                aggregates: [
+                    { field: "TARGET", aggregate: "sum" },
+                    { field: "VISITED", aggregate: "sum" },
+                    { field: "NOT_VISITED", aggregate: "sum" },
+                    { field: "PJP_PRODUCTIVE", aggregate: "sum" },
+                    { field: "TOTAL_PJP", aggregate: "sum" },
+                    { field: "PJP_NON_PRODUCTIVE", aggregate: "sum" },
+                    { field: "EXTRA", aggregate: "sum" },
+                    { field: "TOTAL_QUENTITY", aggregate: "sum" },
+                    { field: "TOTAL_AMOUNT", aggregate: "sum" },
+                        @foreach(var col in Model.OutletTypes)
+            {
+                <text>
+                    {field: "@col.FieldName", aggregate: "sum" },
+                                </text>
+            }
+            @foreach(var col in Model.OutletSubTypes)
+            {
+                <text>
+                    {field: "@col.FieldName", aggregate: "sum" },
+                                </text>
+            }
+            @foreach(var col in Model.Brands)
+            {
+                <text>
+                    {field: "@col.FieldName", aggregate: "sum" },
+                                </text>
+            }
+            { field: "typeTotal", aggregate: "sum" },
+            { field: "subTypeTotal", aggregate: "sum" },
+            { field: "brandTotal", aggregate: "sum" },
+            { field: "brandTotalAmt", aggregate: "sum" },],
+        },
+        aggregate: [
+            { field: "TARGET", aggregate: "sum" },
+            { field: "VISITED", aggregate: "sum" },
+            { field: "NOT_VISITED", aggregate: "sum" },
+            { field: "PJP_PRODUCTIVE", aggregate: "sum" },
+            { field: "TOTAL_PJP", aggregate: "sum" },
+            { field: "PJP_NON_PRODUCTIVE", aggregate: "sum" },
+            { field: "EXTRA", aggregate: "sum" },
+            { field: "TOTAL_QUENTITY", aggregate: "sum" },
+            { field: "TOTAL_AMOUNT", aggregate: "sum" },
+                        @foreach(var col in Model.OutletTypes)
+        {
+            <text>
+                {field: "@col.FieldName", aggregate: "sum" },
+                                </text>
+        }
+        @foreach(var col in Model.OutletSubTypes)
+        {
+            <text>
+                {field: "@col.FieldName", aggregate: "sum" },
+                                </text>
+        }
+        @foreach(var col in Model.Brands)
+        {
+            <text>
+                {field: "@col.FieldName", aggregate: "sum" },
+                                </text>
+        }
+        { field: "typeTotal", aggregate: "sum" },
+        { field: "subTypeTotal", aggregate: "sum" },
+        { field: "brandTotal", aggregate: "sum" },
+        { field: "brandTotalAmt", aggregate: "sum" },
+                    ],
+                },
+        toolbar: kendo.template($("#toolbar-template").html()),
+            excel: {
+            fileName: "Employee Detail Report",
+                allPages: true,
+                },
+        excelExport: function(e) {
+            e.preventDefault();
+            var grid = $('#grid').data('kendoGrid');
+            if (grid.dataSource.group().length > 0) {
+                grid.dataSource.group([]);
+                grid.saveAsExcel();
+            }
+            else {
+                var workbook = e.workbook;
+                //formatting master rows
+                var sheet = workbook.sheets[0];
+                for (var rowIndex = 2; rowIndex < sheet.rows.length; rowIndex++) {
+                    var row = sheet.rows[rowIndex];
+                    for (var cellIndex = 0; cellIndex < row.cells.length; cellIndex++) {
+                        row.cells[cellIndex].bold = true;
+                    }
+                }
+                //formatting master rows
+                detailExportPromises = [];
+                var masterData = e.data;
+
+                for (var rowIndex = 0; rowIndex < masterData.length; rowIndex++) {
+                    exportChildData(masterData[rowIndex].SP_CODE, rowIndex);
+                }
+
+                $.when.apply(null, detailExportPromises)
+                    .then(function () {
+                        // get the export results
+                        var detailExports = $.makeArray(arguments);
+
+                        // sort by masterRowIndex
+                        detailExports.sort(function (a, b) {
+                            return a.masterRowIndex - b.masterRowIndex;
+                        });
+
+                        // add an empty column
+                        workbook.sheets[0].columns.unshift({
+                            width: 30
+                        });
+
+                        // prepend an empty cell to each row
+                        for (var i = 0; i < workbook.sheets[0].rows.length; i++) {
+                            workbook.sheets[0].rows[i].cells.unshift({});
+                        }
+
+                        // merge the detail export sheet rows with the master sheet rows
+                        // loop backwards so the masterRowIndex doesn't need to be updated
+                        for (var i = detailExports.length - 1; i >= 0; i--) {
+                            var masterRowIndex = detailExports[i].masterRowIndex + 1; // compensate for the header row
+
+                            var sheet = detailExports[i].sheet;
+
+                            // prepend an empty cell to each row
+                            for (var ci = 0; ci < sheet.rows.length; ci++) {
+                                if (sheet.rows[ci].cells[0].value) {
+                                    sheet.rows[ci].cells.unshift({});
+                                }
+                            }
+
+                            // insert the detail sheet rows after the master row
+                            [].splice.apply(workbook.sheets[0].rows, [masterRowIndex + 1, 0].concat(sheet.rows));
+                        }
+                        //Add filter information
+                        var companyName = ('@workingContent.CurrentUserinformation.company_name');
+                        var fromADdate = $("#datePickerAd").val();
+                        var fromBSdate = $("#datePickerBs").val();
+                        var branches = ReportFilter.getBranchs();
+
+                        workbook.sheets[0].rows.unshift({
+                            cells: [{ value: "Branding Employee Detail Report".split('').join(' '), colSpan: 7 }]
+                        });
+
+                        workbook.sheets[0].rows.unshift({
+                            cells: [{ value: "Date :- " + fromADdate + "(" + fromBSdate + ")", colSpan: 7 }]
+                        });
+
+                        for (var companyCount = 0; companyCount < branches.length; companyCount++) {
+                            workbook.sheets[0].rows.unshift({
+                                cells: [{ value: branches[companyCount].Company + " :- " + branches[companyCount].Branches.join(','), colSpan: 7 }]
+                            });
+                        }
+                        // save the workbook
+                        kendo.saveAs({
+                            dataURI: new kendo.ooxml.Workbook(workbook).toDataURL(),
+                            fileName: "Branding Employee Detail Report.xlsx"
+                        });
+                    });
+                KendoGridRefresh();
+            }
+        },
+        height: window.innerHeight - 50,
+            sortable: true,
+                reorderable: true,
+                    groupable: true,
+                        reorderable: false,
+                            resizable: true,
+                                filterable: {
+            extra: false,
+                operators: {
+                number: {
+                    eq: "Is equal to",
+                        neq: "Is not equal to",
+                            gte: "is greater than or equal to	",
+                                gt: "is greater than",
+                                    lte: "is less than or equal",
+                                        lt: "is less than",
+                        },
+                string: {
+
+                    eq: "Is equal to",
+                        neq: "Is not equal to",
+                            startswith: "Starts with	",
+                                contains: "Contains",
+                                    doesnotcontain: "Does not contain",
+                                        endswith: "Ends with",
+                        },
+                date: {
+                    eq: "Is equal to",
+                        neq: "Is not equal to",
+                            gte: "Is after or equal to",
+                                gt: "Is after",
+                                    lte: "Is before or equal to",
+                                        lt: "Is before",
+                        }
+            }
+        },
+        columnMenu: true,
+            columnMenuInit: function (e) {
+                wordwrapmenu(e);
+                checkboxItem = $(e.container).find('input[type="checkbox"]');
+            },
+        columnShow: function (e) {
+            if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                SaveReportSetting('BrandingEmployeeWisePerformanceDetail', 'grid');
+        },
+        columnHide: function (e) {
+            if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                SaveReportSetting('BrandingEmployeeWisePerformanceDetail', 'grid');
+        },
+        detailTemplate: kendo.template($("#template").html()),
+            detailInit: detailInit,
+                pageable: {
+            refresh: true,
+                pageSizes: reportConfig.itemPerPage,
+                    buttonCount: 5
+        },
+        dataBound: function (o) {
+            detailExportPromises = [];
+            var grid = o.sender;
+            if (grid.dataSource.total() == 0) {
+                var colCount = 20;
+                $(o.sender.wrapper)
+                    .find('tbody')
+                    .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                displayPopupNotification("No Data Found Given Date Filter.", "info");
+            }
+            else {
+                var g = $("#grid").data("kendoGrid");
+                for (var i = 0; i < g.columns.length; i++) {
+                    g.showColumn(i);
+                }
+                $("div.k-group-indicator").each(function (i, v) {
+                    g.hideColumn($(v).data("field"));
+                });
+            }
+
+            UpdateReportUsingSetting("BrandingEmployeeWisePerformanceDetail", "grid");
+            $('div').removeClass('.k-header k-grid-toolbar');
+        },
+        columns: [
+            {
+                field: "GROUP_EDESC",
+                title: "Group",
+                width: "100px"
+            }, {
+                field: "EMPLOYEE_EDESC",
+                title: "Staff's Name",
+                footerTemplate: "Total",
+                groupFooterTemplate: "Total",
+                width: "150px"
+            }, {
+                field: "ROUTE_NAME",
+                title: "Beat's Name",
+                width: "150px"
+            }, {
+                field: "ATN_TIME",
+                title: "Attendance",
+                width: "100px"
+            }, {
+                field: "EOD_TIME",
+                title: "EOD",
+                width: "100px"
+            }, {
+                field: "WORKING_HOURS",
+                title: "Working Hour",
+                width: "100px"
+            }, {
+                title: "Calls Summary",
+                columns: [{
+                    field: "TARGET",
+                    title: "Target Calls",
+                    aggregates: ["sum"],
+                    footerTemplate: "#=sum#",
+                    groupFooterTemplate: "#=sum#",
+                    attributes:
+                        {
+                            style: "text-align:right;"
+                        },
+                    format: '{0:n0}',
+                    width: "100px"
+                }, {
+                    field: "VISITED",
+                    title: "Visited Calls",
+                    aggregates: ["sum"],
+                    footerTemplate: "#=sum#",
+                    groupFooterTemplate: "#=sum#",
+                    attributes:
+                        {
+                            style: "text-align:right;"
+                        },
+                    format: '{0:n0}',
+                    width: "100px"
+                }, {
+                    field: "TOTAL_PJP",
+                    title: "Productive Calls",
+                    aggregates: ["sum"],
+                    footerTemplate: "#=sum#",
+                    groupFooterTemplate: "#=sum#",
+                    attributes:
+                        {
+                            style: "text-align:right;"
+                        },
+                    format: '{0:n0}',
+                    width: "100px"
+                }, {
+                    field: "EXTRA",
+                    title: "Non PJP Calls",
+                    aggregates: ["sum"],
+                    footerTemplate: "#=sum#",
+                    groupFooterTemplate: "#=sum#",
+                    attributes:
+                        {
+                            style: "text-align:right;"
+                        },
+                    format: '{0:n0}',
+                    width: "100px"
+                }, {
+                    field: "PERCENT_EFFECTIVE_CALLS",
+                    title: "Coverage %",
+                    attributes:
+                        {
+                            style: "text-align:right;"
+                        },
+                    template: function (dataItem) {
+                        return "<span>" + kendo.toString(dataItem.PERCENT_EFFECTIVE_CALLS, 'n2') + " %</span>";
+                    },
+                    width: "100px",
+                }, {
+                    field: "PERCENT_PRODUCTIVE_CALLS",
+                    title: "Effective %",
+                    attributes:
+                        {
+                            style: "text-align:right;"
+                        },
+                    width: "100px",
+                    template: function (dataItem) {
+                        return "<span>" + kendo.toString(dataItem.PERCENT_PRODUCTIVE_CALLS, 'n2') + " %</span>";
+                    }
+                }]
+            },
+            {
+                title: "Outlet Category",
+                columns: [
+                            @foreach(var col in Model.OutletSubTypes.OrderBy(x=>x.FieldName))
+        {
+            <text>
+                {
+                    field: "@col.FieldName",
+                title: "@col.Header",
+                aggregates: ["sum"],
+                footerTemplate: "#=sum#",
+                groupFooterTemplate: "#=sum#",
+                attributes:
+                                        {
+                    style: "text-align:right;"
+            },
+                                        format: '{0: n0}',
+                width: "100px",
+            },
+                                </text>
+        }
+        {
+            field: "subTypeTotal",
+                title: "Total",
+                    aggregates: ["sum"],
+                        footerTemplate: "#=sum#",
+                            groupFooterTemplate: "#=sum#",
+                                attributes:
+            {
+                style: "text-align:right;font-weight:bold;"
+            },
+            format: '{0:n0}',
+                width: "100px",
+                                },
+                        ]
+                    }, {
+            title: "Outlet Type",
+                columns: [
+                            @foreach(var col in Model.OutletTypes)
+            {
+                <text>
+                    {
+                        field: "@col.FieldName",
+                    title: "@col.Header",
+                    aggregates: ["sum"],
+                    footerTemplate: "#=sum#",
+                    groupFooterTemplate: "#=sum#",
+                    attributes:
+                                        {
+                        style: "text-align:right;"
+                },
+                                        format: '{0:n0}',
+                    width: "100px",
+                },
+                                </text>
+            }
+            {
+                field: "typeTotal",
+                    title: "Total",
+                        aggregates: ["sum"],
+                            footerTemplate: "#=sum#",
+                                groupFooterTemplate: "#=sum#",
+                                    attributes:
+                {
+                    style: "text-align:right;font-weight:bold;"
+                },
+                format: '{0:n0}',
+                    width: "100px",
+                                },
+                        ]
+        }, {
+            title: "Order Summary",
+                columns: [
+                            @foreach(var col in Model.Brands)
+            {
+                <text>
+                    {
+                        field: "@col.FieldName",
+                    title: "@col.Header",
+                    aggregates: ["sum"],
+                    footerTemplate: "#= kendo.toString(sum,'n2') #",
+                    groupFooterTemplate: "#= kendo.toString(sum,'n2') #",
+                    attributes:
+                                        {
+                        style: "text-align:right;"
+                },
+                                        format: '{0: n2}',
+                    width: "100px",
+                },
+                                </text>
+            }
+            {
+                field: "brandTotal",
+                    title: "Total Order",
+                        aggregates: ["sum"],
+                            footerTemplate: "#= kendo.toString(sum,'n2') #",
+                                groupFooterTemplate: "#= kendo.toString(sum,'n2') #",
+                                    attributes:
+                {
+                    style: "text-align:right;font-weight:bold;"
+                },
+                format: '{0:n}',
+                    width: "100px",
+                                }, {
+                field: "brandTotalAmt",
+                    title: "Amount",
+                        aggregates: ["sum"],
+                            footerTemplate: "#= kendo.toString(sum,'n2') #",
+                                groupFooterTemplate: "#= kendo.toString(sum,'n2') #",
+                                    attributes:
+                {
+                    style: "text-align:right;"
+                },
+                format: '{0:n2}',
+                    width: "100px",
+                                },
+                        ]
+        }, {
+            field: "EOD_REMARKS",
+                title: "EOD Comment",
+                    width: "150px"
+        },
+                ]
+            });
+
+        function exportChildData(spCode, rowIndex) {
+            var deferred = $.Deferred();
+            detailExportPromises.push(deferred);
+            recordCount = 0;
+
+            var localDS = new kendo.data.DataSource({
+                type: "json",
+                batch: true,
+                transport: {
+                    read: {
+                        url: window.location.protocol + "//" + window.location.host + "/" + "api/Report/GetBrandingEmployeeProductive?SP_CODE=" + spCode,
+                        dataType: "json", // <-- The default was "jsonp".
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8"
+                    },
+                    parameterMap: function (options, type) {
+                        var report = $.extend({}, true, ReportFilter.filterAdditionalData());
+                        report.ReportFilters.FromDate = moment($("#datePickerAd").val()).format('YYYY-MMM-DD');
+                        report.ReportFilters.ToDate = moment($("#datePickerAd").val()).format('YYYY-MMM-DD');
+
+                        var paramMap = JSON.stringify(report);
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+                    },
+                },
+                error: function (e) {
+                    displayPopupNotification("Sorry error occured while processing data", "error");
+                },
+                schema: {
+                    parse: function (response) {
+                        var result = [];
+                        var temp = {};
+                        response.forEach(function (item, idx) {
+                            @foreach(var col in Model.Brands)
+                        {
+                            <text>
+                                temp = _.filter(item.BRANDS,function(x){return x.EDESC == htmlDecode("@col.Header")});
+                                item.@col.FieldName = temp.length > 0 ? temp[0].QUANTITY : '';
+                                </text>
+                        }
+
+                        item.brandTotal = _.reduce(item.BRANDS, function (memo, x) { return memo + x.QUANTITY; }, 0);
+                        item.brandTotalAmt = _.reduce(item.BRANDS, function (memo, x) { return memo + x.TOTAL_AMOUNT; }, 0);
+                        result.push(item);
+                    });
+            return result;
+        }
+                    },
+                });
+        //localDS.filter({ field: "SP_CODE", operator: "eq", value: OrderNum });
+
+        var exporter = new kendo.ExcelExporter({
+            columns: [
+                //{
+                //    title: "S.N.",
+                //    template: "#= ++recordCount #",
+                //    width: "40px"
+                //},
+                {
+                    field: "ENTITY_CODE",
+                    title: "Outlet ID",
+                    width: "100px",
+                }, {
+                    field: "ENTITY_NAME",
+                    title: "Outlet Name",
+                    width: "200px",
+                }, {
+                    field: "ADDRESS",
+                    title: "Address",
+                    width: "100px",
+                }, {
+                    field: "VISIT_TIME",
+                    title: "Visit Time",
+                    width: "100px",
+                }, {
+                    field: "JOURNEY_PLAN",
+                    title: "PJP/Non PJP",
+                    width: "100px",
+                }, {
+                    field: "IS_VISITED",
+                    title: "Status",
+                    width: "100px",
+                },
+                    @foreach(var col in Model.Brands)
+        {
+            <text>
+                {
+                    field: "@col.FieldName",
+                title: "@col.Header",
+                width: "100px",
+            },
+                        </text>
+        }
+        {
+            field: "brandTotal",
+                title: "Total Order",
+                    width: "100px",
+                        }, {
+            field: "brandTotalAmt",
+                title: "Amount",
+                    width: "100px",
+                        }, {
+            field: "REMARKS",
+                title: "Outlet Remark",
+                    width: "200px",
+                        }],
+        dataSource: localDS
+                });
+
+        exporter.workbook().then(function (book, data) {
+            deferred.resolve({
+                masterRowIndex: rowIndex + 1,
+                sheet: book.sheets[0]
+            });
+        });
+            }
+        };
+
+        function KendoGridRefresh(readUrl) {
+            $('#grid').data("kendoGrid").destroy();
+            $('#grid').val('');
+            $('#grid').html('');
+            BindGrid(readUrl)
+        }
+
+        function detailInit(e) {
+            var detailRow = e.detailRow;
+            var Rowdata = e.data;
+            recordCount = 0;
+            var dataSource = new kendo.data.DataSource({
+                type: "json",
+                batch: true,
+                transport: {
+                    read: {
+                        url: window.location.protocol + "//" + window.location.host + "/" + "api/Report/GetBrandingEmployeeProductive?SP_CODE=" + Rowdata.SP_CODE,
+                        dataType: "json", // <-- The default was "jsonp".
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8"
+                    },
+                    parameterMap: function (options, type) {
+                        var report = $.extend({}, true, ReportFilter.filterAdditionalData());
+                        report.ReportFilters.FromDate = moment($("#datePickerAd").val()).format('YYYY-MMM-DD');
+                        report.ReportFilters.ToDate = moment($("#datePickerAd").val()).format('YYYY-MMM-DD');
+
+                        var paramMap = JSON.stringify(report);
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+                    },
+                },
+                error: function (e) {
+                    displayPopupNotification("Sorry error occured while processing data", "error");
+                },
+                schema: {
+                    parse: function (response) {
+                        var result = [];
+                        var temp = {};
+                        response.forEach(function (item, idx) {
+                            @foreach(var col in Model.Brands)
+                        {
+                            <text>
+                                temp = _.filter(item.BRANDS,function(x){return x.EDESC == htmlDecode("@col.Header")});
+                                item.@col.FieldName = temp.length > 0 ? temp[0].QUANTITY : '';
+                            </text>
+                        }
+
+                        item.brandTotal = _.reduce(item.BRANDS, function (memo, x) { return memo + x.QUANTITY; }, 0);
+                        item.brandTotalAmt = _.reduce(item.BRANDS, function (memo, x) { return memo + x.TOTAL_AMOUNT; }, 0);
+                        result.push(item);
+                    });
+            return result;
+        }
+                },
+        sort: { field: "ENTITY_NAME", dir: "asc" },
+        pageSize: 100,
+            pageable: true,
+            });
+        dataSource.fetch(function () {
+            detailRow.find(".details").kendoGrid({
+                //dataSource: new kendo.data.DataSource({
+                //    data: this.data()//_.filter(this.data(), function (x) { return x.ENTITY_TYPE == 'R' })
+                //}),
+                dataSource: dataSource,
+                groupable: true,
+                sortable: true,
+                pageable: false,
+                sortable: true,
+                reorderable: true,
+                resizable: true,
+                reorderable: false,
+                // height:300,
+                //scrollable: {
+                //    virtual: true
+                //},
+                columns: [{
+                    title: "S.N.",
+                    template: "#= ++recordCount #",
+                    width: "40px"
+                }, {
+                    field: "ENTITY_CODE",
+                    title: "Outlet ID",
+                    width: "100px",
+                }, {
+                    field: "ENTITY_NAME",
+                    title: "Outlet Name",
+                    width: "200px",
+                }, {
+                    field: "ADDRESS",
+                    title: "Address",
+                    width: "100px",
+                }, {
+                    field: "VISIT_TIME",
+                    title: "Visit Time",
+                    width: "100px",
+                }, {
+                    field: "JOURNEY_PLAN",
+                    title: "PJP/Non PJP",
+                    width: "100px",
+                }, {
+                    field: "IS_VISITED",
+                    title: "Status",
+                    width: "100px",
+                    template: function (dataItem) {
+                        if (dataItem.IS_VISITED == "X") {
+                            return "<span style='color:#ff9900'>" + "Not Visited" + "</span>";
+                        }
+                        else if (dataItem.IS_VISITED == "Z") {
+                            return "<span style='color:#8E388E'>" + "Get Order From Visited" + "</span>";
+                        }
+
+                        else {
+                            return "<span style='color:#00e64d'>" + "Visited" + "</span>";
+                        }
+                    }
+                },
+                    @foreach(var col in Model.Brands)
+        {
+            <text>
+                {
+                    field: "@col.FieldName",
+                title: "@col.Header",
+                attributes:
+                                        {
+                    style: "text-align:right;"
+            },
+                                        format: '{0: n}',
+                width: "100px",
+            },
+                                </text>
+        }
+        {
+            field: "brandTotal",
+                title: "Total Order",
+                    attributes:
+            {
+                style: "text-align:right;font-weight:bold;"
+            },
+            format: '{0:n}',
+                width: "100px",
+                                }, {
+            field: "brandTotalAmt",
+                title: "Amount",
+                    attributes:
+            {
+                style: "text-align:right;"
+            },
+            format: '{0:n2}',
+                width: "100px",
+                                }, {
+            field: "REMARKS",
+                title: "Outlet Remark",
+                    width: "200px",
+                                },
+                    ],
+        dataBound: function (o) {
+            var grid = o.sender;
+            if (grid.dataSource.data().length <= 0) {
+                var colCount = grid.columns.length + 1;
+                $(o.sender.wrapper)
+                    .find('tbody')
+                    .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+            }
+        },
+        dataBinding: function () {
+            recordCount = 0;
+        }
+                });
+            });
+        };
+
+        $(document).ready(function () {
+            DatePicker.init();
+            consolidate.init(function () {
+                BindGrid();
+            });
+        });
+    </script>

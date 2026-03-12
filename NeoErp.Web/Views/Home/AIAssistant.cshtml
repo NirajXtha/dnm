@@ -1,0 +1,909 @@
+﻿@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+
+@{
+    Layout = null;
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+    var dataBaseName = HttpContext.Current.Session["SelectedDbKey"];
+    //var connnInfo = NeoErp.Data.ConnectionManager.GetDatabaseInfoFromJsonPub(dataBaseName.ToString());
+    //var password = connnInfo.dbPassword;
+}
+
+<!DOCTYPE html>
+<html lang="en" ng-app="aiAssistantApp">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    @*<link rel="stylesheet" href="assets/css/bootstrap.min.css" />
+        <link rel="stylesheet" href="assets/css/style.css" />*@
+
+    <link href="@Styles.Url("~/assets/css/bootstrap.min.css")" rel="stylesheet">
+    <link href="@Styles.Url("~/assets/css/style.css")" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+    <title>SYNERGY AI - ASSISTANT</title>
+
+    <style>
+        /* Custom Chat Styles */
+        .ai-assistant-content {
+            padding: 0 !important;
+            justify-content: flex-start !important;
+            background-color: #f0f7ff !important;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .chat-header {
+            background: white;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #e0e0e0;
+            width: 100%;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .back-arrow {
+            color: #7ab55c;
+            font-size: 24px;
+            margin-right: 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .chat-title {
+            color: #7ab55c;
+            font-size: 18px;
+            font-weight: 600;
+            flex: 1;
+            text-align: center;
+            margin-right: 40px; /* offset for back arrow to center title */
+        }
+
+        .chat-history {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .message-wrapper {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+
+            .message-wrapper.user {
+                flex-direction: row-reverse;
+            }
+
+        .message-icon {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            background: #fff;
+            border: 1px solid #ddd;
+            font-size: 20px;
+        }
+
+        .user .message-icon {
+            background: transparent;
+            border: none;
+        }
+
+        .message-bubble {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            position: relative;
+            overflow: visible !important;
+        }
+
+        .assistant .message-bubble {
+            background: white;
+            color: #333;
+            border: 1px solid #e0e0e0;
+        }
+
+        .user .message-bubble {
+            background: #7ab55c;
+            color: white;
+            border: none;
+        }
+
+        /* Table Styles */
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            overflow: visible !important;
+            margin-top: 5px;
+            width: 100%;
+            min-width: 400px;
+            position: relative;
+        }
+
+        .table-view-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            position: relative;
+            z-index: 20;
+        }
+
+        .ai-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+            .ai-table th {
+                background-color: #7ab55c;
+                color: white;
+                text-align: left;
+                padding: 6px 12px;
+                font-weight: 600;
+                text-transform: uppercase;
+                font-size: 11px;
+            }
+
+            .ai-table td {
+                padding: 6px 12px;
+                border-bottom: 1px solid #eee;
+                font-size: 12px;
+                color: #444;
+                background-color: white;
+            }
+
+            .ai-table tr:nth-child(even) td {
+                background-color: #e3eedc;
+            }
+
+        /* Input Area */
+        .chat-input-area {
+            background-color: #f0f7ff;
+            padding: 15px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .input-box-wrapper {
+            width: 100%;
+            max-width: 800px;
+            background: white;
+            border-radius: 12px;
+            padding: 8px 15px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 1px solid #ccc;
+        }
+
+        .message-input-field {
+            flex: 1;
+            border: none;
+            outline: none;
+            padding: 10px;
+            font-size: 15px;
+            background: transparent;
+        }
+
+        .submit-btn {
+            background-color: #7ab55c;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background 0.2s;
+        }
+
+            .submit-btn:hover {
+                background-color: #689d4d;
+            }
+
+        /* Scrollbar */
+        .chat-history::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-history::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 10px;
+        }
+
+        .report-toggle-btn {
+            font-size: 12px;
+            color: #7ab55c;
+            background: #f1f8ed;
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid #7ab55c;
+            transition: all 0.2s;
+        }
+
+            .report-toggle-btn:hover {
+                background: #7ab55c;
+                color: white;
+            }
+
+            .report-toggle-btn i {
+                margin-right: 5px;
+            }
+
+        /* Options UI */
+        .options-container {
+            margin-top: 10px;
+            background: #fdfdfd;
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px border;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            width: 100%;
+            min-width: 320px;
+        }
+        .option-category {
+            margin-bottom: 15px;
+        }
+        .category-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #777;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+        .option-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .option-btn {
+            background: white;
+            border: 1.5px solid #eaeaea;
+            padding: 7px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #555;
+        }
+        .option-btn:hover {
+            border-color: #7ab55c;
+            color: #7ab55c;
+            background: #f9fff4;
+        }
+        .option-btn.selected {
+            background: #7ab55c;
+            color: white;
+            border-color: #7ab55c;
+            box-shadow: 0 2px 4px rgba(122, 181, 92, 0.3);
+        }
+        .selection-footer {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+            text-align: right;
+        }
+        .confirm-btn {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 9px 18px;
+            border-radius: 25px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 3px 6px rgba(74, 144, 226, 0.2);
+            transition: all 0.2s;
+        }
+        .confirm-btn:hover {
+            background: #357abd;
+            transform: translateY(-1px);
+        }
+
+        /* Typing Dots Animation */
+        .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 5px 10px;
+            background: rgba(122, 181, 92, 0.1);
+            border-radius: 12px;
+            margin-top: 5px;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background: #7ab55c;
+            border-radius: 50%;
+            opacity: 0.4;
+            animation: pulse-dots 1.5s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @@keyframes pulse-dots {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        /* Menu Key Select Styling */
+        .viz-menu-container {
+            position: relative;
+            z-index: 1000;
+        }
+
+        .menu-dots {
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0 10px;
+            color: #777;
+            transition: color 0.2s;
+        }
+
+        .menu-dots:hover {
+            color: #7ab55c;
+        }
+
+        .visualization-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            z-index: 1001; 
+            min-width: 130px;
+            overflow: hidden;
+            display: none;
+            border: 1px solid #eee;
+            margin-top: 5px;
+        }
+
+        .visualization-menu.active {
+            display: block;
+        }
+
+        .viz-menu-item {
+            padding: 10px 15px;
+            font-size: 13px;
+            color: #444;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background 0.2s;
+        }
+
+        .viz-menu-item:hover {
+            background: #f5f9f2;
+            color: #7ab55c;
+        }
+
+        .viz-menu-item i {
+            width: 16px;
+            text-align: center;
+        }
+
+        .viz-menu-item.active {
+            background: #f1f8ed;
+            color: #7ab55c;
+            font-weight: 600;
+        }
+
+        /* Chart Legend Styles */
+        .chart-layout {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            padding: 10px;
+            flex-wrap: wrap;
+        }
+
+        .chart-canvas-wrapper {
+            flex: 1;
+            min-width: 250px;
+            height: 300px;
+            position: relative;
+        }
+
+        .chart-legend {
+            flex: 0 0 200px;
+            max-height: 300px;
+            overflow-y: auto;
+            text-align: left;
+            padding: 10px;
+            background: #fcfcfc;
+            border-radius: 8px;
+            border: 1px solid #f0f0f0;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-size: 12px;
+            color: #555;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        .legend-label {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex-grow: 1;
+        }
+
+        .legend-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        /* Web-style Category Dropdown */
+        .key-selector-container {
+            margin-right: 10px;
+        }
+
+        .ai-viz-select {
+            font-size: 12px;
+            height: 28px;
+            padding: 0 10px;
+            border-radius: 4px;
+            border: 1px solid #ced4da;
+            color: #495057;
+            background-color: #fff;
+            cursor: pointer;
+            outline: none;
+            max-width: 180px;
+        }
+
+        .ai-viz-select:hover {
+            border-color: #7ab55c;
+        }
+
+        .ai-viz-select:focus {
+            border-color: #7ab55c;
+            box-shadow: 0 0 0 0.2rem rgba(122, 181, 92, 0.25);
+        }
+
+        /* Prompt Library Styles */
+        .prompt-library-overlay {
+            position: absolute;
+            bottom: 85px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            width: calc(100% - 40px);
+            max-width: 850px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.15);
+            padding: 15px;
+            z-index: 2000;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 12px;
+            border: 1px solid #eee;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .prompt-library-overlay.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .prompt-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 10px 15px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 500;
+            color: #374151;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 50px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+            white-space: nowrap;
+        }
+
+        .prompt-card:hover {
+            border-color: #7ab55c;
+            color: #7ab55c;
+            background-color: #f9fafb;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(122, 181, 92, 0.12);
+        }
+
+        .prompts-trigger-input {
+            cursor: pointer;
+            padding-right: 10px;
+            color: #7ab55c;
+            transition: all 0.2s;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .prompts-trigger-input:hover {
+            color: #689d4d;
+            transform: scale(1.1);
+        }
+
+        .prompts-trigger-input i {
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div ng-controller="aiAssistantCtrl as vm" ng-init="vm.companyCode = '@workingContent.CurrentUserinformation.company_code'; vm.databaseName = '@dataBaseName'; vm.loginCode = '@workingContent.CurrentUserinformation.login_code';  vm.init();">
+        @*psw @password*@
+        <div class="app-container ai-assistant-wrapper">
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <div class="logo"></div>
+                    <span class="logo-text">SYNERGY AI Assistant </span>
+                </div>
+
+                <nav class="sidebar-menu">
+                    <a href="javascript:void();" class="menu-item" ng-click="vm.RefreshData()">
+                        <div class="menu-icon">🔍</div>
+                        <span>New Chat</span>
+                    </a>
+                    @*<a href="#" class="menu-item">
+                            <div class="menu-icon">💬</div>
+                            <span>Chat History</span>
+                        </a>
+                        <a href="#" class="menu-item">
+                            <div class="menu-icon">📓</div>
+                            <span>Project</span>
+                        </a>
+                        <div class="menu-item active">
+                            <div class="menu-icon">📱</div>
+                            <span>Apps</span>
+                        </div>*@
+
+                    <!-- Office Apps with submenu -->
+                    @*<div class="menu-item has-submenu" onclick="toggleSubmenu(event, 'office-submenu')">
+                            <div class="menu-icon">📦</div>
+                            <span>Office Apps</span>
+                            <span class="submenu-arrow">▶</span>
+                        </div>*@
+
+                    @*<div class="submenu" id="office-submenu">
+                            <a href="#" class="menu-item">
+                                <div class="menu-icon" style="color: #2b579a;">📄</div>
+                                <span>Word</span>
+                            </a>
+                            <a href="#" class="menu-item">
+                                <div class="menu-icon" style="color: #217346;">📊</div>
+                                <span>Excel</span>
+                            </a>
+                            <a href="#" class="menu-item">
+                                <div class="menu-icon" style="color: #c43e1c;">📽️</div>
+                                <span>PowerPoint</span>
+                            </a>
+                            <a href="#" class="menu-item">
+                                <div class="menu-icon" style="color: #0078d4;">📧</div>
+                                <span>Outlook</span>
+                            </a>
+                            <a href="#" class="menu-item">
+                                <div class="menu-icon" style="color: #ca64ea;">📝</div>
+                                <span>OneNote</span>
+                            </a>
+                        </div>*@
+
+                    <!-- Collaboration Tools with submenu -->
+                    @*<div class="menu-item has-submenu" onclick="toggleSubmenu(event, 'collab-submenu')">
+                            <div class="menu-icon">👥</div>
+                            <span>Collaboration</span>
+                            <span class="submenu-arrow">▶</span>
+                        </div>*@
+                    @*<div class="submenu" id="collab-submenu">
+                            <a href="#" class="menu-item">
+                                <div class="menu-icon" style="color: #6264a7;">👥</div>
+                                <span>Teams</span>
+                            </a>
+                            <a href="#" class="menu-item">
+                                <div class="menu-icon" style="color: #0078d4;">☁️</div>
+                                <span>OneDrive</span>
+                            </a>
+                            <a href="#" class="menu-item">
+                                <div class="menu-icon" style="color: #0078d4;">📧</div>
+                                <span>Outlook</span>
+                            </a>
+                            <a href="#" class="menu-item">
+                                <div class="menu-icon" style="color: #8a50d3;">🔄</div>
+                                <span>Loop</span>
+                            </a>
+                        </div>*@
+
+                    <!-- Productivity Tools with submenu -->
+                    @*<div class="menu-item has-submenu" onclick="toggleSubmenu(event, 'productivity-submenu')">
+                            <div class="menu-icon">⚡</div>
+                            <span>Productivity</span>
+                            <span class="submenu-arrow">▶</span>
+                        </div>*@
+                    @*<div class="submenu" id="productivity-submenu">
+                            <a href="#" class="menu-item">
+                                <div class="menu-icon" style="color: #0078d4;">✓</div>
+                                <span>To Do</span>
+                            </a>
+                            <a href="#" class="menu-item">
+                                <div class="menu-icon" style="color: #0078d4;">📅</div>
+                                <span>Calendar</span>
+                            </a>
+                            <a href="#" class="menu-item">
+                                <div class="menu-icon" style="color: #c43e1c;">📋</div>
+                                <span>Lists</span>
+                            </a>
+                            <a href="#" class="menu-item">
+                                <div class="menu-icon" style="color: #0078d4;">⚡</div>
+                                <span>Power Automate</span>
+                            </a>
+                        </div>*@
+                </nav>
+
+                <div class="sidebar-footer">
+                    <div class="user-profile">
+                        <div class="user-avatar"></div>
+                        <span class="user-name">
+                            @if (Request.IsAuthenticated)
+                            {
+                                <span> @workingContent.CurrentUserinformation.login_code</span><br />
+                                <span class="company-name">
+                                    @workingContent.CurrentUserinformation.company_name
+                                    @*<span>|</span> (@workingContent.CurrentUserinformation.branch_name)*@
+                                </span>
+                            }
+                        </span>
+                    </div>
+                    @*<button class="buy-button">Buy SYNERGY AI</button>*@
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <div class="main-content ai-assistant-content">
+                <!-- Chat Header -->
+                @*<div class="chat-header">
+                        <span class="back-arrow">‹</span>
+                        <span class="chat-title">Neo AI-Assistant</span>
+                    </div>*@
+
+                <!-- Prompt Library Overlay -->
+                <div class="prompt-library-overlay" 
+                     ng-class="{'active': vm.showPromptLibrary}"
+                     ng-mouseenter="vm.showPromptLibrary = true" 
+                     ng-mouseleave="vm.showPromptLibrary = false">
+                    <div class="prompt-card" ng-repeat="prompt in vm.promptLibrary" ng-click="vm.selectPrompt(prompt)">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 18px;">{{prompt.icon}}</span>
+                            <span>{{prompt.text}}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat History Area -->
+                <div class="chat-history">
+                    <div ng-repeat="msg in vm.messages" class="message-wrapper {{msg.type}}">
+                        <div class="message-icon">
+                            <span ng-if="msg.type === 'assistant'">🤖</span>
+                            <span ng-if="msg.type === 'user'">👤</span>
+                        </div>
+                        <div class="message-bubble">
+                            <div ng-if="!msg.isTable" class="message-text">
+                                {{msg.text}}
+                                <div ng-if="msg.isLoading" class="typing-indicator">
+                                    <div class="typing-dot"></div>
+                                    <div class="typing-dot"></div>
+                                    <div class="typing-dot"></div>
+                                </div>
+                            </div>
+
+                            <!-- Table View -->
+                            <div ng-if="msg.isTable" class="table-container shadow-sm">
+                                <div class="table-view-header">
+                                    <div ng-click="vm.toggleTable(msg)" style="cursor: pointer; user-select: none; flex-grow: 1;">
+                                        <span style="text-transform: capitalize; font-weight: 600;">{{msg.vizType}} View</span>
+                                        <span class="report-toggle-btn" style="margin-left: 10px;">
+                                            {{msg.isCollapsed ? 'Show' : 'Hide'}}
+                                        </span>
+                                    </div>
+                                    <div style="display: flex; align-items: center;">
+                                        <!-- Graph Key Selector Web Dropdown -->
+                                        <div class="key-selector-container" ng-if="msg.vizType !== 'table' && msg.graphKeys.length > 1">
+                                            <select class="ai-viz-select" 
+                                                    ng-model="msg.selectedKeyIndex" 
+                                                    ng-change="vm.changeKey(msg, msg.selectedKeyIndex)"
+                                                    ng-options="idx*1 as (pair[0] + ' & ' + pair[1]) for (idx, pair) in msg.graphKeys">
+                                            </select>
+                                        </div>
+
+                                        <div class="viz-menu-container">
+                                            <span class="menu-dots" ng-click="msg.showMenu = !msg.showMenu; $event.stopPropagation()">⋮</span>
+                                            <div class="visualization-menu" ng-class="{'active': msg.showMenu}">
+                                                <div class="viz-menu-item" ng-class="{'active': msg.vizType === 'table'}" ng-click="vm.changeViz(msg, 'table'); $event.stopPropagation()">
+                                                    <i class="fa fa-table"></i> Table
+                                                </div>
+                                                <div class="viz-menu-item" ng-class="{'active': msg.vizType === 'pie'}" ng-click="vm.changeViz(msg, 'pie'); $event.stopPropagation()">
+                                                    <i class="fa fa-pie-chart"></i> Pie
+                                                </div>
+                                                <div class="viz-menu-item" ng-class="{'active': msg.vizType === 'column'}" ng-click="vm.changeViz(msg, 'column'); $event.stopPropagation()">
+                                                    <i class="fa fa-bar-chart"></i> Column
+                                                </div>
+                                                <div class="viz-menu-item" ng-class="{'active': msg.vizType === 'line'}" ng-click="vm.changeViz(msg, 'line'); $event.stopPropagation()">
+                                                    <i class="fa fa-line-chart"></i> Line
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="table-responsive" ng-show="!msg.isCollapsed && msg.vizType === 'table'">
+                                    <table class="ai-table">
+                                        <thead>
+                                            <tr>
+                                                <th ng-repeat="header in msg.table.headers">{{header}}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr ng-repeat="row in msg.table.rows">
+                                                <td ng-repeat="header in msg.table.headers">{{row[header]}}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <!-- Chart Display -->
+                                <div ng-if="msg.vizType === 'pie' && !msg.isCollapsed" class="chart-container" style="position: relative;">
+                                    <div class="chart-layout">
+                                        <div class="chart-canvas-wrapper">
+                                            <canvas ai-chart viz-type="msg.vizType" raw-data="msg.rawData" graph-keys="msg.graphKeys" legend-data="msg.legendData" selected-index="msg.selectedKeyIndex"></canvas>
+                                        </div>
+                                        <div class="chart-legend" ng-if="msg.legendData.length > 0">
+                                            <div ng-repeat="item in msg.legendData" class="legend-item">
+                                                <div class="legend-color" ng-style="{'background-color': item.color}"></div>
+                                                <div class="legend-label">{{item.label}}</div>
+                                                <div class="legend-value">{{item.value}}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div ng-if="msg.vizType === 'column' && !msg.isCollapsed" class="chart-container" style="position: relative;">
+                                    <div class="chart-layout">
+                                        <div class="chart-canvas-wrapper">
+                                            <canvas ai-chart viz-type="msg.vizType" raw-data="msg.rawData" graph-keys="msg.graphKeys" legend-data="msg.legendData" selected-index="msg.selectedKeyIndex"></canvas>
+                                        </div>
+                                        <div class="chart-legend" ng-if="msg.legendData.length > 0 && msg.vizType === 'column'">
+                                            <div ng-repeat="item in msg.legendData" class="legend-item">
+                                                <div class="legend-color" ng-style="{'background-color': item.color}"></div>
+                                                <div class="legend-label">{{item.label}}</div>
+                                                <div class="legend-value">{{item.value}}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div ng-if="msg.vizType === 'line' && !msg.isCollapsed" class="chart-container" style="position: relative;">
+                                    <div class="chart-layout">
+                                        <div class="chart-canvas-wrapper">
+                                            <canvas ai-chart viz-type="msg.vizType" raw-data="msg.rawData" graph-keys="msg.graphKeys" legend-data="msg.legendData" selected-index="msg.selectedKeyIndex"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Clarification Options -->
+                            <div ng-if="msg.isOptions" class="options-container">
+                                <div ng-repeat="(category, list) in msg.options" class="option-category">
+                                    <div class="category-label">Choose {{category}}:</div>
+                                    <div class="option-buttons">
+                                        <button ng-repeat="opt in list"
+                                                class="option-btn"
+                                                ng-class="{'selected': msg.selections[category].code === opt.code}"
+                                                ng-click="vm.selectOption(msg, category, opt)">
+                                            {{opt.name}}
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="selection-footer" ng-if="vm.allOptionsSelected(msg)">
+                                    <button class="confirm-btn" ng-click="vm.confirmOptions(msg)">
+                                        Proceed with Selection ➔
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Input Area -->
+                <div class="chat-input-area">
+                    <div class="input-box-wrapper">
+                        <span class="prompts-trigger-input" 
+                              title="Prompt Library"
+                              ng-mouseenter="vm.showPromptLibrary = true" 
+                              ng-mouseleave="vm.showPromptLibrary = false">
+                            <i class="fa fa-plus-circle"></i>
+                        </span>
+                        <input type="text"
+                               id="aiAssistantPromptInput"
+                               class="message-input-field"
+                               ng-model="vm.userPrompt"
+                               ng-keypress="vm.handleKeyPress($event)"
+                               placeholder="monthly sales report">
+                        <button class="submit-btn" ng-click="vm.sendMessage()">
+                            Submit ↵
+                        </button>
+                    </div>
+                </div>
+
+
+
+            </div>
+        </div>
+
+    </div>
+
+    @*<script src="./assets/js/bootstrap.bundle.min.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="./assets/js/main.js"></script>*@
+
+    <!-- Angular.js Library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <!-- Bootstrap -->
+    <script src="@Url.Content("~/assets/js/bootstrap.bundle.min.js")"></script>
+
+    <!-- Chart.js Library -->
+    <script src="@Url.Content("~/Sales/Resource/js/Chart.js")"></script>
+
+    <!-- AI Assistant Angular Controller -->
+    <script src="@Url.Content("~/assets/js/controller/aiAssistantCtrl.js")"></script>
+
+    <!-- Main JS -->
+    <script src="@Url.Content("~/assets/js/main.js")"></script>
+</body>
+</html>

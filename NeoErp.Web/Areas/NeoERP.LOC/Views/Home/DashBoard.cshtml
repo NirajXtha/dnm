@@ -1,0 +1,267 @@
+﻿@using NeoErp.Core.Models;
+@using NeoErp.Core.Domain;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    ViewBag.Title = "Dashboard";
+    IWorkContext _workContext = EngineContext.Current.Resolve<IWorkContext>
+    ();
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>
+        ();
+    var myAreaName = string.Empty;
+    object areaObj;
+    if (ViewContext.RouteData.Values.TryGetValue("area", out areaObj))
+    {
+        myAreaName = areaObj.ToString();
+    }
+    Layout = "~/Areas/NeoERP.LOC/Views/Shared/_LayoutNew.cshtml";
+}
+<link href="@Url.Content("~/Content/jquery.dataTables.min.css")" rel="stylesheet" />
+<link href="@Styles.Url(" ~/Content/MainTheme/assets/admin/layout/css/themes/blue.min.css")" title="blue" rel="alternate stylesheet" />
+<link href="@Styles.Url(" ~/Content/MainTheme/assets/admin/layout/css/themes/darkblue.css")" title="darkblue" rel="alternate stylesheet" />
+<link href="@Styles.Url(" ~/Content/MainTheme/assets/admin/layout/css/themes/light2.css")" title="light2" rel="alternate stylesheet" />
+<style>
+    .page-content-wrapper .page-content {
+        padding: 7px 20px 10px 20px !important;
+    }
+
+    a.k-button.k-button-icontext.k-grid-excel {
+        float: right;
+    }
+
+    a.k-button.k-button-icontext.k-grid-pdf {
+        float: right;
+    }
+
+    .page-bar {
+        margin-bottom: 0px !important;
+    }
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    [data-toggle=buttons] > .btn .radio {
+        display: none;
+    }
+
+    .AmountFigureType {
+        position: absolute;
+        bottom: 103px;
+        right: 32px;
+        font-weight: 600;
+        font-family: sans-serif;
+        font-size: 12px;
+    }
+
+    .DisplayFilterContent {
+        position: absolute;
+        bottom: 107px;
+        right: 32px;
+        font-weight: 400;
+        font-family: sans-serif;
+        font-size: 11px;
+    }
+
+    .column {
+        margin-bottom: -68px;
+    }
+
+    .portlet.portlet-sortable {
+        min-height: 460px;
+    }
+
+    #quick_sidebar_tab_2 .page-quick-sidebar-alerts-list > div {
+        padding-left: 15px !important;
+    }
+
+</style>
+
+<div ng-view></div>
+
+
+
+@section scripts{
+    <!-- angular scripts for planning-->
+    <script type="text/javascript" src="@Scripts.Url("~/areas/"+myAreaName+"/Scripts/ng-urlRoute-loc.js")"></script>
+    <script type="text/javascript" src="@Scripts.Url("~/areas/"+myAreaName+"/JS/PerformaInvoiceCtrl.js")"></script>
+    <script type="text/javascript" src="@Scripts.Url("~/areas/"+myAreaName+"/JS/PurchaseOrderCtrl.js")"></script>
+    <script type="text/javascript" src="@Scripts.Url("~/areas/"+myAreaName+"/JS/LcSetupCtrl.js")"></script>
+    <script type="text/javascript" src="@Scripts.Url("~/areas/"+myAreaName+"/JS/LcEntryApp.js")"></script>
+    <script type="text/javascript" src="@Scripts.Url("~/areas/"+myAreaName+"/JS/LogisticPlanCtrl.js")"></script>
+    <script type="text/javascript" src="@Scripts.Url("~/areas/"+myAreaName+"/JS/CIPaymentSettlementCtrl.js")"></script>
+    <script type="text/javascript" src="@Scripts.Url("~/areas/"+myAreaName+"/JS/CommercialInvoiceCtrl.js")"></script>
+    <script type="text/javascript" src="@Scripts.Url("~/areas/"+myAreaName+"/JS/GrnCtrl.js")"></script>
+    <script type="text/javascript" src="@Scripts.Url("~/areas/"+myAreaName+"/JS/SettlementInvoiceCtrl.js")"></script>
+    <script type="text/javascript" src="@Scripts.Url("~/areas/"+myAreaName+"/JS/ShipmentCtrl.js")"></script>
+    <script type="text/javascript" src="@Scripts.Url("~/areas/"+myAreaName+"/JS/LogisticsCtrl.js")"></script>
+    <script type="text/javascript" src="@Scripts.Url("~/areas/"+myAreaName+"/JS/MenuCtrl.js")"></script>
+    <script type="text/javascript" src="@Url.Content("~/Content/MainTheme/assets/global/plugins/datatables/media/js/jquery.dataTables.min.js")"></script>
+    <script src="@Scripts.Url("~/JS/DateFilter.js")" type="text/javascript"></script>
+    <script src="@Scripts.Url("~/JS/ReportFilter.js")" type="text/javascript"></script>
+
+
+}
+<script>
+   window.virtualPath = '@Url.Content("~")';
+        jQuery(document).ready(function () {
+            Metronic.init(); // init metronic core componets
+            Layout.init(); // init layout
+            //QuickSidebar.init(); // init quick sidebar
+            Demo.init(); // init demo features
+            Index.init();
+            Index.initDashboardDaterange();
+            Index.initJQVMAP(); // init index page's custom scripts
+            Index.initCalendar(); // init index page's custom scripts
+            Index.initCharts(); // init index page's custom scripts
+            Index.initChat();
+            Index.initMiniCharts();
+            Tasks.initDashboardWidget();
+
+            $('.nav nav-tabs nav-justified').on('click', function (e) {
+                e.preventDefault();
+
+              
+            });
+
+
+
+            key('ctrl+h', function () { $('.setting').hide(); return false });
+            key('ctrl+v', function () { $('.setting').show(); return false });
+
+            $(".themes-select").on("change", function () {
+                $('link[title][rel="alternate stylesheet"]').prop('disabled', true);
+                $('link[title="' + $(this).val() + '"][rel="alternate stylesheet"]').prop('disabled', false);
+                $.cookie("themes", $(this).val(), { expires: 365, path: '/' });
+                setTheme(this);
+            });
+
+            function setTheme($this) {
+                var switch_on = $($this).val();
+                var theme;
+                switch (switch_on) {
+                    case "darkblue":
+                        theme = "kendo.moonlight.min.css";
+                        break;
+                    case "blue":
+                        theme = "kendo.blueopal.min.css";
+                        break;
+                    default:
+                        theme = "kendo.default.min.css";
+                }
+                var selectedTheme = '<link href="' + window.location.protocol + "//" + window.location.host + '/Content/Kendo/styles/' + theme + '" rel="stylesheet" tag="kendoTheme" />';
+                $("#operationContent").find("link[tag='kendoTheme']").remove();
+                $("#operationContent").append(selectedTheme);
+            }
+        });
+    $(document).on('click', '.maskdate', function () {
+        var me = $(this);
+        me.datepicker({
+            showOn: 'focus',
+            altFormat: "mm/dd/yy",
+            dateFormat: "mm/dd/yy",
+            changeMonth: true,
+            changeYear: true,
+            showButtonPanel: true
+
+        }).focus();
+    }).on('focus', '.maskdate', function () {
+        var me = $(this);
+        me.mask('99/99/9999');
+    }).on('change', '.maskdate', function () {
+        var date = $(this).val();
+        var arr = date.split('/');
+        var month = (arr[0]);
+        var day = (arr[1]);
+        if (month > 12 || day > 32) {
+
+            $(this).val(new Date('mm/dd/yy'));
+        }
+
+
+    });
+
+    var listlength = 0;
+    var progresswidth = 0;
+    var each_percent = 0;
+    $(document).ready(function () {
+        listlenght = $(".form-wizard").find('li').length;
+        each_percent = (100 / listlenght)
+        progresswidth = (each_percent * 1);
+        $('.progress-bar').width(progresswidth + '%');
+    })
+
+    $(".step").click(function () {
+        showloader();
+        $this = $(this);
+        $(".form-wizard").find('li').removeClass('active');
+        $this.closest('li').addClass('active');
+        var activeindex = $('.form-wizard').find('li.active').index();
+        progresswidth = (each_percent * (activeindex + 1));
+        $('.progress-bar').width(progresswidth + '%');
+        hideloader();
+    })
+
+    function update_wizard(activeindex) {
+        showloader();
+        $(".form-wizard").find('li').removeClass('active');
+        $(".form-wizard li:eq(" + activeindex + ")").addClass('active');
+        progresswidth = (each_percent * (activeindex + 1));
+        $('.progress-bar').width(progresswidth + '%');
+        hideloader();
+    }
+    function CollapseAll() {
+        var elementsA = document.querySelectorAll("#grid a.k-icon.k-minus");
+        if (elementsA.length > 0) {
+
+            for (var i = 0; i < elementsA.length; i++) {
+                $(elementsA[i]).trigger("click");
+            }
+            return;
+        }
+        var elementsB = document.querySelectorAll("#grid a.k-icon.k-i-collapse");
+        for (var i = 0; i < elementsB.length; i++) {
+            $(elementsB[i]).trigger("click");
+        }
+    }
+
+    function ExpandAll() {
+        var elementsB = document.querySelectorAll("#grid a.k-icon.k-i-expand");
+        if (elementsB.length > 0) {
+
+            for (var i = 0; i < elementsB.length; i++) {
+                $(elementsB[i]).trigger("click");
+            }
+            return;
+        }
+        var elementsA = document.querySelectorAll("#grid a.k-icon.k-plus");
+        for (var i = 0; i < elementsA.length; i++) {
+            $(elementsA[i]).trigger("click");
+        }
+    }
+</script>
+
+
+
+
+
+
+
+

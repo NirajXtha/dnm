@@ -1,0 +1,649 @@
+﻿<link href="@Styles.Url(" ~/Areas/NeoERP.Planning/Scripts/multi-select-master/css/multi-select.css")" rel="stylesheet" />
+@{
+    string masterPlanCode = ViewBag.masterPlanCode;
+}
+<style>
+    .custom-header {
+        background-color: #f1f1f1;
+        border-top: 1px solid #c3c3c3;
+        border-left: 1px solid #c3c3c3;
+        border-right: 1px solid #c3c3c3;
+        padding-left: 5px;
+        border-top-right-radius: 10px !important;
+        height: 25px;
+        line-height: 2;
+    }
+
+    .ms-container .ms-selectable, .ms-container .ms-selection {
+        width: 49%;
+    }
+
+    .ms-container .ms-list {
+        height: 500px;
+    }
+
+    select#ddlDateFilterVoucher {
+        margin: 0px;
+        height: 25px;
+        padding: 0px 3px;
+        font-size: 13px;
+    }
+
+    fieldset {
+        border-radius: 10px;
+        border: 1px solid #c3c3c3;
+    }
+
+    .k-header.k-grid-toolbar {
+        height: 30px;
+        padding: 0px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    .txtmultiselectsearch {
+    }
+
+    .input-icon > i {
+        margin: 3px 2px 4px 5px;
+    }
+</style>
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+            @*<li>
+                    <i class="fa fa-home"></i>
+                    <a href="/Distribution/Home/Dashboard#!Distribution/">Home</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>
+                <li>
+                    <a href="#">Group Setup</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>*@
+        </ul>
+    </div>
+
+</div>
+<div id="masterPlan" class="portlet light form-fit1 bordered common portlet_bg" ng-show="masterPlanListShow">
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="fa fa-list-alt font-green-haze"></i>
+            <span class="caption-subject font-green-haze bold uppercase" style="text-align:center">
+                {{pageName}}
+            </span>
+        </div>
+        <div class="actions pull-right">
+            <button type="button" id="addplan" name="addplan" ng-click="masterPlanListShow=false" class="btn btn-circle btn-green btn-sm">
+                <i class="fa fa-plus"></i> Add
+            </button>
+        </div>
+    </div>
+    <div class="portlet-body row">
+        <div class="col-md-12">
+            <div class="col-md-3 pull-right">
+                @*@Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")*@
+                <script type="text/x-kendo-template" id="toolbar-template">
+                    <div class="k-header k-grid-toolbar">
+                        @*<a class="k-button k-button-icontext k-grid-excel" href="javascript:"><i class="fa fa-file-excel-o"></i></a>*@
+                        <a class="k-button k-button-icontext floatright" id="collapseAllButton" title="Collapse All" onclick="CollapseAll()"><i class="fa fa-chevron-up"></i></a>
+                        <a class="k-button k-button-icontext floatright" id="expandAllButton" title="Expand All" onclick="ExpandAll()"><i class="fa fa-chevron-down"></i></a>
+                        <div class="search pull-right">
+                            <input type="text" id="txtSearchString" class="form-control input-sm grid-search" maxlength="64" placeholder="Search..." onkeyup="GridSearch(this)" />
+                            <button class="btn btn-primary btn-sm search-btn fa fa-search"></button>
+                        </div>
+                    </div>
+                </script>
+            </div>
+            @*<div class="pull-left">
+                    <div class="col-md-12 input-icon dataserarch-input">
+                        <i class="fa fa-search searchicon"></i>
+                        <input class="form-control searchbox" id="txtSearchString" ng-keyup="onSearch(this)" name="search" placeholder="search here" type="text">
+                    </div>
+                </div>*@
+            <kendo-grid id="grid" options="mainGridOptions" k-rebind="mainGridOptions">
+                <div k-detail-template>
+                    <div kendo-grid k-options="detailGridOptions(dataItem)"></div>
+                </div>
+            </kendo-grid>
+            @*<table class="table table-bordered" id="masterplanlist_table" datatable="ng" dt-options="dtOptions">
+                    <thead>
+                        <tr>
+                            <th>S.N</th>
+                            <th>Master Plan Name</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="item in masterPlanList">
+                            <td style="width:25px;">{{$index + 1}}</td>
+                            <td>{{item.MASTER_PLAN_EDESC}}</td>
+                            <td><strong>{{item.START_DATE}}</strong> to <strong>{{item.END_DATE}}</strong></td>
+                            <td style="width:50px;">
+                                <a href="javascript:;" ng-click="updateMasterPlan(item.MASTER_PLAN_CODE)" title="Edit {{item.MASTER_PLAN_EDESC}}"><i class="fa fa-edit"></i></a>
+                                <a href="javascript:;" ng-click="deleteMasterPlan(item)" title="Delete {{item.MASTER_PLAN_EDESC}}"><i class="fa fa-trash"></i></a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>*@
+        </div>
+    </div>
+</div>
+
+<div id="masterPlan" class="portlet light form-fit1 bordered common master_plan" ng-hide="masterPlanListShow">
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="fa fa-list-alt font-green-haze"></i>
+            <span class="caption-subject font-green-haze bold uppercase">
+                Master Plan Setup
+            </span>
+        </div>
+        <div class="actions pull-right">
+            <button type="button" id="cancelMasterPlan" name="cancelMasterPlan" ng-click="cancelMasterPlan()" class="btn btn-circle btn-default btn-sm"><i class="fa fa-times"></i> Cancel</button>
+            <button type="button" id="saveMasterPlan" name="saveMasterPlan" class="btn btn-circle btn-green btn-sm"><i class="fa fa-save"></i> Save</button>
+        </div>
+    </div>
+    <div class="portlet-body row">
+        <div class="col-md-12">
+            <fieldset>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-horizontal">
+                                    <label>&nbsp;</label>
+                                    <div>
+                                        <label class="control-label">
+                                            Date Format :
+                                        </label>
+                                        <input type="radio" id="dateFormatAD" name="dateFormat" value="AD"
+                                               ng-model="dateFormat" class="">
+                                        <label for="dateFormatAD"> AD</label>
+                                        <input type="radio" id="dateFormatBS" name="dateFormat" value="BS"
+                                               ng-model="dateFormat" class="">
+                                        <label for="dateFormatBS"> BS </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- date field-->
+                            <div style="width:640px">
+                                @Html.Partial("~/Areas/NeoERP.Planning/Views/Shared/PlanningDateField.cshtml", true)
+                            </div>
+                        </div>
+                        <div class="clearfix"></div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="masterPlanName" class="form-label">Master Plan Name :</label>
+                                    <input type="text" id="masterPlanName" name="masterPlanName" class="form-control" />
+                                    <input type="hidden" id="masterPlanCode" name="masterPlanCode" value="" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <div ng-show="IsCustomerProduct">
+                                    <label class="control-label">Customers</label>
+                                    <select id="customers" kendo-multi-select k-options="customerOptions" k-ng-model="customervalue"></select>
+                                </div>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <div ng-show="IsCustomerProduct">
+                                    <label class="control-label">Employees</label>
+                                    <select id="employees" kendo-multi-select k-options="employeeOptions" k-ng-model="employeevalue"></select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <div ng-show="IsCustomerProduct">
+                                    <label class="control-label">Branches</label>
+                                    <select id="branchs" kendo-multi-select k-options="branchOptions" k-ng-model="branchvalue"></select>
+                                </div>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <div ng-show="IsCustomerProduct">
+                                    <label class="control-label">Divisions</label>
+                                    <select id="divisions" kendo-multi-select k-options="divisionOptions" k-ng-model="divisionvalue"></select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </fieldset>
+            <hr />
+            <div class="page-content-wrapper">
+                <div class="input-icon">
+                    <i class="fa fa-search"></i>
+                    <input type='text' id='txtMultiselectSearch' style='width:300px;' class='form-control input-sm txtmultiselectsearch search-input input-circle-right search' maxlength='64' placeholder='Search...' onkeyup='selectListItem(this)' />
+                    <label style="float:right"><small>SP:sales plan,MP:master plan,CUS:customer,EMP:employee,DIV:division,BRAN:branch</small></label>
+                </div>
+            </div>
+            <select multiple="multiple" id="plan_multiselect" name="plan_multiselect"></select>
+        </div>
+    </div>
+</div>
+
+<script src="@Scripts.Url(" ~/Areas/NeoERP.Planning/Scripts/DateFilterWithADBS.js")" type="text/javascript"></script>
+<script src="@Scripts.Url(" ~/Areas/NeoERP.Planning/Scripts/multi-select-master/js/jquery.multi-select.js")"></script>
+<script src="@Scripts.Url(" ~/Areas/NeoERP.Planning/Scripts/jquery.quicksearch.js")"></script>
+<script>
+    var masterPlanCode = '@masterPlanCode';
+    
+    var d1_selectedPlanBind = $.Deferred();
+    $(document).ready(function () {
+        //DateFilter.init();
+        showloader();
+        var dateFormat = $('input[name=dateFormat]:checked').val();
+        dateFormat = (dateFormat == '' || dateFormat == undefined) ? "BS" : "AD";
+        DateFilter.init(dateFormat, getSelectedOption)
+        $('.input-daterange').closest('div.col-md-4').addClass('hidden');
+        $('#masterplanlist_table').data
+        //loadMultiSelectPlans();
+
+        if (masterPlanCode != "") {
+            bindDataOnEdit();
+        }
+    });
+    function rawHTMLUpdate() {
+        var span = $(".planListOption span");
+        $.each(span, function () {
+            var a = $(this).text();
+            if (a.indexOf('small') > -1)
+                $(this).html(a);
+        })
+    }
+    function getSelectedOption() {
+        var startDate = $.urlParam("startDate");
+        var endDate = $.urlParam("endDate");
+        if (startDate != null && endDate != null) {
+            var dateOption = $('[name=DateStep] option').filter(function () {
+                return ($(this).attr('data-start-date') == moment(startDate).format("YYYY-MM-DD") && $(this).attr('data-end-date') == moment(endDate).format("YYYY-MM-DD")); //To select date range
+            }).prop('selected', true);
+        } else {
+            $(".dateFilterSelect").val('This Year');
+        }
+        //$("#ddlDateFilterVoucher").trigger('change');
+        setTimeout(function () {
+            loadMultiSelectPlans();
+        }, 10)
+    }
+    $('input[type=radio][name=dateFormat]').change(function () {
+        var dateFormat = $('input[name=dateFormat]:checked').val();
+        DateFilter.init(dateFormat, getSelectedOption)
+    });
+
+    $('.ms-list').slimScroll({
+        height: '500px'
+    });
+
+    $("#txtSearchString").on('keyup', function (e) {
+        GridSearch(e);
+    })
+
+    function GridSearch($this) {
+
+        var q = $("#txtSearchString").val();
+        var grid = $("#grid").data("kendoGrid");
+        grid.dataSource.query({
+            page: 1,
+            pageSize: 50,
+            filter: {
+                logic: "or",
+                filters: [
+                    { field: "MASTER_PLAN_EDESC", operator: "contains", value: q },
+                    { field: "START_DATE", operator: "contains", value: q },
+                    { field: "END_DATE", operator: "contains", value: q }
+                ]
+            }
+        });
+    }
+    $(".salesPlanItem li").live('click', function (e) {
+        var values = $(this).find("span").text();
+        $('#plan_multiselect').multiSelect('select', values);
+        return false;
+    });
+
+    $('#selectAll').live('click', function () {
+        $('#plan_multiselect').multiSelect('select_all');
+        return false;
+    });
+    $('#deSelectAll').live('click', function () {
+        $('#plan_multiselect').multiSelect('deselect_all');
+        return false;
+    });
+    //setTimeout(function () {
+    //    var current_date = getNepaliDate();
+    //    var date = current_date.split("-");
+    //    var currentFiscalYear = (parseInt(date[0]) - 1).toString() + "/" + date[0].toString().substring(2, date[0].toString().length);
+    //    //bsDateUrl = window.location.protocol + "//" + window.location.host + "/api/Common/GetDateFilters?fiscalYear=" + currentFiscalYear;
+    //    //$.ajax({
+    //    //    url: bsDateUrl,
+    //    //    async: false
+    //    //}).success(function (result) {
+
+    //    //    var valueArr = ['This Month', 'Today', 'Last Week', 'This Week', 'Last Month', 'Custom', 'This Year', 'First Quarter', 'Second Quarter', 'Third Quarter', 'Forth Quarter'];
+    //    //    $.each(result, function (i, v) {
+    //    //        if ($.inArray(v.RangeName, valueArr) == -1) {
+    //    //            $('.dateFilterSelect').append($("<option></option>")
+    //    //            .attr("value", v.RangeName).attr("data-start-date", v.StartDateString).attr("data-end-date", v.EndDateString)
+    //    //            .text(v.RangeName));
+    //    //        }
+    //    //    });
+
+    //    //    //$('.dateFilterSelect').val('This Year');
+    //    //    $('.dateFilterSelect').append("<option value='' Selected>--Select Date--</option>");
+    //    //}).error(function (err) {
+
+    //    //});
+
+    //    loadMultiSelectPlans();
+
+    //    if (masterPlanCode == '') {
+    //        //loadMultiSelectPlans();
+    //    }
+    //    else {
+    //            $('#addplan').trigger('click');
+    //            $.ajax({
+    //                url: window.location.protocol + "//" + window.location.host + "/api/PlanApi/GetMasterSalesPlanDetail",
+    //                method: 'GET',
+    //                data: { masterplancode: masterPlanCode }
+    //            }).done(function (result) {
+    //                var entity_data = result.DATA;
+    //                $('#masterPlanCode').val(entity_data.MASTER_PLAN_CODE);
+    //                $('#masterPlanName').val(entity_data.MASTER_PLAN_EDESC);
+    //                //$("#ddlDateFilterVoucher")
+    //                //var dateOption = $('[name=DateStep] option').filter(function () {
+    //                //    return ($(this).attr('data-start-date') == moment(entity_data.START_DATE).format("YYYY-MM-DD") && $(this).attr('data-end-date') == moment(entity_data.END_DATE).format("YYYY-MM-DD")); //To select date range
+    //                //}).prop('selected', true);
+    //                //if ($(".dateFilterSelect").val() != "This Year") {
+    //                //    $("#ddlDateFilterVoucher").trigger('change');
+    //                //    //d1_selectedPlanBind.reject();
+    //                //}
+    //                $('#customers').val(entity_data.CUSTOMER_CODE);
+    //                $('#employees').val(entity_data.EMPLOYEE_CODE);
+    //                $('#divisions').val(entity_data.DIVISION_CODE);
+
+    //                //loadMultiSelectPlans();
+    //                var retrievedSalesPlan = [];
+    //                $.each(entity_data.salesPlanMap, function (i, v) {
+    //                    retrievedSalesPlan.push(v.PLAN_CODE.toString() + '_' + v.PLAN_FLAG);
+    //                });
+    //                $.when(d1_selectedPlanBind).then(function () {
+    //                        $('#plan_multiselect').multiSelect('select', retrievedSalesPlan);
+    //                });
+    //            }).error(function (err) {
+    //                displayPopupNotification(err, "error")
+    //            });
+    //        //});
+    //    }
+
+    //}, 2000);
+    var selectedItemsList = null;
+    function loadMultiSelectPlans() {
+        var startDate = moment($("#ddlDateFilterVoucher option:selected").data('start-date')).format('YYYY-MMM-DD');
+        var endDate = moment($("#ddlDateFilterVoucher option:selected").data('end-date')).format('YYYY-MMM-DD');
+        var customer = $('#customers').val() == null ? "" : $('#customers').val().toString();
+        var employee = $('#employees').val() == null ? "" : $('#employees').val().toString();
+        var division = $('#divisions').val() == null ? "" : $('#divisions').val().toString();
+        var branch = $('#branchs').val() == null ? "" : $('#branchs').val().toString();
+        var planUrl = window.location.protocol + "//" + window.location.host + "/api/PlanApi/GetSalesPlanListMaster";
+        var data = {
+            customercode: customer,
+            employeecode: employee,
+            divisioncode: division,
+            branchcode: branch,
+            startdate: startDate,
+            enddate: endDate
+        };
+        $.ajax({
+            url: planUrl,
+            type: 'GET',
+            dataType: "json",
+            contentType: "application/json; charset=utf-8",
+        //data: JSON.stringify({ customercode: data.customercode, employeecode: data.employeecode, employeecode: data.employeecode, branchcode: data.branchcode, startdate: data.startdate, enddate: data.enddate }),
+            data: data,
+            //async: false
+        }).success(function (result) {
+            $('#plan_multiselect').html('');
+            $.each(result, function (i, v) {
+                var customer = v.CUSTOMER_EDESC == null ? "n/a" : v.CUSTOMER_EDESC,
+                    employee = v.EMPLOYEE_EDESC == null ? "n/a" : v.EMPLOYEE_EDESC,
+                    division = v.DIVISION_EDESC == null ? "n/a" : v.DIVISION_EDESC,
+                    branch = v.BRANCH_EDESC == null ? "n/a" : v.BRANCH_EDESC,
+                        SP_MP=v.PLAN_CODE.split('_')[1];
+                var detail = "<small><i>["+SP_MP+"] </i></small><strong> " + v.PLAN_EDESC + "</strong><small><i> (CUS:" + customer + " , EMP:" + employee + " , DIV:" + division + " , BRAN:" + branch + " )</i></small> "
+                detail = $('<div />').text(detail).html();
+                $('#plan_multiselect').append("<option class='planListOption' value='" + v.PLAN_CODE + "'>"+ detail + "</option>");
+            });
+            $('#plan_multiselect').multiSelect({
+                selectableHeader: "<div class='custom-header'><span>Sales Plans (<a href='javascript:void(0)' id='selectAll'>Select All</a>)</span></div>",
+                selectionHeader: "<div class='custom-header'><span>Selected Plans (<a href='javascript:void(0)' id='deSelectAll'>Deselect All</a>)</span></div><div class='clearfix'></div>",
+                cssClass: 'salesPlanItem',
+                keepOrder: true,
+            });
+            $('#plan_multiselect').multiSelect('refresh');
+            selectedItemsList = $('#plan_multiselect option');
+            rawHTMLUpdate();
+            d1_selectedPlanBind.resolve();
+            hideloader();
+            }).error(function (error) {
+                displayPopupNotification(error, "error");
+                hideloader();
+            });
+        $('#ddlDateFilterVoucher').off('change');
+        $('#ddlDateFilterVoucher').on('change',function () {
+            loadMultiSelectPlans();
+        })
+
+        var customerDDL = $('#customers').data('kendoMultiSelect');
+        var employeeDDL = $('#employees').data('kendoMultiSelect');
+        var divisionDDL = $('#divisions').data('kendoMultiSelect');
+        var branchDDL = $('#branchs').data('kendoMultiSelect');
+
+        $('#customers').off('change');
+        $('#customers').on('change', function (e) {
+            loadMultiSelectPlans();
+        });
+        $('#employees').off('change');
+        $('#employees').on('change', function (e) {
+            loadMultiSelectPlans();
+        });
+        $('#divisions').off('change');
+        $('#divisions').on('change', function (e) {
+            loadMultiSelectPlans();
+        });
+        $('#branchs').off('change');
+        $('#branchs').on('change', function (e) {
+            loadMultiSelectPlans();
+        });
+
+        //customerDDL.bind("change", function (e) {
+        //    e.preventDefault();
+        //    loadMultiSelectPlans();
+        //});
+        //employeeDDL.bind("change", function () {
+        //    loadMultiSelectPlans();
+        //    return false;
+        //});
+        //divisionDDL.bind("change", function () {
+        //    loadMultiSelectPlans();
+        //    return false;
+        //});
+        //branchDDL.bind("change", function () {
+        //    loadMultiSelectPlans();
+        //    return false;
+        //});
+
+        //setTimeout(function () {
+        //    rawHTMLUpdate();
+        //}, 100)
+    }
+
+    function selectListItem(e) {
+        if (e != '') {
+            selectedItemsList;
+            var searched = [];
+            $('#plan_multiselect').html('');
+            $.each(selectedItemsList, function (i, v) {
+                var detail = '';
+                if (v.text.match(e.value)) {
+                    detail = $('<div />').text(v.text).html();
+                    $('#plan_multiselect').append("<option class='planListOption' value='" + v.value + "'>" + detail + "</option>");
+                }
+            })
+            $('#plan_multiselect').multiSelect('refresh');
+        }
+        else {
+            $('#plan_multiselect').html('');
+            $.each(selectedItemsList, function (i, v) {
+                var detail = '';
+                detail = $('<strong />').text(v.text).html();
+                $('#plan_multiselect').append("<option class='planListOption' value='" + v.value + "'>" + detail + "</option>");
+            })
+            $('#plan_multiselect').multiSelect('refresh');
+        }
+        rawHTMLUpdate();
+    }
+
+    function bindDataOnEdit() {
+        $('#addplan').trigger('click');
+        $.ajax({
+            url: window.location.protocol + "//" + window.location.host + "/api/PlanApi/GetMasterSalesPlanDetail",
+            method: 'GET',
+            data: { masterplancode: masterPlanCode }
+        }).done(function (result) {
+            var entity_data = result.DATA;
+            $('#masterPlanCode').val(entity_data.MASTER_PLAN_CODE);
+            $('#masterPlanName').val(entity_data.MASTER_PLAN_EDESC);
+            //$("#ddlDateFilterVoucher")
+            //var dateOption = $('[name=DateStep] option').filter(function () {
+            //    return ($(this).attr('data-start-date') == moment(entity_data.START_DATE).format("YYYY-MM-DD") && $(this).attr('data-end-date') == moment(entity_data.END_DATE).format("YYYY-MM-DD")); //To select date range
+            //}).prop('selected', true);
+            //if ($(".dateFilterSelect").val() != "This Year") {
+            //    $("#ddlDateFilterVoucher").trigger('change');
+            //    //d1_selectedPlanBind.reject();
+            //}
+            $('#customers').val(entity_data.CUSTOMER_CODE);
+            $('#employees').val(entity_data.EMPLOYEE_CODE);
+            $('#divisions').val(entity_data.DIVISION_CODE);
+
+            //loadMultiSelectPlans();
+            var retrievedSalesPlan = [];
+            $.each(entity_data.salesPlanMap, function (i, v) {
+                retrievedSalesPlan.push(v.PLAN_CODE.toString() + '_' + v.PLAN_FLAG);
+            });
+            $.when(d1_selectedPlanBind).then(function () {
+                $('#plan_multiselect').multiSelect('select', retrievedSalesPlan);
+            });
+        }).error(function (err) {
+            displayPopupNotification(err, "error")
+        });
+    }
+
+    $("#saveMasterPlan").on('click', function () {
+        if (isValidForm()) {
+            var selectedPlans = $('#plan_multiselect').val(),
+            masterPlanName = $('#masterPlanName').val(),
+            masterPlanCode = $('#masterPlanCode').val(),
+            startDate = moment($("#ddlDateFilterVoucher option:selected").data('start-date')).format('YYYY-MMM-DD'),
+            endDate = moment($("#ddlDateFilterVoucher option:selected").data('end-date')).format('YYYY-MMM-DD'),
+            customer = $('#customers').val(),
+            employee = $('#employees').val(),
+            division = $('#divisions').val(),
+            branch = $('#branchs').val();
+
+            console.log(selectedPlans + ", " + masterPlanName + ", " + masterPlanCode);
+            var postingData = {
+                masterPlanCode: masterPlanCode,
+                masterPlanName: masterPlanName,
+                startDate: startDate,
+                endDate: endDate,
+                customer: customer,
+                employee: employee,
+                division: division,
+                branch: branch,
+                selectedPlans: JSON.stringify(selectedPlans)
+            };
+            $.ajax({
+                url: window.location.protocol + "//" + window.location.host + "/api/PlanApi/SaveMasterPlan",
+                type: 'GET',
+                data: postingData,
+                dataType: "json",
+            }).success(function (result) {
+                console.log(result);
+                if (result.MESSAGE == "Success") {
+                    clearFields();
+                    if (masterPlanCode == '') {
+                        window.location.reload();
+                    } else {
+                        window.location = "/Planning/Home/Setup#!Planning/MasterPlan";
+                    }
+                    displayPopupNotification("Master Plan saved.", "success");
+                }
+                else {
+                    displayPopupNotification(result.MESSAGE, "error");
+                }
+
+            }).error(function (err) {
+                displayPopupNotification("Generic Server Erro. Please review code", "error");
+            })
+        }
+
+    })
+    function clearFields() {
+        $('#plan_multiselect').val('');
+        $('#customers').val('');
+        $('#employees').val('');
+        $('#divisions').val('');
+        $('#branchs').val('');
+        $('#masterPlanName').val('');
+        $('#masterPlanCode').val('');
+    }
+    function isValidForm() {
+        var message = '';
+        var selectedPlans = $('#plan_multiselect').val();
+        var masterPlanName = $('#masterPlanName').val();
+        if (selectedPlans == null || selectedPlans.length < 1) {
+            message += "No plans are selected to create master plan.";
+        }
+        if (masterPlanName == null || masterPlanName == '') {
+            $('#masterPlanName').focus();
+            message += "Master Plan Name couldn't be blank.";
+        }
+        if (masterPlanName.includes("\"") || masterPlanName.includes("'")) {
+            message += " Plan name includes ' or \" character. please remove these characters.";
+            $('#masterPlanName').focus();
+            //return false;
+        }
+        if (masterPlanName.length > 200) {
+            displayPopupNotification("Master Plan name is too long." + message + ".", "error");
+            $('#masterPlanName').focus();
+            return false;
+        }
+
+        if (message == '') {
+            return true;
+        } else {
+            displayPopupNotification(message, "error");
+            return false;
+        }
+
+    }
+    $.urlParam = function (name) {
+        var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+        if (results == null) {
+            return null;
+        }
+        else {
+            return decodeURI(results[1]) || 0;
+        }
+    }
+</script>
+<script src="@Scripts.Url(" ~/Areas/NeoERP.Planning/js/controller/PlanningMenuNavigation.js?V3")"></script>

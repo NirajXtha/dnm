@@ -1,0 +1,544 @@
+﻿
+@{
+    ViewBag.Title = "Home Page";
+}
+<style>
+    .orders.k-grid.k-widget {
+    margin-top: -3px;
+}
+    .page-bar {
+        margin-bottom: 0px !important;
+    }
+    .k-grid table {
+   table-layout: fixed;
+}
+    .no-data{
+        background-color:red;
+    }
+  /*#grid thead{
+       font-size:11px;
+  }*/
+.k-grid td{
+   white-space: nowrap;
+   text-overflow: ellipsis;
+}
+.k-grid-content {
+    font-size:10px;
+}
+.k-grid-footer
+{
+      font-size:10px;
+}
+</style>
+<div class="page-content">
+
+   
+        <div class="page-bar">
+            <ul class="page-breadcrumb">
+                @*<li>
+                    <i class="fa fa-home"></i>
+                    <a href="/sales/SalesHome/Dashboard">Home</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>*@
+                @*<li>
+                    <a href="#">Sales Register Analysis</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>*@
+                @*<li>
+                    <a href="sales/saleshome/dashboard/Dashboard">Organiser</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>*@
+
+            </ul>
+            <div class="page-toolbar">
+                <div class="btn-group pull-right">
+                    <a class="btn btn-circle btn-icon-only btn-default" data-toggle="collapse" href="#demo">
+                        <i class="fa fa-angle-down"></i>
+                    </a>
+                   
+                        @*@Html.Partial("~/Views/Shared/Controls/DateField.cshtml",false)*@
+
+                        @*<button type="button" class="btn btn-fit-height grey-salt dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-delay="1000" data-close-others="true">
+                Actions <i class="fa fa-angle-down"></i>
+            </button>
+            <ul class="dropdown-menu pull-right" role="menu">
+                <li>
+                    <a href="#">Action</a>
+                </li>
+                <li>
+                    <a href="#">Another action</a>
+                </li>
+                <li>
+                    <a href="#">Something else here</a>
+                </li>
+                <li class="divider">
+                </li>
+                <li>
+                    <a href="#">Separated link</a>
+                </li>
+            </ul>*@
+</div>
+            </div>
+        </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-title">
+                    <div class="caption font-green">
+                        <i class="icon-pin font-green"></i>
+                        <span class="caption-subject bold uppercase">Sales Register Analysis</span>
+                    </div>
+                    <div class="actions">
+                        <div class="btn-group">
+                            @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", true)
+                        </div>
+                        <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                            <i class="icon-control-play"></i>
+                        </a>
+                        <a class="btn btn-circle btn-icon-only btn-default fullscreen" href="javascript:;">
+                        </a>
+                        @*<button id="test">test</button>*@
+
+                    </div>
+                </div>
+                <div class="portlet-body form">
+                    <div class="row">
+
+
+                        <div id="grid"></div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+<script src="@Scripts.Url("~/JS/dynamicReport.js?V2")" type="text/javascript"></script>
+@*<button type="button" class="k-button" id="printGrid">Print Grid</button>
+<script type="text/x-kendo-template" id="toolbar-template">
+    <button type="button" class="k-button" id="printGride">Print Grid</button>
+</script*@>
+@section Scripts{
+
+
+    <script>
+        function printGrid() {
+            var gridElement = $('#grid'),
+                printableContent = '',
+                win = window.open('', '', 'width=800, height=500'),
+                doc = win.document.open();
+
+            var htmlStart =
+                    '<!DOCTYPE html>' +
+                    '<html>' +
+                    '<head>' +
+                    '<meta charset="utf-8" />' +
+                    '<title>Kendo UI Grid</title>' +
+                    '<link href="http://kendo.cdn.telerik.com/' + kendo.version + '/styles/kendo.common.min.css" rel="stylesheet" /> ' +
+                    '<style>' +
+                    'html { font: 11pt sans-serif; }' +
+                    '.k-grid { border-top-width: 0; }' +
+                    '.k-grid, .k-grid-content { height: auto !important; }' +
+                    '.k-grid-content { overflow: visible !important; }' +
+                    'div.k-grid table { table-layout: auto; width: 100% !important; }' +
+                    '.k-grid .k-grid-header th { border-top: 1px solid; }' +
+                    '.k-grid-toolbar, .k-grid-pager > .k-link { display: none; }' +
+                    '</style>' +
+                    '</head>' +
+                    '<body>';
+
+            var htmlEnd =
+                    '</body>' +
+                    '</html>';
+
+            var gridHeader = gridElement.children('.k-grid-header');
+            if (gridHeader[0]) {
+                var thead = gridHeader.find('thead').clone().addClass('k-grid-header');
+                printableContent = gridElement
+                    .clone()
+                        .children('.k-grid-header').remove()
+                    .end()
+                        .children('.k-grid-content')
+                            .find('table')
+                                .first()
+                                    .children('tbody').before(thead)
+                                .end()
+                            .end()
+                        .end()
+                    .end()[0].outerHTML;
+            } else {
+                printableContent = gridElement.clone()[0].outerHTML;
+            }
+
+            doc.write(htmlStart + printableContent + htmlEnd);
+            doc.close();
+            win.print();
+        }
+        //$("#test").on("click", function () {
+        //    $('table[role="grid"]').each(function () {
+        //        var dimension_cells = new Array();
+        //        var dimension_col = null;
+
+        //        var i = 1;
+        //        // First, scan first row of headers for the "Dimensions" column.
+        //        $(this).find('th').each(function () {
+        //            if ($(this).text() == 'Discount') {
+        //                dimension_col = i;
+        //            }
+        //            i++;
+        //        });
+
+        //        // first_instance holds the first instance of identical td
+        //        var first_instance = null;
+        //        // iterate through rows
+        //        $('table[role="grid"]').find('tr').each(function () {
+
+        //            // find the td of the correct column (determined by the dimension_col set above)
+        //            var dimension_td = $(this).find('td:nth-child(' + dimension_col + ')');
+
+        //            if (first_instance == null) {
+        //                // must be the first row
+        //                first_instance = dimension_td;
+        //            } else if (dimension_td.text() == first_instance.text()) {
+        //                // the current td is identical to the previous
+        //                // remove the current td
+        //                dimension_td.remove();
+        //                // increment the rowspan attribute of the first instance
+        //                first_instance.attr('rowspan', first_instance.attr('rowspan') + 1);
+        //            } else {
+        //                // this cell is different from the last
+        //                first_instance = dimension_td;
+        //            }
+
+        //        });
+        //    });
+        //});
+        //$("#printGrid").on("click", function (evt) {
+        //    alert("test");
+        //    printGrid();
+        //})
+        $("#applydp").on("click", function (evt) {
+            evt.preventDefault();
+            $("#RunQuery").trigger("click");
+        })
+     //   var trEnlargedCssMap = {
+     //       position: 'absolute',
+     //      'margin-top':"50px",
+     //       'font-size': '20px'
+     //   }
+     //   $('body')
+     //.on('mouseenter', '#grid table tr', function () {
+     //    $(this).closest("table").append(
+     //    $(this).clone().addClass("cloned-element").css(trEnlargedCssMap).show());
+     //})
+     //.on('mouseleave', 'table tr', function () {
+     //    $(this).closest("table").find(".cloned-element").remove();
+     //});
+        $(document).ready(function () {
+          
+          
+            var formEnglishDate = $("#FromDateVoucher").val();
+            var toEnglishDate = $("#ToDateVoucher").val();
+            var urltest = Arg.url(window.location.protocol + "//" + window.location.host +"/api/SalesHome/GetSalesRegister", { formDate: formEnglishDate, toDate: toEnglishDate });
+         
+            $("#RunQuery").click(function(evt){
+                evt.preventDefault();
+                var ddvalue = $("#ddlDateFilterVoucher").val();
+                var formNepalDate = $("#fromInputDateVoucher").val();
+                var toNepalDate = $("#toInputDateVoucher").val();
+                var formEnglishDate = $("#FromDateVoucher").val();
+                var toEnglishDate = $("#ToDateVoucher").val();
+                urltest = Arg.url(window.location.protocol + "//" + window.location.host + "/api/SalesHome/GetSalesRegister", { formDate: formEnglishDate, toDate: toEnglishDate });
+
+               // BindGrid(urltest);
+                KendoGridRefresh(urltest);
+            });
+
+            BindGrid(urltest);
+        });
+
+        function BindGrid(readurl) {
+
+            var dataSource = new kendo.data.DataSource({
+                type: "json",
+                transport: {
+                    read: {
+                        url: readurl, // <-- Get data from here.
+                        dataType: "json", // <-- The default was "jsonp".
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8"
+                    },
+                    parameterMap: function (options, type) {
+                        var paramMap = JSON.stringify(options);
+                      //  paramMap.formDate = $("#FromDateVoucher").val();
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+
+                    }
+                },
+               
+              
+                serverFiltering: true,
+                serverGrouping: false,
+                serverAggregates: true,
+                //serverSorting: true,
+                //serverFiltering: true,
+                //serverPaging: true,
+                schema: {
+                    data: "gridSalesRegReport", // records are returned in the "data" field of the response
+                    total: "total", // total number of records is in the "total" field of the response
+                    aggregates: "Aggrationresult",
+                    model: {
+                        fields: {
+                            SALES_DATE: { type: "date" },
+                            MITI: { type: "string" },
+                            SALES_NO: { type: "string" },
+                            CUSTOMER_EDESC: { type: "string" },
+                            ITEM_EDESC: { type: "string" },
+                            MU_CODE: { type: "string" },
+                            CALC_QUANTITY: { type: "number" },
+                            CALC_UNIT_PRICE: { type: "number" },
+                            CALC_TOTAL_PRICE: { type: "number" },
+                            DISCOUNT: { type: "number" },
+                            VAT: { type: "number" },
+                        }
+                    }
+                },
+
+                //group: {
+                //      aggregates: [
+                //       { field: "CALC_TOTAL_PRICE", aggregate: "sum" },
+                //        { field: "CALC_QUANTITY", aggregate: "sum" },
+                //         { field: "DISCOUNT", aggregate: "sum" },
+                //           { field: "NetAmount", aggregate: "sum" },
+                //            { field: "VAT", aggregate: "sum" },
+                //             { field: "InvoiceAmount", aggregate: "sum" },
+                //    ],
+                //    //field: "SALES_DATE", aggregates: [
+                //    //   { field: "SALES_DATE", aggregate: "count" },
+                //    //   { field: "CALC_TOTAL_PRICE", aggregate: "sum" },
+
+                //    //]
+                //},
+                //group: {
+                aggregate: [
+           { field: "CALC_TOTAL_PRICE", aggregate: "sum" },
+                        { field: "CALC_QUANTITY", aggregate: "sum" },
+                         { field: "DISCOUNT", aggregate: "sum" },
+                           { field: "NetAmount", aggregate: "sum" },
+                            { field: "VAT", aggregate: "sum" },
+                             { field: "InvoiceAmount", aggregate: "sum" },
+                ],
+                serverPaging: true,
+                //serverSorting: true,
+                pageSize: 100,
+            });
+         var grid= $("#grid").kendoGrid({
+             dataSource: dataSource,
+             //toolbar: ["excel"],
+             //excel: {
+             //    allPages: true
+             //},
+           //  toolbar: kendo.template($('#toolbar-template').html()),
+               height: 600,
+                sortable: true,
+                reorderable: true,
+                groupable: true,
+                resizable: true,
+                filterable: {
+                    extra: false
+                },
+                columnMenu: true,
+                pageable: true,
+                //  autoBind: true,
+                scrollable: {
+                    virtual: true
+                },
+               
+                //group: {
+                //    field: "UnitsInStock", aggregates: [
+                //       { field: "ProductName", aggregate: "count" },
+                //       { field: "UnitPrice", aggregate: "sum"},
+                //       { field: "UnitsOnOrder", aggregate: "average" },
+                //       { field: "UnitsInStock", aggregate: "count" }
+                //    ]
+                //},
+                dataBound: function (o) {
+                    var grid = o.sender;
+
+
+                    //$(o.sender.wrapper).find('tbody')
+                    //       .find('.k-footer-template')
+                    //       .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="5" class="no-data">Total Amount(</td></tr>');
+                    if (grid.dataSource.total() == 0) {
+                        var colCount = grid.columns.length;
+                        $(o.sender.wrapper)
+                            .find('tbody')
+                            .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                        displayPopupNotification("No Data Found Given Date Filter.", "info");
+                    }
+                    else {
+                        var g = $("#grid").data("kendoGrid");
+                        for (var i = 0; i < g.columns.length; i++) {
+                            g.showColumn(i);
+                        }
+                        $("div.k-group-indicator").each(function (i, v) {
+                            g.hideColumn($(v).data("field"));
+                        });
+                    }
+
+                },
+                columns: [
+                                {
+                                    field: "SALES_DATE",
+                                    title: "Date",
+                                    width: "90",
+                                   // template: '#= kendo.toString(SALES_DATE, "dd-MMM-yyyy") #'
+                                    format: "{0:dd-MMM-yyyy}",
+                                },
+                              {
+                                  field: "MITI",
+                                  title: "Miti",
+                                  width: "90",
+                                 // template: '#= kendo.toString(MITI, "dd/MM/yyyy") #'
+                              },
+                              {
+                                  field: "SALES_NO",
+                                  title: "Invoice No",
+                                  width: "150",
+                                  //title: "Group1",
+                                  //headerTemplate: "Contact Name HT"
+                                  // template: '<span style="float:right">#= kendo.toString(DR_OPENING, "n") #</span>'
+                                  //aggregates: "sum",
+                                  //footerTemplate: "<div style='float: right'>#= sum #</div>"
+                              },
+                              {
+                                  field: "CUSTOMER_EDESC",
+                                  title: "Customer Name",
+                                  width: "150",
+
+                                  //template: '<span style="float:right">#= kendo.toString(CR_OPENING, "n") #</span>'
+                              },
+                               {
+                                   field: "ITEM_EDESC",
+                                   title: "Item Name",
+                                   width: "13%",
+                                 //  encoded: false,
+                                   //template: '<span style="float:right">#= kendo.toString(CR_OPENING, "n") #</span>'
+                               },
+                               {
+                                   field: "MU_CODE",
+                                   title: "Unit",
+                                   width: "6%",
+                               //    footerTemplate: '<span style="float:right">Total Sum</span>',
+                                   //template: '<span style="float:right">#= kendo.toString(CR_OPENING, "n") #</span>'
+                               },
+                               {
+                                   field: "CALC_QUANTITY",
+                                   title: "Quantity",
+                                   width: "70",
+
+                                 //  groupable: false,
+                                   aggregates: ["count", "min", "sum"],
+                                   groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                                //   groupHeaderTemplate: "Units In Stock: #= value # (Count: #= sum#)",
+                                   //  aggregates: ["count", "sum"],
+                                   //groupHeaderTemplate: "Grouped by size: #= value # Count: #= count #, Sum: #= sum#",
+                                   // groupFooterTemplate: "#=data.CALC_QUANTITY.sum#",
+                                   //aggrigate: ['count'], groupFooterTemplate: 'Count: #= count #'
+                          footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                                   // aggregates: ["count", "sum"],
+                                   //aggregates: ["sum", "average"],
+                                   //groupFooterTemplate: "Sum: #= sum # || Average: #= average #"
+                                   //   groupHeaderTemplate: "Grouped by size: #= value # Count: #= count #, Sum: #= sum#"
+                                   template: '<span style="float:right">#= kendo.parseFloat(CALC_QUANTITY)#</span>',
+                                   format:"{0:n}",
+                               },
+                               {
+                                   field: "CALC_UNIT_PRICE",
+                                   title: "Rate",
+                                   width: "50",
+                                   template: '<span style="float:right">#= kendo.toString(CALC_UNIT_PRICE, "n") #</span>'
+                               },
+                               {
+                                   field: "CALC_TOTAL_PRICE",
+                                   title: "Gross Amount",
+                                   width: "70",
+                                   aggregates: ["count", "min", "sum"],
+                                   groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                                  // footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                                   //footerTemplate: "Sum: #=CALC_TOTAL_PRICE.sum#",
+                                   //  groupFooterTemplate: '<span style="float:right">#= kendo.toString(CALC_TOTAL_PRICE.sum, "n")#',
+                                   // groupFooterTemplate: "Average: #=CALC_TOTAL_PRICE.sum#"
+                                   template: '<span style="float:right">#= kendo.toString(CALC_TOTAL_PRICE, "n") #</span>'
+                               },
+
+                               {
+                                   field: "DISCOUNT",
+                                   title: "Discount",
+                                   width: "70",
+                                   aggregates: ["count", "min", "sum"],
+                                  groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                                   //  groupFooterTemplate: '<span style="float:right">#= kendo.toString(DISCOUNT.sum, "n")#',
+                                //   footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                                   template: '<span style="float:right">#= kendo.toString(DISCOUNT, "n") #</span>'
+                               },
+                               {
+                                   field: "NetAmount",
+                                   title: "Net Amount",
+                                   width: "100",
+                                   aggregates: ["count", "min", "sum"],
+                                   groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                                 //footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                                   //   groupFooterTemplate: '<span style="float:right">#= kendo.toString(NetAmount.sum, "n")#',
+                                   template: '<span style="float:right">#= kendo.toString(NetAmount, "n") #</span>'
+                               },
+                               {
+                                   field: "VAT",
+                                   title: "VAT",
+                                   width: "70",
+                                   aggregates: ["count", "min", "sum"],
+                                  groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                                  // footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                                   //  groupFooterTemplate: '<span style="float:right">#= kendo.toString(VAT.sum, "n")#',
+                                   template: '<span style="float:right">#= kendo.toString(VAT, "n") #</span>'
+                               },
+                                {
+                                    field: "InvoiceAmount",
+                                    title: "Invoice Total",
+                                    width: "100",
+                                    aggregates: ["count", "min", "sum"],
+                                   groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                                  //  footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                                    //  groupFooterTemplate: '<span style="float:right">#= kendo.toString(InvoiceAmount.sum, "n")#',
+                                    template: '<span style="float:right">#= kendo.toString(InvoiceAmount, "n") #</span>'
+                                },
+
+                ]
+
+         });
+         //$("#grid").kendoTooltip({
+         //   filter: "td:nth-child(2)", //this filter selects the first column cells
+         //    position: "right",
+         //    content: function (e) {
+
+         //        var dataItem = $("#grid").data("kendoGrid").dataItem(e.target.closest("tr"));
+         //        var content = dataItem.subclass.SALES_NO.Text;
+         //        return content;
+         //    }
+            //}).data("kendoTooltip");
+        
+        };
+
+        function KendoGridRefresh(readUrl) {
+            $('#grid').val('');
+            $('#grid').html('');
+            BindGrid(readUrl)
+        }
+</script>
+}

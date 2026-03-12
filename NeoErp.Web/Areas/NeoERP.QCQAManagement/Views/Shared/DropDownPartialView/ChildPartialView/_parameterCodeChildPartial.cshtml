@@ -1,0 +1,198 @@
+<style>
+	#parameterModal .modal-header {
+		padding: 10px !important;
+		background-color: #eee;
+	}
+
+	#parameterModal .k-icon {
+		display: inline-block;
+	}
+
+	.verticalLine {
+		border-left: solid #ddd 1px;
+	}
+
+	.k-group.k-treeview-lines {
+		max-height: 230px !important;
+	}
+
+	#parameterGrid {
+		font-size: 9px;
+	}
+
+	.parameter-input {
+		min-height: 21px !important;
+		font-size: 10px !important;
+		display: inline;
+		width: 100%;
+	}
+</style>
+
+<div ng-controller="ProductSetupList" id="ParameterSetupList">
+	<div class="input-group">
+		<input id="parameters_0" ng-model="parameterName" name="parameters" class="parameter-input form-control" 
+			   placeholder="Select Parameter"
+			   readonly="readonly"
+			   style="cursor: pointer;" />
+		<span class="input-group-addon addon-iconbox" style="cursor:pointer" onclick="BrowseParameterList(0)">
+			<i class="fa fa-search hello" data-toggle="tooltip" title="Search parameter"></i>
+		</span>
+	</div>
+	
+	<!-- Parameter Modal -->
+	<div class="modal fade" id="parameterModal_0" data-backdrop="static" tabindex="-1" role="dialog">
+		<div class="modal-dialog modal-dialog-box w-900" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+					<h4 class="modal-title">
+						<span class="fa fa-list-ul"></span>
+						Parameter Selection
+					</h4>
+				</div>
+
+				<div class="modal-body modal-dialogbox-body">
+					<div class="row">
+						<div class="col-md-5 mingapright customcolumn-one columnbg">
+							<input id="parameterfilterText_0" name="search" class="form-control parameterfilterText filterText" type="text" placeholder="Search categories" />
+							<div id="parametertree_0" style="height: 250px; overflow-y: auto; border: 1px solid #ddd; padding: 10px;">
+								<ul>
+									<li onclick="filterParametersByCategory('Quality')">Quality Parameters</li>
+									<li onclick="filterParametersByCategory('Physical')">Physical Parameters</li>
+									<li onclick="filterParametersByCategory('Chemical')">Chemical Parameters</li>
+									<li onclick="filterParametersByCategory('Dimensional')">Dimensional Parameters</li>
+								</ul>
+							</div>
+						</div>
+						<div class="col-md-7 customcolumn-two mingapleft">
+							<div class="expand verticalLine">
+								<div class="row">
+									<div class="col-md-offset-8 col-md-4 search_box">
+										<div class="topsearch1">
+											<a class="btn-linkicon fa fa-search" onclick="BindParameterSearchGrid()" title="Search list"></a>
+											<input class="form-control k-textbox parameterSearchString txtSearchString" type="text" id="parameterSearchString_0" name="search" placeholder="enter search text..." />
+										</div>
+									</div>
+								</div>
+								<div id="parameterGrid_0" style="height: 250px;">
+									<table class="table table-striped table-bordered">
+										<thead>
+											<tr>
+												<th>Parameter Code</th>
+												<th>Parameter Name</th>
+												<th>Target</th>
+												<th>Tolerance</th>
+												<th>Unit</th>
+											</tr>
+										</thead>
+										<tbody id="parameterTableBody">
+											<tr onclick="selectParameterRow(this, 'P001', 'Length')">
+												<td>P001</td>
+												<td>Length</td>
+												<td>100</td>
+												<td>±5</td>
+												<td>mm</td>
+											</tr>
+											<tr onclick="selectParameterRow(this, 'P002', 'Width')">
+												<td>P002</td>
+												<td>Width</td>
+												<td>50</td>
+												<td>±2</td>
+												<td>mm</td>
+											</tr>
+											<tr onclick="selectParameterRow(this, 'P003', 'Thickness')">
+												<td>P003</td>
+												<td>Thickness</td>
+												<td>2.5</td>
+												<td>±0.5</td>
+												<td>mm</td>
+											</tr>
+											<tr onclick="selectParameterRow(this, 'P004', 'Weight')">
+												<td>P004</td>
+												<td>Weight</td>
+												<td>25</td>
+												<td>±1</td>
+												<td>gm</td>
+											</tr>
+											<tr onclick="selectParameterRow(this, 'P005', 'Moisture Content')">
+												<td>P005</td>
+												<td>Moisture Content</td>
+												<td>5</td>
+												<td>±1</td>
+												<td>%</td>
+											</tr>
+										</tbody>
+									</table>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-sm btn-green" onclick="SelectParameter(0)" title="Select">Select</button>
+					<button type="button" class="btn btn-sm btn-default" data-dismiss="modal" title="Cancel">Cancel</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+	var selectedParameterRow = null;
+	
+	function BrowseParameterList(index) {
+		$("#parameterModal_" + index).modal('show');
+	}
+
+	function selectParameterRow(row, code, name) {
+		// Remove previous selection
+		$('#parameterTableBody tr').removeClass('selected');
+		// Add selection to current row
+		$(row).addClass('selected');
+		selectedParameterRow = { code: code, name: name };
+	}
+
+	function SelectParameter(index) {
+		if (selectedParameterRow) {
+			$("#parameters_" + index).val(selectedParameterRow.name);
+			//$("#parameterModal_" + index).modal('hide');
+			selectedParameterRow = null;
+		} else {
+			alert("Please select a parameter from the list.");
+		}
+	}
+
+	function filterParametersByCategory(category) {
+		// Simple filter implementation
+		var rows = $('#parameterTableBody tr');
+		rows.show();
+		// You can implement more sophisticated filtering here
+	}
+
+	function BindParameterSearchGrid() {
+		var searchText = $("#parameterSearchString_0").val().toLowerCase();
+		var rows = $('#parameterTableBody tr');
+		
+		rows.each(function() {
+			var rowText = $(this).text().toLowerCase();
+			if (rowText.indexOf(searchText) === -1) {
+				$(this).hide();
+			} else {
+				$(this).show();
+			}
+		});
+	}
+
+	// Add CSS for selected row
+	$(document).ready(function() {
+		$('<style>').text(`
+			#parameterTableBody tr.selected {
+				background-color: #d4edda !important;
+			}
+			#parameterTableBody tr:hover {
+				background-color: #f8f9fa;
+				cursor: pointer;
+			}
+		`).appendTo('head');
+	});
+</script>

@@ -1,0 +1,209 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row">
+    <div class="col-lg-12" style="background-color: #f5f5f5; height:38px;">
+        <div style="float:left">
+            <ol class="breadcrumb">
+                <li class="active">
+                    <i class="fa fa-home"></i>
+                    <a href="@Url.Action("Index","Home")">Home </a> <i class="fa fa-angle-double-right"></i>
+                    <a href="@Url.Action("Index", "TrialBalance")">TrailBalance </a> <i class="fa fa-angle-double-right"></i>
+                    Tree Report
+                </li>
+            </ol>
+        </div>
+        <div class="btn-group" role="group" style="float: right; padding-top:6px;">
+            @Html.Partial("~/Views/TrialBalance/Search.cshtml")
+        </div>
+        <div style="clear:both"></div>
+    </div>
+    <!-- /.col-lg-12 -->
+</div>
+<!-- /.row -->
+<div class="row">
+    <div class="col-lg-12">
+        @Html.Partial("~/Views/TrialBalance/SearchContent.cshtml")
+        <div id="divBalanceSheetReport" class="row"></div>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var param = {
+            AsOfDate: '2015-04-20'
+        };
+        $.ajax({
+            type: 'POST',
+            async: false,
+            url: "/TrialBalance/TrialBalanceTreeGridData/",
+            data: JSON.stringify(param),
+            contentType: "application/json; charset=utf-8",
+            success: function (response) {
+                $("#divBalanceSheetReport").empty().append(response);
+                $("#divBalanceSheetReport table").find('tr').each(function () {
+                    if ($(this).find('td:eq(1)').html() == '') {
+                        $(this).remove();
+                    }
+                });
+            }
+        });
+        $('#chkShowOpening').on("click", function () {
+            $('tr.HeaderAccount td:nth-child(2)').toggle();
+            $('tr.SubHeaderAccount td:nth-child(2)').toggle();
+            $('tr.SubHeaderAccount td:nth-child(3)').toggle();
+            $('tr.GroupAccount td:nth-child(2)').toggle();
+            $('tr.SubGroupAccount td:nth-child(2)').toggle();
+            $('tr.LedgerAccount td:nth-child(2)').toggle();
+            $('tr.GroupAccount td:nth-child(3)').toggle();
+            $('tr.SubGroupAccount td:nth-child(3)').toggle();
+            $('tr.LedgerAccount td:nth-child(3)').toggle();
+        });
+        $('#chkShowTransaction').on("click", function () {
+            $('tr.HeaderAccount td:nth-child(3)').toggle();
+            $('tr.SubHeaderAccount td:nth-child(4)').toggle();
+            $('tr.SubHeaderAccount td:nth-child(5)').toggle();
+            $('tr.GroupAccount td:nth-child(4)').toggle();
+            $('tr.SubGroupAccount td:nth-child(4)').toggle();
+            $('tr.LedgerAccount td:nth-child(4)').toggle();
+            $('tr.GroupAccount td:nth-child(5)').toggle();
+            $('tr.SubGroupAccount td:nth-child(5)').toggle();
+            $('tr.LedgerAccount td:nth-child(5)').toggle();
+        });
+        $('.GroupAccount').on("click", function () {
+            if ($(this).find('a').attr('class') == 'fa fa-plus') {
+                $(this).find('a').removeClass('fa fa-plus').addClass('fa fa-minus');
+                $(this).nextUntil('tr.GroupAccount').toggle();
+                $('tr.GroupAccount').show();
+                $(this).nextUntil('tr.SubGroupAccount').show();
+                $('tr.LedgerAccount').hide();
+                $('tr.LedgerDetailsAccount').hide();
+                $('tr.SubGroupAccount').find('a').removeClass('fa fa-minus').removeClass('fa fa-plus').addClass('fa fa-plus');
+            } else {
+                $(this).find('a').removeClass('fa fa-minus').addClass('fa fa-plus');
+                $(this).nextUntil('tr.GroupAccount').toggle();
+                $('tr.GroupAccount').show();
+                $(this).nextUntil('tr.SubGroupAccount').hide();
+                $('tr.LedgerAccount').hide();
+                $('tr.LedgerDetailsAccount').hide();
+                $('tr.SubGroupAccount').find('a').removeClass('fa fa-minus').removeClass('fa fa-plus').addClass('fa fa-plus');
+            }
+        });
+        $('.SubGroupAccount').on("click", function () {
+            var i = 100;
+            var cssclass = 'LedgerAccount';
+            var lastTr = $(this);
+            while (i != 0) {
+                if (lastTr.next('tr').attr('class') != 'LedgerDetailsAccount') {
+                    if (lastTr.next('tr').attr('class') != cssclass) {
+                        cssclass = lastTr.next('tr').attr('class');
+                        i = 1;
+                    }
+                }
+                lastTr = lastTr.next('tr');
+                i = i - 1;
+            }
+            if ($(this).find('a').attr('class') == 'fa fa-plus' || $(this).find('a').attr('class') == 'fa-plus fa') {
+                $(this).find('a').removeClass('fa-plus fa').removeClass('fa fa-plus').addClass('fa fa-minus');
+                if (cssclass == 'SubGroupAccount') {
+                    $(this).nextUntil('tr.SubGroupAccount').toggle();
+                }
+                else if (cssclass == 'GroupAccount') {
+                    $(this).nextUntil('tr.GroupAccount').toggle();
+                }
+                else {
+                    //$(this).nextUntil('tr.GroupAccount').toggle();
+                }
+                $('tr.LedgerDetailsAccount').hide();
+                $('tr.LedgerAccount').find('a').removeClass('fa fa-minus').removeClass('fa fa-plus').addClass('fa fa-plus');
+            } else {
+                $(this).find('a').removeClass('fa-minus fa').removeClass('fa fa-minus').addClass('fa fa-plus');
+
+                if (cssclass == 'SubGroupAccount') {
+                    $(this).nextUntil('tr.SubGroupAccount').toggle();
+                }
+                else if (cssclass == 'GroupAccount') {
+                    $(this).nextUntil('tr.GroupAccount').toggle();
+                }
+                else {
+                    //$(this).nextUntil('tr.GroupAccount').toggle();
+                }
+                $('tr.LedgerDetailsAccount').hide();
+                $('tr.LedgerAccount').find('a').removeClass('fa fa-minus').removeClass('fa fa-plus').addClass('fa fa-plus');
+            }
+        });
+        $('.LedgerAccount').on("click", function () {
+            var i = 100;
+            var cssclass = 'LedgerDetailsAccount';
+            var lastTr = $(this);
+            while (i != 0) {
+                if (lastTr.next('tr').attr('class') != 'LedgerDetailsAccount') {
+                    if (lastTr.next('tr').attr('class') != cssclass) {
+                        cssclass = lastTr.next('tr').attr('class');
+                        i = 1;
+                    }
+                }
+                lastTr = lastTr.next('tr');
+                i = i - 1;
+            }
+            if ($(this).find('a').attr('class') == 'fa fa-plus' || $(this).find('a').attr('class') == 'fa-plus fa') {
+                $(this).find('a').removeClass('fa-plus fa').removeClass('fa fa-plus').addClass('fa fa-minus');
+                if (cssclass == 'LedgerAccount') {
+                    $(this).nextUntil('tr.LedgerAccount').toggle();
+                }
+                else if (cssclass == 'SubGroupAccount') {
+                    $(this).nextUntil('tr.SubGroupAccount').toggle();
+                }
+                else if (cssclass == 'GroupAccount') {
+                    $(this).nextUntil('tr.GroupAccount').toggle();
+                }
+                else {
+                    //$(this).nextUntil('tr.GroupAccount').toggle();
+                }
+            } else {
+                $(this).find('a').removeClass('fa-minus fa').removeClass('fa fa-minus').addClass('fa fa-plus');
+
+                if (cssclass == 'LedgerAccount') {
+                    $(this).nextUntil('tr.LedgerAccount').toggle();
+                }
+                else if (cssclass == 'SubGroupAccount') {
+                    $(this).nextUntil('tr.SubGroupAccount').toggle();
+                }
+                else if (cssclass == 'GroupAccount') {
+                    $(this).nextUntil('tr.GroupAccount').toggle();
+                }
+                else {
+                    //$(this).nextUntil('tr.GroupAccount').toggle();
+                }
+            }
+        });
+        $('tr.SubGroupAccount').hide();
+        $('tr.LedgerAccount').hide();
+        $('tr.LedgerDetailsAccount').hide();
+    });
+    
+    $("#btnSearch").on("click", function () {
+        var param = {
+            AsOfDate: $('#datepicker').val()
+        };
+        $.ajax({
+            type: 'POST',
+            async: false,
+            url: "/TrialBalance/TrialBalanceTreeGridData/",
+            data: JSON.stringify(param),
+            contentType: "application/json; charset=utf-8",
+            success: function (response) {
+                $("#divBalanceSheetReport").empty().append(response);
+                $("#divBalanceSheetReport table").find('tr').each(function () {
+                    if ($(this).find('td:eq(1)').html() == '') {
+                        $(this).remove();
+                    }
+                });
+            }
+        });
+    });
+    $(document).ready(function () {
+        $(".nav li a").removeClass("active");//this will remove the active class from previously active menu item 
+        $('#TrialBalance').addClass('active');
+    });
+</script>

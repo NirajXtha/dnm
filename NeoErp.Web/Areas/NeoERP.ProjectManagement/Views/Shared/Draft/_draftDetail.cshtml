@@ -1,0 +1,197 @@
+﻿
+<style>
+    .gridebox {
+        border: solid #ddd 1px !important;
+    }
+
+    #kGrid {
+        font-size: 9px;
+    }
+
+    .topmargin {
+        margin-top: 10px;
+    }
+
+    .mbutton:hover {
+        color: #333;
+        text-decoration: none;
+    }
+
+    .tblbox input[type="search"] {
+        border: solid #ddd 1px !important;
+        max-height: 23px !important;
+    }
+
+    .customized-tbl th {
+        font-size: 12px !important;
+        border-bottom: none !important;
+    }
+
+    .customized-tbl td {
+        font-size: 11px !important;
+    }
+
+    .customized-tbl tfoot th {
+        border-top: solid #ddd 1px !important;
+    }
+
+    .mbutton i {
+        color: #666;
+        font-size: 18px !important;
+        /*padding: 5px 8px 4px 5px;*/
+        /*background-color:#1F897F;
+    border-radius: 2px !important*/
+    }
+
+    .k-ff input.k-textbox {
+        float: right;
+        margin-bottom: 5px;
+        font-size: 11px;
+    }
+
+    .gridebox .k-header {
+        font-size: 12px !important;
+    }
+
+    .minpadding {
+        padding: 0px 6px 10px !important;
+    }
+
+
+        .minpadding .caption {
+            padding: 5px 0px !important;
+        }
+
+        .minpadding .topmargin {
+            margin-top: 6px !important;
+        }
+
+        .minpadding .caption-subject {
+            font-size: 14px !important;
+        }
+
+    .tooltip {
+        position: absolute !important;
+        z-index: 800000 !important;
+    }
+
+    .dataserarch-input {
+        margin-top: 2px;
+    }
+</style>
+<div class="portlet box green-box tab-box">
+    <div class="portlet-title">
+        <div class="caption splitterfont">
+            <span class="caption-subject bold uppercase">{{formname}}</span>
+        
+        </div>
+        <a ng-if="formcode !== '' && moduleCode=='01'" class="btn btn-sm btn-theme"style="float:right; margin:5px 0px 0px 0px" data-toggle="tooltip" data-placement="left" title="Add" href="/DocumentTemplate/Home/Index#!DT/FinanceVoucher?formcode={{formcode}}">
+            <i class="fa fa-plus-circle" aria-hidden="true"></i>
+        </a>
+        <a ng-if="formcode !== '' && moduleCode=='02'" class="btn btn-sm btn-theme"style="float:right; margin:5px 0px 0px 0px" data-toggle="tooltip" data-placement="left" title="Add" href="/DocumentTemplate/Home/Index#!DT/Inventory?formcode={{formcode}}">
+            <i class="fa fa-plus-circle" aria-hidden="true"></i>
+        </a>
+        <a ng-if="formcode !== '' && moduleCode=='04'" class="btn btn-sm btn-theme"style="float:right; margin:5px 0px 0px 0px" data-toggle="tooltip" data-placement="left" title="Add" href="/DocumentTemplate/Home/Index#!DT/formtemplate/{{formcode}}">
+            <i class="fa fa-plus-circle" aria-hidden="true"></i>
+        </a>
+    </div>
+    <div class="portlet-body">
+        <div class="">
+            <div class="dataserarch-input">
+
+                <input class=k-textbox type=text id="txtSearchString" name="search" placeholder="enter search text..." style="z-index:1000;margin:3px;" />
+
+            </div>
+            <kendo-grid id="kGrid" options="mainGridOptions" k-rebind="mainGridOptions" class="kendo_gride_table">
+            </kendo-grid>
+        </div>
+
+
+    </div>
+</div>
+
+
+
+
+
+@*<div class="tab-pane active gridebox" id="tab_15_1">
+
+    </div>*@
+
+<script>
+    $("#txtSearchString").keyup(function () {
+        
+        var val = $(this).val();
+        var grid = $("#kGrid").data("kendoGrid");
+        var tempServerFilter = grid.dataSource.options.serverFiltering;
+        grid.dataSource.options.serverFiltering = false;
+        var filter = [];
+        $.each(grid.columns, function (i, v) {
+            if (v.field != undefined) {
+                var searchText = $.trim($("#txtSearchString").val());
+                var model = grid.dataSource.options.schema.model.fields[v.field];
+                var type = "string";
+                if (model != undefined)
+                    type = model.type;
+                if (type === "string")
+                    filter.push({ field: v.field, operator: "contains", value: searchText });
+                else if (type === "number")
+                    filter.push({ field: v.field, operator: "eq", value: searchText });
+                else if (type === "date") {
+                    var dateValue = new Date(searchText);
+                    searchText = dateValue == "Invalid Date" ? searchText : dateValue;
+                    filter.push({ field: v.field, operator: "eq", value: searchText });
+                }
+            }
+
+        });
+        var filter = {
+            logic: "or",
+            filters: filter,
+        }
+
+        grid.dataSource.filter(filter);
+        
+        if ($("#txtSearchString").val().length == 0)
+            grid.dataSource.filter([]);
+        grid.bind("dataBound", function () {
+            grid.dataSource.options.serverFiltering = tempServerFilter;
+        });
+
+        ////angular.element(document.getElementById('tab_15_1')).scope().onsiteSearch(val);
+        //var q = $("#txtSearchString").val();
+        //var grid = $("#kGrid").data("kendo-grid");
+        //
+        //grid.dataSource.query({
+        //    page: 1,
+        //    pageSize: 50,
+        //    filter: {
+        //        logic: "or",
+        //        filters: [
+        //          { field: "VOUCHER_NO", operator: "contains", value: q },
+        //          { field: "PREPARED_BY", operator: "contains", value: q },
+        //          { field: "AUTHORISED_BY", operator: "contains", value: q },
+        //          { field: "CREATED_BY", operator: "contains", value: q },
+        //          //{ field: "VOUCHER_DATE", operator: "startswith", value: q },
+        //          { field: "CHECKED_BY", operator: "contains", value: q },
+        //          //{ field: "CHECKED_DATE", operator: "contains", value: q },
+        //          { field: "AUTHORISED_BY", operator: "contains", value: q },
+        //          //{ field: "POSTED_DATE", operator: "contains", value: q },
+        //          //{ field: "MODIFY_DATE", operator: "contains", value: q },
+        //          { field: "SYN_RowID", operator: "contains", value: q },
+
+        //        ]
+        //    }
+        //});
+    });
+
+    function redirectEditOrder(orderNo) {
+        window.location.href = "/DocumentTemplate/Home/Index#!DT/formtemplates/" + document.ttt + "/" + orderNo + ""
+        productAutocomplete();
+    }
+    //tooltip script
+    $('a').tooltip();
+    $(document).ready(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+</script>

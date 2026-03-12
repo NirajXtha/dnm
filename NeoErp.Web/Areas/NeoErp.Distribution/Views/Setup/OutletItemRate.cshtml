@@ -1,0 +1,270 @@
+<style>
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+    }
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    a.k-button.k-button-icontext.k-grid-excel {
+        float: right;
+    }
+
+    .number {
+        text-align: right;
+    }
+
+    .text {
+        text-align: left;
+    }
+
+    .date {
+        text-align: center;
+    }
+
+    .custom-combobox {
+        position: relative;
+        display: inline-block;
+    }
+
+    .custom-combobox-toggle {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        margin-left: -1px;
+        padding: 0;
+    }
+
+    .custom-combobox-input {
+        margin: 0;
+        padding: 5px 10px;
+        width: 200px;
+    }
+
+    .controls {
+        margin-top: 10px;
+        border: 1px solid transparent;
+        border-radius: 2px 0 0 2px;
+        box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        height: 32px;
+        outline: none;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+</style>
+
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb"></ul>
+        <div class="actions pull-right actionbutton">
+            <div class="btn-group">
+                <input type="text" id="searchtxt" placeholder="Search" />
+            </div>
+            <div class="btn-group">
+                <a class="btn btn-circle btn-icon-only btn-default" id="ExcelUpload">
+                    <i class="fa fa-file"></i>
+                </a>
+                <input type="file" id="excelFile" style="display:none" accept=".xlsx,.xls" />
+            </div>
+        </div>
+    </div>
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div id="grid"></div>
+                        @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script>
+
+    var debounceTimer = null;
+
+    function debounce(func, delay) {
+        return function () {
+            clearTimeout(debounceTimer);
+            var context = this, args = arguments;
+            debounceTimer = setTimeout(function () {
+                func.apply(context, args);
+            }, delay);
+        };
+    }
+
+    $(document).ready(function () {
+
+        $("#grid").kendoGrid({
+            dataSource: {
+                transport: {
+                    read: {
+                        url: "/api/Setup/GetResellerItems",
+                        dataType: "json"
+                    }
+                },
+                schema: {
+                    model: {
+                        id: "ITEM_CODE",
+                        fields: {
+                            ITEM_CODE: { editable: false },
+                            ITEM_EDESC: { editable: false },
+                            MU_CODE: { editable: false },
+                            RATE: { type: "number", editable: true }
+                        }
+                    }
+                }
+            },
+            editable: true,
+            scrollable: true,
+            sortable: true,
+            filterable: true,
+            columns: [
+                { field: "ITEM_CODE", title: "Item Code", width: 50 },
+                { field: "ITEM_EDESC", title: "Item Name", width: 200 },
+                { field: "MU_CODE", title: "Unit", width: 80 },
+                { field: "RATE", title: "Rate", width: 100, format: "{0:n2}" }
+            ],
+
+            save: debounce(function (e) {
+                var updated = e.model;
+
+                $.ajax({
+                    url: "/api/Setup/UpdateResellerItemRate",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({
+                        ITEM_CODE: updated.ITEM_CODE,
+                        RATE: updated.RATE,
+                        MU_CODE: updated.MU_CODE
+                    }),
+                    success: function () {
+                        console.log("Rate updated successfully");
+                        displayPopupNotification("Rate updated successfully", "success");
+                    },
+                    error: function () {
+                        displayPopupNotification("Failed to update rate", "error");
+                    }
+                });
+            }, 300)
+        });
+        $("#searchtxt").on("keyup", function () {
+            var grid = $("#grid").data("kendoGrid");
+            if (!grid) return;
+
+            var value = $(this).val();
+
+            grid.dataSource.filter({
+                logic: "or",
+                filters: [
+                    { field: "ITEM_EDESC", operator: "contains", value: value },
+                    { field: "MU_CODE", operator: "contains", value: value }
+                ]
+            });
+        });
+        $("#ExcelUpload").on("click", function () {
+            $("#excelFile").click();
+        });
+        $("#excelFile").on("change", function (e) {
+            var file = e.target.files[0];
+            if (!file) return;
+
+            var reader = new FileReader();
+
+            reader.onload = function (evt) {
+                var data = evt.target.result;
+
+                var workbook = XLSX.read(data, { type: "binary" });
+                var sheet = workbook.SheetNames[0];
+                var excelRows = XLSX.utils.sheet_to_json(workbook.Sheets[sheet], { header: 1 });
+
+                var extracted = [];
+
+                for (var i = 1; i < excelRows.length; i++) {
+                    var row = excelRows[i];
+
+                    if (!row || row.length < 3) continue;
+
+                    extracted.push({
+                        ITEM_CODE: row[0],
+                        MU_CODE: row[1],
+                        RATE: parseFloat(row[2])
+                    });
+                }
+
+                console.log("Extracted Excel Data:", extracted);
+
+                // Apply to grid
+                var grid = $("#grid").data("kendoGrid");
+
+                extracted.forEach(function (item) {
+                    var existing = grid.dataSource.get(item.ITEM_CODE);
+                    if (existing) {
+                        existing.set("RATE", item.RATE);
+                    }
+
+                    $.ajax({
+                        url: "/api/Setup/UpdateResellerItemRate",
+                        type: "POST",
+                        contentType: "application/json",
+                        data: JSON.stringify({
+                            ITEM_CODE: item.ITEM_CODE,
+                            RATE: item.RATE,
+                            MU_CODE: item.MU_CODE
+                        }),
+                        success: function () {
+                            console.log("Updated:", item.ITEM_CODE, item.RATE);
+                        },
+                        error: function () {
+                            displayPopupNotification("Failed to update item " + item.ITEM_CODE, "error");
+                        }
+                    });
+                });
+
+                displayPopupNotification("Excel uploaded & grid updated!", "success");
+            };
+
+            reader.readAsBinaryString(file);
+        });
+
+    });
+</script>
+
+<script src="@Scripts.Url("~/JS/reportFilter.js")"></script>
+<script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js")"></script>

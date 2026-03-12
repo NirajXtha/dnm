@@ -1,0 +1,651 @@
+﻿
+
+@using NeoErp.Core.Models;
+@{
+    ViewBag.Title = "Contact Income Fore Cast";
+}
+<style>
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+         font-size:11px;
+    }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+</style>
+<div class="page-content">
+
+
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+            @*<li>
+                <i class="fa fa-home"></i>
+                <a href="/sales/SalesHome/Dashboard">Home</a>
+                <i class="fa fa-angle-right"></i>
+            </li>*@
+            @*<li>
+                <a href="javascript:">Contract Income Fore Cast </a>
+                <i class="fa fa-angle-right"></i>
+            </li>*@
+            @*<li>
+                <a href="sales/saleshome/dashboard/Dashboard">Organiser</a>
+                <i class="fa fa-angle-right"></i>
+            </li>*@
+
+        </ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+                <div class="actions">
+                    <div class="btn-group" style="display:none;" data-toggle="tooltip" data-placement="bottom">
+                        @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                    </div>
+                    <div class="btn-group" style="display:none;">
+                        @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+                    </div>
+                    <div class="btn-group" data-toggle="tooltip" title="Click for Advanced Filter!" data-placement="bottom">
+                        @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                   {
+                       ShowContractStatusTye=true
+                   })
+                    </div>
+
+
+
+                    @*@Html.Partial("~/Views/Shared/Controls/_reportFilterSettings.cshtml", new ReportFilterSettingsModel()
+               {
+                   ShowAmountFigureFilter = true,
+                   ShowAmountFilter = true,
+                   ShowAmountRoundUpFilter = true,
+                   ShowRangeAmountFilter = true,
+                   ShowQuantityFigureFilter = true,
+                   ShowQuantityRoundUpFilter = true,
+                   ShowQuantityFilter = true,
+                   ShowRangeQuantityFilter = true,
+                   ShowRangeRateFilter = true
+
+               })*@
+
+                    @Html.Partial("~/Views/Shared/Controls/ComposeMail.cshtml")
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="javsascript:;">
+                        <i class="icon-control-play"></i>
+                    </a>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "ContactIncomeForeCast")
+                    </div>
+
+                    @*<button id="test">test</button>*@
+
+                </div>
+
+                @*@Html.Partial("~/Views/Shared/Controls/DateField.cshtml",true)*@
+
+                @*<button type="button" class="btn btn-fit-height grey-salt dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-delay="1000" data-close-others="true">
+                        Actions <i class="fa fa-angle-down"></i>
+                    </button>
+                    <ul class="dropdown-menu pull-right" role="menu">
+                        <li>
+                            <a href="#">Action</a>
+                        </li>
+                        <li>
+                            <a href="#">Another action</a>
+                        </li>
+                        <li>
+                            <a href="#">Something else here</a>
+                        </li>
+                        <li class="divider">
+                        </li>
+                        <li>
+                            <a href="#">Separated link</a>
+                        </li>
+                    </ul>*@
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+
+
+                <div class="portlet-body form">
+                    <div class="row">
+
+
+                        <div id="grid"></div>
+                        <script type="text/x-kendo-template" id="toolbar-template">
+                            <div class="k-header k-grid-toolbar">
+
+                                <a class="k-button k-button-icontext k-grid-excel" href="javascript:">
+                                    <i class="fa fa-file-excel-o"></i>
+                                </a>
+
+                                @*<a class="k-button k-button-icontext k-grid-pdf" href="javascript:">
+                                        <i class="fa fa-file-pdf-o"></i>
+                                    </a>*@
+                            </div>
+                        </script>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+<script src="@Scripts.Url("~/JS/DateFilter.js?V5")" type="text/javascript"></script>
+<script src="@Scripts.Url("~/JS/dynamicReport.js?V2")" type="text/javascript"></script>
+<script type="text/javascript">
+        var a = location.hash;
+        var b = location.pathname;
+        var url = (b + a);
+        $(".active").removeClass();
+        $("a[href='" + url + "']").parent().addClass("active");
+        $("a[href='" + url + "']").parent().parent().slideDown("slow");
+
+</script>
+<script type="text/javascript">
+
+    var fileMailSender = new ManualEmailSender({
+        GridName: "grid",
+        GridRefreshTriggerName: "RunQuery",
+        reportName: "ContactIncomeForeCast",
+ });
+</script>
+<script>
+
+    var reportConfig = GetReportSetting("ContactIncomeForeCast");
+    function getDateFormat(date) {
+        return kendo.format("{0:" + reportConfig.dateFormat + "}", date);
+    }
+
+    $(".applydp").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    })
+
+    $("#loadAdvancedFilters").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    });
+
+
+    $(document).ready(function () {
+
+
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/Contract/GetContractDetailMonthWise"
+
+         DateFilter.init(function () {
+                  consolidate.init(function () {
+                    BindGrid(urltest);
+                });
+            });
+
+        $("#RunQuery").click(function (evt) {
+            evt.preventDefault();
+            urltest = window.location.protocol + "//" + window.location.host + "/api/Contract/GetContractDetailMonthWise";
+            KendoGridRefresh(urltest);
+        });
+
+        fileMailSender.init();
+        //BindGrid(urltest);
+    });
+
+    function BindGrid(readurl) {
+        reportConfig = GetReportSetting("ContactIncomeForeCast");
+        var dataSource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: {
+                    url: readurl, // <-- Get data from here.
+                    dataType: "json", // <-- The default was "jsonp".
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8"
+                },
+                parameterMap: function (options, type) {
+                    var paramMap = JSON.stringify($.extend(options,ReportFilter.filterAdditionalData()));
+                    //  paramMap.formDate = $("#FromDateVoucher").val();
+                    delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                    delete paramMap.$format; // <-- remove format parameter.
+                    return paramMap;
+                }
+            },
+
+            error: function (e) {
+                displayPopupNotification("Sorry error occured while processing data", "error");
+            },
+            serverFiltering: false,
+            serverAggregates: false,
+            serverGrouping: false,
+            //schema: {
+            //    data: "items", // records are returned in the "data" field of the response
+            //    total: "total", // total number of records is in the "total" field of the response
+            //    aggregates: "AggregationResult",
+             
+                    
+            //},
+            aggregate: [
+                     { field: "Shrawan", aggregate: "sum" },
+                       { field: "Bhadra", aggregate: "sum" },
+                       { field: "Ashwin", aggregate: "sum" },
+                       { field: "Kartik", aggregate: "sum" },
+                       { field: "Mangsir", aggregate: "sum" },
+                         { field: "Poush", aggregate: "sum" },
+                       { field: "Magh", aggregate: "sum" },
+                            { field: "Falgun", aggregate: "sum" },
+                      { field: "Chaitra", aggregate: "sum" },
+                        { field: "Baisakh", aggregate: "sum" },
+                          { field: "Jestha", aggregate: "sum" },
+                           { field: "Ashadh", aggregate: "sum" },
+                              { field: "TotalAmount", aggregate: "sum" },
+    ],
+            serverPaging: false,
+            //serverSorting: true,
+            pageSize: reportConfig.defaultPageSize,
+        });
+
+        var grid = $("#grid").kendoGrid({
+            dataSource: dataSource,
+
+            toolbar: kendo.template($("#toolbar-template").html()),
+            excel: {
+                fileName: "Contract Income ForeCast",
+                //proxyURL: "//demos.telerik.com/kendo-ui/service/export",
+                allPages: true
+            },
+            pdf: {
+                allPages: true,
+                avoidLinks: true,
+                paperSize: "A4",
+                margin: { top: "2cm", left: "1cm", right: "1cm", bottom: "1cm" },
+                landscape: true,
+                repeatHeaders: true,
+                width: "500px",
+
+                scale: 0.8
+            },
+
+
+            height: window.innerHeight - 50,
+            sortable: true,
+            reorderable: true,
+            groupable: true,
+            resizable: true,
+
+
+            filterable: {
+                extra: false,
+                operators: {
+                    number: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "is greater than or equal to	",
+                        gt: "is greater than",
+                        lte: "is less than or equal",
+                        lt: "is less than",
+
+                    },
+
+
+
+                    string: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        startswith: "Starts with	",
+                        contains: "Contains",
+                        doesnotcontain: "Does not contain",
+                        endswith: "Ends with",
+                    },
+                    date: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "Is after or equal to",
+                        gt: "Is after",
+                        lte: "Is before or equal to",
+                        lt: "Is before",
+                    }
+                }
+            },
+            columnMenu: true,
+            columnMenuInit: function (e) {
+                    wordwrapmenu(e);
+                    checkboxItem = $(e.container).find('input[type="checkbox"]');
+                },
+                //columnShow: function (e) {
+                //    if($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                //        SaveReportSetting('ContactIncomeForeCast', 'grid');
+                //},
+                //columnHide: function (e) {
+                //    if($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                //        SaveReportSetting('ContactIncomeForeCast', 'grid');
+                //},
+                pageable: {
+                    refresh: true,
+                    pageSizes: reportConfig.itemPerPage,
+                    buttonCount: 5
+                },
+            //  autoBind: true,
+            scrollable: {
+                virtual: true
+            },
+            dataBound: function (o) {
+                var grid = o.sender;
+                if (grid.dataSource.total() == 0) {
+                     var colCount = grid.columns.length;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    displayPopupNotification("No Data Found Given Date Filter.", "info");
+                }
+                else {
+                    var g = $("#grid").data("kendoGrid");
+                    //for (var i = 0; i < g.columns.length; i++) {
+                    //    g.showColumn(i);
+                    //}
+                    //$("div.k-group-indicator").each(function (i, v) {
+                    //    g.hideColumn($(v).data("field"));
+                    //});
+                }
+                
+                $('div').removeClass('.k-header k-grid-toolbar');
+                UpdateReportUsingSetting("ContactIncomeForeCast", "grid");
+
+            },
+            columns: [
+                
+            {
+                field: "CUSTOMER_ID",
+                title: "Customer iD",
+                width: "200px",
+                             
+            },
+              {
+                  field: "CONNECTION_TYPE_EDESC",
+                  title: "Connection type",
+                  width: "150px",
+                  hidden: true,
+                             
+              },
+                          {
+                              field: "CUSTOMER_EDESC",
+                              title:"Customer Name",
+                             width:"250px",
+                          },
+                          {
+                              field: "PRE_CUSTOMER_EDESC",
+                              title: "Parent Customer Name",
+                              hidden: true,
+                              width: "250px",
+                          },
+                          {
+                              field: "CONTRACT_TYPE",
+                              title: "CONTRACT TYPE",
+                              hidden: true,
+                              width: "100px",
+                          },
+                          {
+                              field: "DISTRICT_EDESC",
+                              hidden: true,
+                              title: "DISTRICT",
+                              width: "100px",
+                          },
+                          {
+                              field: "CITY_EDESC",
+                              hidden: true,
+                              title: "CITY",
+                              width: "100px",
+                        
+                           },
+                           {
+                               field: "TECH_CONTACT_PERSON",
+                               hidden: true,
+                              title: "Contact Person",
+                              width: "150px",
+                           },
+                           {
+                               field: "TECH_CONTACT_ADD",
+                               title: "Contact Address",
+                               hidden: true,
+                               width: "100px"
+                           },
+                           {
+                               field: "TECH_CONTACT_NO",
+                               hidden: true,
+                               title: "Contact No",
+                               width: "100px",
+
+                           },
+                           {
+                               field: "PAYMENT_LOCATION",
+                               hidden: true,
+                               title: "Payment Location",
+                               width: "100px",
+
+                           },
+
+                           {
+                               field: "HOSTNAME",
+                               hidden: true,
+                               title: "Host Name",
+                               width: "100px",
+
+                           },
+                           {
+                               field: "PAYMENT_BASIS",
+                               hidden: true,
+                               title: "Payment Basis",
+                               width: "100px",
+                           },
+                           {
+                               field: "STATUS_TYPE",
+                               hidden: true,
+                               title: "Status Type",
+                               width: "100px",
+
+                           },
+                           {
+                               field: "REMARKS",
+                               hidden: true,
+                               title: "Remarks",
+                               width: "150px",
+
+                           },
+                            {
+                                field: "BUSINESS_SECTOR_EDESC",
+                                hidden: true,
+                                title: "BUSINESS SECTOR",
+                                width: "200px",
+                            },
+                             {
+                                 field: "Shrawan",
+                                 title: "Shrawan",
+                                 width: "100px",
+                                 attributes: {
+                                     style: "text-align: right;"
+                                 },
+                                 format: "{0:n}",
+                                 aggregates: ["sum"],
+                                 groupFooterTemplate: '#= kendo.toString(sum, "n")#',
+                                  footerTemplate: '#= kendo.toString(sum, "n")#</div>'
+                             },
+                             {
+                                 field: "Bhadra",
+                                 title: "Bhadra",
+                                 width: "100px",
+                                 attributes: {
+                                     style: "text-align: right;"
+                                 },
+                                 format: "{0:n}",
+                                 aggregates: ["sum"],
+                                 groupFooterTemplate: '#= kendo.toString(sum, "n")#',
+                                 footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span></div>'
+                             },
+                             {
+                                 field: "Ashwin",
+                                 title: "Ashwin",
+                                 width: "100px",
+                                 format: "{0:n}",
+                                 aggregates: ["sum"],
+                                 groupFooterTemplate: '#= kendo.toString(sum, "n")#',
+                                 attributes:
+                                     {
+                                         style:"text-align:right;"
+                                     },
+                                 footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span></div>'
+                             },
+                             {
+                                 field: "Kartik",
+                                 title: "Kartik",
+                                 format: "{0:n}",
+                                 width: "100px",
+                                 attributes: {
+                                     style: "text-align: right;"
+                                 },
+                                 aggregates: ["sum"],
+                                 groupFooterTemplate: '#= kendo.toString(sum, "n")#',
+                                 footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span></div>'
+                             }
+                             ,
+                             {
+                                 field: "Mangsir",
+                                 title: "Mangsir",
+                                 format: "{0:n}",
+                                 width: "100px",
+                                 attributes: {
+                                     style: "text-align: right;"
+                                 },
+                                 aggregates: ["sum"],
+                                 groupFooterTemplate: '#= kendo.toString(sum, "n")#',
+                                 footerTemplate: '#= kendo.toString(sum, "n")#</div>'
+                             },
+                             {
+                                 field: "Poush",
+                                 title: "Poush",
+                                 format: "{0:n}",
+                                 width: "100px",
+                                 attributes: {
+                                     style: "text-align: right;"
+                                 },
+                                 aggregates: ["sum"],
+                                 groupFooterTemplate: '#= kendo.toString(sum, "n")#',
+                                 footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span></div>'
+                             },
+                             {
+                                 field: "Magh",
+                                 title: "Magh",
+                                 format: "{0:n}",
+                                 width: "100px",
+                                 attributes: {
+                                     style: "text-align: right;"
+                                 },
+                                 aggregates: ["sum"],
+                                 groupFooterTemplate: '#= kendo.toString(sum, "n")#',
+                                 footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span></div>'
+                             },
+                             {
+                                 field: "Falgun",
+                                 title: "Falgun",
+                                 format: "{0:n}",
+                                 width: "100px",
+                                 attributes: {
+                                     style: "text-align: right;"
+                                 },
+                                 aggregates: ["sum"],
+                                 groupFooterTemplate: '#= kendo.toString(sum, "n")#',
+                                 footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span></div>'
+                             },
+                             {
+                                 field: "Chaitra",
+                                 title: "Chaitra",
+                                 format: "{0:n}",
+                                 width: "100px",
+                                 attributes: {
+                                     style: "text-align: right;"
+                                 },
+                                 aggregates: ["sum"],
+                                 groupFooterTemplate: '#= kendo.toString(sum, "n")#',
+                                 footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span></div>'
+                             },
+                             {
+                                 field: "Baisakh",
+                                 title: "Baisakh",
+                                 format: "{0:n}",
+                                 width: "100px",
+                                 attributes: {
+                                     style: "text-align: right;"
+                                 },
+                                 aggregates: ["sum"],
+                                 groupFooterTemplate: '#= kendo.toString(sum, "n")#',
+                                 footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span></div>'
+                             },
+                             {
+                                 field: "Jestha",
+                                 title: "Jestha",
+                                 format: "{0:n}",
+                                 width: "100px",
+                                 attributes: {
+                                     style: "text-align: right;"
+                                 },
+                                 aggregates: ["sum"],
+                                 groupFooterTemplate: '#= kendo.toString(sum, "n")#',
+                                 footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span></div>'
+                             },
+                             {
+                                 field: "Ashadh",
+                                 title: "Ashadh",
+                                 width: "100px",
+                                 format: "{0:n}",
+                                 attributes: {
+                                     style: "text-align: right;"
+                                 },
+                                 aggregates: ["sum"],
+                                 groupFooterTemplate: '#= kendo.toString(sum, "n")#',
+                                 footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span></div>'
+                             }, {
+                                 field: "TotalAmount",
+                                 title: "Total Amount",
+                                 format: "{0:n}",
+                                 width: "100px",
+                                 attributes: {
+                                     style: "text-align: right;"
+                                 },
+                                 aggregates: ["sum"],
+                                 groupFooterTemplate: '#= kendo.toString(sum, "n")#',
+                                 footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span></div>'
+                             }
+                             
+            ]
+
+        });
+
+    };
+
+    function KendoGridRefresh(readUrl) {
+        $('#grid').val('');
+        $('#grid').html('');
+        BindGrid(readUrl)
+    }
+</script>

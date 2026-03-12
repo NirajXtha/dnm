@@ -1,0 +1,182 @@
+﻿<div id="documentManagerTransactionTree">
+
+</div>
+<script>
+
+    $(document).ready(function () {
+
+        var crudServiceBaseUrl = ""/*"https://demos.telerik.com/kendo-ui/service"*/,
+            dataSource = new kendo.data.DataSource({
+                transport: {
+                    read: {
+                        url: window.location.protocol + "//" + window.location.host + "/AccessManager/GetAvailableDocManagerCntrl",
+                        dataType: "json"
+                    },
+                    parameterMap: function (options, operation) {
+                        if (operation !== "read" && options.models) {
+                            return {
+                                models: kendo.stringify(options.models)
+                            };
+                        }
+                    }
+                },
+                batch: true,
+                pageSize: 100,
+                group: {
+                    field: "CONTROL_HEADING"
+                },
+                schema: {
+                    model: {
+                        id: "CONTROL_CODE",
+                        fields: {
+                            NEW: { type: "boolean" },
+                            VIEW: { type: "boolean" },
+                            EDIT: { type: "boolean" },
+                            RECYCLE: { type: "boolean" },
+                            POSTPRINT: { type: "boolean" },
+                            UNPOST: { type: "boolean" },
+                            CHECK: { type: "boolean" },
+                            VERIFY: { type: "boolean" }
+                        }
+                    }
+                }
+            });
+
+       
+
+        $("#documentManagerTransactionTree").kendoGrid({
+            dataSource: {
+                transport: {
+                    read: {
+                        url: window.location.protocol + "//" + window.location.host + "/AccessManager/GetAvailableDocManagerCntrl",
+                        dataType: "json"
+                    }
+                },
+                group: {
+                    field: "CONTROL_HEADING"
+                },
+                schema: {
+                    model: {
+                        id: "CONTROL_CODE",
+                        fields: {
+                            NEW: { type: "boolean" },
+                            VIEW: { type: "boolean" },
+                            EDIT: { type: "boolean" },
+                            RECYCLE: { type: "boolean" },
+                            POSTPRINT: { type: "boolean" },
+                            UNPOST: { type: "boolean" },
+                            CHECK: { type: "boolean" },
+                            VERIFY: { type: "boolean" }
+                        }
+                    }
+                }
+
+            },
+            columns: [
+                {
+                    template: "<input type='checkbox' class='rowChecker' />",
+                    title: "Select"
+
+                },
+                {
+                    field: "CONTROL_NAME", title: "Element", expandable: true, width: 150
+
+                },
+                {
+                    field: "NEW", title: "NEW", editor: customBoolEditor
+                },
+                {
+                    field: "VIEW", title: "VIEW", editor: customBoolEditor
+                },
+                {
+                    field: "EDIT", title: "EDIT", editor: customBoolEditor
+                },
+                {
+                    field: "RECYCLE", title: "Recycle", editor: customBoolEditor
+                },
+                {
+                    field: "POSTPRINT", title: "Post/Print", editor: customBoolEditor
+                },
+                {
+                    field: "UNPOST", title: "Unpost", editor: customBoolEditor
+                },
+                {
+                    field: "CHECK", title: "Check", editor: customBoolEditor
+                },
+                {
+                    field: "VERIFY", title: "Verify", editor: customBoolEditor
+                },
+                {
+                    field: "MORE", title: "More",
+                    template: "<input type='checkbox'  class= 'checkbox row-checkbox chkDispatch' value='#=MORE#' />"
+                }
+            ],
+            editable: true,
+            dataBound: function (e) {
+                $(".rowChecker").on("click", checkRow);
+            }
+        });
+
+        var selectedControlSetting = [];
+
+        function checkRow() {
+          
+            var dataItem = "";
+            var checked = this.checked;
+            if (checked) {
+                var row = $(this).closest("tr"),
+                    grid = $("#documentManagerTransactionTree").data("kendoGrid");
+                
+
+                row.addClass("k-state-selected");
+                dataItem = grid.dataItem(row);
+
+                console.log("dataITem=-====================>>>" + JSON.stringify(dataItem));
+                selectedControlSetting.push(dataItem);
+               
+
+            } else {
+                var row = $(this).closest("tr");
+                
+                row.removeClass("k-state-selected");
+                
+                selectedControlSetting.pop();
+               
+            }
+
+        }
+
+        function customBoolEditor(container, options) {
+            var guid = kendo.guid();
+            if (options.field === "NEW") {
+                $('<input class="k-checkbox" id="' + guid + '" type="checkbox" name="NEW" data-type="boolean" data-bind="checked:NEW">').appendTo(container);
+                $('<label class="k-checkbox-label" for="' + guid + '">&#8203;</label>').appendTo(container);
+            } else if (options.field === "VIEW") {
+                $('<input class="k-checkbox" id="' + guid + '" type="checkbox" name="VIEW" data-type="boolean" data-bind="checked:VIEW">').appendTo(container);
+                $('<label class="k-checkbox-label" for="' + guid + '">&#8203;</label>').appendTo(container);
+            } else if (options.field === "EDIT") {
+                $('<input class="k-checkbox" id="' + guid + '" type="checkbox" name="EDIT" data-type="boolean" data-bind="checked:EDIT">').appendTo(container);
+                $('<label class="k-checkbox-label" for="' + guid + '">&#8203;</label>').appendTo(container);
+            } else if (options.field === "RECYCLE") {
+                $('<input class="k-checkbox" id="' + guid + '" type="checkbox" name="RECYCLE" data-type="boolean" data-bind="checked:RECYCLE">').appendTo(container);
+                $('<label class="k-checkbox-label" for="' + guid + '">&#8203;</label>').appendTo(container);
+            } else if (options.field === "POSTPRINT") {
+                $('<input class="k-checkbox" id="' + guid + '" type="checkbox" name="POSTPRINT" data-type="boolean" data-bind="checked:POSTPRINT">').appendTo(container);
+                $('<label class="k-checkbox-label" for="' + guid + '">&#8203;</label>').appendTo(container);
+            } else if (options.field === "UNPOST") {
+                $('<input class="k-checkbox" id="' + guid + '" type="checkbox" name="UNPOST" data-type="boolean" data-bind="checked:UNPOST">').appendTo(container);
+                $('<label class="k-checkbox-label" for="' + guid + '">&#8203;</label>').appendTo(container);
+            } else if (options.field === "CHECK") {
+                $('<input class="k-checkbox" id="' + guid + '" type="checkbox" name="CHECK" data-type="boolean" data-bind="checked:CHECK">').appendTo(container);
+                $('<label class="k-checkbox-label" for="' + guid + '">&#8203;</label>').appendTo(container);
+            } else if (options.field === "VERIFY") {
+                $('<input class="k-checkbox" id="' + guid + '" type="checkbox" name="VERIFY" data-type="boolean" data-bind="checked:VERIFY">').appendTo(container);
+                $('<label class="k-checkbox-label" for="' + guid + '">&#8203;</label>').appendTo(container);
+            } else {
+                console.log("lllll");
+            }
+        }
+
+    });
+
+</script>

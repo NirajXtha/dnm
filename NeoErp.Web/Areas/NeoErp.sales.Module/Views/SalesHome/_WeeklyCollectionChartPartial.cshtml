@@ -1,0 +1,836 @@
+﻿@using NeoErp.Core.Models;
+@{
+    var myAreaName = string.Empty;
+    object areaObj;
+    if (ViewContext.RouteData.Values.TryGetValue("area", out areaObj))
+    {
+        myAreaName = areaObj.ToString();
+    }
+    var actionPageId = "WeeklyCollectionChartPartial";
+}
+<style>
+    .slimScrollBar {
+        border-radius: 5px !important;
+        background-color: #333 !important;
+    }
+
+    .slimScrollDiv, #customerMultiSelect {
+        height: auto !important;
+    }
+
+    ul.dropdown-menu.custom {
+        margin-top: 8px !important;
+        border: none;
+        box-shadow: none !important;
+    }
+
+    .dropdown-menu.custom:before {
+        left: 58px !important;
+    }
+
+    .download-btn {
+        margin: 0px !important;
+        padding-top: -2px !important;
+        padding-left: 0px;
+        padding-right: 0px;
+        margin-top: -5px !important;
+        margin-left: 5px !important;
+    }
+
+    .dropdown-menu.custom {
+        left: -27px !important;
+        top: 20px !important;
+    }
+
+    .dropdown > .dropdown-menu:before, .dropdown-toggle > .dropdown-menu:before, .btn-group > .dropdown-menu:before {
+        position: absolute;
+        top: -8px;
+        left: 30px;
+        right: auto;
+        display: inline-block !important;
+        border-right: 8px solid transparent;
+        border-bottom: 8px solid #e0e0e0;
+        border-left: 8px solid transparent;
+        content: '';
+    }
+
+    i.icon-arrow-down {
+        color: #acacac;
+    }
+
+    .btn-group-custom button.btn {
+        padding: 7px 7px !important;
+        float: left;
+    }
+
+    .dropdown-menu.custom {
+        left: -55px !important;
+    }
+
+    a.btnWeeklyCollectionDatagrid {
+        color: #acacac !important;
+    }
+</style>
+
+<div class="modal fade" id="Model_@actionPageId" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog custom-chart">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                <h4 class="modal-title"><span class="fa fa-bar-chart"></span> Weekly Collection </h4>
+            </div>
+            <div class="modal-body bottom-gappingtwo form-horizontal">
+                <div class="row">
+                    
+                        <div class="col-sm-12 col-md-12">
+                            <div class="btn-group weeklyCollection_options" data-toggle="buttons" data-type="chart">
+                                <button type="button" class="btn btn-sm red">
+                                    <i class="fa fa-bar-chart"></i>
+                                    <input id="typeColumn" name="seriesType_weeklyCollection"
+                                           type="radio" value="column" checked="checked" autocomplete="off" />column
+                                </button>
+                                <button type="button" class="btn btn-sm green">
+                                    <i class="fa fa-bar-chart"></i>
+                                    <input id="typeBar" name="seriesType_weeklyCollection"
+                                           type="radio" value="bar" autocomplete="off" />bar
+                                </button>
+                                <button type="button" class="btn btn-sm purple-plum">
+                                    <i class="fa fa-line-chart"></i>
+                                    <input id="typeLine" name="seriesType_weeklyCollection"
+                                           type="radio" value="line" autocomplete="off" />Line
+                                </button>
+                                @*<button type="button" class="btn btn-sm blue">
+                                    <i class="fa fa-area-chart"></i>
+                                    <input id="typearea" name="seriesType_weeklyCollection"
+                                           type="radio" value="area" autocomplete="off" />area
+                                </button>*@
+                            </div>
+                        </div>
+
+                    <div class="col-md-6 col-sm-6 margin_bottom">
+                        <div class="button-group">
+                            <h5> Choose Value Field</h5>
+                        </div>
+
+                        <div class="btn-group weeklyCollection_options" data-toggle="buttons">
+                            <button type="button" class="btn btn-sm green">
+                                <i class=""></i>
+                                <input id="SalesColumn" name="fieldType_weeklyCollection"
+                                       type="radio" value="Amount" checked="checked" autocomplete="off" /> Amount
+                            </button>
+                            <button type="button" class="btn btn-sm red">
+                                <i class="fa fa-cart-arrow-down"></i>
+                                <input id="CollectionColumn" name="fieldType_weeklyCollection"
+                                       type="radio" value="Quantity" autocomplete="off" /> Quantity
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-sm-6">
+                        <!-- show labels & inStack option-->
+                        <div class="input-group chart-option ">
+                            <div class="icheck-inline">
+                                <label>
+                                    <input id="showlables_weeklyCollection" type="checkbox" autocomplete="off" /> Show Labels
+                                </label>
+                                <label style="margin-left:0px;">
+                                    <input id="showzerovalue_weeklyCollection" type="checkbox" checked="checked" autocomplete="off" /> Show Zero values series
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                 
+                        <div class="filter_title">
+                            <label class="filter-label">Advance Filter</label>
+                        </div>
+                        @Html.Partial("~/Views/Shared/Controls/DashboardChartFilter/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                   {
+                       ShowCustomerFilter = true,
+                       ShowProductFilter = true,
+                       ShowPartyTypeFilter = false,
+                       ShowCategoryFilter = false,
+                       ShowLocationFilter = false,
+                       ShowDocumentFilter = false,
+                       ShowCompanyFilter = false,
+                       ShowBranchFilter = true,
+                       ShowAreaFilter=true,
+                       IsPopUp = false,
+                       ActionPageId = actionPageId
+                   })
+                   
+                </div>
+
+                <div class="modal-footer">
+                    @*<button type="button" class="btn default" data-dismiss="modal">Close</button>*@
+                    <button type="button" class="btn btn-green applydp" data-dismiss="modal" id="apply_@actionPageId">Apply</button>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+
+<div class="portlet portlet-sortable  light bordered" id="WeeklyCollectionChartPartial">
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="icon-bar-chart font-green-haze"></i>
+            <span class="caption-subject bold uppercase font-green-haze custom-modal">Weekly collection </span>
+        </div>
+        <div class="tools">
+            <a href="javascript:;" class="collapse"></a>
+            <a class="btnGrid btnWeeklyCollectionDatagrid" href="javascript:void(0);" data-type="Chart" data-title="Grid" data-column="week">
+                <i class="fa fa-table"></i>
+            </a>
+            <div class="btn-group">
+                <a class="btn dropdown-toggle download-btn" title="Download" data-toggle="dropdown" href="#">
+                    <i class="icon-arrow-down Forthcustom"></i>
+                </a>
+                <ul class="dropdown-menu custom Forthslidetoggle">
+                    <div class="btn-group-custom">
+                        <button type="button" data-id="SalesCollectionChart" class="export-pdf btn default blue-stripe"><i class="fa fa-file-pdf-o"></i> PDF</button>
+                        <button type="button" data-id="SalesCollectionChart" class="export-img btn default red-stripe"><i class="fa fa-image-o"></i>Image</button>
+                        <button type="button" data-id="SalesCollectionChart" class="export-svg btn default green-stripe">SVG</button>
+                    </div>
+                </ul>
+            </div>
+            <a href="#Model_@actionPageId" data-toggle="modal" class="config"></a>
+            <a href="javascript:;" class="reload"></a>
+            <a href="javascript:;" class="fullscreen"></a>
+            <a href="javascript:;" class="remove"></a>
+        </div>
+    </div>
+    <div class="portlet-body">
+        <div class="k-content wide">
+            <div id="WeeklyCollectionChart">Weekly Collection chart section</div>
+            <div class="overlay"><div>No data available</div></div>
+            <div class="AmountFigureType"></div>
+            <div class="DisplayFilterContent"><a href="javascript:;" data-toggle="tooltip" title=""></a></div>
+        </div>
+    </div>
+
+    <script>
+        var toggleFlag_WeeklyCollectionChartPartial = true;
+        var dataProvider = [];
+        var weeklyseries = [{
+            field: "Amount",
+            name: "Amount"
+        }];
+        var IsStack = true;
+        var colors = ["#428bca", "#da3b36", "#e67d4a", "#5bc0de", "#5cb85c", "#f2b661"];
+
+        $('#WeeklyCollectionChart').closest('.portlet').find('.reload').click(function () {
+            var urlData = "?customerCode=&itemCode=&categoryCode=&companyCode=&branchCode=" + branchCodes + "&partyTypeCode=&formCode=";
+            $(".btnWeeklyCollectionDatagrid").data('column', 'week');
+            createWeeklyCollectionChart(urlData);
+            RefreshChartFilterControl('@actionPageId');
+        });
+        $('#WeeklyCollectionChart').closest('.portlet').find('.fullscreen').click(function () {
+            if ($(this).hasClass("on")) {
+                $("#WeeklyCollectionChart").data("kendoChart").options.chartArea.height = 350;
+            }
+            else {
+                $("#WeeklyCollectionChart").data("kendoChart").options.chartArea.height = 550;
+            }
+            $("#WeeklyCollectionChart").data("kendoChart").dataSource.read();
+            $("#WeeklyCollectionChart").data("kendoChart").refresh();
+        });
+        $('#WeeklyCollectionChart').closest('.portlet').find('.config').click(function () {
+            $(this).closest('.portlet').css('zIndex', 10040);
+        });
+        $('#WeeklyCollectionChart').closest('.portlet').find('.icon-arrow-down').click(function () {
+            $(this).closest('.portlet').css('zIndex', 10040);
+        });
+
+
+        function createWeeklyCollectionChart(urlData) {
+            urlData = (urlData == undefined) ? "?customerCode=&itemCode=&categoryCode=&companyCode=&branchCode=" + branchCodes + "&partyTypeCode=&formCode=" : urlData;
+            var mainUrl = window.location.protocol + "//" + window.location.host + "/api/SalesDashboard/GetWeekWiseCollectionReport";
+            var daywiseUrl = window.location.protocol + "//" + window.location.host + "/api/SalesDashboard/GetWeekWiseCustomerCollectionReport";
+            var IsDataGrid = $('.btnWeeklyCollectionDatagrid').data("type");
+            reportFilter = reportFilter == undefined ? ReportFilter.filterAdditionalData() : reportFilter;
+            var dataSource = new kendo.data.DataSource({
+                transport: {
+                    read: {
+                        url: mainUrl + urlData, // <-- Get data from here.
+                        dataType: "json", // <-- The default was "jsonp".
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8"
+                    },
+                    parameterMap: function (options, type) {
+                        var paramMap = JSON.stringify($.extend(options, reportFilter));
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+                    }
+                },
+                requestStart: function () {
+                    if (IsDataGrid != "Grid") {
+                        kendo.ui.progress($("#WeeklyCollectionChart"), true);
+                    }
+                },
+                requestEnd: function () {
+                    kendo.ui.progress($("#WeeklyCollectionChart"), false);
+                },
+                sort: {
+                    field: "week",
+                    dir: "asc"
+                },
+                serverSorting: false,
+                serverPaging: true,
+                serverFiltering: false,
+                pageSize: 20,
+                schema: {
+                    parse: function (items) {
+                        var item,
+                            result = [];
+                        var showzerovalue = $("#showzerovalue_weeklyCollection").prop("checked");
+
+                        if (showzerovalue) {
+                            for (var i = 0; i < items.length; i++) {
+                                item = items[i];
+                                result.push(item);
+                            }
+                        }
+                        else {
+                            for (var i = 0; i < items.length; i++) {
+                                item = items[i];
+                                if (item.Collection !== 0 && item.Sales !== 0) {
+                                    result.push(item);
+                                }
+                            }
+                        }
+                        return result;
+                    }
+                }
+            });
+            dataProvider = dataSource;
+            $("#WeeklyCollectionChartPartial .DisplayFilterContent a").text("");
+            // data-grid set option on ceate funciton
+
+            if (IsDataGrid == "Grid") {
+                GenerateDataGrid_WeeklyCollection(dataSource);
+                return;
+            }
+
+            $("#WeeklyCollectionChart").kendoChart({
+                chartArea: {
+                    height: ($("#WeeklyCollectionChartPartial").hasClass("portlet-fullscreen")) ? 550 : 350,
+                },
+                legend: {
+                    position: "bottom"
+                },
+                seriesDefaults: {
+                    type: $("input[name=seriesType_weeklyCollection]:checked").val(),
+                    style: "smooth",
+                    stack: $("#InStack_weeklyCollection").prop("checked"),
+                    labels: {
+                        visible: $("#showlables_weeklyCollection").prop("checked"),
+                        template: "#= FormatSeriesLabels(value)#",
+                        rotation: '270',
+                        padding: {
+                            left: -5
+                        },
+                    },
+                },
+                dataSource: dataSource,
+                onDrag: function (e) {
+                    var chart = e.sender;
+                    var ds = chart.dataSource;
+                    var options = chart.options;
+                    var categoryRange = e.axisRanges.CategoryAxis;
+                    if (categoryRange) {
+                        var xMin = categoryRange.min;
+                        var xMax = categoryRange.max;
+                        options.categoryAxis.min = xMin;
+                        options.categoryAxis.max = xMax;
+                        ds.filter(viewModel.getFilter(xMin, xMax));
+                    }
+                },
+
+                pannable: {
+                    lock: "y"
+                },
+                zoomable: {
+                    mousewheel: {
+                        lock: "y"
+                    },
+                    selection: {
+                        lock: "y"
+                    }
+                },
+                series: weeklyseries,
+                valueAxis: {
+                    line: {
+                        visible: true,
+                    },
+                    labels: {
+                        rotation: 'auto',
+                        template: "#= FormatSeriesLabels(value)#"
+                    },
+                    title: { text: amountFigureType }
+                },
+
+                seriesColors: colors,
+                categoryAxis: {
+                    field: $('.btnWeeklyCollectionDatagrid').data('column'),
+                    labels: {
+                        rotation: -45,
+                        template: "Week: #: value #"
+                    },
+                },
+                tooltip: {
+                    visible: true,
+                    format: "{0}",
+                    template: "Week #= category #: \n #= FormatSeriesLabels(value)#"
+                },
+                dataBound: function (e) {
+                    var data = e.sender.dataSource.view();
+                    var fieldtype = e.sender.options.series[0].field
+                    var max = 0;
+                   var maxValue = getMaxValueFromDataSource(e);
+                    var majorunit = Math.max(6, maxValue / 6);
+                    e.sender.options.valueAxis.majorUnit = majorunit;
+                    e.sender.options.valueAxis.max = maxValue + majorunit;                    
+                     $("#WeeklyCollectionChart").next(".overlay").toggle(maxValue <= 0);
+                },
+                seriesClick: function (e) {
+                    return false;
+                    $('.btnWeeklyCollectionDatagrid').data('column', 'CustomerName')
+                    $('.btnWeeklyCollectionDatagrid').data('week', e.category);
+                    var value = e.category;
+                    var week = e.dataItem.week;
+                    if (week == null) {
+                        return false;
+                    }
+                    reportFilter = reportFilter == undefined ? ReportFilter.filterAdditionalData() : reportFilter;
+                    var dataSourcetest = new kendo.data.DataSource({
+                        transport: {
+                            read: {
+                                url: daywiseUrl + "?week=" + e.category,
+                                dataType: "json", // <-- The default was "jsonp".
+                                type: "POST",
+                                contentType: "application/json; charset=utf-8"
+                            },
+                            parameterMap: function (options, type) {
+                                var paramMap = JSON.stringify($.extend(options, reportFilter));
+                                delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                                delete paramMap.$format; // <-- remove format parameter.
+                                return paramMap;
+                            }
+                        },
+                        requestStart: function () {
+                             kendo.ui.progress($("#WeeklyCollectionChart"), true);
+                        },
+                        requestEnd: function () {
+                            kendo.ui.progress($("#WeeklyCollectionChart"), false);
+                        },
+                        sort: {
+                            field: "CustomerCode",
+                            dir: "asc"
+                        }
+                    });
+                    LoadWeeklyCollectionCustomerChart(dataSourcetest, reportFilter);                   
+                },
+            });
+        }
+
+        function LoadWeeklyCollectionCustomerChart(dataSourcetest, reportFilter) {
+            reportFilter = reportFilter == undefined ? ReportFilter.filterAdditionalData() : reportFilter;
+            $("#WeeklyCollectionChart").kendoChart({
+                chartArea: {
+                    height: ($("#WeeklyCollectionChartPartial").hasClass("portlet-fullscreen")) ? 550 : 350,
+                },
+                legend: {
+                    position: "bottom"
+                },
+                seriesDefaults: {
+                    type: $("input[name=seriesType_weeklyCollection]:checked").val(),
+                    style: "smooth",
+                    stack: $("#InStack_weeklyCollection").prop("checked"),
+                    labels: {
+                        visible: $("#showlables_weeklyCollection").prop("checked"),
+                        template: "#= FormatSeriesLabels(value)#",
+                        rotation: '270',
+                        padding: {
+                            left: -5
+                        },
+                    },
+                },
+                dataSource: dataSourcetest,
+                onDrag: function (e) {
+                    var chart = e.sender;
+                    var ds = chart.dataSource;
+                    var options = chart.options;
+                    var categoryRange = e.axisRanges.CategoryAxis;
+                    if (categoryRange) {
+                        var xMin = categoryRange.min;
+                        var xMax = categoryRange.max;
+                        options.categoryAxis.min = xMin;
+                        options.categoryAxis.max = xMax;
+                        ds.filter(viewModel.getFilter(xMin, xMax));
+                    }
+                },
+
+                pannable: {
+                    lock: "y"
+                },
+                zoomable: {
+                    mousewheel: {
+                        lock: "y"
+                    },
+                    selection: {
+                        lock: "y"
+                    }
+                },
+                series: weeklyseries,
+                valueAxis: {
+                    line: {
+                        visible: true,
+                    },
+                    labels: {
+                        rotation: 'auto',
+                        template: "#= FormatSeriesLabels(value)#"
+                    },
+                    title: { text: amountFigureType }
+                },
+
+                seriesColors: colors,
+                categoryAxis: {
+                    field: $('.btnWeeklyCollectionDatagrid').data('column'),
+                    labels: {
+                        rotation: -45,
+                        template: "#: value #"
+                    },
+                },
+                tooltip: {
+                    visible: true,
+                    format: "{0}",
+                    template: "#= category #: \n #= FormatSeriesLabels(value)#"
+                },
+                dataBound: function (e) {
+                    var data = e.sender.dataSource.view();
+                    var fieldtype = e.sender.options.series[0].field
+                    var max = 0;
+                    if (fieldtype == "Amount") {
+                        jQuery.map(data, function (obj) {
+                            jQuery.map(obj.items, function (objitem) {
+                                if (objitem.Amount > max)
+                                    max = objitem.Amount;
+                            })
+                        });
+                    } else {
+                        jQuery.map(data, function (obj) {
+                            jQuery.map(obj.items, function (objitem) {
+                                if (objitem.Quantity > max)
+                                    max = objitem.Quantity;
+                            })
+                        });
+                    }
+                }
+            });
+             $("#WeeklyCollectionChart").next(".overlay").toggle(max <= 0);
+             //var chart = $("#WeeklyCollectionChart").data("kendoChart");
+             //       type = $("input[name=seriesType_weeklyCollection]:checked").val(),
+             //       chart.options.series[0].field = "Amount";
+             //       chart.setOptions({
+             //           //seriesColors: ["#5cb85c", "#da3b36", "#e67d4a", "#5bc0de", "#428bca", "#f2b661"],
+             //           seriesColors: colors,
+             //           categoryAxis: {
+             //               field: "CustomerName",
+             //               labels: {
+             //                   rotation: -45,
+             //                   template: "#: value #"
+             //               },
+             //               title: { text: "Week: " + $('.btnWeeklyCollectionDatagrid').data('week') }
+             //           },
+             //           tooltip: {
+             //               template: "Customer Name: #= category # \n Amount: #= FormatLabels(value)#"
+             //           },
+             //       });
+             //       chart.setDataSource(dataSourcetest);
+             //       chart.refresh();
+        }
+        function refreshWeeklyCollectionChart() {
+            if ($(".weeklyCollection_options").attr("data-type") == "Grid")// data-grid toogle chart option in data-grid attribute in div
+            {
+                $(".weeklyCollection_options").attr("data-type", "Chart");
+                createWeeklyCollectionChart();
+                return;
+            }
+            var chart = $("#WeeklyCollectionChart").data("kendoChart"),
+                type = $("input[name=seriesType_weeklyCollection]:checked").val(),
+                stack = $("#InStack_weeklyCollection").prop("checked"),
+                fieldtype = $("input[name=fieldType_weeklyCollection]:checked").val(),
+                IsShowLevel = $("#showlables_weeklyCollection").prop("checked");
+            
+            for (var i = 0, length = chart.options.series.length; i < length; i++) {
+                chart.options.series[i].stack = stack;
+            };
+
+            chart.setOptions({
+                //seriesColors: ["#5cb85c", "#da3b36", "#e67d4a", "#5bc0de", "#428bca", "#f2b661"],
+                seriesColors: colors,
+                valueAxis: {
+                    labels: {
+                        rotation: -45
+                    }
+                },
+            });
+
+            if (fieldtype == "Quantity") {
+                chart.setOptions({
+                    //seriesColors: ["#da3b36", "#5cb85c", "#e67d4a", "#5bc0de", "#428bca", "#f2b661"],
+                    seriesColors: colors,
+                });
+                chart.options.series[0].field = "Quantity";
+                chart.options.series[0].name = "Quantity";
+            }
+            else {
+                chart.options.series[0].field = "Amount";
+                chart.options.series[0].name = "Amount";
+            }
+            chart.options.series[0].type = type;
+            chart.options.series[0].labels.visible = IsShowLevel;
+            if (type == "column") {
+                chart.options.series[0].labels.rotation = -90;
+            }
+            if (type == "bar") {
+                chart.options.series[0].labels.rotation = 0;
+            }
+            chart.refresh();
+        }
+
+        $('#apply_@actionPageId').click(function () {
+            ChartFilter('@actionPageId', "createWeeklyCollectionChart");
+        });
+
+        $("#showzerovalue_weeklyCollection").on("change", function () {
+            createWeeklyCollectionChart();
+            RefreshChartFilterControl('@actionPageId');
+        });
+
+        //LoadDataGrid_Category function for data-grid
+        function LoadDataGrid_WeeklyCollection(datasource) {
+             
+            $("#WeeklyCollectionChart").html('');
+            $('.btnWeeklyCollectionDatagrid').data("grid", "Grid");
+            $("#WeeklyCollectionChart").kendoGrid({
+                dataSource: datasource,
+                //height: ($("#WeeklyCollectionChart").hasClass("portlet-fullscreen")) ? 450 : 350,
+                height: 400,
+                groupable: false,
+                sortable: true,
+                //selectable: "multiple",
+               // selectable: "multiple",
+                columns: [{
+                    field: $('.btnWeeklyCollectionDatagrid').data('column'),
+                    title: $('.btnWeeklyCollectionDatagrid').data('column'),
+                },
+                {
+                    field: "Quantity",
+                    title: "Quantity",
+                    format: "{0:n}",
+                    attributes: {
+                        style: "text-align: right;"
+                    },
+                }, {
+                    field: "Amount",
+                    title: "Amount",
+                    format: "{0:n}",
+                    attributes: {
+                        style: "text-align: right;"
+                    },
+                }]
+            });
+        }
+
+        function GenerateDataGrid_WeeklyCollection(datasource) { // data-grid function onClick event of button DataGrid
+            $('.btnWeeklyCollectionDatagrid').data("type", "Grid");
+            var chart = $("#WeeklyCollectionChart").data("kendoChart");
+            if (datasource == undefined || datasource == null) {
+                LoadDataGrid_WeeklyCollection(chart.dataSource);
+            }
+            else {
+                LoadDataGrid_WeeklyCollection(datasource);
+            }
+
+        }
+
+        function WeeklyCollectionChartData() {
+            var urlData = "?customerCode=&itemCode=&categoryCode=&companyCode=&branchCode=" + branchCodes + "&partyTypeCode=&formCode=";
+            $('.btnWeeklyCollectionDatagrid').data("type", "Chart");
+            createWeeklyCollectionChart(urlData);
+            RefreshChartFilterControl('@actionPageId');
+        }
+
+
+        $(".btnWeeklyCollectionDatagrid").click(function () {
+            var datasource = $("#WeeklyCollectionChart").data("kendoChart").dataSource;
+            var type = $('.btnWeeklyCollectionDatagrid').data("type");
+            if (type == "Chart") {
+                //$(".btnWeeklyCollectionDatagrid").data('column', 'CustomerName');
+                GenerateDataGrid_WeeklyCollection(datasource);
+                $('.btnWeeklyCollectionDatagrid').data("type", "Grid");
+            }
+            else if(type=="Grid" && $(".btnWeeklyCollectionDatagrid").data('column')=='CustomerName')
+            {
+                LoadWeeklyCollectionCustomerChart(datasource);
+                $('.btnWeeklyCollectionDatagrid').data("type", "Chart");
+            }
+            else {
+                $(".btnWeeklyCollectionDatagrid").data('column', 'week');
+                WeeklyCollectionChartData(datasource);
+                $('.btnWeeklyCollectionDatagrid').data("type", "Chart");
+            }
+            
+            //$('.btnWeeklyCollectionDatagrid').data("type") == "Chart" ? GenerateDataGrid_WeeklyCollection() : WeeklyCollectionChartData();
+            $("i", this).toggleClass("icon-bar-chart");
+        });
+
+        $(document).ready(function () {
+            $('[title="Download"]').tooltip({
+                trigger: 'hover'
+            });
+            $('.icon-arrow-down.Forthcustom').click(function () {
+                $('.dropdown-menu.custom.Forthslidetoggle').slideToggle(200);
+            });
+            createWeeklyCollectionChart();
+            $(document).bind("kendo:skinChange", createWeeklyCollectionChart);
+            $(".weeklyCollection_options").bind("change", function () {
+                if ($('.btnWeeklyCollectionDatagrid').data("type") == "Chart")
+                    refreshWeeklyCollectionChart();
+                else
+                    chart_grid_option_change("btnWeeklyCollectionDatagrid", "createWeeklyCollectionChart");
+            });
+            $("#showlables_weeklyCollection").bind("change", function () {
+                var temp = $('.btnWeeklyCollectionDatagrid').data("type");
+                $('.btnWeeklyCollectionDatagrid').data("type", "temp");
+                refreshWeeklyCollectionChart();
+                $('.btnWeeklyCollectionDatagrid').data("type", temp);
+            });
+        });
+
+        $("#WeeklyCollectionChart").on('dblclick', ".k-state-selected", function (e) {
+            var grid = $("#WeeklyCollectionChart").data("kendoGrid");
+            var selectedItem = grid.dataItem(grid.select());
+            if (selectedItem.week != null) {
+                var daywiseUrl = window.location.protocol + "//" + window.location.host + "/api/SalesDashboard/GetWeekWiseCustomerCollectionReport";
+                var dataSourcetest = new kendo.data.DataSource({
+                    transport: {
+                        read: {
+                            url: daywiseUrl + "?week=" + selectedItem.week,
+                            dataType: "json", // <-- The default was "jsonp".
+                            type: "POST",
+                            contentType: "application/json; charset=utf-8"
+                        },
+                        parameterMap: function (options, type) {
+                            var paramMap = JSON.stringify($.extend(options, reportFilter));
+                            delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                            delete paramMap.$format; // <-- remove format parameter.
+                            return paramMap;
+                        }
+                    },
+                    sort: {
+                        field: "CustomerCode",
+                        dir: "asc"
+                    }
+                });
+                //
+                $("#WeeklyCollectionChart").html('');
+                $("#WeeklyCollectionChart").kendoGrid({
+                    dataSource: dataSourcetest,
+                    height: ($("#WeeklyCollectionChart").hasClass("portlet-fullscreen")) ? 450 : 350,
+                    groupable: false,
+                    sortable: true,
+                    selectable: "multiple",
+                    columns: [{
+                        field: "CustomerName",
+                        title: "Customer > [Week : " + selectedItem.week + "]",
+                    },
+                    {
+                        field: "Quantity",
+                        title: "Quantity",
+                        format: "{0:n}",
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                    }, {
+                        field: "Amount",
+                        title: "Amount",
+                        format: "{0:n}",
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                    }]
+                });
+            }
+        })
+        //Export 
+        $(".export-pdf").click(function () {
+            var chartid = 'WeeklyCollectionChart';
+            var chart = $("#" + chartid).getKendoChart();
+            var filename = $(this).closest(".portlet-title").find(".custom-modal").html();
+            chart.exportPDF({ paperSize: "auto", margin: { left: "1cm", top: "1cm", right: "1cm", bottom: "1cm" } }).done(function (data) {
+                kendo.saveAs({
+
+                    dataURI: data,
+                    fileName: filename + ".pdf",
+                    proxyURL: "//demos.telerik.com/kendo-ui/service/export"
+                });
+            });
+        });
+
+        $(".export-img").click(function () {
+            var chartid = 'WeeklyCollectionChart';
+            var chart = $("#" + chartid).getKendoChart();
+            var filename = $(this).closest(".portlet-title").find(".custom-modal").html();
+            chart.exportImage().done(function (data) {
+                kendo.saveAs({
+                    dataURI: data,
+                    fileName: filename + ".png",
+                    proxyURL: "//demos.telerik.com/kendo-ui/service/export",
+
+                });
+            });
+        });
+
+        $(".export-svg").click(function () {
+            var chartid = 'WeeklyCollectionChart';
+            var chart = $("#" + chartid).getKendoChart();
+            var filename = $(this).closest(".portlet-title").find(".custom-modal").html();
+            chart.exportSVG().done(function (data) {
+                kendo.saveAs({
+                    dataURI: data,
+                    fileName: filename + ".svg",
+                    proxyURL: "//demos.telerik.com/kendo-ui/service/export"
+                });
+            });
+        });
+
+        function FormatSeriesLabels(value) {
+            if (isNaN(value))
+                value = 0;
+            var decimalPlaces = 2;
+            if (ReportFilter.filterAdditionalData().ReportFilters.AmountRoundUpFilter != "" && ReportFilter.filterAdditionalData().ReportFilters.AmountRoundUpFilter != undefined) {
+                if (ReportFilter.filterAdditionalData().ReportFilters.AmountRoundUpFilter.split(".").length > 1)
+                    decimalPlaces = ReportFilter.filterAdditionalData().ReportFilters.AmountRoundUpFilter.split(".")[1].length;
+                else
+                    decimalPlaces = 0;
+            }
+
+            if (ReportFilter.filterAdditionalData().ReportFilters.AmountFigureFilter == "Lakh") {
+                value = (value / 100000).toFixed(decimalPlaces) + " L";
+            } else if (ReportFilter.filterAdditionalData().ReportFilters.AmountFigureFilter == "Thousand") {
+                value = (value / 1000).toFixed(decimalPlaces) + " K";
+            }
+            else if (ReportFilter.filterAdditionalData().ReportFilters.AmountFigureFilter == "Crore") {
+                value = (value / 10000000).toFixed(decimalPlaces) + " C";
+            }
+            else {
+                value = (value / 100000).toFixed(decimalPlaces) + " L";
+            }
+            return kendo.format("{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString() + "}", value);
+        }
+    </script>
+</div>
+

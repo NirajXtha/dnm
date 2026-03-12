@@ -1,0 +1,868 @@
+﻿@model IEnumerable<string>
+
+
+
+<style>
+    .custom-header {
+        display: block;
+        height: 25px;
+        /*background-color: #865757;*/
+        background-color: rgb(67, 163, 46);
+        color: white;
+        padding: 2px 0px 0px 10px;
+        font-size: 14px;
+    }
+
+    .AmountFigureType {
+        position: absolute;
+        bottom: 103px;
+        right: 32px;
+        font-weight: 600;
+        font-family: sans-serif;
+        font-size: 12px;
+    }
+
+    .DisplayFilterContent {
+        position: absolute;
+        bottom: 107px;
+        right: 40px;
+        font-weight: 500;
+        font-family: sans-serif;
+        font-size: 11px;
+    }
+
+    .column {
+        margin-bottom: -68px;
+    }
+
+    .portlet.portlet-sortable {
+        min-height: 460px;
+    }
+
+
+
+    #reportName {
+        width: 100%;
+        height: 25px;
+    }
+
+
+    .overlay {
+        position: static !important;
+        display: none;
+    }
+
+        .overlay div {
+            position: absolute !important;
+            font-size: 28px !important;
+            text-align: center;
+            transform: translate(70%,-360%);
+        }
+
+
+    .ms-container .ms-list {
+        height: 300px !important;
+    }
+
+
+
+
+
+    button#SaveSetting {
+        float: right;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    .k-grid-excel, .docDownload, .search.pull-right {
+        display: none;
+    }
+
+    #userMultiSelect_taglist > .k-button {
+        float: left;
+        margin: 2px !important;
+    }
+
+    .br {
+        min-height: 2px;
+    }
+
+    .ms-selectable ul li {
+        font-size: 13px !important;
+    }
+
+    .titile_head {
+        padding-top: 10px;
+    }
+
+    .ChartSelection .ms-list li {
+        font-size: 13px !important;
+    }
+</style>
+<link href="~/Content/multi-select-master/css/multi-select.css" rel="stylesheet" />
+<div ng-app="myApp" ng-controller="myCtrl">
+    <div class="main-contain-box">
+        <div class="col-md-12 margin-top-10">
+            <div class="add-panel">
+                <div class="col-md-12">
+                    <div class="page-title titile_head">
+
+                        <div class="caption">
+                            <i class="fa fa-cog fontgreen"></i>
+
+                            <span class="caption-subject bold fontgreen uppercase">Report-Chart Setting </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-sm-6">
+
+                    <div class="portlet light bordered">
+                        <div class="portlet-title tabbable-line">
+                            <div class="caption">
+                                <i class="fa fa-area-chart fontgreen"></i>
+                                <span class="caption-subject bold uppercase fontgreen">Available Charts</span>
+                                <input id="StaticDashboard" type="checkbox" class="setup" value="false" />
+                                Static Dashboard
+                            </div>
+
+                            <button ng-click="saveChartPermission()" id="SaveSetting" class="btn btn-green">Save</button>
+                        </div>
+                        <div class="portlet-body chart_setting">
+                            <!-- swap menu-->
+                            <div class="form-body">
+
+                                <div class="row">
+                                    <div class="col-sm-12 col-md-12">
+                                        <div class="form-group">
+                                            <label class="control-label">Report Name</label>
+
+                                            <input type="text" name="reportName" id="reportName" class="form-control" placeholder="Menu Name" />
+                                            <input type="hidden" name="menuHidden" id="menuHidden" />
+                                        </div>
+                                    </div>
+
+                                    <div class="col-sm-12 col-md-12">
+
+                                        <label class="control-label">Select Users</label>
+
+                                        <select id="userMultiSelect" multiple="multiple" name="userMultiSelect"></select>
+                                    </div>
+
+                                    <div class="col-sm-12 col-md-12">
+                                        <label class="control-label">Select Quick Cap</label>
+                                        <select id="quickCapMultiSelect" multiple="multiple" name="quickCapMultiSelect"></select>
+                                    </div>
+                                    <div class="col-sm-12 col-md-12">
+                                        <label class="control-label">Select Module Code</label>
+                                        <select id="moduleCodeMultiSelect" multiple="multiple" name="moduleCodeMultiSelect"></select>
+                                    </div>
+                                </div>
+                                <hr />
+                            </div>
+                        </div>
+
+
+                        <div class="portlet-body">
+
+                            <!-- swap menu-->
+                            <div class="form-body">
+                                <div class="form-group chart_selectoption">
+                                    <a href='javascript:void();' id='select-all'><i class="fa fa-check-square-o"></i> Select All</a>
+                                    <a href='javascript:void();' id='deselect-all'><i class="fa fa-times"></i> Deselect All</a>
+                                    <input id="filterText" type="text" placeholder="Search here" class="form-control" style="width: 100%" />
+                                    <select multiple="multiple" class="multi-select" id="chart_multi_select" name="ChartAvailable">
+                                        @foreach (var item in Model)
+                                        {
+                                            string checkedStatus = string.Empty;
+                                            if (!string.IsNullOrEmpty(item))
+                                            {
+                                                string[] name = item.Split(';');
+                                                <option class="myOption" value="@name[0]" @checkedStatus>@name[1]</option>
+                                            }
+                                        }
+                                    </select>
+                                    <hr />
+
+                                </div>
+                            </div>
+                            <!-- end: swap menu-->
+
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="col-md-6 col-sm-6">
+                    <div class="portlet light bordered">
+                        <div class="portlet-title tabbable-line">
+                            <div class="caption">
+                                <i class="icon-bubbles font-dark hide"></i>
+                                <span class="caption-subject bold uppercase fontgreen">Chart preview</span><span class="font-sm"> (In case chart loading failure, Please press 'reload' button)</span>
+                                <span id="ajaxBusy" style="display:none">
+                                    <i class="fa fa-spinner fa-spin" style="font-size:24px"></i>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="portlet-body" id="ChartPreview">
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="list-panel">
+                <div class="collapse in" id="demo">
+                    <div class="">
+                        <div class="portlet light bordered ">
+                            <div class="portlet-body form ">
+                                <a class="btn btn-green btn-sm pull-right addBtn" ng-click="AddButtonClickEvent()">
+                                    <i class="fa fa-plus"></i> Add
+                                </a>
+                                <div class="clearfix"></div>
+                                <div class="br"></div>
+                                <div id="grid"></div>
+                                @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+
+
+</script>
+@section Scripts{
+    <script src="http://cdn.kendostatic.com/2014.3.1029/js/jszip.min.js"></script>
+    <script src="@Scripts.Url("~/JS/kendoHelpers.js")"></script>
+    <script src="@Url.Content("~/JS/reportFilter.js?v0")"></script>
+    <script src="@Scripts.Url("~/Content/jquery.singleclick.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoErp.sales.Module/Scripts/KendoChart.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoErp.sales.Module/Scripts/KendoBranchChart.js")"></script>
+    <script src="@Scripts.Url("~/Content/multi-select-master/js/jquery.multi-select.js")"></script>
+    <script src="@Scripts.Url("~/JS/DashboardChartFilter/ChartFilter.js")"></script>
+
+
+
+}
+
+
+<script>
+        var app = angular.module('myApp', []);
+        app.controller('myCtrl', function ($scope, $http) {
+            //grid
+            $("#grid").kendoGrid({
+                dataSource: {
+                    transport: {
+                        read: {
+                            url: window.location.protocol + "//" + window.location.host + "/api/SalesDashboard/GetUserwiseChartList?Module_Code=01",
+                            contentType: "application/json; charset=utf-8",
+                             type: "POST",
+                        },
+                    },
+                    schema: {
+                        parse: function (items) {
+                            var result = _.filter(items, function (x) {
+                                return x.MODULE_ABBR == 'DB';
+                            });
+                            return result;
+                        }
+                    },
+                    error: function (e) {
+                        displayPopupNotification("Sorry error occured while processing data", "error");
+                    },
+                    pageSize: 10,
+                    group: [{ field: "MODULE_EDESC" }, { field: "MENU_EDESC" }]
+                },
+                toolbar: kendo.template($("#toolbar-template").html()),
+               // height: window.innerHeight - 50,
+                sortable: true,
+                reorderable: true,
+                groupable: true,
+                resizable: true,
+                filterable: {
+                    extra: false,
+                    operators: {
+                        number: {
+                            eq: "Is equal to",
+                            neq: "Is not equal to",
+                            gte: "is greater than or equal to	",
+                            gt: "is greater than",
+                            lte: "is less than or equal",
+                            lt: "is less than",
+                        },
+                        string: {
+
+                            eq: "Is equal to",
+                            neq: "Is not equal to",
+                            startswith: "Starts with	",
+                            contains: "Contains",
+                            doesnotcontain: "Does not contain",
+                            endswith: "Ends with",
+                        },
+                        date: {
+                            eq: "Is equal to",
+                            neq: "Is not equal to",
+                            gte: "Is after or equal to",
+                            gt: "Is after",
+                            lte: "Is before or equal to",
+                            lt: "Is before",
+                        }
+                    }
+                },
+                columnMenu: true,
+                columnMenuInit: function (e) {
+                    wordwrapmenu(e);
+                    checkboxItem = $(e.container).find('input[type="checkbox"]');
+                },
+                pageable: {
+                    refresh: true,
+                    pageSizes: 10,
+                    buttonCount: 5
+                },
+                pageable: true,
+                dataBound: function (o) {
+                    var grid = o.sender;
+                    if (grid.dataSource.total() == 0) {
+                        var colCount = grid.columns.length;
+                        $(o.sender.wrapper)
+                            .find('tbody')
+                            .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                        displayPopupNotification("No Data Found Given Date Filter.", "info");
+                    }
+                    else {
+                        var g = $("#grid").data("kendoGrid");
+                        for (var i = 0; i < g.columns.length; i++) {
+                            g.showColumn(i);
+                        }
+                        $("div.k-group-indicator").each(function (i, v) {
+                            g.hideColumn($(v).data("field"));
+                        });
+                    }
+                    $('div').removeClass('.k-header k-grid-toolbar');
+
+                    CollapseAll();
+                    $("#grid a.k-icon.k-i-expand").first().trigger("click");
+                },
+                columns: [
+                    {
+                        field: "USER_ID",
+                        title: "User",
+                    },
+                    {
+                        field: "MENU_EDESC",
+                        title: "Reports",
+                    },
+                    {
+                        field: "QuickCap",
+                        title:"Quick Widgets",
+                    },
+                    {
+                        field: "MODULE_EDESC",
+                        title: "Module Name",
+                    },
+                    {
+                        field: "ORDER_NO",
+                        title: "Charts",
+                        template: function (data) {
+                            var list = data.ORDER_NO.split(',');
+                            var message = [];
+                            $.each(list, function (i, obj) {
+                                message.push(obj.split("$")[1]);
+                            })
+                            return message.join("<br />");
+                        }
+                    },
+
+                    {
+                        title: "Operation",
+                        width:"100px",
+                        template: " <a class='fa fa-edit editAction' onclick='UpdateChart($(this))' title='Edit'></a> &nbsp;&nbsp;  <a class='fa fa-times text-danger deleteAction' onclick='DeleteChart($(this))' title='Remove'></a> "
+                    }
+
+
+
+                ]
+            });
+
+
+            $scope.saveChartPermission = function () {
+
+                var reportName = $("#reportName").val();
+                var userIds = [];
+                var userIdItems = [];
+                var quickWidgets = [];
+                var multiselect = $("#userMultiSelect").data("kendoMultiSelect");
+                var multiQuicks = $("#quickCapMultiSelect").data("kendoMultiSelect");
+                userIds = multiselect.value();
+                userIdItems = multiselect.dataItems();
+                quickWidgets = multiQuicks.value();
+                var chartList = new Array;
+                $("#chart_multi_select option").each(function () {
+                    if ($(this)[0].selected)
+                        chartList.push($(this).val().trim() + "$" + $(this).text().trim());
+                });
+
+                //validation start here
+                if (_.isEmpty(reportName)) {
+                    displayPopupNotification("Enter ReportName", "warning");
+                    $("#reportName").focus();
+                    return;
+                } else if (userIds.length < 1) {
+                    displayPopupNotification("Select atleast one user", "warning");
+                    $("#userMultiSelect").focus();
+                    return;
+                }
+                else if (chartList.length < 1) {
+                    displayPopupNotification("Select atleast one chart", "warning");
+                    $("#userMultiSelect").focus();
+                    return;
+                }
+
+                var moduleName = reportName.trim().replace(/ /g, '_') + "_chart";
+                var StaticDasboard = "Dynamic";
+                if ($("#StaticDashboard").is(':checked'))
+                {
+                    StaticDasboard = "Static";
+                }
+                var userChartData =
+                    {
+                        Users: userIds,
+                        Charts: chartList,
+                        ModuleName: moduleName,
+                        StaticDasboard: StaticDasboard,
+                        QuickWidgets: quickWidgets
+                    }
+                $http({
+                    method: 'POST',
+                    url: window.location.protocol + "//" + window.location.host + "/Main/SaveUserChartPermission",
+                    data: { userChartPermission: userChartData },
+                    type: "POST"
+                }).then(function (result) {
+                    $("#reportName").val("");
+                    multiselect.value([]);
+                    multiQuicks.value([]);
+                    $('#chart_multi_select').multiSelect('deselect_all');
+
+
+                    var status = "Save";
+                    var gridData = $("#grid").data("kendoGrid").dataSource.data();
+                    $.each(gridData, function (i,obj) {
+                        if (obj.MENU_OBJECT_NAME == moduleName)
+                        {
+                            status = "Update";
+                            return false;
+                        }
+                    });
+
+
+
+                    if (status == "Update")
+                    {
+                        var moduleRouteName = $("#moduleCodeMultiSelect").data("kendoMultiSelect").dataItem().RouteName;
+                        // UPDAET Menu
+                        var Menu = {
+                            MENU_NO: $("#menuHidden").val(),
+                            MENU_EDESC: reportName,
+                            MENU_OBJECT_NAME: moduleName,
+                            FULL_PATH: "/" + moduleRouteName + "/Dashboard/index?id=" + moduleName,
+                            VIRTUAL_PATH: moduleRouteName + "/Dashboard/index?id=" + moduleName,
+                            ICON_PATH: "fa fa-bar-chart",
+                            PRE_MENU_NO: "02",
+                            GROUP_SKU_FLAG: "I",
+                            MODULE_ABBR: "DB",
+                            MODULE_CODE: $("#moduleCodeMultiSelect").data("kendoMultiSelect").dataItem().ModuleCode,
+                            COLOR: "#808080",
+                            CREATED_BY: "1"
+                        };
+
+                        $http({
+                            method: "post",
+                            url: "/MenuSetting/UpdateMenu",
+                            data: JSON.stringify(Menu),
+                            dataType: "json"
+                        }).success(function () {
+                            $.each(userIdItems, function (i, obj) {
+                                Menu.MENU_NO = $("#menuHidden").val();
+                                Menu.USER_NO = obj.id;
+                                $http({
+                                    method: "post",
+                                    url: "/MenuControl/AddMenuControl",
+                                    data: JSON.stringify(Menu),
+                                    dataType: "json"
+                                });
+                            });
+
+                            displayPopupNotification("Updated", "success");
+                            $("#reportName").prop('disabled', false);
+                            $("#SaveSetting").text("Save");
+                            $("#grid").data("kendoGrid").dataSource.read();
+                            $("html, body").animate({ scrollTop: $(".addBtn").offset().top - 50 }, "slow");
+
+                        });
+
+                    }
+                    else {
+                        // Add Menu
+                        var moduleRouteName = $("#moduleCodeMultiSelect").data("kendoMultiSelect").dataItem().RouteName;
+                        var Menu = {
+                            MENU_EDESC: reportName,
+                            MENU_OBJECT_NAME: moduleName,
+                            FULL_PATH: "/" + moduleRouteName + "/Dashboard/index?id=" + moduleName,
+                            VIRTUAL_PATH:  moduleRouteName + "/Dashboard/index?id=" + moduleName,
+                            ICON_PATH: "fa fa-bar-chart",
+                            PRE_MENU_NO: "02",
+                            GROUP_SKU_FLAG: "I",
+                            MODULE_ABBR: "DB",
+                            MODULE_CODE: $("#moduleCodeMultiSelect").data("kendoMultiSelect").dataItem().ModuleCode,
+                            COLOR: "#808080",
+                            CREATED_BY: "1"
+                        };
+
+                        $http({
+                            method: "post",
+                            url: "/MenuSetting/AddMenu",
+                            data: JSON.stringify(Menu),
+                            dataType: "json"
+                        }).success(function (menuNO) {
+                            $.each(userIdItems, function (i, obj) {
+                                Menu.MENU_NO = menuNO;
+                                Menu.USER_NO = obj.id;
+                                $http({
+                                    method: "post",
+                                    url: "/MenuControl/AddMenuControl",
+                                    data: JSON.stringify(Menu),
+                                    dataType: "json"
+                                });
+                            });
+
+
+                            displayPopupNotification("Saved", "success");
+                            $("#reportName").prop('disabled', false);
+                            $("#SaveSetting").text("Save");
+                            $("html, body").animate({ scrollTop: $(".addBtn").offset().top - 50 }, "slow");
+                            $("#grid").data("kendoGrid").dataSource.read();
+                        });
+
+
+                    }
+
+
+
+                }, function (result) {
+                    displayPopupNotification("Error", "error");
+                });
+
+            }
+
+
+
+            $scope.AddButtonClickEvent = function () {
+                $("html, body").animate({ scrollTop: 0 }, "slow");
+            }
+
+        });
+
+
+        var amountFigureType = "";
+        var branchCodes = '';
+        var companyCodes = '';
+        $(document).ready(function () {
+            $('#chart_multi_select').multiSelect({
+                selectableHeader: "<div class='custom-header'>Available Charts</div>",
+                selectionHeader: "<div class='custom-header'>Selected Charts</div>",
+                dblClick: true,
+                afterSelect: function (values) {
+
+                },
+                afterDeselect: function (values) {
+                   // $("#ChartPreview").html("deselect" + values);
+                },
+                cssClass: "ChartSelection",
+            })
+
+            var clicks = 0;
+            $(document).on('click', '.ChartSelection li', function (e) {
+                $('#ajaxBusy').show();
+                var values = $(this).find("span").text();
+                var data = { ChartName: values };
+                $.getJSON("@Url.Action("PreviewChart","Main",new { Area=""})", data).done(function (result) {
+
+                    console.log(result);
+                    $("#ChartPreview").html(result);
+                }).complete(function (result, status) {
+                    if (result.status == '200') {
+                        $("#ChartPreview").html(result.responseText);
+                    }
+                    $('#ajaxBusy').hide();
+                    $('[data-toggle="tooltip"]').tooltip({ html: true });
+                });
+                //-------------------------
+
+            });
+
+
+            ///for user multiselect
+            var autoCompletedataSource = new kendo.data.DataSource({
+                transport: {
+                    read: {
+                        url: window.location.protocol + "//" + window.location.host + "/Main/GetLoginUserList",
+                        dataType: "json",
+                        contentType: "application/json; charset=utf-8"
+                    }
+                }
+            });
+
+            $('#userMultiSelect').kendoMultiSelect({
+                dataSource: autoCompletedataSource,
+                dataTextField: "login_edesc",
+                dataValueField: "login_code",
+                height: 600,
+                headerTemplate: '<div class="col-md-offset-4"><strong>Users...</strong></div>',
+                placeholder: "Select Users...",
+                autoClose: false,
+                autoBind: true,
+                dataBound: function () {
+
+                    var current = this.value();
+                    this._savedOld = current.slice(0);
+                    //class is taken run time so slimscroll goes here --Dushant
+                    $('.ms-list').slimScroll({
+
+                    });
+
+                }
+
+
+            });
+
+            var quickCapdataSource = new kendo.data.DataSource({
+                transport: {
+                    read: {
+                        url: window.location.protocol + "//" + window.location.host + "/Api/WebQuickcapSetting/GetAllQuickCapSettings",
+                        dataType: "json",
+                        contentType: "application/json; charset=utf-8"
+                    }
+                }
+            });
+
+            $('#quickCapMultiSelect').kendoMultiSelect({
+                dataSource:quickCapdataSource,
+                dataTextField: "QUICKCAP_TITLE",
+                dataValueField: "QUICKCAP_EDESC",
+                height: 600,
+                headerTemplate: '<div class="col-md-offset-4"><strong>Quick Cap...</strong></div>',
+                placeholder: "Select Quick Cap...",
+                autoBind: true,
+                dataBound: function (e) {
+                    debugger;
+                    var current = this.value();
+                    this._savedOld = current.slice(0);
+                    //class is taken run time so slimscroll goes here --Dushant
+                    $('.ms-list').slimScroll({
+
+                    });
+
+                }
+            });
+
+            var moduleCodedataSource = new kendo.data.DataSource({
+                transport: {
+                    read: {
+                        url: window.location.protocol + "//" + window.location.host + "/api/QueryBuilder/GetModuleList",
+                        dataType: "json",
+                        contentType: "application/json; charset=utf-8"
+                    }
+                },
+                schema: {
+                    data: function (data) {
+                        return data.data;
+                    }
+                }
+            });
+
+            $('#moduleCodeMultiSelect').kendoMultiSelect({
+                dataSource: moduleCodedataSource,
+                dataTextField: "FriendlyName",
+                dataValueField: "ModuleCode",
+                height: 600,
+                headerTemplate: '<div class="col-md-offset-4"><strong>Module Code...</strong></div>',
+                placeholder: "Select Module Code...",
+
+            });
+            $("#moduleCodeMultiSelect").data("kendoMultiSelect").options.maxSelectedItems = 1;
+            $('#userMultiSelect_listbox').slimScroll({
+                //height: '100px',
+                railVisible: true,
+                alwaysVisible: true
+
+            });
+
+            $("html, body").animate({ scrollTop: $(".addBtn").offset().top - 50 }, "slow");
+        });
+
+        function UpdateChart(evt) {
+            debugger;
+            var grid = $("#grid").data("kendoGrid");
+            var row = evt[0].closest("tr");
+            var item = grid.dataItem(row);
+            $("#reportName").val(item.MENU_EDESC);
+            $("#reportName").prop('disabled', true);
+            $("#moduleCodeMultiSelect").data("kendoMultiSelect").value([item.MODULE_CODE]);
+            $("#userMultiSelect").data("kendoMultiSelect").value([]);
+            $("#userMultiSelect").data("kendoMultiSelect").value([item.USER_ID]);
+            //$('#quickCapMultiSelect').data("kendoMultiSelect").value([]);
+            if (item.QuickCap != null) {
+                splitedCap = item.QuickCap.split(',');
+                $('#quickCapMultiSelect').data("kendoMultiSelect").value(splitedCap);
+            }
+            $("#SaveSetting").text("Update");
+
+            var list = item.ORDER_NO.split(',');
+            var selected = [];
+            $.each(list, function (i, obj) {
+                selected.push(obj.split("$")[0]);
+            })
+
+            $("#chart_multi_select").val(selected);
+            $("#chart_multi_select").multiSelect("refresh");
+
+            $("#menuHidden").val(item.MENU_NO);
+            $("html, body").animate({ scrollTop: 0 }, "slow");
+        }
+        function DeleteChart(evt)
+        {
+            bootbox.confirm({
+                message: "Do you want to delete this item? This cannot be undone.",
+                buttons: {
+                    cancel: {
+                        label: 'Cancel'
+                    },
+                    confirm: {
+                        label: 'Confirm'
+                    }
+                },
+                callback: function (result) {
+                    if (result) {
+                        var grid = $("#grid").data("kendoGrid");
+                        var row = evt[0].closest("tr");
+                        var item = grid.dataItem(row);
+                        var data = {
+                            MENU_NO: item.MENU_NO,
+                            MENU_EDESC: item.MENU_EDESC,
+                            MENU_OBJECT_NAME: item.MENU_OBJECT_NAME,
+                            USER_ID: item.USER_ID,
+                        }
+                        $.ajax({
+                            type: 'POST',
+                            contentType: "application/json; charset=utf-8",
+                            dataType: "json",
+                            url: window.location.protocol + "//" + window.location.host + "/api/SalesDashboard/DeleteUserwiseChartList",
+                            data: JSON.stringify(data),
+                            success: function () {
+                                //CALCULATE USERID FROM LOGINCODE
+                                debugger;
+                                var userList = $("#userMultiSelect").data("kendoMultiSelect").dataSource.data();
+                                var userId = _.filter(userList, function (x) {
+                                    return x.login_code == item.USER_ID;
+                                })[0];
+                                $.ajax({
+                                    type: 'GET',
+                                    contentType: "application/json; charset=utf-8",
+                                    dataType: "json",
+                                    url: "/MenuControl/DeleteMenuControl",
+                                    data: { menuNo: item.MENU_NO, userNo: userId.id },
+                                });
+                                displayPopupNotification("Item Deleted Successfully", "success");
+                                $("#grid").data("kendoGrid").dataSource.read();
+                            }
+                        });
+                    }
+
+                }
+            });
+
+
+        }
+        function FormatLabels(value) {
+            return kendo.format("{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString() + "}", value);
+        }
+
+
+        function chart_grid_option_change(btnClass, method) {
+            $this = $("." + btnClass);
+            $this.data("type", "Chart");
+            window[method]();
+            $this.find('i').removeClass('icon-bar-chart');
+            $this.attr('data-original-title', 'Grid');
+        }
+        function CollapseAll() {
+
+            var elementsA = document.querySelectorAll("#grid a.k-icon.k-minus");
+            if (elementsA.length > 0) {
+
+                for (var i = 0; i < elementsA.length; i++) {
+                    $(elementsA[i]).trigger("click");
+                }
+                return;
+            }
+            var elementsB = document.querySelectorAll("#grid a.k-icon.k-i-collapse");
+            for (var i = 0; i < elementsB.length; i++) {
+                $(elementsB[i]).trigger("click");
+            }
+        }
+        function ExpandAll() {
+            var elementsB = document.querySelectorAll("#grid a.k-icon.k-i-expand");
+            if (elementsB.length > 0) {
+
+                for (var i = 0; i < elementsB.length; i++) {
+                    $(elementsB[i]).trigger("click");
+                }
+                return;
+            }
+            var elementsA = document.querySelectorAll("#grid a.k-icon.k-plus");
+            for (var i = 0; i < elementsA.length; i++) {
+                $(elementsA[i]).trigger("click");
+            }
+        }
+
+
+        $('#select-all').click(function () {
+            $('#chart_multi_select').multiSelect('select_all');
+            return false;
+        });
+        $('#deselect-all').click(function () {
+            $('#chart_multi_select').multiSelect('deselect_all');
+            return false;
+        });
+
+        $.extend($.expr[':'], {
+            'containsi': function (elem, i, match, array) {
+                return (elem.textContent || elem.innerText || '').toLowerCase()
+                    .indexOf((match[3] || "").toLowerCase()) >= 0;
+            }
+        });
+        $("#filterText").keyup(function (e) {
+            var filterText = $(this).val();
+            if (filterText !== "") {
+                var searchList = $($("#ms-chart_multi_select .ms-list")[0]);
+                searchList.find('li').hide()
+                searchList.find(".myOption:containsi(" + filterText + ")").each(function () {
+                    $(this).show();
+                });
+            }
+            else {
+                var searchList = $($("#ms-chart_multi_select .ms-list")[0]);
+                searchList.find('li').show()
+            }
+
+        });
+
+</script>
+
+
+

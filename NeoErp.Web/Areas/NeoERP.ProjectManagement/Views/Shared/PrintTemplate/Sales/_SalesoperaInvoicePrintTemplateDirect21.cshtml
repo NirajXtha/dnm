@@ -1,0 +1,249 @@
+﻿@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>
+    ();
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    @*<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>*@
+    @*<link href="~/Content/bootstrap4.min.css" rel="stylesheet" />*@
+    <link href="@Styles.Url(" ~/Areas/NeoERP.ProjectManagement/Content/bootstrap4.min.css")" rel="stylesheet" media="print" />
+    <link href="@Styles.Url(" ~/Areas/NeoERP.ProjectManagement/Content/bootstrap4.min.css")" rel="stylesheet" />
+    <style>
+        .bg-black {
+            background: #000;
+            color: #fff;
+            display: inline;
+            padding: 2px 2px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        h6.tpin span:not(first-child) {
+            border-left: 1px solid #000;
+            padding: 2px;
+        }
+
+        h6.tpin span:last-child {
+            border-right: 1px solid #000;
+        }
+
+        h6.tpin span {
+            border-top: 1px solid #000;
+            border-bottom: 1px solid #000;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 {
+            margin-bottom: .5rem !important;
+        }
+
+        .inv-label {
+            display: flex;
+            /*width: calc(100% - 155px);
+            justify-content: flex-end;*/
+        }
+
+        .inv-data {
+            display: flex;
+            /*width: 155px;
+            text-align: right;
+            justify-content: flex-end;*/
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <div class="text-center">
+            <h6>CASH/CREDIT/MEMO</h6>
+            <h1>Aaju Holding Pvt. Ltd</h1>
+            <h6>DurbarMarg, Kathmandu</h6>
+        </div>
+        <div class="col-lg-12">
+            <h6 class="tpin">
+                TPIN:<span>6</span><span>0</span><span>9</span><span>8</span><span>0</span><span>8</span><span>2</span><span>3</span><span>8</span>
+
+                @*<span>
+                    609808238
+                </span>*@
+            </h6>
+        </div>
+        <div class="col-lg-12 text-center">
+            <h5 class="bg-black" id="TaxINvoiceTest"> {{taxinvoice}}</h5>
+        </div>
+        <div class="clearfix"></div>
+        <div class="col-sm-6 float-left">
+            @*<span>Ref No.:</span>
+            <span>{{BillNumber}}</span>*@
+        </div>
+
+        <div class="col-sm-6 float-right text-right d-flex justify-content-end">
+            <span>Invoice Number:</span>
+            <div class="inv-data" ng-repeat="element in MasterFormElement | orderBy: 'SERIAL_NO'" ng-if="element.COLUMN_NAME.indexOf('REMARKS') == -1">
+                <div ng-if="element.COLUMN_NAME.indexOf('NO') !== -1">
+                    <div ng-if="element.COLUMN_NAME.indexOf('SALES_NO') !== -1">
+                        <div><span>{{masterModels[element.COLUMN_NAME]}}</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <div class="clearfix"></div>
+        <div class="col-sm-6 float-left col-xs-4">
+            <span>M/s.:</span>
+            <span>{{masterModels.CUSTOMER_CODE}}</span>
+        </div>
+
+
+        <div class="col-sm-6 float-left text-right d-flex justify-content-end">
+
+            <span>Transaction Date:</span>
+
+            <div ng-repeat="element in MasterFormElement | orderBy: 'SERIAL_NO'" ng-if="element.COLUMN_HEADER.indexOf('Date') != -1">
+                <div>
+                    <span>{{masterModels[element.COLUMN_NAME]|date:'yyyy-MM-dd'}}</span>
+                    <span>[{{getNepaliDate(masterModels[element.COLUMN_NAME])}}]</span>
+                </div>
+            </div>
+
+          
+        </div>
+
+
+        <div class="clearfix"></div>
+
+        <div class="col-sm-6 float-left col-xs-4">
+            <span>Address:</span>
+            <span>Kathmandu, Nepal</span>
+        </div>
+
+
+        <div class="col-sm-6 float-left text-right d-flex justify-content-end">
+            <span>Invoice Issue Date:</span>
+            <span>{{todayDateOpera|date:'yyyy-MM-dd'}}</span>
+
+        </div>
+        <div class="clearfix"></div>
+
+
+
+
+        <div class="col-sm-6 float-left">
+            Buyer's TPIN:<span>
+                {{masterModels.TPIN_VAT_NO
+                }}
+
+            </span>
+        </div>
+        <div class="col-sm-6 float-left" style="float:left; text-align:right">
+            <span id="TaxInvoiceCopy">
+                {{taxinvoice1}}
+            </span>
+			<span>{{printcounttext}}</span>
+        </div>
+        <div class="clearfix"></div>
+        <div class="col-lg-12">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <td>S.N</td>
+                        <td>Description</td>
+                        <td>Per</td>
+                        <td>Qty</td>
+                        <td>Rate</td>
+                        <td>Amount (Rs.)</td>
+                    </tr>
+                   
+                </thead>
+                <tbody>
+                    <tr ng-repeat="(key,row) in print_body_col | orderBy: 'SERIAL_NO'">
+                        <td><div><span>{{$index+1}}</span></div></td>
+                        <td ng-repeat="item in row.element | orderBy: 'SERIAL_NO'">
+
+                            <div ng-if="item.COLUMN_NAME==='ITEM_CODE'">
+                                <span>{{childModels[key][item.COLUMN_NAME]}}</span>
+                            </div>
+                            <div ng-if="item.COLUMN_NAME=='MU_CODE'">
+                                <span>{{childModels[key][item.COLUMN_NAME]}}</span>
+                            </div>
+                            <div ng-if="item.COLUMN_NAME==='QUANTITY'" style="text-align:-webkit-center;">
+                                <span>{{childModels[key][item.COLUMN_NAME]}}</span>
+                            </div>
+                            <div ng-if="item.COLUMN_NAME==='UNIT_PRICE'" style="text-align:-webkit-center;">
+                                <span>{{childModels[key][item.COLUMN_NAME]}}</span>
+                            </div>
+
+                            <div ng-if="item.COLUMN_NAME==='TOTAL_PRICE'" style="text-align:right;">
+                                <span>{{childModels[key][item.COLUMN_NAME]}}</span>
+                            </div>
+
+
+                        </td>
+
+                    </tr>
+                    <tr>
+                        <td rowspan="8" colspan="3">Amount in words: <span>Rs. {{amountinword}} Only.</span></td>
+                        <td colspan="2">Sub Total</td>
+                        <td>{{SUB_TOTAL}}</td>
+
+
+                    </tr>
+                    @*<tr><td colspan="2">Sub Total</td><td>{{SUB_TOTAL}}</td><td></td></tr>*@
+                    @*<tr><td colspan="2">Discount</td><td></td><td></td></tr>*@
+                    @*<tr><td colspan="2">Total Amount</td><td></td><td></td></tr>
+                    <tr><td colspan="2">Service Charge</td><td></td><td></td></tr>
+                    <tr><td colspan="2">Taxable Amount</td><td></td><td></td></tr>*@
+                    <tr ng-repeat="(key, value) in ChargeList">
+                        <td colspan="2">
+                            <div ng-if="ChargeList[key]['CHARGE_EDESC']!=''">
+                                <div><span>{{value.CHARGE_EDESC}}</span></div>
+                            </div>
+                        </td>
+
+                        <td>
+                            <div ng-if="ChargeList[key]['CHARGE_AMOUNT']!=''">
+                                <div><span>{{value.CHARGE_AMOUNT}}</span></div>
+                            </div>
+                            <div ng-if="ChargeList[key]['CHARGE_AMOUNT']===0 || ChargeList[key]['CHARGE_AMOUNT']<0">
+                                <div><span>0.00</span></div>
+                            </div>
+
+                        </td>
+
+
+
+                    </tr>
+                    <tr><td colspan="2">Grand Total</td><td>{{adtotal}}</td></tr>
+                </tbody>
+
+            </table>
+        </div>
+        <div class="clearfix"></div>
+        <div class="col-sm-6 float-left">
+            Thank You. Visit Again<br>
+            E.& O.E
+        </div>
+        <div class="col-sm-6 float-left">
+            Sold by <br />
+            <span  style="border-bottom:1px dotted #000;"></span>
+        </div>
+        <div class="clearfix"></div>
+        <div class="col-sm-6 float-left">
+            User Name: @workingContent.CurrentUserinformation.login_code
+        </div>
+        <div class="col-sm-6 float-left text-right">
+            Print Date and Time: {{printTodayDateTime|date:'yyyy-MM-dd HH:mm:ss'}}
+        </div>
+    </div>
+</body>
+</html>

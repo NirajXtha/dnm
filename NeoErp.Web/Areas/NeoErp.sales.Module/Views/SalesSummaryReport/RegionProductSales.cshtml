@@ -1,0 +1,216 @@
+﻿@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+<style>
+    div.k-grid-header th.k-header,
+    tr.k-filter-row>th {
+        text-align: center;
+    }
+
+    .page-bar {
+        margin-bottom: 0px !important;
+    }
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+
+    /*#grid thead{
+             font-size:11px;
+        }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-content-locked {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .k-grid-header {
+        font-size: 11px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    .red {
+        color: green !important;
+    }
+</style>
+<div class="page-content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+            @*<li>
+            <i class="fa fa-home"></i>
+            <a href="/sales/SalesHome/Dashboard">Home</a>
+            <i class="fa fa-angle-right"></i>
+            </li>*@
+            @*<li>
+            <a href="#/Purchase/PurchaseVatRegister">Goods Receipt Notes</a>
+            <i class="fa fa-angle-right"></i>
+            </li>*@
+            @*<li>
+            <a href="#/Purchase/PurchaseVatRegister">Goods Receipt Notes</a>
+            <i class="fa fa-angle-right"></i>
+            </li>*@
+
+        </ul>
+        <div class="page-toolbar">
+
+
+            @Html.Partial("~/Views/Shared/Controls/ComposeMail.cshtml")
+
+
+
+        </div>
+
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div id="grid"></div>
+                        @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+<script type="text/javascript">
+    var fileMailSender = new ManualEmailSender({
+        GridName: "grid",
+        GridRefreshTriggerName: "RunQuery",
+        reportName: "RegionProductSales",
+    });
+</script>
+<script>
+    var companyName = @Html.Raw(Json.Encode(workingContent.CurrentUserinformation.company_name));
+    var branchName = @Html.Raw(Json.Encode(workingContent.CurrentUserinformation.branch_name));
+
+    $(document).ready(function () {
+
+        var dataSource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: {
+                    url: window.location.protocol + "//" + window.location.host + "/api/SalesSummaryReportApi/GetRegionProductSales",
+                    dataType: "json",
+                    type: "GET",
+                    contentType: "application/json; charset=utf-8"
+                },
+            },
+            pageSize: 100,
+            error: function (e) {
+                displayPopupNotification("Sorry error occured while processing data", "error");
+            },
+            serverFiltering: false,
+            serverAggregates: false,
+            schema: {
+                parse: function (data) {
+                    var newDataSource = [];
+                    var MaxLength = data.Region.length > data.ProductGp.length ? data.Region.length : data.ProductGp.length;
+                    for (let i = 0; i < MaxLength; i++) {
+                        var IfRegion = typeof (data.Region[i]) != 'undefined';
+                        var IfProduct = typeof (data.ProductGp[i]) != 'undefined';
+                        var newItem = {
+                            RegionName: IfRegion ? data.Region[i].RegionName : '',
+                            RQty: IfRegion ? data.Region[i].Qty : '',
+                            RPercent: IfRegion ? data.Region[i].SalesPercent : '',
+                            Product: IfProduct ? data.ProductGp[i].Product : '',
+                            PQty: IfProduct ? data.ProductGp[i].Qty : '',
+                            PAmount: IfProduct ? data.ProductGp[i].GrossAmount : '',
+                            PPercent: IfProduct ? data.ProductGp[i].GpPercent : '',
+                        }
+                        newDataSource.push(newItem);
+                    }
+                    return newDataSource;
+                }
+            },
+            serverPaging: false,
+        });
+
+        var grid = $("#grid").kendoGrid({
+            dataSource: dataSource,
+            toolbar: kendo.template($("#toolbar-template").html()),
+            excel: {
+                fileName: "Region Product Sales.xlsx",
+                allPages: true
+            },
+            resizable: true,
+            columns: [
+                {
+                    title: "Region Wise Sales",
+                    columns: [
+                        {
+                            field: "RegionName",
+                            title: "Region",
+                        }, {
+                            field: "RQty",
+                            title: "Qty",
+                            attributes: { style: "text-align: right;" },
+                        }, {
+                            field: "RPercent",
+                            title: "Sales %eg",
+                            template: '#:kendo.toString(RPercent, "n")#',
+                            attributes: { style: "text-align: right;" },
+                        },
+                    ]
+                }, {
+                    title: "Product Wise GP Analysis",
+                    columns: [
+                        {
+                            field: "Product",
+                            title: "Product",
+                        }, {
+                            field: "PQty",
+                            title: "Qty",
+                            attributes: { style: "text-align: right;" },
+                        }, {
+                            field: "PAmount",
+                            title: "Gross Amount",
+                            attributes: { style: "text-align: right;" },
+                        }, {
+                            field: "PPercent",
+                            title: "GP %eg",
+                            template: '#:kendo.toString(PPercent, "n")#',
+                            attributes: { style: "text-align: right;" },
+                        },
+                    ]
+                }
+            ]
+        });
+
+        UniversalGridPrint.init({
+            reportName: "Region Product Sales",
+            companyName: companyName,
+            branchName: branchName
+        });
+
+        fileMailSender.init();
+
+    });
+</script>

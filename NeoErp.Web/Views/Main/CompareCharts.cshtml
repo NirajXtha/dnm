@@ -1,0 +1,615 @@
+﻿@using NeoErp.Core.Models;
+@{
+    ViewBag.Title = "Dashboard";
+    var mainmenu = ViewBag.showmenu as string;
+
+    Layout = "~/Views/Shared/_LayoutNew.cshtml";
+
+    var myAreaName = string.Empty;
+    object areaObj;
+    if (ViewContext.RouteData.Values.TryGetValue("area", out areaObj))
+    {
+        myAreaName = areaObj.ToString();
+    }
+    else
+    {
+        myAreaName = "NeoErp.sales.Module";
+    }
+
+
+    List<string> listChartAvailable_TD = new List<string>();
+    bool UserChartSettingAvailable = false;
+    string fullWidth = "full-width";
+    if (TempData["AvailableChart"] != null)
+    {
+        listChartAvailable_TD = (List<string>
+            )TempData["AvailableChart"];
+        UserChartSettingAvailable = true;
+        fullWidth = "full-width";
+    }
+}
+
+
+
+<style>
+    .page-content-wrapper .page-content {
+        padding: 7px 20px 10px 20px !important;
+    }
+
+    a.k-button.k-button-icontext.k-grid-excel {
+        float: right;
+    }
+
+    a.k-button.k-button-icontext.k-grid-pdf {
+        float: right;
+    }
+
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+                     font-size:11px;
+                }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    [data-toggle=buttons] > .btn .radio {
+        display: none;
+    }
+
+
+    .AmountFigureType {
+        position: absolute;
+        bottom: 103px;
+        right: 32px;
+        font-weight: 600;
+        font-family: sans-serif;
+        font-size: 12px;
+    }
+
+    .DisplayFilterContent {
+        position: absolute;
+        bottom: 107px;
+        right: 32px;
+        font-weight: 400;
+        font-family: sans-serif;
+        font-size: 11px;
+    }
+
+    .fiscalYearFilterContent {
+        position: absolute;
+        top: 13px;
+        left: -89px;
+    }
+
+    .column {
+        margin-bottom: -68px;
+    }
+
+    .chart-custom {
+        max-width: 350px;
+    }
+
+    .k-center {
+        text-align: center;
+    }
+
+    .portlet.portlet-sortable {
+        min-height: 460px;
+    }
+
+    .overlay div {
+        position: absolute;
+        font-size: 34px;       
+        top: 40%;
+        right:30%;
+    }
+
+    .overlay {
+        display: none;
+    }
+    .main-view-box
+    {
+        background-color:#fff;
+    }
+    .paddingtop
+    {
+        padding-top:10px;
+    }
+    body{
+         font-family: "Open Sans",sans-serif;
+    }
+</style>
+@if (mainmenu != "false")
+{
+    fullWidth = "";
+    <div class="page-sidebar-wrapper" ng-app="mydashboardApp" ng-controller="dynamicCtrl">
+        <!-- DOC: Set data-auto-scroll="false" to disable the sidebar from auto scrolling/focusing -->
+        <!-- DOC: Change data-auto-speed="200" to adjust the sub menu slide up/down speed -->
+        @Html.Partial("~/Areas/NeoErp.sales.Module/Views/Shared/_menuSales.cshtml")
+    </div>
+}
+
+
+
+<div class="page-content-wrapper" id="operationContent">
+    <div class="page-content @fullWidth">
+        <!-- BEGIN SAMPLE PORTLET CONFIGURATION MODAL FORM-->
+        <!-- /.modal -->
+        <div class="page-bar">
+            <ul class="page-breadcrumb">
+                <li>
+                    <i class="fa fa-home"></i>
+                    <a href="/main/DashBoard">Home</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>
+               
+                <li>
+                    <a href="#">Compare Chart</a>
+                    @*<i class="fa fa-angle-right"></i>*@
+                </li>
+
+            </ul>
+            <div class="page-toolbar">
+                <div class="btn-group pull-right button_space">
+                    @*<a class="btn btn-circle btn-icon-only btn-default" data-toggle="collapse" href="#demo">
+                            <i class="fa fa-angle-down"></i>
+                        </a>*@
+
+
+                    @*<div id="CompareDashboard">
+                        <div class="DisplayFilterContent fiscalYearFilterContent"><a href="javascript:;" data-toggle="tooltip" data-placement="bottom" title=""></a></div>
+                    </div>*@
+
+
+                    @Html.Partial("~/Views/Shared/Controls/DashboardChartFilter/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+               {
+                   ShowCustomerFilter = true,
+                   ShowProductFilter = true,
+                   ShowPartyTypeFilter = false,
+                   ShowCategoryFilter = false,
+                   ShowLocationFilter = false,
+                   ShowDocumentFilter = false,
+                   ShowCompanyFilter = false,
+                   ShowFiscalYearFilter = true,
+                   ShowBranchFilter = true,
+                   IsPopUp = true,
+                   ActionPageId = "CompareDashboard"
+               })
+
+                </div>
+            </div>
+            @*<a href="~/Areas/NeoErp.sales.Module/Views/SalesHome/_MonthlySalesCollectionPartial.cshtml">~/Areas/NeoErp.sales.Module/Views/SalesHome/_MonthlySalesCollectionPartial.cshtml</a>*@
+        </div>
+        <div class="clearfix">
+
+        </div>
+        @*<div class="row margin-top-10">
+                <div id="dashboardWidget">
+
+                </div>
+
+            </div>*@
+
+        
+            <div class="main-view-box clearfix paddingtop">
+                <div class="ui-sortable " id="sortable_portlets">
+
+                    @{
+
+                        var chartArr = new List<string>();
+                        var list = ViewBag.widgets;
+                        if (list != null && list.Count > 0)
+                        {
+                            foreach (var item in list)
+                            {
+
+                                string fullName = "~/Areas/NeoErp.sales.Module/Views/SalesHome/_" + item.Split(';')[0] + ".cshtml";
+                                chartArr.Add(fullName);
+                                @*<div class="col-md-6 column sortable">
+                                        @try
+                                        {
+                                            @Html.Partial(fullName)
+                                        }
+                                        catch { }
+                                        <div class="portlet portlet-sortable-empty"> </div>
+                                    </div>*@
+                            }
+
+                        }
+                        else
+                        {
+                            //default widgets
+                            <div class="col-md-12">
+                                <div class="well text-warning">Contact your administrator to request permission to use Chart</div>
+                            </div>
+
+                        }
+                    }
+
+                </div>
+            </div>
+
+     
+
+
+
+        <!-- END PAGE HEADER-->
+        <!-- BEGIN PAGE CONTENT-->
+        <!-- END PAGE CONTENT-->
+    </div>
+</div>
+
+
+
+@section Scripts{
+    <script src="@Scripts.Url("~/Content/MainTheme/assets/global/plugins/amcharts/amcharts/amcharts.js")"></script>
+    <script src="@Scripts.Url("~/Content/MainTheme/assets/global/plugins/amcharts/amcharts/serial.js")"></script>
+    <script src="@Scripts.Url("~/Content/MainTheme/assets/global/plugins/amcharts/amcharts/pie.js")"></script>
+    <script src="@Scripts.Url("~/Content/MainTheme/assets/global/plugins/amcharts/amcharts/radar.js")"></script>
+    <script src="@Scripts.Url("~/Content/MainTheme/assets/global/plugins/amcharts/amcharts/themes/light.js")"></script>
+    <script src="@Scripts.Url("~/Content/MainTheme/assets/global/plugins/amcharts/amcharts/themes/patterns.js")"></script>
+    <script src="@Scripts.Url("~/Content/MainTheme/assets/global/plugins/amcharts/amcharts/themes/chalk.js")"></script>
+    <script src="@Scripts.Url("~/Content/MainTheme/assets/global/plugins/amcharts/ammap/ammap.js")"></script>
+    <script src="@Scripts.Url("~/Content/MainTheme/assets/global/plugins/amcharts/ammap/maps/js/worldLow.js")"></script>
+    <script src="@Scripts.Url("~/Content/MainTheme/assets/global/plugins/amcharts/amstockcharts/amstock.js")"></script>
+
+    <script src="@Scripts.Url("~/Content/MainTheme/Protle.dragger.js")" type="text/javascript"></script>
+    <script src='@Scripts.Url("~/Areas/"+myAreaName+"/Scripts/sammy-admin-sales.js?v=2")'></script>
+    @*
+        <script src='@Scripts.Url("~/Content/MainTheme/assets/admin/pages/scripts/charts-amcharts.js")'></script>*@
+    <script src='@Scripts.Url("~/Areas/"+myAreaName+"/Scripts/charts.js?v658965")'></script>
+    <script src="http://cdn.kendostatic.com/2014.3.1029/js/jszip.min.js"></script>
+    <script src="@Scripts.Url("~/JS/kendoHelpers.js")"></script>
+    <script src="@Scripts.Url("~/JS/reportFilter.js")"></script>
+    <script src="@Scripts.Url("~/Content/jquery.singleclick.js")"></script>
+    <script src="@Scripts.Url("~/Areas/"+myAreaName+"/Scripts/KendoChart.js")"></script>
+    <script src="@Scripts.Url("~/Areas/"+myAreaName+"/Scripts/KendoBranchChart.js")"></script>
+    <script src="@Scripts.Url("~/JS/DashboardChartFilter/ChartFilter.js")"></script>
+    <script src="@Scripts.Url("~/Content/MainTheme/assets/global/plugins/jquery-slimscroll/jquery.slimscroll.min.js")"></script>
+
+
+    <script>
+        var amountFigureType = "";
+        var branchCodes = '';
+        var companyCodes = '';
+        var chartList = ('@string.Join(",",chartArr)').split(',');
+        var totalChartList = "";
+        var moduleCode = '01';
+        var mod = angular.module('mydashboardApp', ['kendo.directives']);
+        mod.controller('dynamicCtrl', ['$scope', 'menuService', function ($scope, menuService) {
+            var dynamicMenu = menuService.getData();
+            dynamicMenu.then(function (response) {
+                $scope.dynamicMenus = response.data;
+                $scope.dynamicDashboardMenus = response.data;
+                $scope.colors = [
+                    '#C66', '#C93', '#F66', '#36C', '#C96', '#633', '#069', '#F90', '#6C3', '#666', '#a136c7', '#2583ce', '#da2c2c',
+                    '#00b4ac', '#009dd8', '#25b846', '#da2c2c', '#f27022', '#6438c8', '#fbbc11', '#2582cc'
+                ];
+
+                $scope.randomColor = function (parentIndex, index) {
+                    $($($(".erp-iconlist")[parentIndex]).find("ul").first().find("li")[index]).find("i").css('background-color', _.shuffle($scope.colors)[0]);
+                }
+
+            });
+        }]);
+        mod.service('menuService', ['$http', '$q', '$timeout', function ($http, $q, $timeout) {
+            return {
+                GetDynamicMenu: function () {
+                    var deferred = $q.defer()
+                    $timeout(function () {
+                        $http.get('/api/SalesHome/GetDynamicMenu?ModuleCode=' + moduleCode)
+                            .success(function (result) {
+                                defer.resolve(result);
+                            });
+                    }, 2000);
+                    return deferred.promise;
+                },
+                getData: function () {
+                    // This could be $http or any other promise returning service.
+                    // Use a deferred and $timeout to simulate a network request.
+                    var deferred = $q.defer()
+
+                    $timeout(function () {
+                        var results = $http.get('/api/SalesHome/GetDynamicMenu?ModuleCode=' + moduleCode)
+                            .success(function (data) {
+                                return data.data;
+                            });
+                        deferred.resolve(results);
+                    }, 2000);
+
+                    return deferred.promise;
+                },
+            };
+        }]);       
+
+
+        $("#loadAdvancedFilters_CompareDashboard").bind('click', function () {
+            updateSettingOnAllChart();
+            ChartFilter('CompareDashboard', refreshAllCompareChart, true);
+        });
+
+
+        var div = '<div class="clear-fix br"></div>' +
+                    '<div class="row">' +
+                        '<div class="col-md-3 col-sm-4">' +
+                            '<div class="dateOption_CompareDashboard">' +
+                                '<label>' +
+                                    '<input type="radio" id="ADFormat" name="DateFormat_CompareDashboard" value="AD" /> AD' +
+                                '</label>' +
+                                '<label>' +
+                                    '<input type="radio" id="BSFormat" name="DateFormat_CompareDashboard" checked="checked" value="BS" /> BS' +
+                                '</label>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="col-md-6 col-sm-6">' +
+                            '<div class="input-group">' +
+                                '<div class="icheck-inline">' +
+                                    '<label>' +
+                                        '<input id="showLabel_CompareDashboard" type="checkbox" autocomplete="off" /> Show Labels' +
+                                    '</label>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
+        //  $("#filterModal_CompareDashboard > .modal-dialog > .modal-content > .slimScrollDiv > .modal-body").append(div);
+        $("#filterModal_CompareDashboard > .modal-dialog > .modal-content > .modal-body").append(div);
+        $("#filterModal_CompareDashboard > .modal-dialog > .modal-content > .modal-footer").prepend('<button class="btn btn-primary" data-dismiss="modal" onclick="saveCompareChartFilter();" title="Save Setting"><i class="fa fa-save"></i> Save & Apply </button>');
+    </script>
+
+    <script>
+        //functions
+        function saveCompareChartFilter() {
+            var pageId = "CompareDashboard";
+            var data = {
+                ChartName: pageId,
+                ChartType: "none",
+                FieldValue: '["' + $("#FiscalYearMultiSelect_CompareDashboard").data("kendoMultiSelect").value().join('","') + '"]',
+                DateFormat: $("input[name=DateFormat_" + pageId + "]:checked").val(),
+                ShowLabel: $("#showLabel_" + pageId).prop("checked"),
+                IsStack: false
+            }
+
+            $.ajax({
+                type: 'POST',
+                data: data,
+                url: window.location.protocol + "//" + window.location.host + "/Main/SaveUserWiseChartConfig",
+                success: function (xhr, status) {
+                    displayPopupNotification("Setting Saved", "success");
+                    $("#loadAdvancedFilters_CompareDashboard").trigger("click");
+                },
+                error: function (xhr, status) {
+                    displayPopupNotification("Error", "error");
+                }
+            });
+
+
+
+        }
+
+        function refreshAllCompareChart() {
+            //load all fiscal year chart
+
+            //to load saleschartFiscalYear // deu to diffrent pattern used ,have to code manually
+            try {
+                if (jQuery.isFunction(loadDataSource_SalesChartFiscalYear)) {
+                    loadDataSource_SalesChartFiscalYear();
+                }
+            } catch (e) { }
+
+            $(".portlet.portlet-sortable").each(function (i, data) {
+                if ($($(".portlet.portlet-sortable")[i]).is(":visible") == false)
+                    return;
+                var functionName = window[$(this).attr("id")].init;
+                if (jQuery.isFunction(functionName)) {
+                    functionName();
+                }
+            });
+        }
+
+        function updateSettingOnAllChart() {
+            //change if AD/BS is changed Globally
+            var checkedFormat = $("input[name=DateFormat_CompareDashboard]:checked").val();
+            var showLabel = $("#showLabel_CompareDashboard").prop("checked");
+            var selectedChart = getFilteredCompareChart("CompareDashboard");
+            console.log(selectedChart);
+            //var selectedChart = $("#compareChartMultiselect").data("kendoMultiSelect").value();
+            if (selectedChart.length > 0)
+                $(".portlet.portlet-sortable").parent().hide(); //hide all chart first
+            else
+                $(".portlet.portlet-sortable").parent().show();
+            //show only chart is selected
+            if (selectedChart.length > 0)
+                $.each(selectedChart, function (i, chart) {
+                    $("#" + chart).parent().show();
+                });
+            $(".portlet.portlet-sortable").each(function (i, data) {
+                if ($($(".portlet.portlet-sortable")[i]).is(":visible") == false)
+                    return;
+                var pageId = $(this).attr("id");
+                //for dateFormat
+                $("input[name=DateFormat_" + pageId + "]").filter('[value=' + checkedFormat + ']').prop('checked', true);
+                //for showLabel
+                $("#showLabel_" + pageId).prop("checked", showLabel);
+            });
+        }
+
+        function chart_grid_option_change(btnClass, method) {
+            $this = $("." + btnClass);
+            $this.data("type", "Chart");
+            window[method]();
+            $this.find('i').removeClass('icon-bar-chart');
+            $this.attr('data-original-title', 'Grid');
+        }
+
+        function FormatLabels(value) {
+            return kendo.format("{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString() + "}", value);
+        }
+
+
+        var loadChartSync = function () {
+            $.each(chartList, function (i, chart) {
+                $.ajax({
+                    url: window.location.protocol + "//" + window.location.host + "/Main/LoadPartialCharts",
+                    data: { chartName: chart },
+                    async: false,
+                    complete: function (data) {
+                        var generateHtml = '<div class="col-md-6 column sortable">' + data.responseText +
+                                                  '<div class="portlet portlet-sortable-empty"></div>' +
+                                                '</div>';
+                        $("#sortable_portlets").append(generateHtml);
+
+                    }
+
+                });
+            });
+             $("#sortable_portlets").find(".well").addClass("sr-only");
+            $("#loadAdvancedFilters_CompareDashboard").trigger("click");
+        }
+
+        function checkPendingRequest(callback) {
+            if ($.active > 0) {
+                window.setTimeout(checkPendingRequest, 1000, callback);
+            }
+            else {
+                callback();
+            }
+        };
+    </script>
+    <script>
+        $(".export-pdf").click(function () {
+            var chartid = $(this).data("id");
+            var chart = $("#" + chartid).getKendoChart();
+            var filename = $(this).closest(".portlet-title").find(".custom-modal").html();
+
+            chart.exportPDF({ paperSize: "auto", margin: { left: "1cm", top: "1cm", right: "1cm", bottom: "1cm" } }).done(function (data) {
+                kendo.saveAs({
+                    dataURI: data,
+                    fileName: filename + ".pdf",
+                    proxyURL: "//demos.telerik.com/kendo-ui/service/export"
+                });
+            });
+        });
+
+        $(".export-img").click(function () {
+            var chartid = $(this).data("id");
+            var chart = $("#" + chartid).getKendoChart();
+            var filename = $(this).closest(".portlet-title").find(".custom-modal").html();
+            chart.exportImage().done(function (data) {
+                kendo.saveAs({
+                    dataURI: data,
+                    fileName: filename + ".png",
+                    proxyURL: "//demos.telerik.com/kendo-ui/service/export",
+                });
+            });
+        });
+
+        $(".export-svg").click(function () {
+            var chartid = $(this).data("id");
+            var chart = $("#" + chartid).getKendoChart();
+            var filename = $(this).closest(".portlet-title").find(".custom-modal").html();
+            chart.exportSVG().done(function (data) {
+                kendo.saveAs({
+                    dataURI: data,
+                    fileName: filename + ".svg",
+                    proxyURL: "//demos.telerik.com/kendo-ui/service/export"
+                });
+            });
+        });
+        $('.modal').on('shown.bs.modal', function () {
+            $('.modal-backdrop').css('zIndex', 10030);
+        })
+        $(".btnGrid").on("click", function () {
+            if ($(this).find('i').hasClass('icon-bar-chart')) {
+                $(this).attr('data-original-title', 'Chart');
+                $("#" + $(this).closest(".portlet").find(".portlet-body > div > div").attr("id")).css({ 'border': '1px solid rgb(197,197,197)' });
+            }
+            else {
+                $(this).attr('data-original-title', 'Grid');
+                $("#" + $(this).closest(".portlet").find(".portlet-body > div > div").attr("id")).css({ 'border': '0px solid #fff' });
+            }
+        });
+    </script>
+}
+
+<script>
+    $(function () {
+
+
+
+        //load compare setting config
+        var pageId = "CompareDashboard";
+        $.ajax({
+            type: 'POST',
+            data: { 'ChartName': pageId },
+            async: false,
+            url: window.location.protocol + "//" + window.location.host + "/Main/GetUserWiseChartConfig",
+            success: function (data) {
+                if (data != "") {
+                    var multiselect = $("#FiscalYearMultiSelect_" + pageId).data("kendoMultiSelect");
+                    //for dateFormat
+                    $("input[name=DateFormat_" + pageId + "]").filter('[value=' + data.DateFormat + ']').prop('checked', true);
+                    //for fieldValue
+                    multiselect.value(JSON.parse(data.FieldValue)),
+                    //for showLabel
+                    data.ShowLabel == "true" ? $("#showLabel_" + pageId).prop("checked", true) : $("#showLabel_" + pageId).prop("checked", false);
+
+
+
+                }
+            }
+        });
+        debugger;
+        $("#sortable_portlets").html('');
+        $("#sortable_portlets").append(' <div class="col-md-12">' +
+                               '<div class="well text-warning">Loading Compare Charts <i class="fa fa-spinner fa-spin"></i></div>' +
+                           '</div>');
+        checkPendingRequest(loadChartSync);       
+
+
+        $('.k-multiselect-wrap.k-floatwrap').slimScroll({
+            opacity: '0.4',
+            railVisible: true,
+        });
+        $('.k-list.k-reset').slimScroll({
+            //height: '100px',
+            railVisible: true,
+            alwaysVisible: true
+
+        });
+
+        //var loadtooltip = function () {
+        //    $('[data-toggle="tooltip"]').tooltip({ html: true });
+        //}
+        //checkPendingRequest(loadtooltip);
+
+    });
+
+
+
+
+
+
+
+
+
+
+</script>

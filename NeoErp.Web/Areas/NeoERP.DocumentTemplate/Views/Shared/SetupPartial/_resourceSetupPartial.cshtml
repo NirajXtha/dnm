@@ -1,0 +1,505 @@
+﻿
+
+
+
+<style>
+    .k-animation-container, .k-widget, .k-widget *, .k-animation-container *, .k-widget ::before, .k-animation-container ::after, .k-block .k-header, .k-list-container {
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
+    }
+
+    .k-grid-content {
+        height: 285px !important
+    }
+
+    #kGrid {
+        height: 427px !important;
+    }
+
+    .addcolor {
+        color: #ffffff;
+    }
+
+    #ndp-nepali-box {
+        z-index: 10051 !important; /* big number to be above modal */
+    }
+</style>
+<div class="portlet box green-box main">
+
+    <div class="portlet-title">
+        <div class="caption ng-binding">
+            <i class="fa fa-list-alt"></i>
+            <span class="caption-subject  bold uppercase">
+                Resource Setup
+            </span>
+        </div>
+        <div class="actions">
+            <a class="btn dark-green btn-sm addcolor" id="createbtn" ng-click="showModalForNew(event,'N')" ng-disabled="treenodeselected!= 'Y'">
+                <i class="fa fa-plus"></i> NEW
+            </a>
+        </div>
+    </div>
+
+
+    <div class="portlet-body">
+        <div class="row">
+            <div class="col-md-offset-8 col-md-4 search_box">
+                <div class="topsearch" style="display:block;">
+                    <a class="btn-linkicon fa fa-search" style="margin-right: -13px;" ng-click="BindGrid('All')"></a>
+                    <input class="k-textbox txtSearchString" type="text" id="restxtSearchString" ng-model="txtSearchString" name="search" placeholder="enter search text..." style="margin-left: 13px;" />
+                </div>
+            </div>
+        </div>
+        <kendo-grid id="kGrid" options="resourceChildGridOptions" k-rebind="resourceChildGridOptions">
+        </kendo-grid>
+    </div>
+
+
+    <div class="modal fade-out" id="resourceModal" data-backdrop="static" tabindex="-1" data-width="1000">
+        <div class="modal-dialog modal-medium-large popup">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true" next-on-tab>&times;</button>
+                    <h4 class="modal-title">
+                        <span class="fa fa-file"></span>
+                        Resource Model
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <form name="resourcesArrform" class="form-horizontal" novalidate>
+                        @*<div class="row">
+
+                            </div>*@
+                        <div class="row">
+                            <div class="col-sm-6 col-md-6 col-lg-6">
+                                <div class="form-group">
+                                    <label class="control-label col-sm-4 col-md-4 col-lg-4">Under Group:</label>
+                                    <div class="col-sm-8 col-md-8 col-lg-8">
+                                        <select id="masterresourcecode" kendo-drop-down-list
+                                                k-options="resourceGroupOptions"
+                                                style="width: 100%" disabled></select>
+                                    </div>
+                                </div>
+                            </div>
+                            @*<div class="col-sm-6 col-md-6 col-lg-6">
+                                    <div class="form-group">
+                                        <fieldset class="fieldset-box">
+                                            <legend>Record Type</legend>
+                                            <div class="col-sm-8 col-md-8 radiobox">
+                                                <span class="col-sm-6 col-md-6 col-lg-6"><input type="radio" name="resourcesflag" ng-model="resourcesArr.GROUP_SKU_FLAG" value="G" ng-disabled="groupchilddisabled"> Group</span>
+                                                <span class="col-sm-6 col-md-6 col-lg-6"><input type="radio" name="resourcesflag" ng-model="resourcesArr.GROUP_SKU_FLAG" value="I" ng-disabled="groupchilddisabled"> Individual</span>
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                </div>*@
+                            <div class="col-sm-6 col-md-6 col-lg-6">
+                                <div class="form-group">
+
+                                    <label class="control-label col-sm-4 col-md-4 col-lg-4" for="element">Shortcut:</label>
+                                    <div class="col-sm-8 col-md-8 col-lg-8">
+                                        <input type="text" id="newresourcescode" name="NEW_RESOURCE_CODE" ng-model="resourcesArr.RESOURCE_CODE" class="form-control" readonly />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-6 col-lg-6">
+                                <div class="form-group">
+                                    <input type="hidden" id="budgetcode" name="BUDGET_CODE" ng-model="resourcesArr.RESOURCE_CODE" class="form-control" />
+                                    <label class="control-label col-sm-4 col-md-4 col-lg-4" for="element">
+                                        In English:<span style="color:red" ng-show="resourcesArrform.resourcesengname.$invalid">
+                                            <span ng-show="resourcesArrform.resourcesengname.$error.required">*</span>
+                                        </span>
+                                    </label>
+                                    <div class="col-sm-8 col-md-8 col-lg-8">
+                                        <input type="text" id="resourcesengname" name="resourcesengname" ng-model="resourcesArr.RESOURCE_EDESC" class="form-control" required />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-6 col-lg-6">
+                                <div class="form-group">
+                                    <label class="control-label col-sm-4 col-md-4 col-lg-4" for="element">In Nepali:</label>
+                                    <div class="col-sm-8 col-md-8 col-lg-8">
+                                        <input type="text" id="resourcesnepname" name="RESOURCE_NDESC" ng-model="resourcesArr.RESOURCE_NDESC" class="form-control" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-sm-6 col-md-6 col-lg-6">
+                                <div class="form-group">
+
+                                    <label class="control-label col-sm-4 col-md-4 col-lg-4" for="element">Remarks:</label>
+                                    <div class="col-sm-8 col-md-8 col-lg-8">
+                                        <input type="text" id="remarks" name="REMARKS" ng-model="resourcesArr.REMARKS" class="form-control" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-6 col-lg-6">
+                                <div class="form-group">
+                                    <label class="control-label col-sm-4 col-md-4 col-lg-4" for="element">
+                                        Resource Type:<span style="color:red" ng-show="resourcesArrform.resourcesType.$invalid">
+                                            <span ng-show="resourcesArrform.resourcesType.$error.required">*</span>
+                                        </span>
+                                    </label>
+                                    <div class="col-sm-8 col-md-8 col-lg-8">
+                                        <select id="resourcesType" name="resourcesType" k-ng-model="resourcesArr.RESOURCE_TYPE" ng-model="resourcesArr.RESOURCE_TYPE" style="width: 100%" required>
+                                            <option value="" selected>--Select Resource type--</option>
+                                            <option value="PL">Plant</option>
+                                            <option value="DG">DG</option>
+                                            <option value="VE">Vehicle</option>
+                                            <option value="EA">NEA</option>
+                                        </select>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <div class="col-sm-6 col-md-6 col-lg-6">
+                                <div class="form-group">
+                                    <label class="control-label col-sm-6 col-md-6 col-lg-6" for="isSerial">Is Individual or Serial items:</label>
+                                    <div class="col-sm-2 col-md-2 col-lg-2">
+                                        <input type="checkbox" id="isSerial"
+                                               name="IS_SERIAL_ITEM"
+                                               ng-model="resourcesArr.IS_INDIVIDUAL_OR_SERIAL_ITEM"
+                                               ng-change="onSerialItemToggle(resourcesArr.IS_INDIVIDUAL_OR_SERIAL_ITEM)" />
+                                    </div>
+                                </div>
+                            </div>
+
+
+                        </div>
+
+
+
+                        <!-- Dynamic Detail Rows Section (Visible only when checked) -->
+                        <div class="form-group" ng-show="!resourcesArr.IS_INDIVIDUAL_OR_SERIAL_ITEM">
+                            <div class="col-sm-12">
+                                <table class="table table-bordered  table-condensed">
+                                    <thead>
+                                        <tr class="active">
+                                            @*<th>Purchase Date</th>
+                                                <th>Effective Date</th>
+                                                <th>Output Capacity</th>
+                                                <th>Unit</th>*@
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        <!-- Purchase Date -->
+                                        <tr>
+                                            <td>
+                                                <label class="col-sm-4 control-label">Purchase Date:</label>
+                                                <div class="col-sm-3">
+                                                    <input id="englishdatedocument1" kendo-date-picker
+                                                           ng-model="resourcesArr.PURCHASE_DATE"
+                                                           k-options="monthSelectorOptionsSingle1"
+                                                           data-toggle="tooltip" title="Select date" />
+                                                </div>
+
+                                                <div class="col-sm-3">
+                                                    <input type="text" id="nepaliDate51"
+                                                           ng-model="resourcesArr.PURCHASE_DATE_BS"
+                                                           data-checkfor="englishdatedocument"
+                                                           onchange="ConvertNepToEng(this)"
+                                                           data-toggle="tooltip" title="Select date"
+                                                           class="form-control nepali-calendar" />
+                                                    <i class="fa fa-calendar form-control-feedback calendar-icon-2"
+                                                       data-toggle="tooltip" title="Select date"></i>
+                                                </div>
+
+                                            </td>
+                                        </tr>
+                                        <!-- Effective Date -->
+                                        <tr>
+                                            <td>
+                                                <label class="col-sm-4 control-label">Effective Date:</label>
+                                                <div class="col-sm-3">
+                                                    <input id="englishdatedocument12" kendo-date-picker
+                                                           ng-model="resourcesArr.EFFECTIVE_DATE"
+                                                           k-options="monthSelectorOptionsSingle12"
+                                                           data-toggle="tooltip" title="Select date" />
+                                                </div>
+                                                <div class="col-sm-3">
+                                                    <input type="text" id="nepaliDate512"
+                                                           ng-model="resourcesArr.EFFECTIVE_DATE_BS"
+                                                           data-checkfor="englishdatedocument"
+                                                           onchange="ConvertNepToEng(this)"
+                                                           data-toggle="tooltip" title="Select date"
+                                                           class="form-control nepali-calendar2" />
+                                                    <i class="fa fa-calendar form-control-feedback calendar-icon-2"
+                                                       data-toggle="tooltip" title="Select date"></i>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <!-- Output Capacity -->
+                                        <tr>
+                                            <td>
+                                                <label class="col-sm-4 control-label">Output Capacity:</label>
+                                                <div class="col-sm-6">
+                                                    <input type="number" class="form-control input-sm"
+                                                           ng-model="resourcesArr.OUTPUT_CAPACITY" />
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <!-- Unit -->
+                                        <tr>
+                                            <td>
+                                                <label class="col-sm-4 control-label">Unit:</label>
+                                                <div class="col-sm-6">
+                                                    <select ng-model="resourcesArr.UNIT"
+                                                            ng-options="unit.MU_CODE as unit.MU_EDESC for unit in unitList"
+                                                            class="form-control input-sm">
+                                                        <option value="">--Select Unit--</option>
+                                                    </select>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+
+
+
+                                </table>
+
+                            </div>
+                        </div>
+
+
+
+
+
+
+                        <!-- Dynamic Detail Rows Section (Visible only when checked) -->
+                        <div class="form-group" ng-show="resourcesArr.IS_INDIVIDUAL_OR_SERIAL_ITEM">
+                            <div class="col-sm-12">
+                                <table class="table table-bordered table-striped table-condensed">
+                                    <thead>
+                                        <tr class="active">
+                                            <th>Unique Name</th>
+                                            <th>Serial No</th>
+                                            <th>Purchase Date</th>
+                                            <th>Effective Date</th>
+                                            <th>Output Capacity</th>
+                                            <th>Unit</th>
+                                            <th style="width: 50px;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr ng-repeat="detail in resourceDetails">
+                                            <td>
+                                                <input type="text" class="form-control input-sm" ng-model="detail.RESOURCE_UNIQUE_NAME" />
+                                            </td>
+                                            <td>
+                                                <input type="text" class="form-control input-sm" ng-model="detail.SERIAL_NO" />
+                                            </td>
+                                            <td style="width:185px;">
+
+                                                <input id="englishdatedocument1" kendo-date-picker
+                                                       ng-model="detail.PURCHASE_DATE"
+                                                       k-options="monthSelectorOptionsSingle1"
+                                                       data-toggle="tooltip" title="Select date"
+                                                       class="form-control input-sm" />
+
+                                            </td>
+                                            <td style="width:185px;">
+
+                                                <input id="englishdatedocument1" kendo-date-picker
+                                                       ng-model="detail.EFFECTIVE_DATE"
+                                                       k-options="monthSelectorOptionsSingle1"
+                                                       data-toggle="tooltip" title="Select date"
+                                                       class="form-control input-sm" />
+
+                                                @*<input type="date" class="form-control input-sm" ng-model="detail.EFFECTIVE_DATE" />
+                                                    <input type="date" class="form-control input-sm" ng-model="detail.EFFECTIVE_DATE" />*@
+                                            </td>
+                                            <td>
+                                                <input type="number" class="form-control input-sm" ng-model="detail.OUTPUT_CAPACITY" />
+                                            </td>
+                                            <td>
+                                                <select ng-model="detail.UNIT"
+                                                        ng-options="unit.MU_CODE as unit.MU_EDESC for unit in unitList"
+                                                        class="form-control">
+                                                    <option value="">--Select Unit--</option>
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <button type="button" class="btn btn-danger btn-xs" ng-click="removeDetailRow($index)">
+                                                    <i class="glyphicon glyphicon-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+
+                                <!-- Add Row Button -->
+                                <button type="button" class="btn btn-success btn-sm" ng-click="addDetailRow()">
+                                    <i class="glyphicon glyphicon-plus"></i> Add More
+                                </button>
+                            </div>
+                        </div>
+
+
+
+
+                    </form>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-green" id="savedocumentformdata" ng-click="saveNewResource(resourcesArrform.$valid)" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Resourceing..." href="javascript:;">
+                        <i class="fa fa-floppy-o"></i> {{saveupdatebtn}}
+                    </button>
+                    <button type="button" class="btn btn-sm btn-default" data-dismiss="modal" ng-click="Cancel()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="@Scripts.Url(" ~/JS/reportFilter.js")"></script>
+
+<script>
+    $(document).ready(function () {
+        $(".topsearch").hide();
+        $("#restxtSearchString").keyup(function () {
+            var val = $('#restxtSearchString').val();
+            $("#kGrid").data("kendoGrid").dataSource.filter({
+                logic: "or",
+                filters: [
+                    {
+                        field: "RESOURCE_EDESC",
+                        operator: "contains",
+                        value: val
+                    },
+                    {
+                        field: "REMARKS",
+                        operator: "contains",
+                        value: val
+                    },
+                    {
+                        field: "CREATED_BY",
+                        operator: "contains",
+                        value: val
+                    },
+                    {
+                        field: "CREATED_DATE",
+                        operator: "contains",
+                        value: val
+                    }
+                ]
+            });
+        });
+        setTimeout(function () {
+
+            $('.k-list').slimScroll({
+                height: '250px'
+            });
+        }, 100);
+        $('.nav-tabs a').on('click', function (e) {
+            e.preventDefault();
+            //if ($(this).attr('href') == '#tab_1') {
+            //    $('#tab_1').tab('show')
+            //}
+            if ($(this).attr('href') == '#tab_2') {
+                $('#tab_2').tab('show')
+            }
+        });
+    });
+
+</script>
+
+
+
+
+<script>
+
+
+
+    function ConvertNepToEng(e) {
+        var date = BS2AD($("#nepaliDate512").val());
+        var date1 = BS2AD($("#nepaliDate51").val());
+        var FormattedEngDate = moment(date).format('DD-MMM-YYYY');
+        var FormattedEngDate1 = moment(date1).format('DD-MMM-YYYY');
+        $("#englishdatedocument12").val(FormattedEngDate);
+        $("#englishdatedocument1").val(FormattedEngDate1);
+    }
+
+    $('a').tooltip();
+
+    function ConvertEngDateToNep(eng) {
+        if (eng === undefined)
+            return;
+        var engmonthreq = "";
+        var arr = eng.split('-');
+        var day = (arr[0]);
+        var month = (arr[1]);
+        var year = (arr[2]);
+        if (month == "Jan") { engmonthreq = "01" }
+        else if (month == "Feb") { engmonthreq = "02" }
+        else if (month == "Mar") { engmonthreq = "03" }
+        else if (month == "Apr") { engmonthreq = "04" }
+        else if (month == "May") { engmonthreq = "05" }
+        else if (month == "Jun") { engmonthreq = "06" }
+        else if (month == "Jul") { engmonthreq = "07" }
+        else if (month == "Aug") { engmonthreq = "08" }
+        else if (month == "Sep") { engmonthreq = "09" }
+        else if (month == "Oct") { engmonthreq = "10" }
+        else if (month == "Nov") { engmonthreq = "11" }
+        else if (month == "Dec") { engmonthreq = "12" }
+        engdatereq = year + '-' + engmonthreq + '-' + day;
+        return convertednepdate = AD2BS(engdatereq);
+    }
+
+    $(function () {
+
+
+        //  debugger
+        $('[data-toggle="tooltip"]').tooltip();
+        // consolidate.init();
+        $(".nepali-calendar").nepaliDatePicker({
+            npdMonth: true,
+            onFocus: true,
+            npdYear: true,
+            npdYearCount: 10,
+            altFormat: "dd-MMM-YYYY",
+            dateFormat: "dd-MMM-YYYY",
+            onChange: function (evt) {
+                var nepalidate1 = $("#nepaliDate51").val();
+                var Engdate1 = BS2AD(nepalidate1);
+                var FormattedEngDate1 = moment(Engdate1).format('DD-MMM-YYYY');
+                $("#englishdatedocument1").val(FormattedEngDate1);
+
+            }
+        });
+
+
+
+
+        $(".nepali-calendar2").nepaliDatePicker({
+            npdMonth: true,
+            onFocus: true,
+            npdYear: true,
+            npdYearCount: 10,
+            altFormat: "dd-MMM-YYYY",
+            dateFormat: "dd-MMM-YYYY",
+            onChange: function (evt) {
+
+
+
+                // for manufacture date
+                var nepalidate12 = $("#nepaliDate512").val();
+                var Engdate12 = BS2AD(nepalidate12);
+                var FormattedEngDate12 = moment(Engdate12).format('DD-MMM-YYYY');
+                $("#englishdatedocument12").val(FormattedEngDate12);
+
+
+
+            }
+        });
+
+
+        //  DateFilter.init();
+        window.scrollTo(0, 0);
+
+
+    })
+</script>

@@ -1,0 +1,425 @@
+﻿
+@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@using NeoErp.Sales.Modules.Services.Models
+@model IEnumerable<DailySalesTreeList>
+@{
+
+    // var Column = ViewBag.dynamicColumn as List<NeoErp.Sales.Modules.Services.Models.DynamicColumnForNCR>;
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>
+();
+}
+<style>
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+    }
+
+    /*.page-bar {
+                margin-bottom: 0px !important;
+            }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+             font-size:11px;
+        }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-content-locked {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .k-grid-header {
+        font-size: 11px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    #Savefavriote {
+        display: none;
+    }
+</style>
+<div class="page-content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+        
+            @*<li>
+                    <i class="fa fa-home"></i>
+                    <a href="/sales/SalesHome/Dashboard">Home</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>*@
+            @*<li>
+                    <a href="#/Purchase/PurchaseVatRegister">Sales Register</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>*@
+            @*<li>
+                    <a href="sales/saleshome/dashboard/Dashboard">Organiser</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>*@
+
+        </ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+                <div class="actions">
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                    </div>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+                    </div>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                   {
+                       ShowCustomerFilter = true,
+                       ShowProductFilter = true,
+                       ShowDocumentFilter = false,
+                       ShowCategoryFilter = false,
+                       ShowPartyTypeFilter = true,
+                       ShowEmployeeFilter = false,
+                       ShowAgentFilter = false,
+                       ShowLocationFilter = false,
+                       ShowDivisionFilter = false,
+                       ShowAreaFilter = true
+                   })
+                    </div>
+
+                    @Html.Partial("~/Views/Shared/Controls/_reportFilterSettings.cshtml", new ReportFilterSettingsModel()
+               {
+                   ShowAmountFigureFilter = true,
+                   ShowAmountFilter = true,
+                   ShowAmountRoundUpFilter = true,
+                   ShowRangeAmountFilter = true,
+               })
+
+                    @Html.Partial("~/Views/Shared/Controls/ComposeMail.cshtml")
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#" data-trigger="tooltip" data-html="true" data-placement="left" title="Refresh">
+                        <i class="icon-control-play"></i>
+                    </a>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "GetSalesRegisterDailyReport")
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+
+
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div id="grid"></div>
+                        <script type="text/x-kendo-template" id="toolbar-template">
+                            <div class="k-header k-grid-toolbar">
+
+                                <a class="k-button k-button-icontext k-grid-excel" href="javascript:">
+                                    <i class="fa fa-file-excel-o"></i>
+                                </a>
+
+                            </div>
+                        </script>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+
+</div>
+<script src="@Scripts.Url(" ~/JS/DateFilter.js?V9")" type="text/javascript"></script>
+<script src="@Scripts.Url("~/JS/dynamicReport.js?V2")" type="text/javascript"></script>
+<script type="text/javascript">
+    var fileMailSender = new ManualEmailSender({
+        GridName: "grid",
+        GridRefreshTriggerName: "RunQuery",
+        reportName: "GetSalesRegisterDailyReport",
+    });
+</script>
+<script type="text/javascript">
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+
+</script>
+<script>
+
+    var dynamicColumns = [];
+    $(document).ready(function () {
+
+        DateFilter.init(function () {
+            consolidate.init(function () {
+                BindGrid(urltest);
+            });
+        });
+
+        fileMailSender.init();
+
+
+
+        $("#RunQuery").click(function (evt) {
+
+            evt.preventDefault();
+            urltest = window.location.protocol + "//" + window.location.host + "/api/SalesHome/GetSalesRegisterDailyReport";
+            //loaded = false;
+            reportConfig = GetReportSetting("GetSalesRegisterDailyReport");
+            KendoGridRefresh(urltest);
+        });
+    });
+
+
+    function ExportToExcel(e) {
+        console.log("yohoooo");
+        var companyName = ('@workingContent.CurrentUserinformation.company_name');
+        var fromADdate = $("#FromDateVoucher").val()
+        var toADdate = $("#ToDateVoucher").val();
+        var fromBSdate = $("#fromInputDateVoucher").val();
+        var toBSdate = $("#toInputDateVoucher").val();
+        var branches = ReportFilter.getBranchs();
+        var tables = $('#grid table');
+        var temptable = '';
+        var table1 = tables[0],
+            table2 = tables[1],
+            table3 = tables[2],
+            table4 = tables[3];
+        temptable = "<b>Company Name:</b>" + companyName.bold() + "&nbsp;&nbsp;&nbsp;<b>From Date:</b>" + fromADdate.bold() + "&nbsp;&nbsp;&nbsp;<b>To Date:</b>" + toADdate.bold() + "<hr/>" + "<table border='1' cellspacing='0' bordercolor='#d0d0d0'><thead><tr>";
+
+        temptable += "<td><b>Area/Dealer/Customer</b></td><td><b>Sales Qty.</b></td><td><b>Gross Amt.</b></td><td><b>Excise Duty</b></td><td><b>Discount</b></td><td><b>VAT 13%</b></td><td><b>Invoice Total</b></td><td><b>Net Amt.</b></td><td><b>Gross Realisation Amt.</b></td><td><b>Gross Realisation Per Qty.</b></td><td><b>Target Bonus</b></td><td><b>Collection Bonus</b></td><td><b>Monopoly Bonus</b></td><td><b>Bg Bonus</b></td><td><b>CMTP Scheme</b></td><td><b>VPB Scheme</b></td><td><b>Total Bonus</b></td><td><b>Total Bonus Per Qty.</b></td><td><b>NCR Amount</b></td><td><b>NCR Per Qty.</b></td>";
+
+        // Add zone row
+        //temptable += "<tr>";
+        //temptable += "<td colspan='2'><b>Zone Info</b></td>"; 
+        //for (var i = 2; i < 20; i++) { 
+        //    temptable += "<td></td>"; 
+        //}
+        //temptable += "</tr>";
+        // mark
+
+        var lines = temptable.split('<table>');
+       
+        temptable += "<tbody>";
+        var table3row = $(table2).find('tr');
+        var data = e.sender.dataSource._data;
+
+        $.each(table3row, function (i, v) {
+            
+            temptable += '<tr>';
+            var vtd = $(v).find('td');
+            $.each(vtd, function (vindex, vValue) {
+                
+                var gap = '';
+                var cellValue = '';
+                if (vindex == 0 && vValue.hasChildNodes()) {
+                    $.each(vValue.childNodes, function () {
+                        //gap += '-- ';
+                    })
+                }
+                if (table3row[i].className != "") {
+                    cellValue = vValue.innerText.bold();
+                }
+                else {
+                    cellValue = vValue.innerText;
+                }
+                //if (vindex == 0) {
+
+                //}
+                //else if (vindex == 1) {
+                //    cellValue = $(vValue).find('input').val();
+                //}
+                temptable += "<td style='white-space: nowrap;'>" + gap + cellValue + "</td>";
+            })
+            var table4eachrow_td = $($(table4).find('tr')[i]).find('td');
+            $.each(table4eachrow_td, function (i, v) {
+
+                temptable += "<td>" + $(v).find('input').val() + "</td>";
+            })
+            temptable += "</tr>";
+        });
+
+        temptable += "</tbody></table>";
+
+        var link = window.document.createElement("a");
+        link.setAttribute("href", "data:application/vnd.ms-excel," + encodeURIComponent(temptable));
+        link.setAttribute("download", "NCR Report" + ".xls");
+        console.log(link);
+        link.click();
+
+       
+    }
+
+
+    var reportConfig = GetReportSetting("GetSalesRegisterDailyReport");
+    var urltest = window.location.protocol + "//" + window.location.host + "/api/SalesHome/GetSalesRegisterDailyReport";
+    function getDateFormat(date) {
+        return kendo.format("{0:" + reportConfig.dateFormat + "}", date);
+    }
+
+    $(".applydp").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    })
+
+    $("#loadAdvancedFilters").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    });
+
+
+    var dynamicHeader = [];
+    dynamicColumnUrl = window.location.protocol + "//" + window.location.host + "/api/SalesHome/GetDynamicColumnsForNCR";
+    $.ajax({
+        type: "GET",
+        url: dynamicColumnUrl,
+        dataType: "json",
+        success: function (data) {
+            dynamicColumns = data;
+            dynamicHeader.push({ field: "Description", title: "Area/Dealer/Customer", expandable: true, width: 300 });
+            dynamicHeader.push({ field: "QUANTITY", title: "Sales Qty.", attributes: { style: "text-align: right;" }, width: 95, format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter") + "}" });
+            dynamicHeader.push({ field: "TOTAL_PRICE", title: "Gross Amt.", attributes: { style: "text-align: right;" }, width: 100, format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString() + "}" });
+            dynamicHeader.push({ field: "EXCISE_DUTY", title: "Excise Duty", attributes: { style: "text-align: right;" }, width: 95, format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter") + "}" });
+            dynamicHeader.push({ field: "DISCOUNT_AMT", title: "Discount", attributes: { style: "text-align: right;" }, width: 100, format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter") + "}" });
+            dynamicHeader.push({ field: "VAT_AMOUNT", title: "VAT 13%", attributes: { style: "text-align: right;" }, width: 100, format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter") + "}" });
+            dynamicHeader.push({ field: "TOTAL_BILL_VALUE", title: "Invoice Total", attributes: { style: "text-align: right;" }, width: 100, format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter") + "}" });
+            dynamicHeader.push({ field: "DISCOUNTED_AMOUNT", title: "Net Amt.", attributes: { style: "text-align: right;" }, width: 100, format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter") + "}" });
+            dynamicHeader.push({ field: "GROSS_REALISATION_AMOUNT", title: "Gross Realisation Amt.", width: 100, attributes: { style: "text-align: right;" }, format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter") + "}" });
+            dynamicHeader.push({ field: "GROSS_REALISATION_PER_QUANTITY", title: "Gross Realisation per Qty.", width: 100, attributes: { style: "text-align: right;" }, format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter") + "}" });
+            $.each(dynamicColumns, function (key, val) {
+
+                dynamicHeader.push({ field: val.Name, title: val.Name, attributes: { style: "text-align: right;" }, width: 85, format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter") + "}" });
+
+            })
+            dynamicHeader.push({ field: "TotalBonus", title: "Total Bonus", width: 100, attributes: { style: "text-align: right;" }, format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter") + "}" });
+            dynamicHeader.push({ field: "TotalBonusPerQty", title: "TotalBonus Per Qty", width: 100, attributes: { style: "text-align: right;" }, format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter") + "}" });
+            dynamicHeader.push({ field: "NCRAmount", title: "NCR Amt", width: 100, attributes: { style: "text-align: right;" }, format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter") + "}" });
+            dynamicHeader.push({ field: "NCRPerQty", title: "NCR Per Qty", width: 85, attributes: { style: "text-align: right;" }, format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter") + "}" });
+        },
+        error: function () {
+            alert("Error occured!!")
+        }
+    });
+
+
+    function BindGrid(service) {
+        var companyName = ('@workingContent.CurrentUserinformation.company_name');
+        var fromADdate = $("#FromDateVoucher").val()
+        var toADdate = $("#ToDateVoucher").val();
+        var fromBSdate = $("#fromInputDateVoucher").val();
+        var toBSdate = $("#toInputDateVoucher").val();
+        var branches = ReportFilter.getBranchs();
+        $("#grid").kendoTreeList({
+            toolbar: ["excel"],
+            excel: {
+                fileName: "NCR Report.xlsx",
+                proxyURL: "https://demos.telerik.com/kendo-ui/service/export",
+                filterable: true
+            },
+            excelExport: function (e) {
+
+                ExportToExcel(e);
+                e.preventDefault();
+            },
+            dataSource: {
+                transport: {
+                    read: {
+                        url: service,
+                        dataType: "json",
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8",
+                    },
+                    parameterMap: function (options, type) {
+                        var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+                    }
+                },
+                schema: {
+                    model: {
+                        id: "Id",
+                        parentId: "parentId",
+                        fields: {
+                            parentId: { field: "parentId", nullable: true },
+                            Id: { field: "Id", type: "number", nullable: false },
+                            Description: { field: "Description", type: "string" },
+                            QUANTITY: { field: "QUANTITY", type: "number" },
+                            UNIT_PRICE: { field: "UNIT_PRICE", type: "number" },
+                            DISCOUNT_AMT: { field: "DISCOUNT_AMT", type: "number" },
+                            DISCOUNTED_AMOUNT: { field: "DISCOUNTED_AMOUNT", type: "number" },
+                            Special_Discount_Scheme: { field: "Special_Discount_Scheme", type: "number" },
+                        },
+                        //expanded: true,
+                    }
+                }
+            },
+
+            filterable: true,
+            sortable: true,
+            height: window.innerHeight - 50,
+            columnMenu: {
+                columns: true
+            },
+            columnMenuInit: function (e) {
+                wordwrapmenu(e);
+            },
+            scrollable: {
+                virtual: true
+            },
+            dataBound: function (o) {
+                
+                var grid = o.sender;
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.length + 1;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    displayPopupNotification("No Data Found Given Date Filter.", "info");
+                }
+                $('div').removeClass('.k-header k-grid-toolbar');
+                UpdateReportUsingSetting("GetSalesRegisterDailyReport", "grid");
+            },
+            resizable: true,
+            selectable: true,
+            columns: dynamicHeader,
+        });
+
+    }
+
+
+    function KendoGridRefresh(readUrl) {
+
+        $('#grid').val('');
+        $('#grid').html('');
+        var treeList = $("#grid").data("kendoTreeList");
+        treeList.destroy();
+        BindGrid(readUrl);
+    }
+</script>

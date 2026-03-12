@@ -1,0 +1,363 @@
+﻿
+<link href="@Styles.Url("~/Areas/NeoERP.DocumentTemplate/Content/inventory.css")" rel="stylesheet" media="print" />
+<link href="@Styles.Url("~/Areas/NeoERP.DocumentTemplate/Content/inventory.css")" rel="stylesheet" />
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f9f9f9;
+    }
+
+    .container {
+        background-color: white;
+        padding: 20px;
+        border: 1px solid #ccc;
+        max-width: 800px;
+        margin: auto;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+
+    .totals-table td {
+        text-align: right;
+    }
+
+        .totals-table td:first-child {
+            text-align: left;
+        }
+
+
+    header {
+        text-align: center;
+    }
+
+        header h1{
+            margin-bottom: 5px;
+        }
+
+    .order-info {
+        text-align: center;
+        margin: 10px 0;
+    }
+
+    .vendor-info {
+        display: flex;
+        justify-content: space-between;
+        margin: 20px 0;
+        padding: 10px;
+        line-height: 1.7;
+        width: 85%;
+    }
+
+    /* .vendor-info div {
+            width: 48%;
+        }*/
+
+    .products table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+    }
+
+    .products th, .products td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        text-align: left;
+    }
+
+    .products th {
+        background-color: #f2f2f2;
+    }
+
+    .totals div {
+        margin: 5px 0;
+    }
+
+    .terms {
+        margin-top: 20px;
+    }
+
+    footer {
+        text-align: right;
+        margin-top: 20px;
+    }
+
+    .products table tbody td:nth-child(3) {
+        text-align: right;
+    }
+
+    .products table tbody td:nth-child(4) {
+        text-align: right;
+    }
+
+    .products table tbody td:nth-child(5) {
+        text-align: right;
+    }
+
+    .products table tbody td:nth-child(6) {
+        text-align: right;
+    }
+
+
+    /*.date-container {
+        margin-bottom: 10px;*/ /* Space between date entries */
+    /*}
+
+        .date-container label {
+            display: inline-block;
+            width: 250px;*/ /* Adjust width to ensure proper alignment */
+    /*font-weight: bold;
+        }
+
+    .date-values {
+        display: inline;*/ /* Ensure this aligns on the same line as the label */
+    /*}
+
+    .date-text {
+        margin-right: 10px;*/ /* Space between English date and Nepali date */
+    /*}
+
+    .nepali-date {*/
+    /* No additional styling needed unless you want to differentiate */
+    /*}*/
+
+    .date-container {
+        /*margin-bottom: 10px;*/ /* Space between date entries */
+        display: flex;
+        text-align: center;
+        /*margin: 10px 0;*/
+    }
+
+        .date-container label {
+            display: inline-block;
+            width: 250px; /* Adjust width to ensure proper alignment */
+            font-weight: bold;
+        }
+
+    .date-values {
+        display: inline; /* Ensure this aligns on the same line as the label */
+    }
+
+    .date-text {
+        margin-right: 10px; /* Space between English date and Nepali date */
+    }
+
+    .nepali-date {
+        /* No additional styling needed unless you want to differentiate */
+    }
+</style>
+
+<div class="container">
+    <header>
+        <h1 style="background-color: white; color: black; font-size: 25px; font-weight: 700; margin-bottom: 10px;">
+            {{printCompanyInfo.companyName}}
+        </h1>
+
+        <div class="order-info">
+
+            <div style="font-size: large;">Vat No:   {{printCompanyInfo.tPinVatNo}}</div>
+        </div>
+
+        <h2 style="font-size: 18px; font-weight: bold; margin-top: 3px;">
+            {{printCompanyInfo.formName}}
+        </h2>
+
+    </header>
+
+    <div style="display:flex;justify-content:space-between;margin-bottom:25px;">
+        <table class="vendinfo" style="width:400px;">
+            <tr><td><strong>VENDOR: </strong></td><td style="font-size:11px !important">{{masterModels.SUPPLIER_CODE}}</td></tr>
+            <tr><td><strong>Address:</strong></td><td style="font-size:11px !important">{{masterModels.REGD_OFFICE_EADDRESS}}</td></tr>
+            <tr><td><strong>Pan No:</strong></td><td style="font-size:11px !important">{{masterModels.TPIN_VAT_NO}}</td></tr>
+            <tr><td><strong>Contact No:</strong></td><td style="font-size:11px !important">{{masterModels.TEL_MOBILE_NO1}}</td></tr>
+        </table>
+
+        <table class="vendinfo" style="width:300px;margin-left:30px;">
+            <tr><td><strong>Order No : </strong></td><td style="font-size:11px !important">{{dzvouchernumber}}</td></tr>
+            <tr ng-repeat="element in MasterFormElement | orderBy: 'SERIAL_NO'" ng-if="element.COLUMN_HEADER.indexOf('Date') != -1">
+                <td><strong>{{element.COLUMN_HEADER}} :</strong></td>
+                <td style="font-size:11px !important">{{masterModels[element.COLUMN_NAME]}} / {{getNepaliDate(masterModels[element.COLUMN_NAME])}}</td>
+            </tr>
+        </table>
+    </div>
+
+    <style>
+        .vendinfo tr td strong {
+            font-size: 14px;
+        }
+
+        .vendinfo tr td {
+            font-size: 13px;
+        }
+
+        .vendinfo {
+            border-collapse: collapse;
+        }
+    </style>
+
+
+
+    @*<p style="font-weight: bold; margin-bottom: 0;">Dear Sir/,</p>*@
+    <p style="margin-top: 0;">We are pleased to place the purchase order for the following.</p>
+
+
+
+    <section class="products">
+        <table>
+            <thead>
+                <tr>
+                    <th>S.No.</th>
+                    <th ng-repeat="item in print_body_col[0].element | orderBy:'SERIAL_NO'">
+                        {{ item.COLUMN_NAME.replace('_',' ') }}
+                    </th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr ng-repeat="(key,row) in print_body_col | orderBy:'SERIAL_NO'" style="height:20px">
+                    <td>{{ $index + 1 }}</td>
+                    <td ng-repeat="item in row.element | orderBy:'SERIAL_NO'">
+                        <span>{{ childModels[key][item.COLUMN_NAME] }}</span>
+                    </td>
+                </tr>
+            </tbody>
+
+
+            <!--<tbody>
+    <tr ng-repeat="(key, row) in print_body_col | orderBy: 'SERIAL_NO'" style="height:20px">-->
+            <!-- S.No. Column: Sequential numbers -->
+            <!--<td>{{ item.COLUMN_NAME}}</td>
+    <td>{{ $index + 1 }}</td>-->
+            <!-- Product Description Column: Data from the row element -->
+            <!--<td>
+        <div ng-if="item.COLUMN_NAME==='ITEM_CODE'">
+            <span>{{childModels[key][item.COLUMN_NAME]}}</span>
+
+        </div>
+
+    </td>-->
+            <!-- Quantity Column -->
+            <!--<td style="text-align:right;">
+        <div ng-if="row.element | filter:{COLUMN_NAME: 'QUANTITY'}">
+            <span>{{childModels[key]['QUANTITY']}}</span>
+        </div>
+    </td>-->
+            <!-- UOM Column -->
+            <!--<td>
+        <div ng-if="row.element | filter:{COLUMN_NAME: 'MU_CODE'}">
+            <span>{{childModels[key]['MU_CODE']}}</span>
+        </div>
+    </td>-->
+            <!-- Rate/Unit Column -->
+            <!--<td style="text-align:right;">
+        <div ng-if="row.element | filter:{COLUMN_NAME: 'UNIT_PRICE'}">
+            <span>{{childModels[key]['UNIT_PRICE']}}</span>
+        </div>
+    </td>-->
+            <!-- Total Amount Column -->
+            <!--<td style="text-align:right;">
+                <div ng-if="row.element | filter:{COLUMN_NAME: 'TOTAL_PRICE'}">
+                    <span>{{childModels[key]['TOTAL_PRICE']}}</span>
+                </div>
+            </td>
+        </tr>
+    </tbody>-->
+
+
+
+
+
+
+        </table>
+    </section>
+
+
+    <table class="totals-table"
+           style="width: 40%; margin-left: auto; border-collapse: collapse; border: 1px solid #000;">
+        <tr>
+            <td style="border: 1px solid #000; padding: 6px; font-weight: bold;">Total</td>
+            <td style="border: 1px solid #000; padding: 6px; text-align: right;">
+                {{summary.grandTotal | number:2}}
+            </td>
+        </tr>
+
+        <tr ng-repeat="(key, value) in ChargeList">
+            <td style="border: 1px solid #000; padding: 6px;">{{value.CHARGE_EDESC}}</td>
+            <td style="border: 1px solid #000; padding: 6px; text-align: right;">
+                {{value.CHARGE_AMOUNT | number:2}}
+            </td>
+        </tr>
+
+        <tr>
+            <td style="border: 1px solid #000; padding: 6px; font-weight: bold;">Net Total</td>
+            <td style="border: 1px solid #000; padding: 6px; text-align: right; font-weight: bold;">
+                {{adtotal | number:2}}
+            </td>
+        </tr>
+    </table>
+
+
+
+    <div style="
+    width: 100%;
+">
+        <div style="width:50%; float:left;">
+
+            <!-- Dummy Div, can be used for other content if needed -->
+        </div>
+        <section class="totals" style="width:50%; float:left;">
+
+
+
+            <div><strong></strong> <span style="float:right;"></span></div>
+
+
+        </section>
+        <section class="totals" style="width:50%; float:left;">
+            @*<div><strong>Sub Total:</strong> <span style="float:right;">$100.00</span></div>
+                <div><strong>Discount 5%:</strong> <span style="float:right;">-$5.00</span></div>
+                <div><strong>Taxable Amount:</strong> <span style="float:right;">$95.00</span></div>
+                <div><strong>Vat 13%:</strong> <span style="float:right;">$12.35</span></div>*@
+            <div><strong>Total Amount:</strong> <span style="float:right;">{{adtotal| number:2}}</span></div>
+
+            @*<td style="width:993px;" colspan="5"><span>Amount in words :</span> {{amountinword}} Only.</td>*@
+
+        </section><br>
+
+        <section style="clear: both; margin-top: 10px;">
+            <br>  <div><strong>Amount in words:</strong> {{amountinword}} Only.</div>
+        </section>
+    </div>
+
+
+    <section class="terms" ng-if="TNCCodeList.length > 0">
+        <h4 style="font-weight: bold;">Terms and Conditions:</h4>
+        <p style="margin: 0 0 1px;"
+           ng-repeat="tnc in TNCCodeList | filter:{GROUP_SKU_FLAG:'I'}">
+            {{$index + 1}}) {{tnc.TNC_EDESC}}
+        </p>
+    </section>
+
+    <footer>
+        <div style="display: flex; justify-content: space-between; text-align: center;">
+            <div style="width: 33.33%;">
+                <p>-----------------------------</p>
+                <p>Created By</p>
+            </div>
+            <div style="width: 33.33%;">
+                <p>-----------------------------</p>
+                <p>Checked By</p>
+            </div>
+            <div style="width: 33.33%;">
+                <p>-----------------------------</p>
+                <p>Authorized Signature</p>
+            </div>
+        </div>
+        @*<div style="width: 100%; text-align: center; margin-top: 20px;">
+            <p style="font-weight: bold;">{{printCompanyInfo.companyName}}</p>
+        </div>*@
+    </footer>
+</div>
+
+

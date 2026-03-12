@@ -1,0 +1,176 @@
+﻿
+
+@using NeoErp.Sales.Modules.Services.Models.CalendarReport
+@model IEnumerable<CalendarColumnRange>
+@{
+    var dynamicRow = Model.FirstOrDefault().FirstColumnlist;
+    var abc = ViewData["header"].ToString();
+}
+<!-- BEGIN PAGE CONTENT-->
+<div class="col-md-12">
+    <div class="portlet light bordered">
+
+        <div class="portlet-body form">
+            <div class="row">
+                <div id="calendar-treelist"></div>
+                @*<div id="testt">
+                    @Html.Raw(abc)
+                </div>*@
+                <table id="calendar-treelistsdfs" class="table table-bordered" style="display:none;">
+                    @*<a href="~/Views/CalendarReport/_CalendarHeader.cshtml">~/Views/CalendarReport/_CalendarHeader.cshtml</a>*@
+
+                   @Html.Raw(abc)
+                    @*<thead role="rowgroup">
+                        <tr id="trParentHeader">
+                            <th></th>
+                            <th colspan="2" class="k-header"><strong>Opening Balance</strong></th>
+                            <th colspan="2" class="k-header"><strong>Trasaction Balance</strong></th>
+                            <th scope="col" colspan="2" class="k-header"><strong>Closing Balance</strong></th>
+                        </tr>
+                        <tr role="row">
+                            <th data-field="account_head" data-title="Account Name" class="k-header" role="columnheader">Account Name</th>
+                            <th data-field="DR_OPENING" data-title="Dr Amount" class="k-header" role="columnheader">Dr Amount</th>
+                            <th data-field="CR_OPENING" data-title="Cr Amount" class="k-header" role="columnheader">Cr Amount</th>
+                            <th data-field="DR_AMT" data-title="Dr Amount" class="k-header" role="columnheader">Dr Amount</th>
+                            <th data-field="CR_AMT" data-title="Cr Amount" class="k-header" role="columnheader">Cr Amount</th>
+                            <th data-field="DR_CLOSING " data-title="Dr Amount" class="k-header" role="columnheader">Dr Amount</th>
+                            <th data-field="CR_CLOSING" data-title="Cr Amount" class="k-header" role="columnheader">Cr Amount</th>
+                        </tr>*@
+
+                    <thead>
+
+                        
+
+
+
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- END PAGE CONTENT-->
+
+<script type="text/javascript">
+
+    function myCustomFunction(arrey, header,headertest) {
+        var result = $.grep(arrey, function (e) {
+            return $.trim(e.weekName) + $.trim(e.MonthName) + $.trim(e.yearname) == header
+
+        });
+        var value = 0;
+        if (result.length == 0) {
+            value = "-";
+        } else if (result.length == 1) {
+            if (headertest == 'Qty')
+            {
+                value = result[0].totalQty
+            }
+            else {
+                value = result[0].TotalAmount
+            }
+
+        }
+        return value;
+    }
+    function onDataBoundtest(arg) {
+        var myElem = document.getElementsByClassName('extrarow');
+        var abc = $("#calendar-treelist").find(".extrarow");
+        var test = $("#calendar-treelistsdfs >tbody")[0].innerHTML;
+        $("#calendar-treelist").find("th.k-header").parent().before(test);
+        if (myElem == null) {
+
+            @*var htmltest = $.parseHTML("<text>@Html.Raw(abc)</text>")*@
+         @*var test = "@ViewData["header"].ToString()";*@
+            $("#calendar-treelist").find("th.k-header").parent().before(test);
+        }
+        // this.pager.element.hide();
+
+
+    }
+    $(document).ready(function () {
+        var service = window.location.protocol + "//" + window.location.host + "/api/CalendarReport/GetWeekCalendarReport";
+        var dataSource = new kendo.data.TreeListDataSource({
+            transport: {
+                read: {
+                    url: service,
+                    dataType: "json",
+                    type: "POST",
+                    data: function (paramData) {
+                        var treeList = $("#calendar-treelist").data("kendoTreeList");
+                        var dataSource = treeList.dataSource;
+                        if (paramData.id) {
+                            var parentNode = dataSource.get(data.id);
+                            return $.extend(calendar.filters(), data.id);
+                        }
+                        return calendar.filters();
+                    }
+                },
+                schema: {
+                    model: {
+                        id: "Id",
+                        parentId: "ParentId",
+                        fields: {
+                            ParentId: { field: "ParentId", type: "number", nullable: false },
+                            Id: { field: "Id", type: "number", nullable: false },
+                        },
+                    }
+                }
+            }
+        });
+
+        $("#calendar-treelist").kendoTreeList({
+           dataSource: dataSource,
+            height: 540,
+           // autoBind: true,
+           dataBound: onDataBoundtest,
+            columns: [ {
+                field: "CustomerName",
+                width: "250px",
+                //locked: true,
+                //lockable: false,
+                //headerTemplate: '#= getHeader() #'
+                title: "Customer"
+            }, @foreach (var item in dynamicRow)
+            {
+                                        foreach (var second in item.secondHorizontalPeriodModel)
+        {
+            foreach (var third in second.ThirdHorizontalColumn)
+            {
+                foreach (var forth in third.forthHorizontalColumn)
+                {
+                    <text>
+                    {
+                        width: "70px",
+                        title:'@forth.HeaderName',
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                        format: "{0:n}",
+                        template: " #= kendo.format('{0:n}', myCustomFunction(additionalData,'@forth.HeaderVlaue','@forth.HeaderName') )#",
+                    },
+                   </text>
+                    }
+
+
+                    }
+
+                }
+            }
+//{
+//    field: "Total",
+//    width: "150px",
+//    //headerTemplate: '#= getHeader() #'
+//    title: "Total Amount"
+//},
+            ],
+            columnMenu: {
+                columns: true
+            },
+            resizable: true
+        });
+
+    });
+</script>
+

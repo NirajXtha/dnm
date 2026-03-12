@@ -1,0 +1,180 @@
+﻿@using NeoErp.Core.Models;
+@using NeoErp.Sales.Modules.Services.Models
+@{
+    var actionPageId = "TreewiseSalesReportDealer";
+    var chartTitle = "Dealer Wise Sales Report";
+
+}
+<style>
+    #TreewiseSalesReportDealer {
+        font-size: 11px;
+    }
+</style>
+
+
+<div class="portlet portlet-sortable light bordered" id="@actionPageId">
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="icon-bar-chart font-green-haze"></i>
+            <span class="caption-subject bold uppercase font-green-haze custom-modal">@chartTitle</span>
+        </div>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+                <div class="actions">
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+    <div class="portlet-body">
+        <script type="text/x-kendo-template" id="toolbar-template">
+            <div class="k-header k-grid-toolbar pull-right">
+
+                <a class="k-button k-button-icontext k-grid-excel" href="javascript:">
+                    <i class="fa fa-file-excel-o"></i>
+                </a>
+            </div>
+        </script>
+        <div class="k-content wide">
+            <div id="TreewiseSalesReportDealer"></div>
+            <div class="overlay"><div>No data available</div></div>
+            <div class="AmountFigureType"></div>
+            <div class="DisplayFilterContent"><a href="javascript:;" data-toggle="tooltip" title=""></a></div>
+        </div>
+    </div>
+</div>
+
+<script src="@Scripts.Url(" ~/JS/DateFilter.js?V9")" type="text/javascript"></script>
+
+<script>
+    var pageId_MonthlySalesChart = '@actionPageId';
+
+
+</script>
+<script>
+
+    $(document).ready(function () {
+        var service = window.location.protocol + "//" + window.location.host + "/api/SalesDashboard/TreewiseSalesDealerReport";
+        DateFilter.init(function () {
+
+            BindGrid(service);
+
+        });
+
+        $(".applydp").on("click", function (evt) {
+            evt.preventDefault();
+            KendoGridRefresh(service);
+        })
+    });
+    var totalQuantity;
+    var totalTotalSales;
+    function BindGrid(service) {
+
+        var fromADdate = $("#FromDateVoucher").val()
+        var toADdate = $("#ToDateVoucher").val();
+        var fromBSdate = $("#fromInputDateVoucher").val();
+        var toBSdate = $("#toInputDateVoucher").val();
+        var branches = ReportFilter.getBranchs();
+        $("#TreewiseSalesReportDealer").kendoTreeList({
+
+            dataSource: {
+                transport: {
+                    read: {
+                        url: service,
+                        dataType: "json",
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8",
+                    },
+                    parameterMap: function (options, type) {
+                        var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+                    }
+                },
+                schema: {
+                    model: {
+                        id: "MASTER_CUSTOMER_CODE",
+                        parentId: "PRE_CUSTOMER_CODE",
+                        fields: {
+                            MASTER_CUSTOMER_CODE: { field: "MASTER_CUSTOMER_CODE", type: "number" },
+                            PRE_CUSTOMER_CODE: { field: "PRE_CUSTOMER_CODE", type: "number", defaultValue: "0" },
+                            TOTAL_SALES: { field: "TOTAL_SALES", type: "number" },
+                            QUANTITY: { field: "QUANTITY", type: "number" },
+
+                        },
+
+                        //expanded: true,
+                    }
+                },
+                aggregate: [
+                    { field: "QUANTITY", aggregate: "sum" },
+                    { field: "TOTAL_SALES", aggregate: "sum" }
+                ]
+            },
+
+            filterable: true,
+            sortable: true,
+            height: 400,
+            columnMenu: {
+                columns: true
+            },
+            columnMenuInit: function (e) {
+                wordwrapmenu(e);
+            },
+            scrollable: {
+                virtual: true
+            },
+            dataBound: function (o) {
+
+                var grid = o.sender;
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.length + 1;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    displayPopupNotification("No Data Found Given Date Filter.", "info");
+                }
+                else if (o.sender.dataSource._data.length == 1) {
+
+                    if (o.sender.dataSource._data[0].TOTAL_SALES == 0) {
+                        var colCount = grid.columns.length;
+                        $(o.sender.wrapper)
+                            .find('tbody')
+                            .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                        displayPopupNotification("No Data Found Given Date Filter.", "info");
+                    }
+                }
+
+                $('div').removeClass('.k-header k-grid-toolbar');
+
+            },
+            resizable: true,
+            selectable: true,
+            columns: [
+                { field: "CUSTOMER_EDESC", title: "Dealer Name", width: 300 },
+                { field: "QUANTITY", title: "Quantity", attributes: { style: "text-align: right;" }, width: 95, format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter") + "}" },
+                { field: "TOTAL_SALES", title: "Total Sales", attributes: { style: "text-align: right;" }, width: 95, format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter") + "}" }
+            ]
+        });
+
+
+    }
+
+
+    function KendoGridRefresh(readUrl) {
+
+        $('#TreewiseSalesReportDealer').val('');
+        $('#TreewiseSalesReportDealer').html('');
+        var treeList = $("#TreewiseSalesReportDealer").data("kendoTreeList");
+        treeList.destroy();
+        BindGrid(readUrl);
+    }
+</script>
+
+

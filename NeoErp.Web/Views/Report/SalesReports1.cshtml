@@ -1,0 +1,891 @@
+﻿@using System.Globalization;
+@{   
+ViewBag.Title = "Overview";
+Layout = "~/Views/Common/Master.cshtml";
+ViewBag.DemoSettings = true;
+}
+<style type="text/css">
+   a:hover {
+  
+   background-color: transparent;
+   text-decoration: underline;
+   }
+   #roundSlider, #slider {
+   clear: left;
+   width: 144px;
+   margin: 15px;
+   height: 2px;
+   }
+   #slider1, #slider {
+   clear: left;
+   width: 144px;
+   margin: 15px;
+   height: 2px;
+   }
+   #periodSlider {
+   clear: left;
+   width: 214px;
+   margin: 15px;
+   height: 2px;
+   }
+   #roundSlider1, #roundSlider {
+   clear: left;
+   width: 70px;
+   margin: 15px;
+   height: 2px;
+   }
+   span.ui-slider-handle.ui-state-default.ui-corner-all {
+   border-color: #99ff99;
+   background-color: #2e6e9e !important;
+   }
+   .ui-state-default, .ui-widget-content .ui-state-default, .ui-widget-header .ui-state-default {
+   font-weight: 100 !important;
+   color: #000;
+   font-size: 14px !important;
+   font-family: Helvetica;
+   }
+   #periodSlider .ui-slider-range {
+   background: #729fcf;
+   }
+   #periodSlider .ui-slider-handle {
+   border-color: #99ff99;
+   height: 8px;
+   width: 8px;
+   background-color: blue;
+   }
+   #slider .ui-slider-range {
+   background: #729fcf;
+   }
+   #slider .ui-slider-handle {
+   background: #99ff99;
+   height: 8px;
+   width: 8px;
+   }
+   #roundSlider .ui-slider-range {
+   background: #729fcf;
+   }
+   #roundSlider .ui-slider-handle {
+   border-color: #99ff99;
+   height: 8px;
+   width: 8px;
+   }
+   #slider1 .ui-slider-range {
+   background: #729fcf;
+   }
+   #slider1 .ui-slider-handle {
+   background: #99ff99;
+   height: 8px;
+   width: 8px;
+   }
+   #roundSlider1 .ui-slider-range {
+   background: #729fcf;
+   }
+   #roundSlider1 .ui-slider-handle {
+   border-color: #99ff99;
+   height: 8px;
+   width: 8px;
+   }
+   select.dateFilterSelect, input.frmDataInput {
+   margin-left: 8px;
+   /* height: 20px; */
+   max-width: 67px;
+   padding: 2px 5px;
+   border: 1px solid #ddd;
+   width: 100%;
+   font-size: 11px;
+   }
+   input.readOnlyInput {
+   max-width: 67px;
+   width: 100%;
+   font-size: 11px;
+   }
+</style>
+<link href="~/Content/JGrid/JQGridDemo.css" rel="stylesheet" media="screen">
+<div id="hidden">LOADING</div>
+<div class="row">
+    <div class="col-lg-12" style="background-color: #f5f5f5; height:38px;">
+      <div class="btn-group" role="group" style="float: right; padding-top:6px;">
+         @Html.Partial("~/Views/Report/Search.cshtml")
+      </div>
+   </div>
+</div>
+<div class="row">
+   <div class="col-lg-12">
+      <form class="form-horizontal" action="~/Report/SalesReports1" method="post" onsubmit="return ValidateDate(); ">
+         @Html.Partial("~/Views/Report/SearchContent.cshtml")
+         <div id="divBalanceSheetReport" class="row"></div>
+      </form>
+   </div>
+</div>
+<div class="container-fluid wrapper">
+   <div class="row">
+      <div class="col-md-12">
+          
+                              <label style="font-size: 12px; font-weight: normal">Date Filter</label>
+                              <select class="dateFilterSelect" id="ddlDateFilter" name="DateStep">
+                                 <option value="TD" selected="selected">Today</option>
+                                 <option value="TM">This Month</option>
+                                 <option value="LM">Last Month</option>
+                                 <option value="TQ">This Quater</option>
+                                 <option value="LQ">Last Quarter</option>
+                                 <option value="TH">This Half Year</option>
+                                 <option value="LH">Last Half Year</option>
+                                 <option value="TY">This Year</option>
+                                 <option value="LY">Last Year</option>
+                              </select>
+                              <label style="font-size: 12px; font-weight: normal">From Date</label>
+                              <input type="text" id="fromInputDate" class="frmDataInput" placeholder="From Date" />
+                              <input type="text" name="FromDate" id="FromDate" class="readOnlyInput" placeholder="From Date" />
+                              <label style="font-size: 12px; font-weight: normal">To Date</label>
+                              <input type="text" class="frmDataInput" id="toInputDate" placeholder="To Date">
+                              <input type="text" name="ToDate" class="readOnlyInput" id="ToDate" placeholder="To Date">
+                           
+         <div class="btn-group btn-group-xs pull-right">
+            <a href="~/Report/SalesReportsWeekly" style="text-decoration: none"></a>
+            <button value="W" name="Weekly" type="button" class="btn btn-default">Weekly</button>
+            <a href="~/Report/SalesReports" style="text-decoration: none"></a>
+            <button value="M" name="Monthly" type="button" class="btn btn-default">Monthly</button>
+            <a href="~/Report/SalesReportsQuarterly" style="text-decoration: none"></a>
+            <button value="Q" name="Quarterly" type="button" class="btn btn-default">Quarterly</button>
+         </div>
+         <div class="table-content" style="margin-top:26px;overflow-x: auto;" id="salesreport">
+            <table id="grid" class="table table-bordered" style:"padding-right:10px;"></table>
+            <div id='pager'></div>
+         </div>
+      </div>
+   </div>
+</div>
+@*PREFERENCE HTML*@
+<div class="row">
+   <div class="col-md-12">
+      <!-- Modal -->
+      <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" >
+         <div class="modal-dialog" role="document">
+            <div class="modal-content" style="width:800px;">
+               <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                  <div id="PopupHeader">
+                     <h4 class="modal-title" id="myModalLabel">Preference Setup</h4>
+                  </div>
+               </div>
+               <form class="form-horizontal" action="~/Report/SalesReports1" method="post">
+                  <div class="modal-body">
+                     <div class="panel-body">
+                        <div class="form-group">
+                           <div class="col-md-12">
+                              <label style="font-size: 12px; font-weight: normal">Date Filter</label>
+                              <select class="dateFilterSelect" id="ddlDateFilter" name="DateStep">
+                                 <option value="TD" selected="selected">Today</option>
+                                 <option value="TM">This Month</option>
+                                 <option value="LM">Last Month</option>
+                                 <option value="TQ">This Quater</option>
+                                 <option value="LQ">Last Quarter</option>
+                                 <option value="TH">This Half Year</option>
+                                 <option value="LH">Last Half Year</option>
+                                 <option value="TY">This Year</option>
+                                 <option value="LY">Last Year</option>
+                              </select>
+                              <label style="font-size: 12px; font-weight: normal">From Date</label>
+                              <input type="text" id="fromInputDate" class="frmDataInput" placeholder="From Date" />
+                              <input type="text" name="FromDate" id="FromDate" class="readOnlyInput" placeholder="From Date" />
+                              <label style="font-size: 12px; font-weight: normal">To Date</label>
+                              <input type="text" class="frmDataInput" id="toInputDate" placeholder="To Date">
+                              <input type="text" name="ToDate" class="readOnlyInput" id="ToDate" placeholder="To Date">
+                           </div>
+                        </div>
+                         <div class="col-md-9">
+                        <div class="form-group">
+                           <div class="col-md-3">
+                              <p>
+                                 <input type="text" id="period" readonly="" style="font-size: 10px; border: 0; color: #009999; font-weight: bold;">
+                              </p>
+                              <div id="periodSlider">
+                                 <label for="period" style="font-size: 12px; font-weight: normal">Date Step</label>
+                              </div>
+                           </div>
+                        </div>
+                        <div class="form-group">
+                           <div class="checkbox">
+                              <label style="font-size: 12px">
+                              <input type="checkbox" id="Quantity" name="Quantity" checked >
+                              Show Quantity
+                              </label>
+                           </div>
+                           <div class="col-md-3">
+                              <p>
+                                 <input type="text" id="figure" name="figureQuantity" readonly="" style="font-size: 10px; border: 0; color: #009999; font-weight: bold;">
+                              </p>
+                              <div id="slider">
+                                 <label for="figure" style="font-size: 12px; font-weight: normal">figure in</label>
+                              </div>
+                           </div>
+                           <div class="col-md-3">
+                              <p>
+                                 <input type="text" id="round" name="roundupQuantity" readonly="" style="font-size: 10px; border: 0; color: #009999; font-weight: bold;">
+                              </p>
+                              <div id="roundSlider">
+                                 <label for="round" style="font-size: 12px; font-weight: normal">round up</label>
+                              </div>
+                           </div>
+                        </div>
+                        <div class="form-group">
+                           <div class="checkbox">
+                              <label style="font-size: 12px">
+                              <input type="checkbox" id="Amount" name="Amount" checked>
+                              Show Amount
+                              </label>
+                           </div>
+                           <div class="col-md-3">
+                              <p>
+                                 <input type="text" name="figureAmount"id="figure1" readonly="" style="font-size: 10px; border: 0; color: #009999; font-weight: bold;">
+                              </p>
+                              <div id="slider1">
+                                 <label for="figure" style="font-size: 12px; font-weight: normal">figure in</label>
+                              </div>
+                           </div>
+                           <div class="col-md-3">
+                              <p>
+                                 <input type="text" id="round1" name="roundupAmount"readonly="" style="font-size: 10px; border: 0; color: #009999; font-weight: bold;">
+                              </p>
+                              <div id="roundSlider1">
+                                 <label for="round" style="font-size: 12px; font-weight: normal">round up</label>
+                              </div>
+                           </div>
+                        </div>
+                         </div>
+                         <div class="col-md-3">
+                             <label>X-axis:</label>
+                             <select name="x-axis">
+                                 <option value="Item">Item</option>
+                             </select>
+                             <br />
+                             <label>Y-axis:</label>
+                             <select name="x-axis">
+                                 <option value="Customer">Customer</option>
+                             </select>
+                         </div>
+                     </div>
+                  </div>
+                  <div class="modal-footer">
+                     <button type="submit" id="btnOk" class="btn btn-primary">OK</button>
+                     <button type="button" id="btnLoad" class="btn btn-primary">Load</button>
+                     <button type="submit" id="btnSave" class="btn btn-primary">Save</button>
+                  </div>
+               </form>
+            </div>
+         </div>
+      </div>
+   </div>
+</div>
+<script src="~/Sales/Content/jquery.ba-throttle-debounce.min.js"></script>
+<script src="~/Sales/Content/jquery.stickyheader.js"></script>
+<link href="~/Sales/Content/nepali.datepicker.v2.1.min.css" rel="stylesheet" />
+<script src="~/Sales/Content/nepali.datepicker.v2.1.min.js"></script>
+@*PREFERENCE SCRIPT*@
+<script>
+    var steps = [
+    "weekly",
+    "monthly",
+    "quartely"
+    ];
+    var rsteps = [
+    "0",
+    "0.0",
+    "0.00",
+    "0.000",
+    "0.0000"
+    ];
+    var fsteps = [
+    "Actual",
+    "thousand",
+    "lakh",
+    "crore",
+    ];
+    $(function () {
+        $("#slider1").slider({
+            value: 0,
+            min: 0,
+            max: 3,
+            slide: function (event, ui) {
+                $("#figure1").val(fsteps[ui.value]);
+            }
+        });
+        $("#figure1").val(fsteps[$("#slider1").slider("value")]);
+        $("#roundSlider1").slider({
+            value: 0,
+            min: 0,
+            max: 4,
+            slide: function (event, ui) {
+                $("#round1").val(rsteps[ui.value]);
+            }
+        });
+        $("#round1").val(rsteps[$("#roundSlider1").slider("value")]);
+        $("#Amount").click(function () {
+            if (this.checked) {
+                // set the slider as disable
+                $("#slider1").slider("option", "disabled", false);
+                $("#roundSlider1").slider("option", "disabled", false);
+                var trial = true;
+            }
+            else {
+                // set the slider as enable again when you click to uncheck
+                $("#slider1").slider("option", "disabled", true);
+                $("#roundSlider1").slider("option", "disabled", true);
+                trial = false;
+            }
+        });
+
+        $("#slider").slider({
+            value: 0,
+            min: 0,
+            max: 2,
+            slide: function (event, ui) {
+                $("#figure").val(fsteps[ui.value]);
+            }
+        });
+        $("#figure").val(fsteps[$("#slider").slider("value")]);
+        $("#roundSlider").slider({
+            value: 0,
+            min: 0,
+            max: 4,
+            slide: function (event, ui) {
+                $("#round").val(rsteps[ui.value]);
+            }
+        });
+        $("#round").val(rsteps[$("#roundSlider").slider("value")]);
+        $("#Quantity").click(function () {
+            if (this.checked) {
+                // set the slider as disable
+                $("#slider").slider("option", "disabled", false);
+                $("#roundSlider").slider("option", "disabled", false);
+            }
+            else {
+                // set the slider as enable again when you click to uncheck
+                $("#slider").slider("option", "disabled", true);
+                $("#roundSlider").slider("option", "disabled", true);
+            }
+        });
+        $("#periodSlider").slider({
+            range: "min",
+            value: 1,
+            min: 0,
+            max: 2,
+            slide: function (event, ui) {
+                $("#period").val(steps[ui.value]);
+            }
+        });
+        $("#period").val(steps[$("#periodSlider").slider("value")]);
+        $('#Quantity').on("click", function () {
+            $("#roundSlider1").show();
+        });
+    });
+
+</script>
+<script type="text/javascript">
+    var Preference = {
+        BindEvents: function () {
+            $("#btnPreference").on('click', function () { });
+        },
+    }
+</script>
+<script>
+    $('#btnCommonSearch').click(function () {
+        var DateFilter = $('#ddlDateFilter').val();
+        var fromDate = $('#fromInputDate').val();
+        var toDate = $('#toInputDate').val();
+        var Currency = $('#ddlCurrency').val();
+        var Consolidated = $('#chkConsolidated').is(':checked');
+        var Monthly = $("#chkMonthly").is(':checked');
+        var YearType = $('#ddlYearType').val();
+        var DataType = $('#ddlDataType').val();
+    });
+</script>
+<script>
+    function UpdateChart(CPeriod) {
+        var ChartPeriod = CPeriod;
+        var url = window.location.href + "?change=" + ChartPeriod;
+        var urlc = url.split("?");
+        url = urlc[0] + "?change=" + ChartPeriod;
+        window.location.href = url;
+        alert(url);
+    };
+
+</script>
+
+<script>
+    
+    var trial = '@ViewData["Amount"]';
+    var trial1 = '@ViewData["Quantity"]';
+    var decimalPlacesAmount = '@ViewData["roundupAmount"]';
+    decimalPlacesAmount = decimalPlacesAmount.split(".");
+    if (decimalPlacesAmount == 0) {
+        decimalPlacesAmount = 0;
+    }
+    else {
+        decimalPlacesAmount = decimalPlacesAmount[1].length;
+    }
+    var decimalPlacesQuantity = '@ViewData["roundupQuantity"]';
+    decimalPlacesQuantity = decimalPlacesQuantity.split(".");
+    if (decimalPlacesQuantity == 0) {
+        decimalPlacesQuantity = 0;
+    }
+    else {
+        decimalPlacesQuantity = decimalPlacesQuantity[1].length;
+    }
+    Amount = false;
+    Quantity = false;
+    $('#Quantity').prop('checked', true);
+    $('#Amount').prop('checked', true);
+    if (trial == 'on') {
+        var Amount = false;
+        $('#Amount').prop('checked', true);
+    }
+    else {
+        Amount = true;
+        $('#Amount').prop('checked', false);
+
+    }
+    if (trial1 == 'on') {
+        var Quantity = false;
+        $('#Quantity').prop('checked', true);
+    }
+    else {
+        Quantity = true;
+        $('#Quantity').prop('checked', false);
+    }
+    var divwidth = $(document).width();
+    var divheight = $(window).height();
+    jQuery(document).ready(function () {
+        var monthNames = ["", "January", "February", "March", "April", "May", "June",
+                         "July", "August", "September", "October", "November", "December"
+        ];
+
+        jQuery("#grid").jqGrid('jqPivot',
+           [@if (ViewData.Model != null)
+          {
+              var roundupAmount = Convert.ToString(ViewData["roundupAmount"]);
+              var roundupQuantity = Convert.ToString(ViewData["roundupQuantity"]);
+              var figureQuantity = Convert.ToDouble(ViewData["figureQuantity"]);
+              var figureAmount = Convert.ToDouble(ViewData["figureAmount"]);
+              foreach (var item in ViewData.Model)
+              {<text>
+             {
+                 itemcode: "@Convert.ToString(item["ITEM_CODE"])",
+                 grandparent: "<b>@Convert.ToString(item["GRANDPARENT"])</b>",
+                 category: "<b>@Convert.ToString(item["PARENT"])</b>",
+                 name: "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@Convert.ToString(item["ITEM_EDESC"])",
+                 year: "@Convert.ToString(item["YEAR"])",
+                 month: "<div class='hidden'>@Convert.ToInt16(item["MONTH"])</div>@CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(Convert.ToInt16(item["MONTH"]))-                                @Convert.ToString(item["YEAR"])",
+                 Qty: @{double b = (Convert.ToDouble(item["QUANTITY"]) / figureQuantity);
+                   string values=b.ToString(roundupAmount);}"@values",
+                 customer: "@Convert.ToString(item["CUSTOMER_CODE"])",
+                 Amt:@{
+                  double a = 0;
+                  if (item["PRICE"] is DBNull)
+                  {
+                      a = 0;
+                  }
+                  else
+                  {
+                      a = (Convert.ToDouble(item["PRICE"]) / figureAmount);
+                  }
+                   string value=a.ToString(roundupAmount);}"@value",
+
+             },</text>}
+          }
+          else
+          {<text>{ name: "", month: "", quantity: "", price: "" }</text>}
+           ],
+     // pivot options
+     {
+         xDimension: [{ dataName: 'grandparent', label: "parent", frozen: true },
+                      { dataName: 'category', label: "Category", frozen: true },
+                     { dataName: 'name', label: "Item Description", width: 300, sortable: true },
+                     { dataName: 'itemcode', label: "Item Code", width: 300, hidden: true }
+         ],
+         yDimension: [{ dataName: 'month', label: "Month" }],
+         aggregates: [
+             {
+                 member: "Qty",  aggregator: "sum", label: "Qty.", summaryType: 'sum', width: 40, formatter: 'integer', align: 'right', hidden: Quantity,
+                 formatoptions: { decimalSeparator: ".", thousandsSeparator: ",", decimalPlaces: decimalPlacesQuantity, defaultValue: '0.00' },
+             },
+             {
+                 member: "Amt", aggregator: "sum", label: "Amt.", summaryType: 'sum', width: 100, align: 'right', search: false, hidden: Amount,
+                 formatoptions: { decimalSeparator: ".", thousandsSeparator: ",", decimalPlaces: decimalPlacesAmount, defaultValue: '0.00' },
+             },
+              {
+                  member: "customer", aggregator: "count", label: "Customer", summaryType: 'sum', width: 100, align: 'right',
+              },
+         ],
+         footerTotals: "Total",
+         footerAggregator: "sum",
+         frozenStaticCols: true,
+         totals: true,
+         totalHeader: "Grand Total",
+         totalText: "<span style='font-style: italic'> {0} {1}</span>",
+
+     },
+
+
+     // grid options
+     {
+         
+         //cmTemplate: { autoResizable: true },
+         shrinkToFit: true,
+         rowList: [50, 100, 200, "10000:All"],
+         autowidth: false,
+         autoresizeOnLoad: true,
+         scroll: true,
+         width: divwidth,
+         autoResizing: { compact: true },
+         gridview: true,
+         pager: "#pager",
+         rowNum: 10000,
+         caption: "Sales Report",
+         groupingView: {
+             "plusicon": "ui-icon-triangle-1-e",
+             "minusicon": "ui-icon-triangle-1-s",
+             "openicon": "ui-icon-arrowreturn-1-e",
+             groupCollapse: true,
+             showSummaryOnHide: false,
+             groupColumnShow: [false, false],
+             //groupSummaryPos: ["header", "header"],
+             groupSummary: [true, true]
+         },
+         subGrid: true,
+         subGridOptions: {
+             "plusicon": "ui-icon-triangle-1-e",
+             "minusicon": "ui-icon-triangle-1-s",
+             "openicon": "ui-icon-arrowreturn-1-e",
+             "reloadOnExpand": false,
+             "selectOnExpand": true
+         },
+         subGridRowExpanded: function (subgrid_id, row_id) {
+             var subgrid_table_id, pager_id; subgrid_table_id = subgrid_id + "_t";
+             pager_id = "p_" + subgrid_table_id;
+             a = $("#grid").getRowData(row_id);
+             //alert(a.x3);
+             
+             $("#" + subgrid_id).html("<table id='" + subgrid_table_id + "' class='scroll'></table><div id='" + pager_id + "' class='scroll'></div>");
+             $("#" + subgrid_table_id).jqGrid({
+                 datatype: "local",
+                 height: 'auto',
+                 colNames:[ 'Client', 'Quantity','Amount'],
+                 colModel:[
+                     { name: 'name', index: 'name', width: 600 },
+                     { name: 'tax', index: 'tax', width: 80, align: "right", sorttype: "float" },
+                     {name:'amount',index:'amount', width:80, align:"right",sorttype:"float"},
+                         ],
+                 
+             });
+             //alert(a.x3);
+            
+             var mydata = [@foreach(var description in ViewData.Model)
+                           {
+                            if(description["ITEM_CODE"]=="6821")
+                                {
+                                 <text>
+                                    {
+                                        name: "@Convert.ToString(description["CUSTOMER_EDESC"])", amount: "@Convert.ToString(description["PRICE"])",
+                                        tax: "@Convert.ToString(description["QUANTITY"])",
+                                        
+                                    },
+                                 </text>
+                                }
+                           }
+                     
+             ];
+             for(var i=0;i<=mydata.length;i++)
+                 jQuery("#" + subgrid_table_id).jqGrid('addRowData', i + 1, mydata[i]);
+         }})
+        
+    });
+   
+
+</script>
+
+<script>
+    function ValidateDate() {
+        var FromDate = document.getElementById("fromInputDate").value;
+        var ToDate = document.getElementById("toInputDate").value;
+        var f = BS2AD(FromDate);
+        var t = BS2AD(ToDate);
+        var fsplit = f.split("-", 3);
+        var tsplit = t.split("-", 3);
+        var month = new Array();
+        month[01] = "Jan";
+        month[02] = "Feb";
+        month[03] = "Mar";
+        month[04] = "Apr";
+        month[05] = "May";
+        month[06] = "Jun";
+        month[07] = "Jul";
+        month[08] = "Aug";
+        month[09] = "Sep";
+        month[1] = "Jan";
+        month[2] = "Feb";
+        month[3] = "Mar";
+        month[4] = "Apr";
+        month[5] = "May";
+        month[6] = "Jun";
+        month[7] = "Jul";
+        month[8] = "Aug";
+        month[9] = "Sep";
+        month[10] = "Oct";
+        month[11] = "Nov";
+        month[12] = "Dec";
+        document.getElementById("FromDate").value = fsplit[2] + "-" + month[parseInt(fsplit[1])] + "-" + fsplit[0];
+        document.getElementById("ToDate").value = tsplit[2] + "-" + month[parseInt(tsplit[1])] + "-" + tsplit[0];
+
+        if (document.getElementById("FromDate").value == "" && document.getElementById("ToDate").value == "") {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+</script>
+<script>
+    $('html').mouseover(function () {
+        var FromDate = document.getElementById("fromInputDate").value;
+        var ToDate = document.getElementById("toInputDate").value;
+        var f = BS2AD(FromDate);
+        var t = BS2AD(ToDate);
+        var fsplit = f.split("-", 3);
+        var tsplit = t.split("-", 3);
+        var month = new Array();
+        month[01] = "Jan";
+        month[02] = "Feb";
+        month[03] = "Mar";
+        month[04] = "Apr";
+        month[05] = "May";
+        month[06] = "Jun";
+        month[07] = "Jul";
+        month[08] = "Aug";
+        month[09] = "Sep";
+        month[1] = "Jan";
+        month[2] = "Feb";
+        month[3] = "Mar";
+        month[4] = "Apr";
+        month[5] = "May";
+        month[6] = "Jun";
+        month[7] = "Jul";
+        month[8] = "Aug";
+        month[9] = "Sep";
+        month[10] = "Oct";
+        month[11] = "Nov";
+        month[12] = "Dec";
+        document.getElementById("FromDate").value = fsplit[2] + "-" + month[parseInt(fsplit[1])] + "-" + fsplit[0];
+        document.getElementById("ToDate").value = tsplit[2] + "-" + month[parseInt(tsplit[1])] + "-" + tsplit[0];
+
+    });
+
+</script>
+<script>
+    $(document).ready(function () {
+        //alert(BS2AD('2072-04-27'));
+        // alert(AD2BS('2015-08-12'));
+        $('#fromInputDate').nepaliDatePicker();
+        $('#toInputDate').nepaliDatePicker();
+        var DbFromDate = AD2BS('@ViewData["FromDate"]');
+        var DbToDate = AD2BS('@ViewData["ToDate"]');
+        var FromDate = '@ViewData["FromDate"]';
+        var ToDate = '@ViewData["ToDate"]';
+        if (FromDate != "" && ToDate != "") {
+            $('#fromInputDate').val(DbFromDate);
+            $('#toInputDate').val(DbToDate);
+        } else {
+            var current_date = getNepaliDate();
+            $('#fromInputDate').val(current_date);
+            $('#toInputDate').val(current_date);
+        }
+        $("#hidden").remove();
+
+    });
+</script>
+<script>
+    $('.extraBtn #btnToggle').click(function () {
+        $('#btnToggle').html($('#btnToggle').text() == 'Total Amount' ? 'Quantity' : 'Total Amount');
+        $('.Total').toggleClass('tbl-active');
+        $('.Quantity').toggleClass('tbl-inactive');
+        $('.MuEdesc').toggleClass('tbl-inactive');
+
+    });
+</script>
+<script type="text/javascript">
+    $(function () {
+        $("#ddlDateFilter").change(function () {
+            var month = new Array();
+            month[0] = "Jan";
+            month[1] = "Feb";
+            month[2] = "Mar";
+            month[3] = "Apr";
+            month[4] = "May";
+            month[5] = "Jun";
+            month[6] = "Jul";
+            month[7] = "Aug";
+            month[8] = "Sep";
+            month[9] = "Oct";
+            month[10] = "Nov";
+            month[11] = "Dec";
+            var today = new Date();
+            var n = month[today.getMonth()];
+            var dd = today.getDate();
+            var yyyy = today.getFullYear();
+            if (dd < 10) {
+                dd = '0' + dd
+            }
+            today = dd + '-' + n + '-' + yyyy;
+            var current_date = getNepaliDate();
+            var current_date = current_date.split("-");
+            var cYear = current_date[0];
+            var cMonth = current_date[1];
+            var cDay = current_date[2];
+
+            if ($('option:selected', this).val() == "TD") {
+                var FromDate = cYear + "-" + cMonth + "-" + cDay;
+                var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                $("#fromInputDate").val(FromDate);
+                $("#toInputDate").val(ToDate);
+            }
+            else if ($('option:selected', this).val() == "TY") {
+                var FromDate = cYear + "-" + "04" + "-" + "01";
+                var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                $("#fromInputDate").val(FromDate);
+                $("#toInputDate").val(ToDate);
+            }
+            else if ($('option:selected', this).val() == "LY") {
+                var FromDate = (cYear - 1) + "-" + "04" + "-" + "01";
+                var ToDate = cYear + "-" + "03" + "-" + numberOfBsDays(cYear, "2");
+                $("#fromInputDate").val(FromDate);
+                $("#toInputDate").val(ToDate);
+            }
+            else if ($('option:selected', this).val() == "TM") {
+                var FromDate = cYear + "-" + cMonth + "-" + "01";
+                var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                $("#fromInputDate").val(FromDate);
+                $("#toInputDate").val(ToDate);
+            }
+            else if ($('option:selected', this).val() == "LM") {
+                if (cMonth == 1) {
+                    cYear = cYear - 1;
+                    cMonth = "12";
+                }
+                else {
+                    cMonth = cMonth - 1;
+                }
+                var newToDate = numberOfBsDays(cYear, (cMonth - 1));
+                if (cMonth > 1 && (cMonth) < 10)
+                    cMonth = "0" + cMonth;
+                var FromDate = cYear + "-" + cMonth + "-" + "01";
+                var ToDate = cYear + "-" + cMonth + "-" + newToDate;
+                $("#fromInputDate").val(FromDate);
+                $("#toInputDate").val(ToDate);
+            }
+            else if ($('option:selected', this).val() == "TQ") {
+                if (cMonth > 3 && cMonth < 7) {
+                    var FromDate = cYear + "-" + "04" + "-" + "01";
+                    var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+                else if (cMonth > 6 && cMonth < 10) {
+                    var FromDate = cYear + "-" + "07" + "-" + "01";
+                    var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+                else if (cMonth > 9 && cMonth <= 12) {
+                    var FromDate = cYear + "-" + "10" + "-" + "01";
+                    var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+                else if (cMonth >= 1 && cMonth < 4) {
+                    var FromDate = cYear + "-" + "01" + "-" + "01";
+                    var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+            }
+            else if ($('option:selected', this).val() == "LQ") {
+                if (cMonth > 3 && cMonth < 7) {
+                    var FromDate = cYear + "-" + "01" + "-" + "01";
+                    var ToDate = cYear + "-" + "03" + "-" + numberOfBsDays(cYear, "2");
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+                else if (cMonth > 6 && cMonth < 10) {
+                    var FromDate = cYear + "-" + "04" + "-" + "01";
+                    var ToDate = cYear + "-" + "06" + "-" + numberOfBsDays(cYear, "5");
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+                else if (cMonth > 9 && cMonth <= 12) {
+                    var FromDate = cYear + "-" + "07" + "-" + "01";
+                    var ToDate = (cYear + 1) + "-" + "09" + "-" + numberOfBsDays((cYear + 1), "8");
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+                else if (cMonth >= 1 && cMonth < 4) {
+                    var FromDate = (cYear - 1) + "-" + "10" + "-" + "01";
+                    var ToDate = (cYear - 1) + "-" + "12" + "-" + numberOfBsDays((cYear - 1), "11");
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+            }
+            else if ($('option:selected', this).val() == "TH") {
+                if (cMonth > 3 && cMonth < 10) {
+                    var FromDate = cYear + "-" + "04" + "-" + "01";
+                    var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+                else {
+                    var FromDate = cYear + "-" + "10" + "-" + "01";
+                    var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+            }
+            else if ($('option:selected', this).val() == "LH") {
+                if (cMonth > 3 && cMonth < 10) {
+                    var FromDate = (cYear - 1) + "-" + "10" + "-" + "01";
+                    var ToDate = cYear + "-" + "03" + "-" + numberOfBsDays(cYear, "2");
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+                else if (cMonth >= 10) {
+                    var FromDate = cYear + "-" + "04" + "-" + "01";
+                    var ToDate = cYear + "-" + "09" + "-" + numberOfBsDays(cYear, "8");
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+                else {
+                    var FromDate = (cYear - 1) + "-" + "04" + "-" + "01";
+                    var ToDate = (cYear - 1) + "-" + "09" + "-" + numberOfBsDays((cYear - 1), "8");
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+            }
+        });
+    });
+</script>
+<script>
+    $(document).ready(function () {
+        var selected = '@ViewData["DateStep"]';
+        if (selected == "") {
+            document.getElementById("ddlDateFilter").value = 'TD';
+        } else {
+            document.getElementById("ddlDateFilter").value = selected;
+        }
+    });
+</script>
+<script>
+    $(document).ready(function () {
+        var pageHeight = $('div#search').outerHeight() + $('div.pull-right').outerHeight();
+        $('.overflow-y').height($('.page-wrapper').height() - pageHeight);
+    });
+
+
+</script>

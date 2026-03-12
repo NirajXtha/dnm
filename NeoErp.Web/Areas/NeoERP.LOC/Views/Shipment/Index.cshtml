@@ -1,0 +1,581 @@
+﻿@{
+    var myAreaName = string.Empty;
+    object areaObj;
+    Layout = null;
+    if (ViewContext.RouteData.Values.TryGetValue("area", out areaObj))
+    {
+        myAreaName = areaObj.ToString();
+    }
+}
+<style>
+    legend {
+        width: 17%;
+    }
+
+    .btn-xs {
+        padding: 0px 5px;
+    }
+
+    .portlet.light.bordered.main {
+        min-height: 550px !important;
+    }
+
+    a.btn.btn-xs {
+        color: grey;
+    }
+
+    #ShipmentInvoiceForm input[type="text"] {
+        height: 24px !important;
+        /*width: 98%;*/
+        font-size: 11px !important;
+    }
+
+    #ShipmentInvoiceForm input [type="checkbox"] {
+        height: auto !important;
+    }
+
+    div#grid {
+        height: 500px;
+    }
+
+    .required {
+        color: #b94a48;
+    }
+
+    i.fa.fa-file-image-o.image {
+        margin: 1px;
+    }
+
+    .image-placeholder > img {
+        display: inline;
+        margin: 1px;
+        height: 40px;
+        width: 40px;
+    }
+
+    #shipmentitemsok {
+        float: right;
+    }
+
+    /*.btn {
+        height: 28px !important;
+    }*/
+
+    #ShipmentInvoiceForm .k-widget input {
+        height: 16px !important;
+    }
+
+
+    .form-group.image-placeholder > div {
+        display: inline-block;
+        float: left;
+        width: 78px;
+    }
+
+    .main .k-dropdown-wrap {
+        height: 22px;
+        font-size: 12px;
+    }
+    /*.form-control {
+        height: 28px !important;
+    }*/
+    .actionbutton {
+        color: white !important;
+    }
+
+    .k-clear-value {
+        display: none;
+    }
+
+    span.k-icon.k-i-loading {
+        display: none;
+    }
+
+    .addbuttonmargin {
+        margin-bottom: 22px;
+    }
+</style>
+<div ng-app="myApp">
+    <div ng-controller="ShipmentCtrl" id="ShipmentCtrl">
+        <div class="portlet light bordered main">
+            <div class="portlet-title titleheading">
+                <span class="caption-subject font-green bold uppercase text-center" style="text-align:center">
+                    <i class="fa fa-list-alt"></i>
+                    Shipment Invoice Entry
+                </span>
+
+
+                <span class="pull-right">
+                    <button type="button" id="cancelsi" name="cancelsi" class="btn btn-default btn-sm" ng-click="cancelsi();">Cancel</button>
+                    <button type="reset" id="saveandcontinue" name="saveandcontinue" class="btn btn-primary btn-sm" ng-click="createshipment(ShipmentInvoiceForm.$valid,'saveandcontinue')">{{scAction}}</button>
+                    <button type="submit" id="saveshipment" name="saveshipment" ng-click="createshipment(ShipmentInvoiceForm.$valid,'save')" class="btn btn-success btn-sm">{{saveAction}}</button>
+                </span>
+
+            </div><!-- /portlet-title-->
+            <div class="portlet-body">
+                <div class="row">
+
+                    <form id="ShipmentInvoiceForm" name="ShipmentInvoiceForm" novalidate>
+
+
+                        <input type="hidden" id="LocCode" ng-model="pi.LocCode" />
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Invoice Number<span style="color:red" ng-show="ShipmentInvoiceForm.pininvoice.$invalid">
+                                        <span ng-show="ShipmentInvoiceForm.pininvoice.$error.required">*</span>
+                                    </span>
+                                </label>
+                                <input id="perfomainvoiceautocomplete" ng-model="si.perfomainvoice" name="perfomainvoice" kendo-auto-complete
+                                       k-data-text-field="'INVOICE_NUMBER'"
+                                       k-data-value-field="'INVOICE_CODE'"
+                                       k-data-source="ipPurchaseOrder"
+                                       k-min-length="1"
+                                       k-value-primitive="true"
+                                       k-on-select="ItemsOnChange(kendoEvent)"
+                                       k-placeholder="'Select Commercial Number...'"
+                                       style="width: 100%" ng-disabled="profomainvoicedisabled" required />
+
+                            </div>
+                        </div>
+
+
+                        <div class="col-sm-12 col-md-12">
+                            <div class="portlet-body">
+                                <div class="addbuttonmargin" ng-repeat="items in itemlist|limitTo:1">
+                                    <a href="javascript:void(0)" class="btn btn-xs btn-success pull-right actionbutton">
+                                        [<i class="fa fa-plus"></i>] Add Shipment Info
+                                    </a>
+                                    @*<a href="javascript:void(0)" ng:click="AddShipmentItems(items)" class="btn btn-xs btn-success pull-right actionbutton">
+                                        [<i class="fa fa-plus"></i>] Add Shipment Info
+                                    </a>*@
+                                  
+                                </div>
+                                <div class="tblresponsive">
+                                    <table class="table table-striped  table-hover ctable" id="items">
+                                        <thead>
+                                            <tr>
+                                                <th width="5%">S.N.</th>
+                                                <th>Name</th>
+                                                <th>Quantity</th>
+                                                <th>Tot. Qty.</th>
+                                                <th>From</th>
+                                                <th>To</th>
+                                                <th>Type</th>
+                                                <th>Est Days</th>
+                                                <th>Load Type</th>
+                                                @*<th>Action</th>*@
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            <tr style="font-size:10px;" ng-if="itemlist.length==0"><td colspan="11">No Items To Display..</td></tr>
+                                            <tr style="font-size:10px;" ng-if="itemlist.length!=0" ng-repeat="items in itemlist">
+                                                <td>{{$index +1}}</td>
+                                                <td>{{items.ITEM_EDESC}}</td>
+                                                <td style="text-align:right;">{{items.RECEIVED_QUANTITY | number : fractionSize}}</td>
+                                                <td style="text-align:right;">{{items.QUANTITY | number : fractionSize}}</td>
+                                                <td>{{items.FROM_LOCATION}}</td>
+                                                <td>{{items.TO_LOCATION}}</td>
+                                                <td>{{items.SHIPMENT_TYPE}}</td>
+                                                <td style="text-align:right;">{{items.EST_DAY}}</td>
+                                                <td>{{items.LOAD_TYPE}}</td>
+                                                @*<td class="actionbutton">
+                                                        @*<a ng-show="editbutton" class="edit glyphicon glyphicon-edit btn-edit" ng-click="EditShipmentItems(items)" style="color:grey;"><span class="sr-only"></span> </a>
+
+
+
+
+                                                    </td>*@
+                                            </tr>
+
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div ng-show="onitemsedit">
+
+                            <div class="col-sm-12 col-md-12 bottom_gapping">
+                                <fieldset>
+                                    <legend>Shipment Details</legend>
+                                    <div class="row">
+                                        <input type="hidden" ng-model="lctrackno" />
+                                        <input type="hidden" ng-model="sno" />
+                                      
+                                        <div class="col-sm-6 col-md-3">
+                                            <div class="form-group">
+                                                <label class="control-label">
+                                                    Shipment Type
+                                                </label>
+                                                <select id="shipmentType" k-value-primitive="true" k-on-change="OnChangeShipmentType(kendoEvent)" name="shipmentType" k-ng-model="si.shipmentType" ng-model="si.shiptype" kendo-drop-down-list style="width: 100%"
+                                                        k-options="shipmentType"></select>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6 col-md-3">
+                                            <div class="form-group">
+                                                <label class="control-label">
+                                                    From Location
+                                                </label>
+                                                <input type="text" id="fromlocation" name="fromlocation" ng-model="si.fromlocation" class="form-control input-sm" />
+
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6 col-md-3">
+                                            <div class="form-group">
+                                                <label class="control-label">
+                                                    To Location
+                                                </label>
+                                                <input type="text" id="tolocation" name="tolocation" ng-model="si.tolocation" class="form-control input-sm" />
+
+                                            </div>
+                                        </div>
+                                        <div ng-show="showforair">
+                                            <div class="col-sm-6 col-md-3">
+                                                <div class="form-group">
+                                                    <label class="control-label">
+                                                        Airway Bill No.
+                                                    </label>
+                                                    <input type="text" id="awb" name="awb" ng-model="si.awb" class="form-control input-sm" />
+
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6 col-md-3">
+                                                <div class="form-group">
+                                                    <label class="control-label">Airway Bill Date<small>(mm/dd/yyyy)</small></label>
+                                                    <input type="text" id="awbdate" name="awbdate" autocomplete="off" class="form-control maskdate" ng-model="si.awbdate" />
+
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6 col-md-3">
+                                                <div class="form-group">
+                                                    <label class="control-label">
+                                                        Gross Weight Air
+                                                    </label>
+                                                    <input type="text" id="grosswhtair" name="grosswhtair" ng-model="si.grosswhtair" class="form-control input-sm" />
+                                                </div>
+                                            </div>
+
+                                            <div class="col-sm-6 col-md-3">
+                                                <div class="form-group">
+                                                    <label class="control-label">
+                                                        Chargeable Weight Air
+                                                    </label>
+                                                    <input type="text" id="chargeablewhtair" name="chargeablewhtair" ng-model="si.chargeablewhtair" class="form-control input-sm" />
+                                                </div>
+
+                                            </div>
+
+
+                                        </div>
+                                        <div class="col-sm-6 col-md-3">
+                                            <div class="form-group">
+                                                <label class="control-label">
+                                                    Load Type
+                                                </label>
+                                                <select id="shipmentload" k-value-primitive="true" name="shipmentload" k-ng-model="si.shipmentload" ng-model="si.load" kendo-drop-down-list style="width: 100%"
+                                                        k-options="shipmentLoad"></select>
+
+                                            </div>
+                                        </div>
+
+
+
+                                        <div class="col-sm-6 col-md-3">
+                                            <div class="form-group">
+                                                <label class="control-label">
+                                                    Shipment Status
+                                                </label>
+                                                <input type="text" id="shipmentstatus" name="shipmentstatus" ng-model="si.shipmentstatus" class="form-control input-sm" />
+
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6 col-md-3">
+                                            <div class="form-group">
+                                                <label class="control-label">
+                                                    Container Size
+                                                </label>
+                                                <input type="text" id="containersize" name="containersize" ng-model="si.containersize" class="form-control input-sm" />
+
+                                            </div>
+
+                                        </div>
+
+                                        <div class="col-sm-6 col-md-3">
+                                            <div class="form-group">
+                                                <label class="control-label">
+                                                    Container Number/Seal No
+                                                </label>
+                                                <input type="text" id="containernumber" name="containernumber" ng-model="si.containernumber" class="form-control input-sm" />
+
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6 col-md-3">
+                                            <div class="form-group">
+                                                <label class="control-label">
+                                                    Estimated Day
+                                                </label>
+                                                <input type="text" id="estimateday" name="estimateday" ng-model="si.estimateday" class="form-control input-sm" />
+                                            </div>
+
+                                        </div>
+                                        <div class="col-sm-6 col-md-3">
+                                            <div class="form-group">
+                                                <label class="control-label">
+                                                    Shipper Name
+                                                </label>
+                                                <input type="text" id="shippername" name="shippername" ng-model="si.shippername" class="form-control input-sm" />
+                                            </div>
+
+                                        </div>
+                                        <div class="col-sm-6 col-md-3">
+                                            <div class="form-group">
+                                                <label class="control-label">
+                                                    Shipper Address
+                                                </label>
+                                                <input type="text" id="shipperaddress" name="shipperaddress" ng-model="si.shipperaddress" class="form-control input-sm" />
+                                            </div>
+
+                                        </div>
+                                        <div class="col-sm-6 col-md-3">
+                                            <div class="form-group">
+                                                <label class="control-label">
+                                                    Consignee Name
+                                                </label>
+                                                <input type="text" id="consigneename" name="consigneename" ng-model="si.consigneename" class="form-control input-sm" />
+                                            </div>
+
+                                        </div>
+                                        <div class="col-sm-6 col-md-3">
+                                            <div class="form-group">
+                                                <label class="control-label">
+                                                    Consignee Address
+                                                </label>
+                                                <input type="text" id="consigneeaddress" name="consigneeaddress" ng-model="si.consigneeaddress" class="form-control input-sm" />
+                                            </div>
+
+                                        </div>
+                                        <div class="col-sm-6 col-md-3">
+                                            <div class="form-group">
+                                                <label class="control-label">
+                                                    Issuing Carrier Name
+                                                </label>
+                                                <input type="text" id="issuingcarrername" name="issuingcarrername" ng-model="si.issuingcarrername" class="form-control input-sm" />
+                                            </div>
+
+                                        </div>
+                                        <div class="col-sm-6 col-md-3">
+                                            <div class="form-group">
+                                                <label class="control-label">
+                                                    Issuing Carrier Address
+                                                </label>
+                                                <input type="text" id="issuingcarreraddress" name="issuingcarreraddress" ng-model="si.issuingcarreraddress" class="form-control input-sm" />
+                                            </div>
+
+                                        </div>
+                                        <div class="col-sm-6 col-md-3">
+                                            <div class="form-group">
+                                                <label class="control-label">
+                                                    Notify Applicant Name
+                                                </label>
+                                                <input type="text" id="notifyapplicantname" name="notifyapplicantname" ng-model="si.notifyapplicantname" class="form-control input-sm" />
+                                            </div>
+
+                                        </div>
+                                        <div class="col-sm-6 col-md-3">
+                                            <div class="form-group">
+                                                <label class="control-label">
+                                                    Notify Applicant Address
+                                                </label>
+                                                <input type="text" id="notifyapplicantaddress" name="notifyapplicantaddress" ng-model="si.notifyapplicantaddress" class="form-control input-sm" />
+                                            </div>
+
+                                        </div>
+
+                                        <div class="col-sm-6 col-md-3">
+                                            <div class="form-group">
+                                                <label class="control-label">
+                                                    Remarks
+                                                </label>
+                                                <input type="text" id="remarks" name="remarks" ng-model="si.remarks" class="form-control input-sm" />
+                                            </div>
+                                        </div>
+                                        <div ng-show="showforsea">
+                                            <div class="col-md-12">
+                                                <h5><b><u>Sea</u></b></h5>
+                                            </div>
+                                            <div class="col-sm-6 col-md-3">
+                                                <div class="form-group">
+                                                    <label class="control-label">
+                                                        Lading Bill No.
+                                                    </label>
+                                                    <input type="text" id="lading" name="lading" ng-model="si.lading" class="form-control input-sm" />
+
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6 col-md-3">
+                                                <div class="form-group">
+                                                    <label class="control-label">Lading Bill Date<small>(mm/dd/yyyy)</small></label>
+                                                    <input type="text" id="ladingdate" name="ladingdate" autocomplete="off" class="form-control maskdate" ng-model="si.ladingdate" />
+
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6 col-md-3">
+                                                <div class="form-group">
+                                                    <label class="control-label">
+                                                        Gross Weight Sea
+                                                    </label>
+                                                    <input type="text" id="grossweightsea" name="grossweightsea" ng-model="si.grossweightsea" class="form-control input-sm" />
+
+                                                </div>
+                                            </div>
+
+                                            <div class="col-sm-6 col-md-3">
+                                                <div class="form-group">
+                                                    <label class="control-label">
+                                                        Measurement weight (CBM for sea)
+                                                    </label>
+                                                    <input type="text" id="cbmsea" name="cbmsea" ng-model="si.cbmsea" class="form-control input-sm" />
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6 col-md-3">
+                                                <div class="form-group">
+                                                    <label class="control-label">
+                                                        Vessel No
+                                                    </label>
+                                                    <input type="text" id="vesselno" name="vesselno" ng-model="si.vesselno" class="form-control input-sm" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div ng-show="showforroad">
+                                            <div class="col-md-12">
+                                                <h5><b><u>Road</u></b></h5>
+                                            </div>
+                                            <div class="col-sm-6 col-md-3">
+                                                <div class="form-group">
+                                                    <label class="control-label">
+                                                        Road Bill No.
+                                                    </label>
+                                                    <input type="text" id="road" name="road" ng-model="si.road" class="form-control input-sm" />
+
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6 col-md-3">
+                                                <div class="form-group">
+                                                    <label class="control-label">Road Bill Date<small>(mm/dd/yyyy)</small></label>
+                                                    <input type="text" id="roaddate" name="roaddate" autocomplete="off" class="form-control maskdate" ng-model="si.roaddate" />
+
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6 col-md-3">
+                                                <div class="form-group">
+                                                    <label class="control-label">
+                                                        Truck No
+                                                    </label>
+                                                    <input type="text" id="truck" name="truck" ng-model="si.truck" class="form-control input-sm" />
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6 col-md-3">
+                                                <div class="form-group">
+                                                    <label class="control-label">
+                                                        Transporter Name
+                                                    </label>
+                                                    <input type="text" id="transname" name="transname" ng-model="si.transname" class="form-control input-sm" />
+
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6 col-md-3">
+                                                <div class="form-group">
+                                                    <label class="control-label">
+                                                        Transporter Address
+                                                    </label>
+                                                    <input type="text" id="transaddress" name="transaddress" ng-model="si.transaddress" class="form-control input-sm" />
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div ng-show="showfortrain">
+                                            <div class="col-md-12">
+                                                <h5><b><u>Train</u></b></h5>
+                                            </div>
+                                            <div class="col-sm-6 col-md-3">
+                                                <div class="form-group">
+                                                    <label class="control-label">
+                                                        Train Bill No.
+                                                    </label>
+                                                    <input type="text" id="train" name="train" ng-model="si.train" class="form-control input-sm" />
+
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6 col-md-3">
+                                                <div class="form-group">
+                                                    <label class="control-label">Train Bill Date<small>(mm/dd/yyyy)</small></label>
+                                                    <input type="text" id="traindate" name="traindate" autocomplete="off" class="form-control maskdate" ng-model="si.traindate" />
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                        @*<div ng-show="showforother">
+                                                <div class="col-md-12"><h5><b><u>Others</u></b></h5></div>
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">
+                                                            Other Bill No.
+                                                        </label>
+                                                        <input type="text" id="other" name="other" ng-model="si.other" class="form-control input-sm"  />
+
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-6 col-md-3">
+                                                    <div class="form-group">
+                                                        <label class="control-label">Other Bill Date<small>(mm/dd/yyyy)</small></label>
+                                                        <input type="text" id="otherdate" name="otherdate" autocomplete="off" class="form-control maskdate" ng-model="si.otherdate" />
+
+                                                    </div>
+
+
+
+                                                </div>
+
+
+
+                                            </div>*@
+                                        @*<div class="col-md-12">
+                                                <button type="submit" id="shipmentitemsok" name="saveshipment" ng-click="ApplyDataForItem()" class="btn btn-success btn-sm">Apply</button>
+                                            </div>*@
+
+                                    </div>
+                                </fieldset>
+                            </div>
+                        </div>
+
+
+                    </form>
+                    <div class="clearfix">
+                    </div>
+
+
+                </div>
+            </div><!--/portlet-body-->
+        </div><!-- /portlet-->
+
+    </div>
+</div>
+
+<script>
+    var settlementDropzone;
+    (function () {
+        $(document).ready(function () {
+
+        });
+    })();
+
+
+
+
+    function RefreshGrid() {
+        $("#grid").data("kendoGrid").dataSource.read();
+    }
+
+</script>

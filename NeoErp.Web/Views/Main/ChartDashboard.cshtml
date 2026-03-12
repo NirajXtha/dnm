@@ -1,0 +1,537 @@
+﻿@using NeoErp.Core.Models;
+@{
+    ViewBag.Title = "Dashboard";
+}
+
+@{
+    var myAreaName = string.Empty;
+    object areaObj;
+    if (ViewContext.RouteData.Values.TryGetValue("area", out areaObj))
+    {
+        myAreaName = areaObj.ToString();
+    }
+    myAreaName = "NeoErp.sales.Module";
+
+    List<string>
+    listChartAvailable_TD = new List<string>
+        ();
+    bool UserChartSettingAvailable = false;
+    string fullWidth = string.Empty;
+    if (TempData["AvailableChart"] != null)
+    {
+        listChartAvailable_TD = (List<string>
+            )TempData["AvailableChart"];
+        UserChartSettingAvailable = true;
+        fullWidth = "";
+    }
+    var pageId = "Personal_Dashboard";
+    Session["oldPagenumber_" + pageId] = null;
+}
+
+<style>
+    .page-content-wrapper .page-content {
+        padding: 7px 20px 10px 20px !important;
+    }
+
+    a.k-button.k-button-icontext.k-grid-excel {
+        float: right;
+    }
+
+    a.k-button.k-button-icontext.k-grid-pdf {
+        float: right;
+    }
+
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+         font-size:11px;
+    }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    [data-toggle=buttons] > .btn .radio {
+        display: none;
+    }
+
+
+    .AmountFigureType {
+        position: absolute;
+        bottom: 103px;
+        right: 32px;
+        font-weight: 600;
+        font-family: sans-serif;
+        font-size: 12px;
+    }
+
+    .DisplayFilterContent {
+        position: absolute;
+        bottom: 107px;
+        right: 32px;
+        font-weight: 400;
+        font-family: sans-serif;
+        font-size: 11px;
+    }
+
+    .column {
+        margin-bottom: -68px;
+    }
+
+    .chart-custom {
+        max-width: 350px;
+    }
+
+    .k-center {
+        text-align: center;
+    }
+
+    .portlet.portlet-sortable {
+        min-height: 460px;
+    }
+
+    .overlay div {
+        position: relative;
+        font-size: 34px;
+        margin-top: -17px;
+        top: 50%;
+    }
+
+    .overlay {
+        display: none;
+    }
+</style>
+
+@if (!UserChartSettingAvailable)
+            {
+    <div class="page-sidebar-wrapper">
+        <!-- DOC: Set data-auto-scroll="false" to disable the sidebar from auto scrolling/focusing -->
+        <!-- DOC: Change data-auto-speed="200" to adjust the sub menu slide up/down speed -->
+        @Html.Partial("_menuSales")
+    </div>
+}
+
+@{
+    TempData["sidemenu"] = "true";
+}
+@Html.Action("InstalledPluginListForMenu", "Main", new { area = "" })
+
+<div class="page-content-wrapper" id="operationContent">
+    <div class="page-content @fullWidth">
+        <!-- BEGIN SAMPLE PORTLET CONFIGURATION MODAL FORM-->
+        <!-- /.modal -->
+        <div class="page-bar">
+            <ul class="page-breadcrumb">
+                <li>
+                    <i class="fa fa-home"></i>
+                    <a href="/Main/Dashboard">Home</a>
+                    @*<i class="fa fa-angle-right"></i>*@
+                </li>
+                @*<li>
+                        <a href="#">Dash Board</a>
+                        <i class="fa fa-angle-right"></i>
+                    </li>*@
+
+            </ul>
+            <div class="page-toolbar">
+                <div class="btn-group pull-right button_space">
+                    <a class="btn btn-circle btn-icon-only btn-default" href="~/Main/CompareCharts" title="Compare Charts">
+                        <i class="fa fa-bar-chart" aria-hidden="true"></i>
+                    </a>
+                    <a class="btn btn-circle btn-icon-only btn-default" href="~/Main/CompareChartDivision" title="Compare Charts Division">
+                        <i class="glyfter-Sales-revenue" aria-hidden="true"></i>
+                    </a>
+                    <a class="btn btn-circle btn-icon-only btn-default" href="~/Main/CompareChartDivisionCollectionWise" title="Compare Charts Division CollectionWise">
+                        <i class="glyfter-Sales-revenue" aria-hidden="true"></i>
+                    </a>
+                    @*<a class="btn btn-circle btn-icon-only btn-default" data-toggle="collapse" href="#demo">
+                            <i class="fa fa-angle-down"></i>
+                        </a>*@
+                    @*<button class="k-button">Export Grid</button>*@
+                    @Html.Partial("~/Views/Shared/Controls/_reportFilterSettings.cshtml", new ReportFilterSettingsModel()
+               {
+                   ShowAmountFigureFilter = true,
+                   ShowAmountFilter = true,
+                   ShowAmountRoundUpFilter = true,
+                   ShowRangeAmountFilter = false,
+                   ShowRangeQuantityFilter = false,
+                   ShowRangeRateFilter = false,
+                   ActionPageId = "ChartDashboard",
+                   ShowApplyToAllChartOption = false
+               })
+
+
+                </div>
+            </div>
+            @*<a href="~/Areas/NeoErp.sales.Module/Views/SalesHome/_MonthlySalesCollectionPartial.cshtml">~/Areas/NeoErp.sales.Module/Views/SalesHome/_MonthlySalesCollectionPartial.cshtml</a>*@
+        </div>
+
+        <div class="main-view-port">
+            <div class=" ">
+                <div id="dashboardWidget">
+
+                </div>
+
+            </div>
+
+
+
+            <div class="col-md-12 margin-top-10">
+                <div class="row" id="sortable_portlets">
+
+                    @*<div class="col-md-6 column sortable" id="dashboardAlerts">
+
+                        </div>*@
+                    @*@{
+
+                        string[] list = ViewBag.widgets;
+                        if (list != null && list.Length > 0 && UserChartSettingAvailable)
+                        {
+                        foreach (var itemlist in list)
+                        {
+                        if (listChartAvailable_TD.Contains(itemlist))
+                        {
+                        string fullName = string.Empty;
+                        fullName = "~/Areas/NeoErp.sales.Module/Views/SalesHome/_" + itemlist + ".cshtml";
+                        <div class="col-md-6 col-sm-6 column sortable">
+                            @try
+                            {
+                            @Html.Partial(fullName)
+                            <div class="portlet portlet-sortable-empty"> </div>
+                            }
+                            catch { }
+                        </div>
+                        }
+                        }
+                        foreach (var item in listChartAvailable_TD)
+                        {
+                        if (!list.Contains(item))
+                        {
+                        string fullName = string.Empty;
+                        fullName = "~/Areas/NeoErp.sales.Module/Views/SalesHome/_" + item + ".cshtml";
+                        <div class="col-md-6 col-sm-6 column sortable">
+                            @try
+                            {
+                            @Html.Partial(fullName)
+                            <div class="portlet portlet-sortable-empty"> </div>
+                            }
+                            catch { }
+                        </div>
+                        }
+                        }
+                        }
+                        else if ((list == null || list.Length < 1) && UserChartSettingAvailable)
+                        {
+                        foreach (var item in listChartAvailable_TD)
+                        {
+                        string fullName = "~/Areas/NeoErp.sales.Module/Views/SalesHome/_" + item + ".cshtml";
+                        <div class="col-md-6 col-sm-6 column sortable">
+                            @try
+                            {
+                            @Html.Partial(fullName)
+                            <div class="portlet portlet-sortable-empty"> </div>
+                            }
+                            catch { }
+                        </div>
+                        }
+                        }
+                        else
+                        {
+
+                        }
+                        }
+                        @*}*@
+
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12 margin-top-10">
+                    <a href="#" id="loadMore" class="btn default btn-block">Load More</a>
+                </div>
+            </div>
+            <!-- END PAGE HEADER-->
+            <!-- BEGIN PAGE CONTENT-->
+            <!-- END PAGE CONTENT-->
+        </div>
+    </div>
+</div>
+
+
+
+@section Scripts{
+    <script src="@Scripts.Url(" ~/Content/MainTheme/assets/global/plugins/amcharts/amcharts/amcharts.js")"></script>
+    <script src="@Scripts.Url(" ~/Content/MainTheme/assets/global/plugins/amcharts/amcharts/serial.js")"></script>
+    <script src="@Scripts.Url(" ~/Content/MainTheme/assets/global/plugins/amcharts/amcharts/pie.js")"></script>
+    <script src="@Scripts.Url(" ~/Content/MainTheme/assets/global/plugins/amcharts/amcharts/radar.js")"></script>
+    <script src="@Scripts.Url(" ~/Content/MainTheme/assets/global/plugins/amcharts/amcharts/themes/light.js")"></script>
+    <script src="@Scripts.Url(" ~/Content/MainTheme/assets/global/plugins/amcharts/amcharts/themes/patterns.js")"></script>
+    <script src="@Scripts.Url(" ~/Content/MainTheme/assets/global/plugins/amcharts/amcharts/themes/chalk.js")"></script>
+    <script src="@Scripts.Url(" ~/Content/MainTheme/assets/global/plugins/amcharts/ammap/ammap.js")"></script>
+    <script src="@Scripts.Url(" ~/Content/MainTheme/assets/global/plugins/amcharts/ammap/maps/js/worldLow.js")"></script>
+    <script src="@Scripts.Url(" ~/Content/MainTheme/assets/global/plugins/amcharts/amstockcharts/amstock.js")"></script>
+
+    <script src="@Scripts.Url(" ~/Content/MainTheme/Protle.dragger.js")" type="text/javascript"></script>
+    <script src='@Scripts.Url("~/Areas/"+myAreaName+"/Scripts/sammy-admin-sales.js?v=2")'></script>
+    @*
+        <script src='@Scripts.Url("~/Content/MainTheme/assets/admin/pages/scripts/charts-amcharts.js")'></script>*@
+    <script src='@Scripts.Url("~/Areas/"+myAreaName+"/Scripts/charts.js")'></script>
+    <script src="http://cdn.kendostatic.com/2014.3.1029/js/jszip.min.js"></script>
+    <script src="@Scripts.Url(" ~/JS/kendoHelpers.js")"></script>
+    <script src="@Scripts.Url(" ~/JS/reportFilter.js")"></script>
+    <script src="@Scripts.Url(" ~/Content/jquery.singleclick.js")"></script>
+    <script src="@Scripts.Url(" ~/Areas/"+myAreaName+"/Scripts/KendoChart.js")"></script>
+    <script src="@Scripts.Url(" ~/Areas/"+myAreaName+"/Scripts/KendoBranchChart.js")"></script>
+    <script src="@Scripts.Url(" ~/JS/DashboardChartFilter/ChartFilter.js")"></script>
+    <script src="@Scripts.Url(" ~/Content/MainTheme/assets/global/plugins/jquery-slimscroll/jquery.slimscroll.min.js")"></script>
+
+    <script>
+      var amountFigureType = "";
+                var branchCodes = '';
+                var companyCodes = '';
+                var pageNumber = 1;
+               var reportName = '@pageId';               
+    </script>
+
+    <script>
+                $(".export-pdf").click(function () {
+                    var chartid = $(this).data("id");
+                    var chart = $("#" + chartid).getKendoChart();
+                    var filename = $(this).closest(".portlet-title").find(".custom-modal").html();
+
+                    chart.exportPDF({ paperSize: "auto", margin: { left: "1cm", top: "1cm", right: "1cm", bottom: "1cm" } }).done(function (data) {
+                        kendo.saveAs({
+                            dataURI: data,
+                            fileName: filename + ".pdf",
+                            proxyURL: "//demos.telerik.com/kendo-ui/service/export"
+                        });
+                    });
+                });
+
+                $(".export-img").click(function () {
+                    var chartid = $(this).data("id");
+                    var chart = $("#" + chartid).getKendoChart();
+                    var filename = $(this).closest(".portlet-title").find(".custom-modal").html();
+                    chart.exportImage().done(function (data) {
+                        kendo.saveAs({
+                            dataURI: data,
+                            fileName: filename + ".png",
+                            proxyURL: "//demos.telerik.com/kendo-ui/service/export",
+                        });
+                    });
+                });
+
+                $(".export-svg").click(function () {
+                    var chartid = $(this).data("id");
+                    var chart = $("#" + chartid).getKendoChart();
+                    var filename = $(this).closest(".portlet-title").find(".custom-modal").html();
+                    chart.exportSVG().done(function (data) {
+                        kendo.saveAs({
+                            dataURI: data,
+                            fileName: filename + ".svg",
+                            proxyURL: "//demos.telerik.com/kendo-ui/service/export"
+                        });
+                    });
+                });
+                $('.modal').on('shown.bs.modal', function () {
+                    $('.modal-backdrop').css('zIndex', 10030);
+                })
+                $(".btnGrid").on("click", function () {
+                    if ($(this).find('i').hasClass('icon-bar-chart')) {
+                        $(this).attr('data-original-title', 'Chart');
+                        $("#" + $(this).closest(".portlet").find(".portlet-body > div > div").attr("id")).css({ 'border': '1px solid rgb(197,197,197)' });
+                    }
+                    else {
+                        $(this).attr('data-original-title', 'Grid');
+                        $("#" + $(this).closest(".portlet").find(".portlet-body > div > div").attr("id")).css({ 'border': '0px solid #fff' });
+                    }
+                });
+                function chart_grid_option_change(btnClass, method) {
+                    $this = $("." + btnClass);
+                    $this.data("type", "Chart");
+                    window[method]();
+                    $this.find('i').removeClass('icon-bar-chart');
+                    $this.attr('data-original-title', 'Grid');
+                }
+
+
+
+                $("#applyFilters_ChartDashboard").bind('click', function () {
+                    //hide modal if not hide auto
+                    $('#reportFilterShow__ChartDashboard').closest('.modal').modal('hide')
+                    //update amount figure
+                    if (ReportFilter.filterAdditionalData().ReportFilters.AmountFigureFilter != "Actual")
+                        amountFigureType = "In " + ReportFilter.filterAdditionalData().ReportFilters.AmountFigureFilter;
+                    else
+                        amountFigureType = "";
+
+                    //
+                    var applyToChartOption = $("input[name=ApplyOnChartOption]:checked").val();
+                    if (applyToChartOption == "All") {
+
+                        try { createMonthlySalesCollectionChart(); } catch (e) { }
+                        try { kendoCharts.createChart(); } catch (e) { }
+
+                        //refreshmonthly();
+                        try { CreateMonthlyBranchSalesChart(); } catch (e) { }
+
+                        //refreshBranch();
+                        try { createbranchwiseSalesCollectionChart(); } catch (e) { }
+
+                        //refreshBranchWiseSalesCollectionChart();
+                        try { createWeeklyCollectionChart(); } catch (e) { }
+
+                        //refreshWeeklyCollectionChart();
+                        try { CreateExpensesTrendChart(); } catch (e) { }
+
+                        //RefreshExpensesTrendChart();
+                        try { createCategoryChart(); } catch (e) { }
+
+                        //refreshCategoryChart();
+                        try { createDivisionwiseSalesChart(); } catch (e) { }
+                        //refreshDivisionSalesChart();
+                        try { CreateEmployeeWiseSalesChart(); } catch (e) { }
+
+                        //RefreshEmployeeWiseSalesChart();
+                    }
+                });
+                function FormatLabels(value) {
+                    return kendo.format("{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString() + "}", value);
+                }
+    </script>
+   
+
+
+
+}
+<script>
+
+                $(window).scroll(function () {
+                    var lengthofmsg = $(".contactAdministratorMsg").length;
+                    if (lengthofmsg == 1) {
+                        return false;
+                    }
+                    // if the scroll position is at the bottomm of the page
+                    if ($(window).scrollTop() == $(document).height() - $(window).height() && $('#loadMore').is(":visible")) {
+                        $('div#divLoading').show(); // alert the user and show the Loading message
+                        // fire jQuery ajax
+                        LoadCharts();
+                    }
+                    else {
+                       // ArrangePortlet();
+                    }
+                });
+                $("#loadMore").on('click', function (e) {
+                    e.preventDefault();
+                    $('div#divLoading').show(); // alert the user and show the Loading message
+
+                    // fire jQuery ajax
+                    LoadCharts();
+                    $('html,body').animate({
+                        scrollTop: $(this).offset().top
+                    }, 1500);
+                });
+
+
+
+                function LoadCharts() {
+                    $.ajax({
+                        //url: "/main/dashboardpartial/?page=" + pageNumber,
+                        url: "/sales/Saleshome/dashboardpartial/?page=" + pageNumber + "&reportName=" + reportName,
+                        success: function (html) {                            
+                            if (html.trim()) {
+                                $("#sortable_portlets").append(html); // append the data came from server
+                                $('div#divLoading').hide(); // hide the Loading... message
+                                
+                                pageNumber++; // increment the page number for next request
+                                PortletDraggable.init(reportName + "_sorted");
+                               // ArrangePortlet();
+
+                            } else { // no data found
+                                $('div#divLoading').hide(); // hide the Loading... message                                                               
+                            }
+                        }
+                    });
+                }
+                function ArrangePortlet() {                   
+                    var i = 0, j = 0;
+                    var leftPortlet = _.filter($(".sortable"), function (x) {
+                        return $(x).offset().left < 300;
+                    });
+                    var rightPortlet = _.filter($(".sortable"), function (x) {
+                        return $(x).offset().left > 300;
+                    });
+                    if (leftPortlet.length > 1) {
+                        $.each(leftPortlet, function (index, obj) {
+                            if ((i + 1) < leftPortlet.length) {
+                                var diff = $(leftPortlet[i]).offset().top + $(leftPortlet[i]).outerHeight(true) - $(leftPortlet[i + 1]).offset().top;
+                                $(leftPortlet[i + 1]).find(".portlet.portlet-sortable").css("margin-top", diff + "px");
+                                i++;
+                            }
+
+                        });
+                    }
+                    if (rightPortlet.length > 1) {
+                        $.each(rightPortlet, function (index, obj) {
+                            if ((i + 1) < rightPortlet.length) {
+                                var diff = $(rightPortlet[i]).offset().top + $(rightPortlet[i]).outerHeight(true) - $(rightPortlet[i + 1]).offset().top;
+                                $(rightPortlet[i + 1]).find(".portlet.portlet-sortable").css("margin-top", diff + "px");
+                                i++;
+                            }
+                        });
+                    }
+                }
+
+                $(document).ready(function () {
+
+                    PortletDraggable.init(reportName);
+                    ReportFilter.init();
+                    $.ajax({
+                        type: 'POST',
+                        url: '@Url.Content("~/sales/SalesHome/DashBoardWidgets")',
+                        success: function (data) {
+                            $('#dashboardWidget').html(data);
+                            setTimeout(function () {
+                                $("#loadMore").trigger("click");
+                            }, 2000);
+                        }
+                    });
+
+                    $("#amount-roundUp-range").val("0");
+                    var slider = $("#amount-roundUp-range").data("ionRangeSlider");
+                    slider.update({
+                        from: 0,
+                        disable: true,
+                    });
+                    $('[data-toggle="tooltip"]').tooltip({ html: true });
+                    $('.k-list.k-reset').slimScroll({
+                        //height: '100px',
+                        railVisible: true,
+                        alwaysVisible: true
+                    });
+                    $('.k-multiselect-wrap.k-floatwrap').slimScroll({
+                        opacity: '0.4',
+                        railVisible: true,
+                    });
+
+                });
+</script>
+
+

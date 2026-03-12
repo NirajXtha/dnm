@@ -1,0 +1,291 @@
+@model NeoErp.Distribution.Service.Model.DetailColumnModel
+
+@using NeoErp.Core.Models.CustomModels;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@using NeoErp.Core.Models;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>
+    ();
+}
+
+
+<div class="page-bar">
+    <ul class="page-breadcrumb"></ul>
+    <div class="page-toolbar">
+        
+    </div>
+</div>
+
+<div class="content">
+
+    <div class="excel-page" style="margin: 20px 30px;">
+        <div class="container" style="margin: 2vh 0; padding: 0; max-width: 100%;">
+            <div class="row d-flex justify-content-center align-items-center">
+                <div class="col-md-3">
+                    <form id="uploadForm" enctype="multipart/form-data">
+                        <input type="file" id="excelFile" accept=".xls,.xlsx" required />
+                        <button id="uploadButton" type="submit" class="btn btn-primary">Upload</button>
+                    </form>
+
+                </div>
+                <div class="col-md-2 d-flex justify-content">
+                    <button style="display: block" id="downloadExcelButton" class="btn btn-secondary">Excel Format</button>
+                </div>
+                <div class="col-md-4 d-flex justify-content">
+                    <div id="searchDiv" style="display:none;">
+                        <input type="text" id="searchBox" placeholder="Search by Name or Balance" class="form-control" style="width: auto; display: inline-block;" />
+                        <button id="searchButton" class="btn btn-secondary">Search</button>
+                        <div id="noResultsMessage" style="display: none; color: red;">No results found</div>
+                    </div>
+                </div>
+                <div class="col-md-2 d-flex justify-content-end" style="position: absolute; right: 0;">
+                    <button id="manageAccess" class="btn btn-success"> Manage Access</button>
+                </div>
+            </div>
+        </div>
+        <div style="display: none; margin: 10% 50%; font-size: 22px;" id="loaderMini">Loading...</div>
+        <div id="grid"></div>
+
+        <button id="saveButton" style="display:none; margin-top: 2vh;">Save</button>
+    </div>
+</div>
+
+
+
+
+    <script>
+
+        $(document).ready(function () {
+            $("#excelFile").kendoButton({
+                themeColor: "primary"
+            });
+
+            $("#uploadButton").kendoButton({
+                themeColor: "primary"
+            });
+
+            $("#searchButton").kendoButton({
+                themeColor: "primary"
+            });
+
+            $("#saveButton").kendoButton({
+                icon: "save",
+                themeColor: "success"
+            });
+        });
+
+        $.ajax({
+            url: window.location.protocol + "//" + window.location.host + "/api/Report/FinalData?employeeCode=0&companyCode=0",
+            type: 'POST',
+            contentType: 'application/json',
+            success: function (finalResponse) {
+                console.log(finalResponse);
+                showGrid(finalResponse);
+            },
+            error: function (error) {
+                console.error(error);
+                alert("Please upload an excel file.");
+            }
+        });
+
+        $('#uploadForm').on('submit', function (e) {
+            document.getElementById("loaderMini").style.display = "block";
+            e.preventDefault(); // Prevent the default form submission
+            console.log("hello");
+            var fileData = new FormData();
+            var fileInput = $('#excelFile')[0];
+
+            // Check if a file is selected
+            if (fileInput.files.length === 0) {
+                alert("Please select a file to upload.");
+                return;
+            }
+
+            fileData.append('file', fileInput.files[0]); // Append the file to the FormData object
+            $.ajax({
+                url: window.location.protocol + "//" + window.location.host + "/api/Report/UploadExcel",
+                type: 'POST',
+                data: fileData,
+                contentType: false, // Prevent jQuery from overriding the Content-Type
+                processData: false, // Prevent jQuery from processing the data
+                success: function (response) {
+                    showGrid(response); // Call your function to handle the response
+                },
+                error: function (error) {
+                    console.error("Error uploading file:", error); // Log any errors
+                    alert("An error occurred. Please check the excel format");
+                }
+            });
+        });
+
+        function showGrid(data) {
+            $("#grid").kendoGrid({
+                dataSource: {
+                    data: data.customerDataList,
+                    schema: {
+                        model: {
+                            fields: {
+                                CustomerCode: {
+                                    type: "string", editable: false
+                                },
+                                Name: { type: "string", editable: false },
+                                Balance: { type: "number" },
+                                Type: { type: "string", editable: false },
+                            }
+                        }
+                    }
+                },
+                resizable: true,
+                height: 450,
+                sortable: true,
+                editable: "inline",
+                pageable: false,
+                noRecords: {
+                    template: "<div>No results found</div>"
+                },
+                columns: [
+                    { field: "CustomerCode", title: "Reseller Code", width: 60 },
+                    { field: "Name", expandable: true, title: "Reseller Name", width: 250 },
+                    { field: "Balance", title: "Balance", width: 80, attributes: { "style": "text-align:right;" }, footerTemplate: `Total: ${data.TotalBalance}`, footerAttributes: { "style": "text-align:right;" } },
+                    { field: "Type", expandable: true, title: "Type", width: 20, footerTemplate: data.TotalBalanceType },
+                    {
+                        command: [
+                            { name: "edit", text: "Edit" },
+                        ],
+                        title: "&nbsp;",
+                        width: 30
+                    }
+                ],
+                dataBound: function (e) {
+                    var grid = this;
+                    grid.tbody.find("tr").each(function () {
+                        var dataItem = grid.dataItem(this);
+                        if (dataItem.CustomerCode == null) {
+                            $(this).addClass("k-state-selected");
+
+                            var editButton = $(this).find(".k-grid-edit");
+                            editButton.hide();
+                        }
+                    });
+                }
+            });
+
+            $('#searchDiv').show();
+            $('#saveButton').show();
+
+
+            $("#searchButton").off("click").on("click", function () {
+                applySearch();
+            });
+
+            $("#searchBox").off("keypress").on("keypress", function (e) {
+                if (e.which === 13) {
+                    applySearch();
+                }
+            });
+            document.getElementById("loaderMini").style.display = "none";
+
+        };
+
+
+        function applySearch() {
+            var searchData = $("#searchBox").val();
+            var searchValue = searchData.trim().toLowerCase();
+            var grid = $("#grid").data("kendoGrid");
+            var dataSource = grid.dataSource;
+            if (!searchData) {
+                dataSource.filter({});
+                $("#noResultsMessage").hide();
+            }
+
+            if (searchValue) {
+                var parsedBalance = parseFloat(searchValue);
+                var isNumber = !isNaN(parsedBalance);
+
+
+                dataSource.filter({
+                    logic: "or",
+                    filters: [
+                        { field: "Name", operator: "contains", value: searchValue },
+                        ...(isNumber ? [{ field: "Balance", operator: "eq", value: parsedBalance }] : [])
+                    ]
+                });
+
+                var results = dataSource.view();
+                if (results.length === 0) {
+                    $("#noResultsMessage").show();
+                    dataSource.filter({});
+                } else {
+                    $("#noResultsMessage").hide();
+                }
+
+            } else {
+                dataSource.filter({});
+            }
+        }
+
+
+        $('#saveButton').on('click', function () {
+            var grid = $("#grid").data("kendoGrid");
+            var dataToSave = [];
+            var dataItems = grid.dataSource.view();
+            for (var i = 0; i < dataItems.length; i++) {
+                var item = dataItems[i];
+                var customerCode = item.CustomerCode;
+                var balance = item.Balance;
+                var type = item.Type;
+
+                if (customerCode !== null) {
+                    dataToSave.push({ customerCode: customerCode, balance: balance, type: type });
+                }
+            }
+            $.ajax({
+                url: window.location.protocol + "//" + window.location.host + "/api/Report/SaveData",
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(dataToSave),
+                success: function (response) {
+                    alert('Data saved successfully!');
+                    $.ajax({
+                        url: window.location.protocol + "//" + window.location.host + "/api/Report/FinalData?employeeCode=0&companyCode=0",
+                        type: 'POST',
+                        contentType: 'application/json',
+                        success: function (finalResponse) {
+                            console.log(finalResponse);
+                            showGrid(finalResponse);
+                        },
+                        error: function (error) {
+                            console.error(error);
+                            alert("Something went wrong.")
+                        }
+                    });
+                },
+                error: function (error) {
+                    console.error(error);
+                    alert('An error occured while saving data. Please try again later');
+                }
+            });
+        });
+
+        document.getElementById("downloadExcelButton").addEventListener("click", function () {
+            var fileUrl = "/Areas/NeoERP.Distribution/Images/demoExcelSheet.xlsx";
+            var link = document.createElement("a");
+            link.href = fileUrl;
+            link.download = "demoExcelSheet.xlsx";
+
+            document.body.appendChild(link);
+
+            link.click();
+
+            document.body.removeChild(link);
+        });
+
+
+        document.getElementById("manageAccess").addEventListener("click", function () {
+            window.location.href = window.location.protocol + "//" + window.location.host + "/Distribution/Home/Dashboard#!Distribution/LedgerAccess";
+        });
+
+    </script>
+    <script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js")"></script>
+

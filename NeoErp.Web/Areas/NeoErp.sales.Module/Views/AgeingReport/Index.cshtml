@@ -1,0 +1,182 @@
+﻿@{
+    var myAreaName = string.Empty;
+    object areaObj;
+    if (ViewContext.RouteData.Values.TryGetValue("area", out areaObj))
+    {
+        myAreaName = areaObj.ToString();
+    }
+}
+
+<script type="text/javascript" src="@Url.Content("~/areas/"+myAreaName+"/Scripts/ageing.js?v2525")"></script>
+<style>
+    div.k-grid-header th.k-header,
+    tr.k-filter-row>th {
+        text-align: center;
+    }
+
+    .page-bar {
+        margin-bottom: 0px !important;
+    }
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+
+    /*#grid thead{
+         font-size:11px;
+    }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+</style>
+<div class="page-content">
+
+
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+            @*<li>
+            <i class="fa fa-home"></i>
+            <a href="/sales/SalesHome/Dashboard">Home</a>
+            <i class="fa fa-angle-right"></i>
+            </li>*@
+            @*<li>
+            <a href="sales/saleshome/dashboard/Dashboard">Organiser</a>
+            <i class="fa fa-angle-right"></i>
+            </li>*@
+
+        </ul>
+        <div class="page-toolbar">
+            @*<div class="btn-group" data-toggle="tooltip" title="Click to filter date range!" data-placement="bottom">
+            @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+
+            </div>*@
+            @Html.Partial("~/Views/Shared/Controls/ComposeMail.cshtml")
+            @*<a id="PrintReport" class="k-grid-print" style="cursor: pointer;">
+                <div class="btn btn-circle btn-icon-only btn-default" data-placement="left" data-html="true"
+                    data-container="body" data-toggle="tooltip" title="Print Report">
+                    <i class="fa fa-print"></i>
+                </div>
+            </a>*@
+            <div class="btn-group">
+                @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+            </div>
+            <div class="btn-group">
+                <div class="actions">
+                    @Html.Partial("~/areas/" + myAreaName + "/Views/AgeingReport/_ageingReportFilter.cshtml")
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="javascript:void(0);">
+                        <i class="icon-control-play"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="btn-group">
+                <a class="btn btn-circle btn-icon-only btn-default" onclick="HelpPopup.showByKey('ageingReport')"
+                    title="Help">
+                    <i class="fa fa-question-circle" style="color: #007bff;"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="row collapse in" id="ageing-content">
+
+    </div>
+</div>
+<script src="@Scripts.Url("~/JS/dynamicReport.js?V2")" type="text/javascript"></script>
+@Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+@Html.Partial("~/Views/Shared/Helper/GlobalHelper.cshtml")
+<script src="~/JS/UniversalGridPrint.js"></script>
+<script type="text/javascript">
+    var fileMailSender = new ManualEmailSender({
+        GridName: "ageing-treelist",
+        GridRefreshTriggerName: "RunQuery",
+        reportName: "AgeingReport",
+    });
+</script>
+<script type="text/javascript">
+    var agingFirst = true;
+    $(document).ready(function () {
+        ageing.init(window.location.protocol + "//" + window.location.host + "/sales/AgeingReport/DynamicColumnView");
+        fileMailSender.init();
+    });
+</script>
+
+<script type="text/javascript">
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+
+</script>
+
+<script>
+    // Register help content for Ageing Report page with pagination
+    HelpPopup.register(
+        'ageingReport',
+        'Ageing Report Help',
+        [
+            // Page 1 - Overview and Purpose
+            `
+                <h4>Ageing Report - Overview</h4>
+                <p>The Ageing Report is a vital tool for financial management, allowing you to track how long invoices or balances have remained unpaid. It helps in identifying overdue payments from customers or pending liabilities to suppliers.</p>
+
+                <h5>Primary Functions:</h5>
+                <ul>
+                    <li><strong>Credit Control:</strong> Monitor customer payment patterns and identify delinquent accounts.</li>
+                    <li><strong>Cash Flow Planning:</strong> Estimate upcoming receivables and payables based on time brackets.</li>
+                    <li><strong>Categorization:</strong> View balances grouped by time periods (e.g., 0-15 days, 16-30 days, etc.).</li>
+                </ul>
+            `,
+
+            // Page 2 - Using the Ageing Filter
+            `
+                <h4>Configuring the Ageing Report</h4>
+                <p>Before generating the report, use the <strong>Ageing Report Filter</strong> to define your parameters:</p>
+
+                <ul>
+                    <li><strong>As on Date:</strong> Set the cutoff date for the report. You can select "Today" or a specific date in both BS (Bikram Sambat) and AD (Anno Domini) formats.</li>
+                    <li><strong>Frequency & Final Days:</strong> Define the interval for the ageing brackets. For example, a frequency of 15 and final days of 30 creates brackets for 0-15, 16-30, and 30+ days.</li>
+                    <li><strong>Ageing Type:</strong> Choose how to view data, such as "Ledger Wise" for a high-level summary.</li>
+                    <li><strong>Choose Entity:</strong> Select whether you want to view ageing for <strong>Customer</strong>, <strong>Supplier</strong>, or <strong>Product</strong>.</li>
+                    <li><strong>Group Wise:</strong> Toggle this switch to group the results by specific categories or branches.</li>
+                    <li><strong>Entity Selection:</strong> Use the tree view at the bottom to select specific customers or groups (e.g., "Customers (Lazimpat)").</li>
+                </ul>
+            `,
+
+            // Page 3 - Interpreting Results & Exporting
+            `
+                <h4>Interpreting the Report</h4>
+                <p>Once you click <strong>Apply</strong>, the system generates a tabular view of the outstanding amounts.</p>
+
+                <h5>Report Grid Features:</h5>
+                <ul>
+                    <li><strong>Time Brackets:</strong> Amounts are distributed across columns like <em>0-15</em>, <em>16-30</em>, and <em>30+</em> based on the age of the debt.</li>
+                    <li><strong>Total:</strong> The final column shows the total outstanding balance for that specific entity.</li>
+                    <li><strong>Filtering:</strong> Use the funnel icon on column headers (e.g., Customer, Total) to filter for specific values or names.</li>
+                    <li><strong>Export to Excel:</strong> Click the <strong>Export to Excel</strong> button to download the report for offline analysis or presentations.</li>
+                </ul>
+
+                <h5>Pro Tip:</h5>
+                <p>Regularly review the <strong>30+ days</strong> (or your highest bracket) column to prioritize collection efforts on the oldest outstanding debts.</p>
+            `
+        ]
+    );
+</script>

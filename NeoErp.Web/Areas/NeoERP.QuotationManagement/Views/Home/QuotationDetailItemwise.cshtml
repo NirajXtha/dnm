@@ -1,0 +1,605 @@
+﻿@{
+    Layout = null;
+}
+
+<link href="@Styles.Url("~/Areas/NeoERP.QuotationManagement/Content/quotationSetup.css")" rel="stylesheet" />
+<div class="col-md-12 bodyController" id="quotationDetailItemWise">
+    <div class="portlet light form-fit bordered bottomspance">
+        <div class="portlet box green-box main">
+            <div class="portlet-title">
+                <div class="caption">
+                    <a class="btn-back pull-left" data-toggle="tooltip" data-placement="top" title="Back" href="javascript:history.back();">
+                        <i class="fa fa-arrow-circle-left"></i>
+                    </a>
+                    <i class="fa fa-gift font-white-haze"></i>
+                    <span class="caption-subject font-white-haze bold uppercase">Summary Details</span>
+                </div>
+            </div>
+
+            <div class="portlet light form-fit bordered bottomspance">
+                <style>
+                    .form-group {
+                        flex: 1;
+                    }
+                </style>
+                <div class="row boxbg">
+                    <form id="quotationForm" class="quotationform" ng-submit="saveData()" method="post" enctype="multipart/form-data">
+                        <div class="col-md-12 customerDetailsSection">
+                            <h5><b>Party Details</b></h5>
+                            <input type="hidden" id="quotationNo" ng-model="QUOTATION_NO" name="quotationNo" class="form-control" />
+                            <div style="display:flex;">
+                                <div class="form-group">
+                                    <label for="element">Pan No</label>
+                                    <input type="text" id="panNo" ng-model="PAN_NO" name="panNo" readonly class="form-control" />
+                                </div>
+                                <div class="form-group">
+                                    <label for="customerName">Party Name</label>
+                                    <input type="text" id="customerName" placeholder="" ng-model="PARTY_NAME" name="customerName" readonly class="form-control" />
+                                </div>
+                                <div class="form-group">
+                                    <label for="validDt">Status</label><br />
+                                    <input type="text" ng-model="STATUS" class="form-control" id="status" readonly />
+                                </div>
+
+                            </div>
+                            <div style="display:flex;">
+                                <div class="form-group">
+                                    <label for="address">Address</label>
+                                    <input type="text" id="address" placeholder="" ng-model="ADDRESS" name="address" readonly class="form-control" />
+                                </div>
+                                <div class="form-group">
+                                    <label for="contactNo">Contact No.</label>
+                                    <input type="text" id="contactNo" placeholder="" ng-model="CONTACT_NO" readonly name="contactNo" class="form-control" pattern="[0-9]{10}" title="Please enter a 10-digit phone number" />
+                                </div>
+                                <div class="form-group">
+                                    <label for="email">Email</label>
+                                    <input type="email" id="email" placeholder="" ng-model="EMAIL" name="email" class="form-control" readonly />
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display:flex;" class="col-md-12">
+                            <div class="form-group">
+                                <label for="currency">Currency</label><br />
+                                <input type="text" id="currency" placeholder="" ng-model="CURRENCY" name="email" class="form-control" readonly />
+                            </div>
+                            <div class="form-group">
+                                <label for="currency">Currency Rate</label>
+                                <input type="number" id="currencyRate" placeholder="" ng-model="CURRENCY_RATE" name="currencyRate" class="form-control" readonly />
+                            </div>
+                            <div class="form-group">
+                                <label for="deliveryDt">Delivery Date</label> <br />
+                                <div style="display:flex;">
+                                    <input id="deliveryDt" type="text" ng-model="DELIVERY_DATE" class="form-control dateclass" readonly />
+                                    <input type="text" id="nepaliDate" data-checkfor="englishdatedocument" ng-model="DELIVERY_DT_NEP" class="nepali-calendar form-control dateclass" readonly />
+                                </div>
+                            </div>
+
+                        </div>
+                        <div style="display:flex;" class="col-md-12">
+                            <div class="form-group">
+                                <label for="address">Quote No </label>
+                                <input type="text" id="tenderNo" placeholder="" ng-model="TENDER_NO" name="quoteNo" class="form-control" required readonly />
+                            </div>
+                            <div class="form-group">
+                                <label>Date/Miti</label>
+                                <div style="display:flex;">
+                                    <input type="text" class="form-control dateclass" readonly ng-model="ISSUE_DATE" />
+                                    <input type="text" id="nepaliDate" data-checkfor="englishdatedocument" ng-model="NEPALI_DATE" class="nepali-calendar form-control dateclass" readonly />
+                                </div>
+
+                            </div>
+                            <div class="form-group">
+                                <label for="validDt">Delivery Date</label><br />
+                                <div style="display:flex;">
+                                    <input type="text" class="form-control dateclass" readonly ng-model="VALID_DATE" />
+                                    <input type="text" id="nepaliDate" data-checkfor="englishdatedocument" ng-model="DELIVERY_DT_BS" class="form-control dateclass" readonly />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-12" style="margin-bottom:2rem">
+                            <div class="tableContainer" ng-init="setInitialWidth()">
+                                <div class="table-responsive">
+                                    <table class="table-bordered table-striped modal-table">
+                                        <tr>
+                                            <td style="width:30px;" class="table-head">
+                                                <input type="checkbox" ng-model="selectAll" ng-click="toggleAll()" />
+                                            </td>
+                                            <td style="width: 49px;" class="table-head">S.N</td>
+                                            <td class="table-head">Item Description</td>
+                                            <td class="table-head">
+                                                Specification
+                                                <span class="arrow-wrapper" title="More Specification">
+                                                    <span>
+                                                        <i class="fa fa-arrow-circle-left" ng-click="toggleDetails()" ng-show="showSpecificationDetail" aria-hidden="true"></i>
+                                                        <i class="fa fa-arrow-circle-right" ng-click="toggleDetails()" ng-hide="showSpecificationDetail" aria-hidden="true"></i>
+                                                    </span>
+                                                </span>
+                                            </td>
+                                            <td ng-show="showSpecificationDetail" class="table-head">Category</td>
+                                            <td ng-show="showSpecificationDetail" class="table-head">Brand Name</td>
+                                            <td ng-show="showSpecificationDetail" class="table-head">Interface</td>
+                                            <td ng-show="showSpecificationDetail" class="table-head">Type</td>
+                                            <td ng-show="showSpecificationDetail" class="table-head">Lamination</td>
+                                            <td ng-show="showSpecificationDetail" class="table-head">Item Size</td>
+                                            <td ng-show="showSpecificationDetail" class="table-head">Thickness</td>
+                                            <td ng-show="showSpecificationDetail" class="table-head">Color</td>
+                                            <td ng-show="showSpecificationDetail" class="table-head">Grade</td>
+                                            <td ng-show="showSpecificationDetail" class="table-head">Size Length</td>
+                                            <td ng-show="showSpecificationDetail" class="table-head">Size Width</td>
+                                            <td class="table-head">Image</td>
+                                            <td class="table-head">Unit</td>
+                                            <td class="table-head">Quantity</td>
+                                            <td class="table-head">Rate</td>
+                                            <td class="table-head">Amount</td>
+                                            <td class="table-head"> Discount( <span ng-bind="DISCOUNT_TYPE"></span>)</td>
+                                            <td class="table-head">Discount Amount</td>
+                                            <td class="table-head">Excise</td>
+                                            <td class="table-head">Taxable Amount</td>
+                                            <td class="table-head" style="background-color: #aafa32">Actual Price</td>
+                                            <td class="table-head">Vat Amount(13%)</td>
+                                            <td class="table-head">Net Amount</td>
+                                        </tr>
+                                        <tr ng-repeat="product in productFormList">
+                                            <td style="text-align: center;">
+                                                <input type="checkbox" ng-model="product.isSelected" ng-change="updateSelected()" />
+                                            </td>
+                                            <td>
+                                                <input style="width:49px;" type="text" name="unit_{{product.ID}}" id="unit_{{product.ID}}" ng-model="product.ID" value="" readonly class="form-control">
+                                            </td>
+                                            <td>
+                                                <select id="itemSelected" name="item_{{product.ID}}" kendo-drop-down-list
+                                                        k-options="{dataSource: ItemSelect.dataSource,dataTextField: 'ItemDescription', dataValueField: 'ItemCode',filter: 'contains', autoClose: true }"
+                                                        slim-scroll ng-change="updateUnit(product)"
+                                                        ng-model="product.ItemDescription" readonly
+                                                        style="width:38rem;">
+                                                </select>
+                                                @*<input type="text" name="item_{{product.ID}}" id="item_{{product.ID}}" ng-model="product.ItemDescription" readonly class="form-control" value="">*@
+                                            </td>
+                                            <td>
+                                                <input type="text" name="specification_{{product.ID}}" id="specification_{{product.ID}}" ng-model="product.SPECIFICATION" readonly class="form-control" value="">
+                                            </td>
+                                            <td ng-show="showSpecificationDetail">
+                                                <input type="text" name="category_{{product.ID}}" min="0" id="category_{{product.ID}}" ng-model="product.CATEGORY" readonly class="form-control small-width" value="">
+                                            </td>
+                                            <td ng-show="showSpecificationDetail">
+                                                <input type="text" name="brandName_{{product.ID}}" id="brandName_{{product.ID}}" ng-model="product.BRAND_NAME" readonly class="form-control small-width" value="">
+                                            </td>
+                                            <td ng-show="showSpecificationDetail">
+                                                <input type="text" name="interface_{{product.ID}}" id="interface_{{product.ID}}" ng-model="product.INTERFACE" readonly class="form-control small-width" value="">
+                                            </td>
+                                            <td ng-show="showSpecificationDetail">
+                                                <input type="text" name="type_{{product.ID}}" id="type_{{product.ID}}" ng-model="product.TYPE" readonly class="form-control small-width" value="">
+                                            </td>
+                                            <td ng-show="showSpecificationDetail">
+                                                <input type="text" name="lamination_{{product.ID}}" id="lamination_{{product.ID}}" ng-model="product.LAMINATION" readonly class="form-control small-width right-align" value="">
+                                            </td>
+                                            <td ng-show="showSpecificationDetail">
+                                                <input type="text" name="itemSize_{{product.ID}}" min="0" id="itemSize_{{product.ID}}" ng-model="product.ITEM_SIZE" readonly class="form-control small-width right-align" value="">
+                                            </td>
+                                            <td ng-show="showSpecificationDetail">
+                                                <input type="text" name="thickness_{{product.ID}}" min="0" id="thickness_{{product.ID}}" ng-model="product.THICKNESS" readonly class="form-control small-width right-align" value="">
+                                            </td>
+                                            <td ng-show="showSpecificationDetail">
+                                                <input type="text" name="color_{{product.ID}}" id="color_{{product.ID}}" ng-model="product.COLOR" class="form-control small-width" value="" readonly>
+                                            </td>
+                                            <td ng-show="showSpecificationDetail">
+                                                <input type="text" name="lamination_{{product.ID}}" id="lamination_{{product.ID}}" ng-model="product.GRADE" readonly class="form-control small-width right-align" value="">
+                                            </td>
+                                            <td ng-show="showSpecificationDetail">
+                                                <input type="number" name="sizeLength_{{product.ID}}" min="0" id="sizeLength_{{product.ID}}" readonly ng-model="product.SIZE_LENGTH" class="form-control small-width right-align" value="">
+                                            </td>
+                                            <td ng-show="showSpecificationDetail">
+                                                <input type="number" name="sizeHeight_{{product.ID}}" min="0" id="sizeHeight_{{product.ID}}" readonly ng-model="product.SIZE_WIDTH" class="form-control small-width right-align" value="">
+                                            </td>
+                                            <td>
+                                                <img name="image_{{product.ID}}" id="image_{{product.ID}}" ng-src="{{product.IMAGE_LINK}}" ng-model="product.IMAGE" class="form-control large-width" ng-click="openImage(product.IMAGE_LINK)" />
+                                            </td>
+                                            <td>
+                                                <input type="text" name="unit_{{product.ID}}" id="unit_{{product.ID}}" ng-model="product.UNIT" readonly class="form-control small-width" value="">
+                                            </td>
+                                            <td>
+                                                <input type="number" name="quantity_{{product.ID}}" min="0" id="quantity_{{product.ID}}" ng-model="product.QUANTITY" readonly class="form-control small-width right-align" value="">
+                                            </td>
+                                            <td>
+                                                <input type="text" name="rate_{{product.ID}}" min="0" id="rate_{{product.ID}}" ng-model="product.RATE" class="form-control small-width right-align" readonly value="">
+                                            </td>
+                                            <td>
+                                                <input type="text" name="amount_{{product.ID}}" id="amount_{{product.ID}}" ng-model="product.AMOUNT" class="form-control large-width right-align" value="" readonly>
+                                            </td>
+                                            <td>
+                                                <input type="text" name="discount_{{product.ID}}" id="discount_{{product.ID}}" ng-model="product.DISCOUNT" class="form-control large-width right-align" readonly value="">
+                                            </td>
+                                            <td>
+                                                <input type="text" name="discountAmt_{{product.ID}}" id="discountAmt_{{product.ID}}" ng-model="product.DISCOUNT_AMOUNT" class="form-control large-width right-align" readonly>
+                                            </td>
+                                            <td>
+                                                <input type="text" name="excise_{{product.ID}}" id="excise_{{product.ID}}" ng-model="product.EXCISE" class="form-control large-width right-align" readonly value="">
+                                            </td>
+                                            <td>
+                                                <input type="text" name="taxableAmt_{{product.ID}}" id="taxableAmt_{{product.ID}}" ng-model="product.TAXABLE_AMOUNT" class="form-control large-width right-align" readonly>
+                                            </td>
+                                            <td>
+                                                <input type="text" name="vatAmt_{{product.ID}}" id="vatAmt_{{product.ID}}" ng-model="product.ACTUAL_PRICE" class="form-control large-width right-align" readonly value="">
+                                            </td>
+                                            <td>
+                                                <input type="text" name="vatAmt_{{product.ID}}" id="vatAmt_{{product.ID}}" ng-model="product.VAT_AMOUNT" class="form-control large-width right-align" readonly value="">
+                                            </td>
+                                            <td>
+                                                <input type="text" name="netAmt_{{product.ID}}" id="netAmt_{{product.ID}}" ng-model="product.NET_AMOUNT" class="form-control large-width right-align" readonly value="">
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="summary-table">
+                            <div class="col-xs-2 col-md-3 customerDetailsSection">
+                                <table class="table table-bordered">
+                                    <thead class="font-green">
+                                        <tr>
+                                            <th colspan="2">Summary @*<i class="fa fa-info-circle font-green" data-toggle="tooltip" title="Amount Summary"></i>*@</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Total</td>
+                                            <td class="text-right">{{TOTAL_AMOUNT}}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Discount </td>
+                                            <td class="text-right">{{TOTAL_DISCOUNT}}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Excise</td>
+                                            <td class="text-right">{{TOTAL_EXCISE}}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Taxable Amount </td>
+                                            <td class="text-right">{{TOTAL_TAXABLE_AMOUNT}}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>VAT(13%)</td>
+                                            <td class="text-right">{{TOTAL_VAT}}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Net Amount </td>
+                                            <td class="text-right">{{TOTAL_NET_AMOUNT}}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-xs-2 col-md-1 customerDetailsSection">
+                                <table class="table table-bordered">
+                                    <thead class="font-green">
+                                        <tr>
+                                            <th colspan="2">Summary Quantity @*<i class="fa fa-info-circle font-green" data-toggle="tooltip" title="Unit Total"></i>*@</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Total Quantity</td>
+                                            <td class="text-right">{{TOTAL_QUANTITY}}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="col-xs-5  col-md-4">
+                                <div class="table-container" ng-init="setInitialWidth()" style="height:20rem;">
+                                    <div class="table-responsive">
+                                        <table class="table-bordered table-striped modal-table">
+                                            <thead>
+                                                <tr>
+                                                    <td style="width: 44px;" class="table-head">S.N</td>
+                                                    <td class="table-head">Terms and Condition</td>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr ng-repeat="term in termList">
+                                                    <td>
+                                                        <input style="width:44px;" type="text" name="unit_{{term.ID}}" id="unit_{{term.ID}}" ng-model="term.ID" value="" readonly class="form-control text-right">
+                                                    </td>
+                                                    <td>
+                                                        <input type="text" name="unit_{{term.ID}}" id="unit_{{term.ID}}" ng-model="term.TERM_CONDITION" class="form-control termsCondition" readonly>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-xs-3  col-md-2">
+                                <div>
+                                    <label class="control-label">Upload Files</label>
+                                    <div id="dQuotationUpload" class="dropzone">
+                                        <div class="dz-default dz-message">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12 parent-container" style="display: flex; flex-direction: column;">
+                            <div class="col-md-4">
+                                <label class="control-label">Remarks</label>
+                                <textarea id="remarks" ng-model="TXT_REMARKS" readonly class="form-control salestype" type="textarea" style="width:90%; height:29px;"></textarea>
+                            </div>
+                            @*<div class="col-md-2">
+                                </div>*@
+                            <div class="text-right buttons-container" style=" margin-top: 1rem;">
+                                @*<div class="row">
+                                        <div class="col-xs-12 col-sm-4">
+                                            <button type="submit" class="btn btn-primary btn-block" ng-click="printPage()">Print</button>
+                                        </div>
+                                        <div class="col-xs-12 col-sm-4" ng-show="STATUS == 'Pending' && CHECK == 'Y'">
+                                            <button type="submit" class="btn btn-success btn-block" ng-click="AcceptEvent('Checked')">Check</button>
+                                        </div>
+                                        <div class="col-xs-12 col-sm-4" style="width: auto !important;" ng-show="STATUS == 'Pending' && RECOMMEND == 'Y'">
+                                            <button type="submit" class="btn btn-success btn-block" style="width: 100 !important;" ng-click="AcceptEvent('Recommended')">Recommend</button>
+                                        </div>
+                                        <div class="col-xs-12 col-sm-4" ng-show="STATUS == 'Pending' && APPROVALBYAMOUNT == 'Y'">
+                                            <button type="submit" class="btn btn-success btn-block" ng-click="AcceptEvent('Approved')">Approve</button>
+                                        </div>
+                                        <div class="col-xs-12 col-sm-4" ng-show="STATUS == 'Pending' && POST == 'Y'">
+                                            <button type="submit" class="btn btn-success btn-block" ng-click="AcceptEvent('Posted')">Post</button>
+                                        </div>
+                                        <div class="col-xs-12 col-sm-4" ng-show="STATUS == 'Pending' && APPROVALBYAMOUNT == true">
+                                            <button type="submit" class="btn btn-danger btn-block" ng-click="RejectEvent()">Reject</button>
+                                        </div>
+                                    </div>*@
+                                <div class="row" style="display: flex; justify-content: space-between;">
+                                    <div class="">
+                                        <button type="submit" class="btn btn-primary btn-block" ng-if="STATUS == 'Approved'" style="width: 100 !important;" ng-click="printPage()">Print</button>
+                                    </div>
+
+                                    <div ng-show="STATUS == 'Pending' && CHECK == 'Y'">
+                                        <button type="submit" class="btn btn-success btn-block" style="width: 100 !important;"
+                                                ng-click="AcceptEvent('Checked')">
+                                            Check
+                                        </button>
+                                    </div>
+
+                                    <!-- Verify Button -->
+                                    <div ng-show="(STATUS == 'Pending' || STATUS == 'Checked') && VERIFY == 'Y'">
+                                        <button type="submit" class="btn btn-success btn-block" style="width: 100 !important;"
+                                                ng-click="AcceptEvent('Verify')">
+                                            Verify
+                                        </button>
+                                    </div>
+
+                                    <!-- Recommend Button -->
+                                    @*<div ng-show="IS_APPROVED == 'N' && (STATUS == 'Pending' || STATUS == 'Checked' || STATUS == 'Verified') && RECOMMEND == 'Y'">
+                                            <button type="submit" class="btn btn-success btn-block" style="width: 100 !important;"
+                                                    ng-click="AcceptEvent('Recommended')">
+                                                Recommend
+                                            </button>
+                                        </div>*@
+                                    <div ng-show="canShowRecommend()">
+                                        <button type="submit"
+                                                class="btn btn-success btn-block"
+                                                style="width: 100 !important;"
+                                                ng-click="AcceptEvent('Recommended')">
+                                            Recommend
+                                        </button>
+                                    </div>
+
+
+                                    <!-- Approve Button -->
+                                    <div ng-show="(STATUS == 'Pending' || STATUS == 'Checked' || STATUS == 'Verified' || STATUS == 'Recommended') && APPROVALBYAMOUNT == 'Y'">
+                                        <button type="submit" class="btn btn-success btn-block" style="width: 100 !important;"
+                                                ng-click="AcceptEvent('Approved')">
+                                            Approve
+                                        </button>
+                                    </div>
+
+                                    <!-- Post Button -->
+                                    @*<div ng-show="(IS_APPROVED == 'Y' && IS_SELF_APPROVED == 'Y') ||
+                                        (IS_APPROVED == 'N' && (STATUS == 'Pending' || STATUS == 'Checked' || STATUS == 'Recommended' || STATUS == 'Approved')) && POST == 'Y'">
+                                                              <button type="submit" class="btn btn-success btn-block" style="width: 100 !important;"
+                                                                      ng-click="AcceptEvent('Posted')">
+                                                                  Post
+                                                              </button>
+                                                          </div>*@
+                                    @*<div ng-show="STATUS != 'Posted' && (
+                                            (IS_APPROVED == 'Y' && IS_SELF_APPROVED == 'Y') ||
+                                            (IS_APPROVED == 'N' &&
+                                             (STATUS == 'Pending' || STATUS == 'Checked' || STATUS == 'Recommended' || STATUS == 'Approved'))
+                                        )">
+                                                                                <button type="submit" class="btn btn-success btn-block" style="width: 100 !important;"
+                                                                                        ng-click="AcceptEvent('Posted')">
+                                                                                    Post
+                                                                                </button>
+                                                                            </div>*@
+
+
+                                    <!-- Reject Button -->
+                                    <div ng-show="IS_APPROVED == 'N' && (STATUS == 'Pending' || STATUS == 'Checked' || STATUS == 'Verified' || STATUS == 'Recommended') && APPROVALBYAMOUNT == 'Y'">
+                                        <button type="submit" class="btn btn-danger btn-block" style="width: 100 !important;"
+                                                ng-click="RejectEvent()">
+                                            Reject
+                                        </button>
+                                    </div>
+                                    <div ng-show="RECYCLE">
+                                        <button type="submit" class="btn btn-info btn-block" style="width: 100 !important;"
+                                                ng-click="Recycle()">
+                                            Recycle
+                                        </button>
+                                    </div>
+
+                                    <!-- Check Button -->
+                                    <!--<div class="" style="width: auto !important;"
+                                         ng-show="(STATUS == 'Pending') && CHECK == 'Y' && IS_APPROVED == 'N'">
+                                        <button type="submit" class="btn btn-success btn-block" style="width: 100 !important;" ng-click="AcceptEvent('Checked')">Check</button>
+                                    </div>-->
+                                    <!-- Recommend Button -->
+                                    <!--<div class=""
+                                         ng-show="(STATUS == 'Pending' || STATUS == 'Checked') && RECOMMEND == 'Y' && IS_APPROVED == 'N'">
+                                        <button type="submit" class="btn btn-success btn-block" style="width: 100 !important;" ng-click="AcceptEvent('Recommended')">Recommend</button>
+                                    </div>-->
+                                    <!-- Approve Button -->
+                                    <!--<div
+                                         ng-show="(STATUS == 'Pending' || STATUS == 'Checked' || STATUS == 'Recommended') && IS_APPROVED == 'N' && APPROVALBYAMOUNT == 'Y'">
+                                        <button type="submit" class="btn btn-success btn-block" style="width: 100 !important;" ng-click="AcceptEvent('Approved')">Approve</button>
+                                    </div>-->
+                                    <!-- Post Button -->
+                                    <!--<div
+                                         ng-show="(STATUS == 'Pending' || STATUS == 'Checked' || STATUS == 'Recommended' || STATUS == 'Approved' || (IS_APPROVED == 'Y' && IS_SELF_APPROVED == 'Y')) && POST == 'Y'">
+                                        <button type="submit" class="btn btn-success btn-block" style="width: 100 !important;" ng-click="AcceptEvent('Posted')">Post</button>
+                                    </div>-->
+                                    <!-- Reject Button -->
+                                    <!--<div
+                                         ng-show="(STATUS == 'Pending' || STATUS == 'Checked' || STATUS == 'Recommended' || (IS_APPROVED == 'Y' && IS_SELF_APPROVED == 'Y')) && APPROVALBYAMOUNT == 'Y'">
+                                        <button type="submit" class="btn btn-danger btn-block" style="width: 100 !important;" ng-click="RejectEvent()">Reject</button>
+                                    </div>-->
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="remarksModal" tabindex="-1">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h5 class="modal-title">{{remarksTitle}}</h5>
+                </div>
+
+                <div class="modal-body">
+                    <textarea class="form-control"
+                              rows="3"
+                              placeholder="Enter remarks..."
+                              ng-model="remarksText">
+                </textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary btn-sm"
+                            data-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button class="btn btn-primary btn-sm"
+                            ng-click="confirmWithRemarks()" ng-disabled="isProcessing">
+                        {{ isProcessing ? 'Processing...' : 'Confirm' }}
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <div class="modal fade-out" id="saveAndPrintQuotationModal" data-backdrop="static" tabindex="-1" data-width="760">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+
+                    <h4 class="modal-title">
+                        <span class="fa fa-print"></span>
+
+                    </h4>
+                </div>
+                <link href="@Styles.Url(" ~/Areas/NeoERP.QuotationManagement/Content/salesinvoice.css")" rel="stylesheet" />
+                <style>
+                    .print-page {
+                        font-size: 10px !important;
+                    }
+
+                    .print_table {
+                        border-bottom: 1px solid black;
+                    }
+                </style>
+                <div id="saveAndPrintQuotationModalFor" class="modal-body saveAndPrintModal main" ng-switch="MultiPartyPrint">
+                    <form name="saveAndPrint" class="form-horizontal" ng-switch-when="false">
+                        @Html.Partial("~/Areas/NeoERP.QuotationManagement/Views/Shared/PrintTemplate/QuotationPrintTemplate.cshtml")
+                    </form>
+                    <form name="saveAndPrintMulti" class="form-verticle" ng-switch-when="true">
+                        @Html.Partial("~/Areas/NeoERP.QuotationManagement/Views/Shared/PrintTemplate/QuotationMultiPartyPrintTemplate.cshtml")
+                    </form>
+                </div>
+
+                <div class="modal-footer">
+                    @*<a href="~/Views/Shared/PrintTemplate/Sales/_salesInvoicePrintTemplate.cshtml">~/Views/Shared/PrintTemplate/Sales/_salesInvoicePrintTemplate.cshtml</a>*@
+                    <a ng-click="changePrintTemplate()" class="btn btn-sm btn-green" id="changeDocumentFormat" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Processing..." href="javascript:;">
+                        <i class="fa fa-floppy-o"></i> Change Template
+                    </a>
+                    <a ng-click="printDiv1()" class="btn btn-sm btn-green" id="savedocumentformdata" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Processing..." href="javascript:;">
+                        <i class="fa fa-floppy-o"></i> Print
+                    </a>
+                    <a class="btn btn-sm btn-default" id="cancelPrint" @*ng-click="cancelPrint(event)*@ ng-click="cnlPrint()" data-dismiss="modal">Cancel Print</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    var myInventoryDropzone;
+
+    // Initialize myInventoryDropzone when AngularJS controller is ready
+    angular.element(document).ready(function () {
+        var scope = angular.element(document.getElementById('quotationDetailItemWise')).scope();
+
+        myInventoryDropzone = new Dropzone('#dQuotationUpload', {
+            url: "/Quotation/QuotationFileUpload/",
+            thumbnailWidth: 200,
+            thumbnailHeight: 75,
+            autoDiscover: false,
+            autoProcessQueue: false,
+            addRemoveLinks: true,
+            paramName: "inputFiles",
+            uploadMultiple: true,
+            parallelUploads: 100,
+            maxFiles: 100,
+            maxFileSize: 10,
+        });
+
+        myInventoryDropzone.on('sending', function (file, xhr, formData) {
+            // Ensure scope values are available and not undefined
+            if (scope) {
+                var tenderNo = scope.tenderNo;
+                var quotationNo = scope.quotationNo;
+
+                formData.append('TenderNo', tenderNo);
+                formData.append('QuotationNo', quotationNo);
+            } else {
+                console.error("Scope is undefined");
+            }
+        });
+
+        myInventoryDropzone.on("success", function (file, responseText) {
+            if (responseText.status == "Error") {
+                displayPopupNotification("File upload did not succeed. Please try again.", "error");
+            } else {
+                myInventoryDropzone.removeFile(file);
+            }
+        });
+
+        myInventoryDropzone.on("removedfile", function (file, xhr, formData) {
+            if (scope) {
+                var filename = file.name;
+                var voucherno = scope.OrderNo;
+                var formcode = scope.formcode;
+                var model = {
+                    FILE_NAME: filename,
+                    FORM_CODE: formcode,
+                    VOUCHER_NO: voucherno
+                };
+                var staturl = window.location.protocol + "//" + window.location.host + "/api/TemplateApi/deleteUploadedFile";
+                $.ajax({
+                    type: 'POST',
+                    url: staturl,
+                    data: model,
+                    dataType: "json",
+                    success: function (data) {
+                        // Handle success if needed
+                    }
+                });
+            } else {
+                console.error("Scope is undefined during file removal");
+            }
+        });
+    });
+</script>

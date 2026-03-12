@@ -1,0 +1,123 @@
+﻿@{
+    Layout = "~/Views/Shared/_LayoutNew.cshtml";
+}
+<style>
+    .minicolors-theme-default .minicolors-input {
+        height: 32px;
+    }
+
+    .colmargin {
+        margin-right: -80px;
+    }
+
+    .row.pagemargin {
+        margin-top: 10px;
+    }
+
+    .btngap-top {
+        margin-top: 78px;
+    }
+
+    .table-padding, div#example table-padding {
+        padding: 12px 20px 15px 20px !important;
+    }
+
+    .form-control {
+        /* border-radius: 4px !important; */
+        height: 100% !important;
+    }
+
+    .btn-danger {
+        color: #fff;
+        background-color: #F3565D;
+        border-color: #f13e46;
+    }
+</style>
+
+<div id="editForm" style="display:none">
+    @Html.Partial("_Form")
+</div>
+<div class="main-contain-box clearfix">
+    <div class="table-padding">
+        <div id="grid"></div>
+    </div>
+    </div>
+    <script>
+        $(document).ready(function () {
+
+            $("#btnCancel").show();
+
+            var crudServiceBaseUrl = window.location.protocol + "//" + window.location.host,
+                dataSource = new kendo.data.DataSource({
+                    transport: {
+                        read: {
+                            url: crudServiceBaseUrl + "/api/QueryBuilder/NotificationList",
+                            dataType: "json"
+                        },
+                        update: {
+
+                        },
+                        parameterMap: function (data, operation) {;
+                            if (operation != "read") {
+                                return data;
+                            } else {
+                                //for some reasons only such "Filter" data be parsed
+                                return JSON.stringify(data);
+                            }
+                        }
+                    },
+                    pageSize: 20,
+                });
+
+            $("#grid").kendoGrid({
+                dataSource: dataSource,
+                height: 550,
+                columns: [
+                     { field: "NotificationName", title: "Name" },
+                     { field: "NotificationType", title: "Type" },
+                     { field: "SqlQuery", title: "Sql Query" },
+                     { field: "NotificationResult", title: "Result Type" },
+                     { field: "MinResult", title: "Min Value" },
+                     { field: "MaxResult", title: "Max Value" },
+                     { field: "AppendText", title: "Append Text" },
+                     { field: "AppendPosition", title: "Append Position" },
+                     { command: { text: "View Details", click: showDetails }, title: " ", width: "150px" }],
+            });
+        });
+
+        function showDetails(e) {
+            
+            e.preventDefault();
+            var dataItem = this.dataItem($(e.currentTarget).closest("tr"));
+            $("#editForm").show();
+            window.scrollTo(0, 0);
+
+            $("#NotificationId").val(dataItem.NotificationId);
+            $("#NotificationName").val(dataItem.NotificationName);
+            $("#NotificationResult").val(dataItem.NotificationResult);
+            $("#SqlQuery").val(dataItem.SqlQuery);
+            $("#MinResult").val(dataItem.MinResult);
+            $("#MaxResult").val(dataItem.MaxResult);
+            $("#NotificationType").val(dataItem.NotificationType);
+            $("#NotificationTemplate").val(dataItem.NotificationTemplate);
+            $("#iconField").data('iconpicker').update(dataItem.Icon);
+            $("#colorField").minicolors('value', dataItem.Color);
+            $("#AppendText").val(dataItem.AppendText);
+            $("#AppendPosition").val(dataItem.AppendPosition);
+            $("#ModuleCode").val(dataItem.ModuleCode);
+            var multiselectValues = dataItem.Users == null ? '' : dataItem.Users.split(',')
+            $("#Users").data("kendoMultiSelect").value(multiselectValues);
+        }
+
+        $("#btnCancel").click(function (e) {
+            $("#NotificationForm").find("input, textarea").val("");
+            $("#Users").data("kendoMultiSelect").value('');
+            $("#editForm").hide();
+        });
+
+        $(".button-submit").click(function (e) {
+            
+            $('#grid').data('kendoGrid').dataSource.read();
+            $('#grid').data('kendoGrid').refresh();
+        });
+    </script>

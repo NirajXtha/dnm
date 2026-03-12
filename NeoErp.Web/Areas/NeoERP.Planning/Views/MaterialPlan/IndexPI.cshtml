@@ -1,0 +1,723 @@
+﻿@using NeoErp.Core;
+@using NeoErp.Core.Models;
+@{
+    ViewBag.Title = "Material Plan List";
+    string LoggedInUsers_EmployeeCode = ViewBag.EmployeeCode;
+    //Layout = "~/Areas/NeoERP.Planning/Views/Shared/_Layout.cshtml";
+    Layout = null;
+}
+@{
+    string retrived_start_date = ViewBag.startdate;
+    string retrived_end_date = ViewBag.enddate;
+}
+
+<style>
+    .k-grid {
+        font-size: 11px;
+    }
+
+    .color-notify {
+        float: left;
+        padding-left: 5px;
+    }
+
+    .color-box-1 {
+        height: 13px;
+        width: 13px;
+        background-color: #91D598;
+        border: 1px solid #9c9797;
+        margin-top: 2px;
+        float: left;
+    }
+
+    .color-box-2 {
+        height: 13px;
+        width: 13px;
+        background-color: #D4FAB6;
+        border: 1px solid #9c9797;
+        margin-top: 2px;
+        float: left;
+    }
+
+    .color-box-3 {
+        height: 13px;
+        width: 13px;
+        background-color: #fff;
+        border: 1px solid #9c9797;
+        margin-top: 2px;
+        float: left;
+    }
+
+    .plant-identification {
+        padding-top: 22px;
+        padding-left: 20px;
+    }
+
+    .k-list.k-reset {
+        overflow: hidden !important;
+    }
+
+    #operationContent .slimScrollBar {
+        display: none !important;
+    }
+
+        #operationContent .slimScrollBar:hover {
+            display: block !important;
+        }
+
+    .k-ff input.k-textbox {
+        float: right;
+        margin-bottom: 5px;
+        font-size: 11px;
+    }
+
+    #copyDetail.modal.fade.in {
+        top: 40%;
+        margin: auto;
+        width: 470px !important;
+        height: 464px !important;
+        margin-left: -12% !important;
+    }
+
+    .k-header.k-grid-toolbar {
+        /*height:33px;*/
+        padding: 0px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    .actions .referenceCustomer input {
+        width: 2px !important;
+        transition: .55s ease;
+        padding: 2px 2px !important;
+    }
+
+        .actions .referenceCustomer input:hover, .actions .referenceCustomer input:focus, .ref_search_cus:hover input {
+            width: 290px !important;
+        }
+</style>
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+        </ul>
+    </div>
+
+</div>
+<div class="col-md-12">
+    <div class="portlet light bordered">
+        <div class="portlet-title c-porlettitle">
+            <div class="caption">
+                <i class="icon-speech"></i>
+                <span class="caption-subject bold uppercase">Material List</span>
+                <span class="caption-helper"></span>
+            </div>
+
+            @*<div class="actions">
+                    <div class="btn-group menuDropdown">
+                        <a class="btn btn-green" href="javascript:;" data-toggle="dropdown" aria-expanded="false">
+                            <i class="fa fa-user"></i> Actions
+                            <i class="fa fa-angle-down"></i>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a href="/Planning/Home/Index#!Planning/CreateMaterialPlan">
+                                    <i class="glyphicon glyphicon-new-window"></i> New
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/Planning/Home/Index#!Planning/MaterialFromProduction">
+                                    <i class="fa fa-share"></i> Reference
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>*@
+            <div class="btn-group pull-right gaptopmin filterbuttons">
+                <div class="actions">
+                    <div class="btn-group">
+                        @Html.Partial("~/Areas/NeoERP.Planning/Views/Shared/Controls/DateField.cshtml", false)
+                    </div>
+                    <div class="btn-group">
+                        @Html.Partial("~/Areas/NeoERP.Planning/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                        {
+                            ShowCustomerFilter = true,
+                            ShowBranchFilter = true,
+                            ShowEmployeeFilter = true,
+                            ShowDivisionFilter = true,
+                            ShowCompanyFilter = false,
+                        })
+                        <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                            <i class="icon-control-play"></i>
+                        </a>
+                    </div>
+                    <div class="btn-group">
+                        <a href="/Planning/Home/Index#!Planning/MaterialFromProductionPI" class="btn btn-circle btn-icon-only btn-default btngaptop tooltipsinner" data-toggle="tooltip" title="" data-placement="top" data-original-title="Create Material Plan">
+                            <i class="fa fa-plus-circle"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="page-toolbar pull-right">
+            <div class="pull-left">
+                <script type="text/x-kendo-template" id="toolbar-template">
+                    <div class="k-header k-grid-toolbar">
+                        <a class="k-button k-button-icontext floatright" id="collapseAllButton" title="Collapse All" onclick="CollapseAll()"><i class="fa fa-chevron-up"></i></a>
+                        <a class="k-button k-button-icontext floatright" id="expandAllButton" title="Expand All" onclick="ExpandAll()"><i class="fa fa-chevron-down"></i></a>
+                        <div class="search pull-right">
+                            <input type="text" id="txtSearchString" class="form-control input-sm grid-search" maxlength="64" placeholder="Search..." onkeyup="onSearch(this)" />
+                            <button class="btn btn-primary btn-sm search-btn fa fa-search"></button>
+                        </div>
+                    </div>
+                </script>
+                @*<div class="col-md-12 input-icon dataserarch-input">
+                        <i class="fa fa-search searchicon"></i>
+                        <input class="form-control searchbox" id="txtSearchString" ng-keyup="onSearch(this)" name="search" placeholder="search here" type="text">
+                    </div>
+                    <div class="col-md-12 dataserarch-input">
+                            <input class=k-textbox type=text id="txtSearchString" ng-keyup="onSearch(this)" placeholder="enter search text..." />
+                        </div>*@
+            </div>
+            @*<div class="btn-group pull-right gaptopmin">
+                    <div class="actions">
+                        <div class="btn-group">
+                            @Html.Partial("~/Areas/NeoERP.Planning/Views/Shared/Controls/DateField.cshtml", false)
+                        </div>
+                        <div class="btn-group">
+                            @Html.Partial("~/Areas/NeoERP.Planning/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                       {
+                           ShowCustomerFilter = true,
+                           ShowBranchFilter = true,
+                           ShowEmployeeFilter = true,
+                           ShowDivisionFilter = true,
+                           ShowCompanyFilter = false,
+                       })
+                            <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                                <i class="icon-control-play"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>*@
+        </div>
+        <div class="portlet-body">
+            @*<div class="row">
+                    <div class="col-md-12 dataserarch-input">
+                        <input class=k-textbox type=text id="txtSearchString" ng-keyup="onSearch(this)" placeholder="enter search text..." />
+                    </div>
+                </div>*@
+            <div id="grid"></div>
+        </div>
+    </div>
+
+</div>
+
+<div id="copyDetail" class="modal fade" tabindex="-1" data-width="760">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+        <h4 class="modal-title">Copy Plan</h4>
+    </div>
+    <div class="modal-body copyContentBody"></div>
+    <div class="modal-footer">
+        <button type="button" data-dismiss="modal" class="btn btn-outline dark">Close</button>
+        <button type="button" class="btn green" id="saveCopiedPlan">Save</button>
+    </div>
+</div>
+<script src="@Scripts.Url("~/Areas/NeoERP.Planning/Scripts/DateFilter.js")" type="text/javascript"></script>
+<script src="@Scripts.Url("~/JS/ReportFilter.js")" type="text/javascript"></script>
+<script>
+
+    var planUrl = window.location.protocol + "//" + window.location.host + "/api/MaterialPlanApi/GetSalesPlanList";
+    var loggedInUsers_employeeCode = '@LoggedInUsers_EmployeeCode';
+    $(document).ready(function () {
+
+        var retrived_start_date = '@retrived_start_date';
+        var retrived_end_date = '@retrived_end_date';
+        console.log('S' + retrived_start_date + 'E' + retrived_end_date);
+        if (retrived_start_date != '' && retrived_end_date != '') {
+            var dateOption = $('[name=DateStep] option').filter(function () {
+                return ($(this).attr('data-start-date') === moment(retrived_start_date).format("YYYY-MM-DD") && $(this).attr('data-end-date') === moment(retrived_end_date).format("YYYY-MM-DD")); //To select date range
+            }).prop('selected', true);
+        }
+        //BindGrid();
+        DateFilter.init(function () {
+
+            $("#ddlDateFilterVoucher").val('This Year');
+            $("#ddlDateFilterVoucher").trigger('change');
+
+            BindPlanList(planUrl);
+        });
+        hideloader();
+        $("#RunQuery").click(function (evt) {
+            evt.preventDefault();
+
+            KendoGridRefresh(planUrl);
+        });
+        //BindPlanList(planUrl);
+        //setTimeout(function () {
+        //    $("#ddlDateFilterVoucher").val('This Year');
+        //    $("#ddlDateFilterVoucher").trigger('change');
+        //},1000);
+    });
+
+    $("#clearall").on('click', function () {
+        $("#customerMultiSelect").data("kendoMultiSelect").value('');
+        $("#employeeMultiSelect").data("kendoMultiSelect").value('');
+        $("#divisionMultiSelect").data("kendoMultiSelect").value('');
+        $("#BranchMultiSelect").data("kendoMultiSelect").value('');
+
+    });
+
+    $(".applydp").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    });
+
+    $("#loadAdvancedFilters").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+
+    });
+
+    $("#txtSearchString").on('keyup', function (e) {
+
+        onSearch(e);
+    })
+
+    function onSearch($this) {
+        //
+        var q = $("#txtSearchString").val();
+        var grid = $("#grid").data("kendoGrid");
+        grid.dataSource.query({
+            page: 1,
+            pageSize: 50,
+            filter: {
+                logic: "or",
+                filters: [
+                    { field: "PLAN_EDESC", operator: "contains", value: q },
+                    { field: "START_DATE", operator: "contains", value: q },
+                    { field: "END_DATE", operator: "contains", value: q },
+                    { field: "SALES_TYPE", operator: "contains", value: q },
+                   // { field: "SALES_QUANTITY", operator: "contains", value: q },
+                    { field: "CUSTOMER_EDESC", operator: "contains", value: q },
+                    { field: "EMPLOYEE_EDESC", operator: "contains", value: q },
+                    { field: "BRANCH_EDESC", operator: "contains", value: q },
+                    { field: "DIVISION_EDESC", operator: "contains", value: q }
+                ]
+            }
+        });
+    }
+
+    function BindPlanList(pUrl) {
+        $("#grid").kendoGrid({
+            dataSource: {
+                type: "json",
+                transport: {
+                    read: {
+                        url: pUrl, // <-- Get data from here.
+                        dataType: "json", // <-- The default was "jsonp".
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8"
+                    },
+                    parameterMap: function (options, type) {
+
+                        var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+
+                    }
+                },
+                schema: {
+                    model: {
+                        fields: {
+                            PLAN_EDESC: { type: "string" },
+                            START_DATE: { type: "string" },
+                            END_DATE: { type: "string" },
+                            SALES_AMOUNT: { type: "number" },
+                            SALES_QUANTITY: { type: "number" },
+                            CUSTOMER_EDESC: { type: "string" }
+                        }
+                    }
+                },
+                pageSize: 20,
+                //serverPaging: true,
+                //serverFiltering: true,
+                //serverSorting: true
+            },
+            height: window.innerHeight - 200,
+            sortable: true,
+            reorderable: true,
+            groupable: true,
+            toolbar: kendo.template($("#toolbar-template").html()),
+            resizable: true,
+            filterable: {
+                extra: false,
+                operators: {
+                    number: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "is greater than or equal to	",
+                        gt: "is greater than",
+                        lte: "is less than or equal",
+                        lt: "is less than",
+                    },
+                    string: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        startswith: "Starts with	",
+                        contains: "Contains",
+                        doesnotcontain: "Does not contain",
+                        endswith: "Ends with",
+                    },
+                    date: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "Is after or equal to",
+                        gt: "Is after",
+                        lte: "Is before or equal to",
+                        lt: "Is before",
+                    }
+
+                }
+            },
+            columnMenu: true,
+            //Wordwrapmenu function calling
+            columnMenuInit: function (e) {
+                //wordwrapmenu(e);
+                checkboxItem = $(e.container).find('input[type="checkbox"]');
+            },
+            pageable: {
+                refresh: true,
+                buttonCount: 5
+            },
+            scrollable: {
+                virtual: true
+            },
+            dataBinding: function () {
+                record = (this.dataSource.page() - 1) * this.dataSource.pageSize();
+            },
+            dataBound: function () {
+                $('div').removeClass('.k-header k-grid-toolbar');
+            },
+            columns: [
+                { title: "SN", template: "#= ++record #", width: "28px" },
+                {
+                    field: "PLAN_EDESC",
+                    title: "Plan",
+                    filterable: true,
+                    template: "#= SetPlanLink(PLAN_EDESC,PLAN_CODE,REFERENCE_FLAG) #"
+                }, {
+                    field: "PLAN_DATE",
+                    title: "Plan Date",
+                    format: "{0:yyyy/MMM/dd}",
+                    //template: '#= kendo.toString(kendo.parseDate(PLAN_DATE), "yyyy/Mon/dd")#',
+                    attributes: { style: "text-align:right;" },
+                },
+                //{
+                //    field: "SALES_AMOUNT",
+                //    title: "Amount"
+                //},
+                {
+                    //field: "BRANCH_EDESC",
+                    title: "Branch"
+                },
+                //{
+                //    field: "CREATED_DATE",
+                //    title: "Created Date",
+                //    format: "{0:yyyy-MMM-dd}",
+                //},
+                //{
+                //    //field: "CREATED_BY",
+                //    title: "Created By"
+                //},
+                //{
+                //    field: "MODIFY_DATE",
+                //    title: "Modify Date",
+                //    format: "{0:yyyy-MMM-dd}",
+                //},
+                //{
+                //    field: "MODIFIED_BY",
+                //    title: "Modify By"
+                //},
+                {
+                    field: "PLAN_CODE", title: "Action", sortable: false, filterable: false, width: "90px",
+                    template: "#= setAction(PLAN_CODE,REFERENCE_FLAG) #",
+                    groupable: false
+                }
+            ]
+        });
+    }
+
+
+
+
+    function KendoGridRefresh(readUrl) {
+        $('#grid').val('');
+        $('#grid').html('');
+        BindPlanList(planUrl);
+
+    }
+
+    function BindGrid() {
+        //var mainurl = window.location.protocol + "//" + window.location.host + "/api/MaterialPlanApi/GetPlanList";
+        var mainurl = window.location.protocol + "//" + window.location.host + "/api/MaterialPlanApi/GetSalesPlanList";
+        var dataSource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: {
+                    url: mainurl, // <-- Get data from here.
+                    dataType: "json", // <-- The default was "jsonp".
+                    type: "get",
+                    contentType: "application/json; charset=utf-8"
+                },
+            },
+
+            schema: {
+                model: {
+                    fields: {
+                        START_DATE: { type: "date" },
+                        END_DATE: { type: "date" },
+
+                    }
+                }
+            },
+            //group: { field: "PLAN_EDESC"},
+            serverPaging: false,
+            pageSize: 10,
+        });
+
+        var temp = dataSource.read();
+
+        var grid = $("#grid").kendoGrid({
+            dataSource: dataSource,
+            sortable: true,
+            pageable: {
+                refresh: true,
+                pageSizes: true,
+                buttonCount: 5
+            },
+
+            reorderable: true,
+            groupable: true,
+            filterable: true,
+            resizable: true,
+            filterable: {    // filter for the null and is not null etc
+                extra: false,// extra false means there is 2 different filter inside the filter
+                operators: {   // the number is data type for the net sales column , and string for the MITI
+                    number: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "is greater than or equal to	",
+                        gt: "is greater than",
+                        lte: "is less than or equal",
+                        lt: "is less than",
+
+                    },
+                    string: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        startswith: "Starts with	",
+                        contains: "Contains",
+                        doesnotcontain: "Does not contain",
+                        endswith: "Ends with",
+                    },
+                    date: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "Is after or equal to",
+                        gt: "Is after",
+                        lte: "Is before or equal to",
+                        lt: "Is before",
+                    }
+                }
+            },
+
+            columnMenu: true,
+            pageable: true,
+            dataBinding: function () {
+                record = (this.dataSource.page() - 1) * this.dataSource.pageSize();
+            },
+            columns: [
+                { title: "SN", template: "#= ++record #", width: "28px" },
+                { field: "PLAN_EDESC", title: 'Plan', template: "#= '' #" },
+                {
+                    field: "START_DATE",
+                    title: "Start Date",
+                    format: "{0:yyyy-MMM-dd}",
+                    //width: "35px",
+                },
+                {
+                    field: "END_DATE",
+                    title: "End Date",
+                    format: "{0:yyyy-MMM-dd}",
+                    //width: "35px",
+                },
+                {
+                    field: "REMARKS",
+                    hidden: true,
+                },
+            ],
+            dataBound: function (event) {
+                dataView = this.dataSource.view();
+
+                $(".goto_planSetup").click(function (e) {
+                    e.preventDefault();
+                    var grid = $("#grid").data("kendoGrid");
+                    var dataItem = grid.dataItem($(this).closest("tr"));
+                    var planCode = dataItem.PLAN_CODE;
+
+                    if (dataItem.STATUS == 'SUB_PLAN') {
+                        //window.location = "/Planning/Home/Index#!Planning/PlanSetup/" + planCode;
+                        //update_wizard(1);
+                    } else if (dataItem.STATUS == 'PLAN_DETAIL') {
+                        window.location = "/Planning/Home/SubPlan#!Planning/SubPlan/" + planCode;
+                        update_wizard(2);
+                    }
+                    else {
+                        window.location = "/Planning/Home/Index#!Planning/PlanSetup/" + planCode;
+                        update_wizard(1);
+                    }
+
+                })
+            }
+
+        });
+    }
+
+    function SetPlanLink(name, value, rFlag) {
+        name = (name == null ? "" : name);
+        //var html = '<a style="" href="/Planning/Home/Index#!Planning/PlanSetup/' + value + '" >' + name + ' </a>';
+        var html = "";
+        if (rFlag == "")
+            html = '<a style="" href="/Planning/Home/Index#!Planning/CreateMaterialPlan/' + value + '" >' + name + ' </a>';
+        else
+            html = '<a style="" href="/Planning/Home/Index#!Planning/MaterialFromProduction/' + value + '" >' + name + ' </a>';
+        //var html = '<a style="" href="/Planning/Home/Index#!Planning/EditPlan/' + value + '" >' + name + ' </a>';
+        return html;
+    }
+    function setAction(plancode,rFlag) {
+        var html = '';
+        //html += '<a data-toggle="modal" style="color:green;" data-id="' + plancode + '" onclick="copySalesPlanModal(this)" class="copy_salesplan planCode_' + plancode + ' fa fa-copy" title="clone this plan"><span class="sr-only"></span></a>&nbsp;&nbsp;';
+        if (rFlag == "")
+            html += '<a href="/Planning/Home/Index#!Planning/CreateMaterialPlan/' + plancode + '" data-toggle="modal" style="color:orange;" data-id="' + plancode + '" class="copy_salesplan planCode_' + plancode + ' fa fa-edit" title="Edit this plan"><span class="sr-only"></span></a>&nbsp;&nbsp;';
+        else
+            html += '<a href="/Planning/Home/Index#!Planning/MaterialFromProduction/' + plancode + '" data-toggle="modal" style="color:orange;" data-id="' + plancode + '" class="copy_salesplan planCode_' + plancode + ' fa fa-edit" title="Edit this plan"><span class="sr-only"></span></a>&nbsp;&nbsp;';
+        html += '<a style="color:red;" data-id="' + plancode + '" onclick="deleteSalesPlan(' + plancode + ')" class="delete_salesplan planCode_' + plancode + ' icon icon-trash" title="Delete this plan"><span class="sr-only"></span></a>&nbsp;&nbsp;';
+        //html += '<a href="/Planning/Home/Index#!Planning/CopyPlan/' + plancode + '" style="color:green;" data-id="' + plancode + '" onclick="copySalesPlan(' + plancode + ')" class="copy_salesplan planCode_' + plancode + ' fa fa-copy" title="clone this plan"><span class="sr-only"></span></a>';
+        return html;
+    }
+    function setRedirection(planCode) {
+        var html = '<a style="color:green;" class="goto_planSetup planCode_' + planCode + ' icon icon-share-alt "><span class="sr-only"></span> </a>';
+        return html;
+    }
+
+    function deleteSalesPlan(id) {
+
+        //var id = $(this).data('id');
+        var sureDelete = confirm("Are you sure to delete the record?");
+        if (sureDelete) {
+            $.ajax({
+                url: "/api/MaterialPlanApi/DeletePlane?planCode=" + id,
+                type: 'POST',
+                //data: { planCode: id }
+            }).done(function () {
+                displayPopupNotification("Record deletion successed", "success");
+                RefreshGrid();
+            }).error(function (err) {
+                displayPopupNotification("Record deletion failed due " + err.responseText, "error");
+            })
+        }
+        else {
+            return false;
+        }
+    }
+
+    function copySalesPlan(id) {
+       }
+
+    function copySalesPlanModal(el) {
+        var id = $(el).data('id');
+        $.ajax({
+            url: '/Planning/MaterialPlan/CopyPlan',
+            data: { planCode: id },
+        }).done(function (result) {
+
+            $('.copyContentBody').html('');
+            $('.copyContentBody').html(result);
+            $('#copyDetail').modal('toggle');
+            setTimeout(function () {
+                $('#customers_copy').data("kendoComboBox").dataSource.read();
+            }, 1000);
+        }).error(function (err) {
+
+        })
+
+    }
+
+    $('#saveCopiedPlan').on('click', function () {
+
+        var formVal = $('#generateplan_copy').serialize();
+        var plan_code = $('#plancode_copy').val();
+        var plan_name = $('#planName_copy').val();
+        var isCustomerProduct = $('input[name=customer_product_option_copy]:checked').val();
+        var selectedCustomer = $('#customers_copy').val();
+        var selectedEmployee = $('#employees_copy').val();
+        var valid = true;
+        //validation
+        if (plan_name == "") {
+            $('#planName_copy').focus();
+            displayPopupNotification("Please enter plan name.", "error");
+            valid = false;
+            return false;
+        }
+        if (isCustomerProduct == "customer_product" && selectedCustomer == "") {
+            $('#customers_copy').focus();
+            displayPopupNotification("Please select customer or check Product Only option.", "error");
+            valid = false;
+            return false;
+        }
+        if((selectedEmployee=="" || selectedEmployee == null) && loggedInUsers_employeeCode==""){
+            $('#employees_copy').focus();
+            displayPopupNotification("Either Select Employee From Employee Option or Maintain Logged In Users Employee_Code in Application User.", "error");
+            valid = false;
+            return false;
+        }
+        if ((selectedEmployee == "" || selectedEmployee ==null) && loggedInUsers_employeeCode != "") {
+            $('#employees_copy').val(loggedInUsers_employeeCode);
+        }
+        //
+        if (valid) {
+            var sureDelete = confirm("Are you sure to clone this plan?");
+            if (sureDelete) {
+                var formdata = JSON.stringify(formVal);
+                $.ajax({
+                    url: "/Planning/MaterialPlan/CopyPlan",
+                    data: formdata,
+                    type: 'POST',
+                }).done(function () {
+                    displayPopupNotification("Record clonning successed", "success");
+                    RefreshGrid();
+                    $('#copyDetail').modal('toggle');
+                }).error(function (err) {
+                    displayPopupNotification("Record clonning failed due " + err.responseText, "error");
+                })
+            }
+            else {
+                return false;
+            }
+        }
+    })
+    function RefreshGrid() {
+        $('#grid').data("kendoGrid").dataSource.read();
+    }
+</script>
+<script src="@Scripts.Url(" ~/Areas/NeoERP.Planning/js/controller/PlanningMenuNavigation.js")"></script>

@@ -1,0 +1,263 @@
+﻿@using NeoErp.Core.Models;
+@using NeoErp.Core.Domain;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@using NeoErp.Core.Models.CustomModels;
+@{
+    var actionPageId = "VisitMapDetail";
+    var myAreaName = "NeoErp.Distribution";
+
+}
+<style>
+
+
+
+</style>
+<div class="modal fade" id="Model_@actionPageId" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog custom-chart">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                <h4 class="modal-title"><span class="fa fa-filter"></span> Advance Filter</h4>
+            </div>
+            <div class="modal-body bottom-gappingtwo form-horizontal">
+                <div class="col-sm-12 col-md-12">
+                    @Html.Partial("~/Views/Shared/Controls/DashboardChartFilter/_NewDatePicker.cshtml", new NeoErp.Core.Models.CustomModels.DatePickerModel()
+               {
+                   ActionPageId = actionPageId
+               })
+                </div>
+                
+            
+                        <div class="filter_title">
+                            <label class="filter-label">Advance Filter</label>
+                        </div>
+
+                        @Html.Partial("~/Views/Shared/Controls/DashboardChartFilter/_AdvancedFilter.cshtml", new NeoErp.Core.Models.AdvancedFilterSettingsModel()
+                   {
+                       ShowCustomerFilter = false,
+                       ShowProductFilter = false,
+                       ShowPartyTypeFilter = false,
+                       ShowCategoryFilter = false,
+                       ShowLocationFilter = false,
+                       ShowDocumentFilter = false,
+                       ShowCompanyFilter = false,
+                       ShowBranchFilter = true,
+                       IsPopUp = false,
+                       ActionPageId = actionPageId
+                   })
+                
+             
+                <div class="sr-only1" style="margin-top:10px;">
+                    
+                    <div class="row">
+                        <div class="col-xs-10 col-sm-10 col-md-11">
+                            <div class="form-group">
+                                <div class="col-md-12">
+                                    <div id="outLetMultiSelect"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                   
+                    <div class="row">
+                        <div class="col-xs-10 col-sm-10 col-md-11">
+                            <div class="form-group">
+                                <div class="col-md-12">
+                                    <div id="distributorMultiSelect"></div>
+                                </div>
+                            </div>
+                        </div>
+                    
+                </div>
+
+            </div>
+                </div>
+            <div class="modal-footer">
+                @*<button type="button" class="btn default" data-dismiss="modal">Close</button>*@
+                <button type="button" class="btn green applydp" data-dismiss="modal" id="apply_@actionPageId">Apply</button>
+            </div>
+        </div>
+        <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+</div>
+
+<div class="col-md-12">
+    <div class="row ui-sortable " id="sortable_portlets_@actionPageId">
+        <div class="col-md-12 column sortable">
+            <div class="portlet portlet-sortable  light bordered" id="@actionPageId">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="icon-bar-chart font-green-haze"></i>
+                        <span class="caption-subject bold uppercase font-green-haze custom-modal">Visit Plan vs Visited</span>
+                    </div>
+                    <div class="tools">
+                        <input type="checkbox" value="true" id="chkgetarea" name="chkgetarea" />
+                        <a data-target="#Model_@actionPageId" data-toggle="modal" class="config"></a>
+                        <a href="javascript:;" class="collapse">
+                        </a>
+                        <a href="javascript:;" class="remove">
+                        </a>
+                    </div>
+                </div>
+                <div class="portlet-body-1">
+                    <div class="k-content wide">
+                        <div class="panel-body-1">
+                            <div id="visit-map-panel" style="width: 100%;height: 425px; margin: 0 auto">
+                                <input type="hidden" id="cur-date" value="@DateTime.Now.ToString("dd-MMM-YY")" />
+                                <div id="visit-plan-search" style="display:none;position:absolute;z-index:1;top:55px;left:27%;width:50%;">
+                                    <input id="search-target" type="text" placeholder="Search Customer" autocomplete="off"
+                                           style="width:100%;padding:0 11px 0 13px;height:30px;border:1px solid transparent;outline: none;background-color:#fff;font-size:15px;border-radius:2px 0 0 2px;box-shadow:0 2px 6px rgba(0, 0, 0, 0.3);">
+                                    <div id="visit-search-result" style="background:#fff;z-index:1;display:none;max-height:390px;overflow:auto;"></div>
+                                </div>
+                                <div id="visit-map-legend-wrapper"
+                                     style="display:none;position:absolute;top:0;right:0;width:150px;overflow-y:auto;border:1px solid #ccc;z-index:1;background: #fff">
+                                    <div id="visit-map-legend" style="font-size:12px;">
+                                        <div class="visit-map-legend-row visit-click" style="padding:3px 5px;border-bottom:1px solid #eee;">
+                                            <div class="visit-map-legend-row-label" style="float:left;">
+                                                <span>Visited</span> : <span id="visit-count">0</span>
+                                            </div>
+
+                                            <div class="visit-map-legend-row-marker" style="float:right;">
+                                                <img src="@Scripts.Url("~/Areas/"+myAreaName+ "/Content/img/marker_visited.png")"
+                                                     style="height:20px;" />
+                                            </div>
+                                            <div class="clear" style="clear:both;"></div>
+                                        </div>
+                                        <div class="visit-map-legend-row pending-visit-click" style="padding:3px 5px;border-bottom:1px solid #eee;">
+                                            <div class="visit-map-legend-row-label" style="float:left;">
+                                                <span>Pending Visit</span> :
+                                                <span id="pending-visit-count">0</span>
+                                            </div>
+                                            <div class="visit-map-legend-row-marker" style="float:right;">
+                                                <img src="@Scripts.Url("~/Areas/"+myAreaName+ "/Content/img/pink_marker.png")"
+                                                     style="height:20px;" />
+                                            </div>
+                                            <div class="clear" style="clear:both;"></div>
+                                        </div>
+                                        <div class="visit-map-legend-row cancle-visit-click" style="padding:3px 5px;border-bottom:1px solid #eee;">
+                                            <div class="visit-map-legend-row-label" style="float:left;">
+                                                <span>Cancelled Visit</span> : <span id="cancle-visit-count">0</span>
+                                            </div>
+
+                                            <div class="visit-map-legend-row-marker" style="float:right;">
+                                                <img src="@Scripts.Url("~/Areas/"+myAreaName+ "/Content/img/blue_marker.png")"
+                                                     style="height:20px;" />
+                                            </div>
+                                            <div class="clear" style="clear:both;"></div>
+                                        </div>
+                                        <div class="visit-map-legend-row"
+                                             style="padding:3px 5px;border-bottom:1px solid #eee;background:#efefef">
+                                            <div class="visit-map-legend-row-label">
+                                                <span>Total Visit Plan</span> : <span id="total-visit-plan-count">0</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="visit-map-legend-row"
+                                             style="padding:3px 5px;border-bottom:1px solid #eee;background:#efefef">
+                                            <div class="visit-map-legend-row-label">
+                                                <span>Total MR</span> : <span id="total-mr-plan-count">0</span>
+                                            </div>
+                                        </div>
+                                        <div class="visit-map-legend-row" style="padding:3px 5px;border-bottom:1px solid #eee;">
+                                            @*<img src="~/Content/map/asset/img/sv5.png" />*@
+                                            <div id="visit-map-fullscreen" style="display:none;margin-top:10px;height:24px;width:24px;cursor:pointer;background-color:#fff;background:url('~/Areas/'+@myAreaName+'/Content/map/asset/img/sv5.png') -52px -86px no-repeat;">&nbsp;</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="visit-map-mr-report-filter" style="display:none;">
+                                    <div id="visit-map-mr-detail-report" style="padding:5px; background:#fff;">View Detailed Path</div>
+                                    <div id="visit-map-mr-detail-filter-date" style="margin-top:5px;padding:5px; background:#fff;">
+                                        <span>Filter By Date </span>
+                                        <input id="visit-map-mr-report-filter-date-inp" type="text" placeholder="" style="font-size:11px !important;width:70px;text-align:center;" readonly />
+                                    </div>
+                                </div>
+                                <div id="map-canvas-visit" style="height:100%;width:100%;">
+                                    <div id="map-loading">
+                                        <span class="loading"
+                                              style="background:#a0a0a0;padding:0 5px;display:block;position:absolute;top:50%;left:45%;">
+                                            <img src="data:image/gif;base64,R0lGODlhWgAUAIABAP///////yH/C05FVFNDQVBFMi4wAwEAAAAh+QQFZAABACwAAAAAWgAUAAACiIyPqcvtD6OctNqLs968+w+GFdAAprmQyHmuhnrAASuHdZzUpKzjM+8L2lJEHDD3SsJUt5nIqWgCjy7oztd8QpHR4LJrTYa1YK75K64yxetYSyQt0lBbbPpaF76ykzi4lzf21WbmtpEFGAc4tqfHdzjn9hboFGlXtTdJtsnZ6fkJGio6SlpKUQAAIfkEBWQAAQAsSAALAAIAAgAAAgKEUQAh+QQFZAABACxNAAsAAgACAAACAoRRACH5BAVkAAEALFIACwACAAIAAAIChFEAOw==" />
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="portlet portlet-sortable-empty"> </div>
+        </div>
+        @*@Html.Partial("_PartialDashboard.cshtml", new DashboardViewModel()
+            {
+                AllchartList = ViewBag.widgetsAll as List<string>,
+                chartList= ViewBag.widgets as List<string>,
+            })*@
+    </div>
+    <div id="divLoading" style="display:none;"></div>
+
+</div>
+
+<script>
+    DatePicker.init('@actionPageId', '', '');
+    ReportFilter.init('@actionPageId');
+
+
+    $(document).ready(function () {
+        $("#outLetMultiSelect").kendoMultiSelect({            
+            dataTextField: "Reseller_NAME",
+            dataValueField: "Reseller_CODE",
+            height: 600,
+            valuePrimitive: true,
+           // maxSelectedItems: 1,
+            headerTemplate: '<div class="col-md-offset-3"><strong>Outlet...</strong></div>',
+            placeholder: "Select Outlet...",
+            autoClose: false,
+            dataBound: function (e) {
+                var current = this.value();
+                this._savedOld = current.slice(0);
+                $("#" + e.sender.element[0].id + "_listbox").slimScroll({ 'height': '179px', 'scroll': 'scroll' });
+            },
+            dataSource: {
+                transport: {
+                    read: {
+                        url: window.location.protocol + "//" + window.location.host + "/api/Distribution/GetResellerList",
+                        dataType: "json",                        
+                    }
+                }
+            }
+        });
+        $("#distributorMultiSelect").kendoMultiSelect({
+                dataTextField: "CUSTOMER_EDESC",
+                dataValueField: "DISTRIBUTOR_CODE",
+                height: 600,
+                valuePrimitive: true,                
+                //maxSelectedItems: 1,
+                headerTemplate: '<div class="col-md-offset-3"><strong>Distributors...</strong></div>',
+                placeholder: "Select Distributors...",
+                autoClose: false,
+                dataBound: function (e) {
+                    var current = this.value();
+                    this._savedOld = current.slice(0);
+                    $("#" + e.sender.element[0].id + "_listbox").slimScroll({ 'height': '179px', 'scroll': 'scroll' });
+                },
+                dataSource: {
+                    transport: {
+                        read: {
+                            url: window.location.protocol + "//" + window.location.host + "/api/Distribution/GetIndividualCustomer",
+                            dataType: "json"
+                        }
+                    }
+                }
+            });
+
+    });
+</script>
+<script>
+    $('#apply_@actionPageId').click(function () {
+        ReportFilter.init('@actionPageId');
+        DistMap.callWebService();
+        DistMap.map.setZoom(7);
+    });
+</script>

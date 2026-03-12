@@ -1,0 +1,242 @@
+
+@model NeoErp.Distribution.Service.Model.DetailColumnModel
+
+@using NeoErp.Core.Models.CustomModels;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@using NeoErp.Core.Models;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>
+    ();
+}
+
+
+
+<div class="content" style="margin: 20px 30px;">
+    <div style="display: flex; flex-direction: row; justify-content: space-between; margin-top: 20px;">
+        <h2>Manage User Access</h2>
+        <div style="align-content: center;">
+            <button id="AddNew" class="btn btn-green">Add</button>
+            <button id="Save" class="btn btn-green">Save</button>
+        </div>
+    </div>
+
+    <div id="grid"></div>
+</div>
+
+
+<script>
+    $(document).ready(function () {
+
+        var employeeData;
+        var resellerData;
+
+
+        $("#grid").kendoGrid({
+            dataSource: {
+                data: [],
+                schema: {
+                    model: {
+                        fields: {
+                            S_NO: { type: "number" },
+                            Employee: { type: "string" },
+                            Reseller: { type: "string" }
+                        }
+                    }
+                },
+                pageSize: 10
+            },
+            pageable: false,
+            sortable: true,
+            editable: true,
+            columns: [
+                { field: "S_NO", title: "S.No", width: "20px" },
+                {
+                    field: "Employee",
+                    title: "Employee Name",
+                    width: "100px",
+                    editor: itemCodeEditor
+                },
+                {
+                    field: "Reseller",
+                    title: "Reseller Assigned",
+                    width: "200px",
+                    editor: itemDescEditor,
+                    template: "#= Reseller ? Reseller.join(', ') : '' #"
+
+                },
+                {
+                    title: "Actions",
+                    width: "15px",
+                    template: '<a href="javascript:void(0)" class="fa fa-trash-o delete-row" style="font-size: 17px; color: red; margin: 0 40%"></a>'
+                }
+            ],
+            selectable: "row"
+        });
+
+
+        function itemCodeEditor(container, options) {
+            $('<input data-bind="value:' + options.field + '" />')
+                .appendTo(container)
+                .kendoAutoComplete({
+                    dataSource: employeeData.map(employee => employee.EMPLOYEE_EDESC),
+                    filter: "startswith",
+                    placeholder: "Select Employee",
+                    autoClose: false,
+                    select: function (e) {
+                        var selectedEmployee = this.dataItem(e.item.index());
+                        var grid = $("#grid").data("kendoGrid");
+
+                        var isEmployeeAssigned = grid.dataSource.data().some(function (item) {
+                            return item.Employee === selectedEmployee && item.S_NO !== options.model.S_NO;
+                        });
+
+                        if (isEmployeeAssigned) {
+                            alert("This employee is already assigned to another row.");
+                            this.value("");
+                            return false;
+                        }
+                    }
+                });
+        }
+
+        function itemDescEditor(container, options) {
+            $('<input data-bind="value:' + options.field + '" />')
+                .appendTo(container)
+                .kendoMultiSelect({
+                    dataSource: resellerData.customerDataList.map(item => item.Name),
+                    filter: "startswith",
+                    placeholder: "Select Item Description",
+                    autoClose: false
+                });
+        }
+
+        $("#AddNew").click(function () {
+            var grid = $("#grid").data("kendoGrid");
+            var newRowIndex = grid.dataSource.total() + 1;
+            grid.dataSource.add({ S_NO: newRowIndex, Employee: "", Reseller: [] });
+        });
+
+        $("#grid").on("click", ".delete-row", function (e) {
+            var grid = $("#grid").data("kendoGrid");
+            var row = $(this).closest("tr");
+            grid.dataSource.remove(grid.dataItem(row));
+            grid.refresh();
+        });
+
+        $("#Save").click(function () {
+            var grid = $("#grid").data("kendoGrid");
+            var data = grid.dataSource.view();
+            var allData = [];
+            data.forEach(function (item) {
+                var employeeCode = employeeData.find(emp => emp.EMPLOYEE_EDESC === item.Employee)?.EMPLOYEE_CODE;
+
+                var resellers = item.Reseller;
+
+                resellers.forEach(function (reseller) {
+                    allData.push({
+                        Employee: employeeCode,
+                        Reseller: resellerData.customerDataList.find(res => res.Name === reseller)?.CustomerCode
+                    });
+                });
+            });
+            console.log(allData);
+            $.ajax({
+                url: window.location.protocol + "//" + window.location.host + "/api/Report/AccessData",
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(allData),
+                success: function (response) {
+                    alert("Data saved sucessfully!");
+                },
+                error: function (error) {
+                    console.error(error);
+                    alert("Sorry! An error occured while saving the data.")
+                }
+            });
+        });
+
+        function fetchEmployeeAPI() {
+            $.ajax({
+                url: window.location.protocol + "//" + window.location.host + "/api/Report/FinalData?employeeCode=0&companyCode=0",
+                type: 'POST',
+                contentType: 'application/json',
+                success: function (finalResponse) {
+                    console.log(1);
+                    resellerData = finalResponse;
+                    fetchResellerAPI();
+                },
+                error: function (error) {
+                    console.error(error);
+                    alert("An error occured while fetching data. Please try again.");
+                }
+            });
+        };
+
+        function fetchResellerAPI() {
+            $.ajax({
+                url: window.location.protocol + "//" + window.location.host + "/api/UserSetup/getUserEmployee",
+                type: 'GET',
+                contentType: 'application/json',
+                success: function (response) {
+                    console.log(2);
+                    employeeData = response;
+                    storedAccessData();
+                },
+                error: function (error) {
+                    console.error(error);
+                    alert("An error occured while fetching data. Please try again.");
+                }
+            });
+        };
+
+
+        function storedAccessData() {
+            $.ajax({
+                url: window.location.protocol + "//" + window.location.host + "/api/Report/StoredAccessData",
+                type: 'POST',
+                contentType: 'application/json',
+                success: function (response) {
+                    console.log(3);
+                    //console.log(response);
+                    //console.log(resellerData);
+                    //console.log(employeeData);
+
+                    var groupedData = {};
+
+                    response.forEach(function (item) {
+                        var employeeName = employeeData.find(emp => emp.EMPLOYEE_CODE === item.Employee)?.EMPLOYEE_EDESC;
+
+                        if (!groupedData[employeeName]) {
+                            groupedData[employeeName] = [];
+                        }
+
+                        var resellerName = resellerData.customerDataList.find(res => res.CustomerCode === item.Reseller)?.Name;
+                        if (resellerName) {
+                            groupedData[employeeName].push(resellerName);
+                        }
+                    });
+
+                    for (var employee in groupedData) {
+                        $("#grid").data("kendoGrid").dataSource.add({
+                            S_NO: $("#grid").data("kendoGrid").dataSource.total() + 1,
+                            Employee: employee,
+                            Reseller: groupedData[employee]
+                        });
+                    }
+                },
+                error: function (error) {
+                    console.error(error);
+                    alert("An error occured while fetching data. Please try again.");
+                }
+            });
+        };
+
+        fetchEmployeeAPI();
+    });
+
+
+
+</script>
+
+

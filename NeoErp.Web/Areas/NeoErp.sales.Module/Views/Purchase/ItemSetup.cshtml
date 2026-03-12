@@ -1,0 +1,341 @@
+﻿@using NeoErp.Core.Models;
+@{
+    ViewBag.Title = "ItemSetup";
+    Layout = "~/Views/Shared/_LayoutNew.cshtml";
+}
+<style>
+    .main input.form-control {
+        height: 24px;
+        padding: 0px 6px;
+    }
+
+        .main input.form-control:focus {
+            border-color: #ddd;
+        }
+
+    .main .k-widget.k-multiselect.k-header, .main .k-multiselect-wrap {
+        max-height: 100px;
+        overflow-y: auto;
+        min-height: 22px !important;
+        font-size: 11px;
+        border-color: #ddd;
+    }
+
+        .main .k-multiselect-wrap ul li {
+            padding: 0px 7px !important;
+            margin-right: 2px;
+        }
+
+
+    .k-widget.k-dropdown.k-header {
+        min-height: 22px !important;
+        font-size: 11px;
+    }
+</style>
+
+
+<div class="page-content-wrapper" id="operationContent">
+    <div class="page-content">
+        <div class="content">
+            <div class="page-bar">
+                <ul class="page-breadcrumb">
+                    <li>
+                        <i class="fa fa-home"></i>
+                        <a href="/Distribution/Home/Dashboard#!Distribution/">Home</a>
+                        <i class="fa fa-angle-right"></i>
+                    </li>
+                    <li>
+                        <a href="#">Item Setup</a>
+                        <i class="fa fa-angle-right"></i>
+                    </li>
+                </ul>
+                <div class="pull-right btn-group" id="showAdd">
+                    <a class="" data-toggle="tooltip" data-placement="left" title="Add Item">
+                        <div class=" btn btn-circle btn-icon-only btn-default">
+                            <i class="fa fa-plus"></i>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div id="showItemForm" style="display:none">
+            <form name="formName">
+                <div class="portlet light bordered main">
+                    <div class="portlet-title">
+                        <div class="caption">
+                            <span class="caption-subject font-green-haze bold uppercase">
+                                <i class="fa fa-list-alt font-green-haze"></i>
+                                Item Setup
+                            </span>
+                        </div>
+                        <span class="actions pull-right">
+                            <button type="button" id="cancelTarget" name="cancelTarget" class="btn btn-default btn-sm">Cancel</button>
+
+                            <a href="javascript:void(0)" id="saveDealerCreate" name="saveDealerCreate" class="btn btn-green btn-sm">Save</a>
+                        </span>
+
+                    </div>
+                    <div class="portlet-body">
+                        <div class="row">
+                            <input id="itemCode" name="itemCode" style="display:none" />
+                            <div class="col-sm-4 col-md-4">
+                                <div class="form-group ">
+                                    <label class="control-label">
+                                        Group Name
+                                        <span class="required" aria-required="true"> * </span>
+                                    </label>
+                                    <input id="ItemName" name="ItemName" class="form-control" placeholder="Item Name" required />
+
+                                </div>
+                            </div>
+                            <div class="col-sm-2 col-md-2">
+                                <div class="form-group ">
+                                    <label class="control-label">
+                                        Group Type
+                                        <span class="required" aria-required="true"> * </span>
+                                    </label>
+                                    <select id="GroupType" kendo-drop-down-list style="width: 100%;">
+                                        <option value="Sales">Sales</option>
+                                        <option value="Purchase">Purchase</option>
+                                    </select>
+                                    <script>
+                                        $(document).ready(function () {
+                                            $("#GroupType").kendoDropDownList();
+                                        });
+                                    </script>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-6">
+                                <div class="form-group ">
+                                    <div class="form-group" id="OfficerHidden">
+                                        <label class="control-label">
+                                            Choose Items
+                                            <span class="required" aria-required="true"> * </span>
+                                        </label>
+
+                                        @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                                        {
+                                        ShowProductFilter = true,
+                                        //ShowDistEmployeeFilter = true,
+                                        IsPopUp = false,
+                                        })
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div id="example">
+            <div id="grid"></div>
+            <script>
+                urltest = window.location.protocol + "//" + window.location.host + "/api/Purchase/GetItemList";
+                $(document).ready(function () {
+                    $("#grid").kendoGrid({
+                        // change: ItemChange,
+                        dataSource: {
+                            type: "POST",
+                            transport: {
+                                read: urltest,
+                            },
+                            pageSize: 20
+                        },
+                        height: 300,
+                        groupable: false,
+                        sortable: false,
+                        //selectable: true,
+                        columns: [{
+                            field: "ITEM_GROUP_CODE",
+                            title: "Group Code",
+                            width: 240
+                        },
+                        {
+                            field: "ITEM_GROUP_NAME",
+                            title: "Group Name"
+                            },
+                        {
+                            field: "GROUP_TYPE",
+                            title: "Group Type"
+                        },
+                        {
+                            title: "Operation",
+                            template: "<a class='fa fa-edit' onclick='myFunction(#=ITEM_GROUP_CODE#)'></a>&nbsp;&nbsp;&nbsp<a class='fa fa-trash-o' onclick='myDeleteFunction(#=ITEM_GROUP_CODE#)'></a>"
+
+                        }
+
+                        ]
+                    });
+                });
+            </script>
+
+
+        </div>
+    </div>
+</div>
+<script>
+    $('#saveDealerCreate').attr('disabled', true);
+    //$('#saveDealerCreate').attr('disabled', true);
+
+    $('#ItemName').keyup(function () {
+        if ($(this).val().length != 0) {
+            $('#saveDealerCreate').attr('disabled', false);
+        }
+        else {
+            $('#saveDealerCreate').attr('disabled', true);
+        }
+    })
+    $("#saveDealerCreate").click(function () {
+        debugger;
+        var name = document.formName.ItemName.value;
+        var selectedOption = $("#productMultiselect").data('kendoMultiSelect').value();
+        if (name == null || name == "" || selectedOption.length == 0) {
+            //alert("Please select items");
+            displayPopupNotification("Please select items", "warning");
+            return false;
+        }
+        
+        var ITEM_CODE = $("#productMultiselect").data('kendoMultiSelect').value();
+        var ITEM_GROUP_NAME = $("#ItemName").val();
+        var ITEM_GROUP_CODE = $("#itemCode").val();
+        var GROUP_TYPE = $("#GroupType").val();
+        var value = {
+            ITEM_CODE: ITEM_CODE,
+            ITEM_GROUP_NAME: ITEM_GROUP_NAME,
+            ITEM_GROUP_CODE: ITEM_GROUP_CODE,
+            GROUP_TYPE: GROUP_TYPE
+        };
+        $.ajax({
+            type: 'POST',
+            data: value,
+            // dataType: "json",
+            url: window.location.protocol + "//" + window.location.host + "/api/Purchase/InsertItem",
+            success: function (data) {
+                if (data.toLowerCase().indexOf('success') > -1) {
+                    $("#ItemName").val("");
+                    $("#itemCode").val("");
+                    $("#productMultiselect").data("kendoMultiSelect").value("");
+                    $("#grid").data("kendoGrid").dataSource.read();
+                    displayPopupNotification(data, "success");
+                }
+                else {
+                    displayPopupNotification(data, "warning");
+                }
+               
+
+            },
+            error: function (e) {
+                displayPopupNotification(e.statusText, "error");
+            }
+        });
+    });
+
+</script>
+<script>
+    $("#showAdd").click(function () {
+        $("#showItemForm").toggle();
+        $("#showAdd").hide();
+    });
+    $("#cancelTarget").click(function () {
+        $('#saveDealerCreate').attr('disabled', true);
+        $("#showItemForm").hide();
+        $("#ItemName").val("");
+        $("#itemCode").val("");
+        $("#productMultiselect").data("kendoMultiSelect").value("");
+        $("#showAdd").show();
+
+    });
+
+    function myFunction(e) {
+        debugger;
+        oldItemCode = e;
+        var data = $("#grid").data("kendoGrid").dataSource._data;
+        for (var i = 0; i < data.length; i++) {
+            if (data[i].ITEM_GROUP_CODE == oldItemCode) {
+                var itemGroupCode = data[i].ITEM_GROUP_CODE;
+                var itemGroupName = data[i].ITEM_GROUP_NAME;
+                var groupType = data[i].GROUP_TYPE;
+                $("#showItemForm").show();
+                var ITEM_GROUP_CODE = itemGroupCode
+                $("#ItemName").val(itemGroupName);
+                $("#itemCode").val(itemGroupCode);
+                $("#GroupType").data("kendoDropDownList").value(groupType);
+                $('#saveDealerCreate').attr('disabled', false);
+
+                $.ajax({
+                    type: 'POST',
+                    dataType: "json",
+                    url: "/api/Purchase/GetItemCode?ITEM_GROUP_CODE=" + ITEM_GROUP_CODE,
+                    success: function (data) {
+                        var myarr = [];
+                        for (var i = 0; i < data.length; i++) {
+                            myarr.push(data[i].ITEM_CODE)
+                            $("#productMultiselect").data("kendoMultiSelect").value(myarr)
+                        }
+                    }
+                });
+            }
+            else {
+                continue;
+            }
+        }
+    }
+
+    function myDeleteFunction(e) {
+        debugger;
+        bootbox.confirm({
+            message: "Are you sure ?",
+            buttons: {
+                confirm: {
+                    label: 'Yes',
+                    className: 'btn-success'
+                },
+                cancel: {
+                    label: 'No',
+                    className: 'btn-danger'
+                }
+            },
+            callback: function (result) {
+                if (result == true) {
+                    ITEM_GROUP_CODE = e;
+                    var data = $("#grid").data("kendoGrid").dataSource._data;
+                    for (var i = 0; i < data.length; i++) {
+                        if (data[i].ITEM_GROUP_CODE == ITEM_GROUP_CODE) {
+                            $.ajax({
+                                type: 'POST',
+                                url: "/api/Purchase/DeleteItemCode?ITEM_GROUP_CODE=" + ITEM_GROUP_CODE,
+                                success: function (data) {
+                                    $("#grid").data("kendoGrid").dataSource.read();
+                                    displayPopupNotification(data, "success");
+                                }
+                            });
+                        }
+                    }
+
+                }
+                else {
+
+                }
+
+
+
+            }
+        });
+
+    }
+
+</script>
+
+<script>
+    $(document).ready(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+
+
+    //$(function () {
+    //    $('.k-list.k-reset').slimScroll({
+    //        height: '250px'
+    //    });
+    //});
+</script>
+

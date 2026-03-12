@@ -1,0 +1,441 @@
+﻿@using NeoErp.Core.Models;
+@using NeoErp.Sales.Modules.Services.Models
+@{
+    var actionPageId = "TreewiseProductSalesPlanReport";
+    var chartTitle = "Treewise Product Sales Plan Report";
+
+}
+<style>
+    #treewiseProductSalesPlanReport {
+        font-size: 11px;
+    }
+
+    .selectbox {
+        cursor: pointer;
+        color: #337ab7;
+    }
+
+    div#ndp-nepali-box {
+        z-index: 10076 !important;
+    }
+
+    .ui-datepicker {
+        z-index: 10076 !important;
+    }
+
+
+    .input-medium {
+        width: 90% !important;
+    }
+</style>
+
+
+<div class="portlet portlet-sortable light bordered" id="@actionPageId">
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="icon-bar-chart font-green-haze"></i>
+            <span class="caption-subject bold uppercase font-green-haze custom-modal">@chartTitle</span>
+        </div>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+                <div class="actions">
+                    <div class="btn-group">
+                        @*@Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)*@
+                        @*Added by Chandra*@
+                        <span id="spandate1" class="thin uppercase hidden-xs color-view bg-default bg-font-default bold uppercase sr-only" style="display:none"></span>
+                        <a data-toggle="modal" data-target="#form_modal1">
+                            <div class="pull-right tooltips-date btn btn-circle btn-icon-only btn-default datepicker-gap date-tooltip1" data-placement="left" data-html="true" data-container="body" data-toggle="tooltip">
+                                <i class="icon-calendar"></i>
+                            </div>
+                        </a>
+                        <div id="form_modal1" class="modal fade" role="dialog" aria-hidden="true">
+                            <div class="modal-dialog modal-custom">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                                        <h4 class="modal-title"><span class="fa fa-calendar"></span> Filter Date & Time</h4>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="form-horizontal">
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <div class="form-group">
+                                                        <label class="control-label col-md-3">Date Filter</label>
+                                                        <div class="col-md-9">
+                                                            <select class="dateFilterSelect form-control" id="ddlDateFilterVoucher1" name="DateStep">
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label class="control-label col-md-3">BS Date Range</label>
+                                                        <div class="col-md-9">
+                                                            <div class="input-group  date-picker input-daterange" data-date="10/11/2012" data-date-format="mm/dd/yyyy">
+                                                                <input type="text" id="fromInputDateVoucher1" class="frmDataInput form-control" placeholder="From Date" />
+
+                                                                <span class="input-group-addon">
+                                                                    to
+                                                                </span>
+                                                                <input type="text" class="frmDataInput form-control" id="toInputDateVoucher1" placeholder="To Date">
+                                                            </div>
+                                                            <!-- /input-group -->
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label class="control-label col-md-3">AD Date Range</label>
+                                                        <div class="col-md-9">
+                                                            <div class="input-group  date-picker input-daterange" data-date="10/11/2012" data-date-format="mm/dd/yyyy">
+                                                                <input type="text" name="FromDateVoucher1" id="FromDateVoucher1" class="form-control frmDataInput" readonly="readonly" placeholder="From Date" />
+
+                                                                <span class="input-group-addon">
+                                                                    to
+                                                                </span>
+                                                                <input type="text" name="ToDateVoucher1" class="form-control frmDataInput" readonly="readonly" id="ToDateVoucher1" placeholder="To Date">
+                                                            </div>
+                                                            <!-- /input-group -->
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                        <button type="button" class="btn btn-green applydp1" id="applydp1">Apply</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @*End added by Chandra*@
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+    <div class="portlet-body">
+        <script type="text/x-kendo-template" id="toolbar-template">
+            <div class="k-header k-grid-toolbar pull-right">
+
+                <a class="k-button k-button-icontext k-grid-excel" href="javascript:">
+                    <i class="fa fa-file-excel-o"></i>
+                </a>
+            </div>
+        </script>
+        <div class="k-content wide">
+            <div id="treewiseProductSalesPlanReport"></div>
+            <div class="overlay" style="display:none"><div>No data available</div></div>
+            <div class="AmountFigureType"></div>
+            <div class="DisplayFilterContent"><a href="javascript:;" data-toggle="tooltip" title=""></a></div>
+        </div>
+    </div>
+</div>
+
+<script src="@Scripts.Url("~/JS/DateFilter.js?V9")" type="text/javascript"></script>
+
+<script>
+    var pageId_MonthlySalesChart = '@actionPageId';
+
+
+</script>
+<script>
+
+    $(document).ready(function () {
+        var service = window.location.protocol + "//" + window.location.host + "/api/SalesDashboard/TreewiseProductSalesPlanReport";
+       
+        //DateFilter1.init(function () {
+        //    BindGrid1(service);
+        //});
+        $('[data-toggle="tooltip"]').tooltip();
+        Init(service);
+        $("#applydp1").on("click", function (evt) {
+            evt.preventDefault();
+            KendoGridRefresh1(service);
+        })
+    });
+    var totalQuantity;
+    var totalTotalSales;
+    function BindGrid1(service) {
+
+        var fromADdate = $("#FromDateVoucher1").val()
+        var toADdate = $("#ToDateVoucher1").val();
+        var fromBSdate = $("#fromInputDateVoucher1").val();
+        var toBSdate = $("#toInputDateVoucher1").val();
+        var branches = ReportFilter.getBranchs();
+        $("#treewiseProductSalesPlanReport").kendoTreeList({
+
+            dataSource: {
+                transport: {
+                    read: {
+                        url: service,
+                        dataType: "json",
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8",
+                    },
+                    parameterMap: function (options, type) {
+                        var data =
+                        {
+                            ReportFilters: {
+                                FromDate: fromADdate,
+                                ToDate: toADdate
+                            }
+                        };
+                        var paramMap = JSON.stringify($.extend(options, data));
+                        //var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+                    }
+                },
+                schema: {
+                    model: {
+                        id: "MASTER_CUSTOMER_CODE",
+                        parentId: "PRE_CUSTOMER_CODE",
+                        fields: {
+                            MASTER_CUSTOMER_CODE: { field: "MASTER_CUSTOMER_CODE", type: "number" },
+                            PRE_CUSTOMER_CODE: { field: "PRE_CUSTOMER_CODE", type: "number", defaultValue: "0" },
+                            TOTAL_SALES: { field: "TOTAL_SALES", type: "number" },
+                            QUANTITY: { field: "QUANTITY", type: "number" },
+
+                        },
+
+                        //expanded: true,
+                    }
+                },
+                aggregate: [
+                         { field: "QUANTITY", aggregate: "sum" },
+                         { field: "TOTAL_SALES", aggregate: "sum" }
+                ]
+            },
+
+            filterable: true,
+            sortable: true,
+            height: 400,
+            columnMenu: {
+                columns: true
+            },
+            columnMenuInit: function (e) {
+                wordwrapmenu(e);
+            },
+            scrollable: {
+                virtual: true
+            },
+            dataBound: function (o) {
+                
+                var grid = o.sender;
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.length + 1;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    displayPopupNotification("No Data Found Given Date Filter.", "info");
+                }
+                else if (o.sender.dataSource._data.length == 1) {
+                    
+                    if (o.sender.dataSource._data[0].TOTAL_SALES == 0) {
+                        var colCount = grid.columns.length;
+                        $(o.sender.wrapper)
+                            .find('tbody')
+                            .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                        displayPopupNotification("No Data Found Given Date Filter.", "info");
+                    }
+                }
+
+                $('div').removeClass('.k-header k-grid-toolbar');
+
+            },
+            resizable: true,
+            selectable: true,
+            columns: [
+                { field: "CUSTOMER_EDESC", title: "Product Name", width: 300 },
+                { field: "QUANTITY", title: "Total Quantity", attributes: { style: "text-align: right;" }, width: 95, format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter") + "}" },
+                { field: "TOTAL_SALES", title: "Total Amount", attributes: { style: "text-align: right;" }, width: 95, format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter") + "}" }
+            ]
+        });
+
+
+    }
+
+
+    function KendoGridRefresh1(readUrl) {
+
+        $('#treewiseProductSalesPlanReport').val('');
+        $('#treewiseProductSalesPlanReport').html('');
+        var treeList = $("#treewiseProductSalesPlanReport").data("kendoTreeList");
+        treeList.destroy();
+        BindGrid1(readUrl);
+    }
+
+    function Init(callback) {
+        debugger
+        loadDateFilter1("#ddlDateFilterVoucher1", callback);
+
+        $("#ddlDateFilterVoucher1").change(function () {
+            if ($('option:selected', this).val() != "Custom") {
+                $("#FromDateVoucher1").val(moment($('option:selected', this).attr("data-start-date")).format("YYYY-MMM-DD"));
+                $("#ToDateVoucher1").val(moment($('option:selected', this).attr("data-end-date")).format("YYYY-MMM-DD"));
+            }
+            $('#fromInputDateVoucher1').val(AD2BS(moment($("#FromDateVoucher1").val()).format("YYYY-MM-DD")));
+            $('#toInputDateVoucher1').val(AD2BS(moment($("#ToDateVoucher1").val()).format("YYYY-MM-DD")));
+        });
+        $('#fromInputDateVoucher1').nepaliDatePicker({
+            ndpEnglishInput: 'FromDateVoucher1',
+            onChange: function () {
+                $('#ddlDateFilterVoucher1').val("Custom");
+                $("#FromDateVoucher1").val(moment(BS2AD($("#fromInputDateVoucher1").val())).format("YYYY-MMM-DD"))
+            }
+        });
+        $('#toInputDateVoucher1').nepaliDatePicker({
+            ndpEnglishInput: 'ToDateVoucher1',
+            changeMonth: true,
+            changeYear: true,
+            showButtonPanel: true,
+            onChange: function () {
+                $('#ddlDateFilterVoucher1').val("Custom");
+                $("#ToDateVoucher1").val(moment(BS2AD($("#toInputDateVoucher1").val())).format("YYYY-MMM-DD"));
+            }
+        });
+        var current_date = getNepaliDate();
+        $('#fromInputDateVoucher1').val(current_date);
+        $('#toInputDateVoucher1').val(current_date);
+        $("#FromDateVoucher1").datepicker({
+            dateFormat: 'yy-M-d', changeMonth: true,
+            changeYear: true,
+            showButtonPanel: true
+        });
+        $("#ToDateVoucher1").datepicker({
+            dateFormat: 'yy-M-d', changeMonth: true,
+            changeYear: true,
+            showButtonPanel: true
+        });
+        //change
+        $('#FromDateVoucher1').val(moment(BS2AD($("#fromInputDateVoucher1").val())).format("YYYY-MMM-DD"));
+        $('#ToDateVoucher1').val(moment(BS2AD($("#toInputDateVoucher1").val())).format("YYYY-MMM-DD"));
+        $('#FromDateVoucher1').change(function () {
+            $('#ddlDateFilterVoucher1').val("Custom");
+            $('#fromInputDateVoucher1').val(AD2BS(moment($('#FromDateVoucher1').val()).format("YYYY-MM-DD")));
+        });
+        $('#ToDateVoucher1').change(function () {
+            $('#ddlDateFilterVoucher1').val("Custom");
+            $('#toInputDateVoucher1').val(AD2BS(moment($('#ToDateVoucher1').val()).format("YYYY-MM-DD")));
+        });
+        var formNepali = $('#fromInputDateVoucher1').val();
+        var toNepali = $('#toInputDateVoucher1').val();
+        var FormEnglish = $('#FromDateVoucher1').val();
+        var toEnglish = $('#ToDateVoucher1').val();
+        var stringFormat = formNepali + "(" + FormEnglish + ")  To " + toNepali + "(" + toEnglish + ")"
+        $("#spandate1").html(stringFormat);
+        $(".date-tooltip1").attr("data-original-title", $("#spandate1").html());
+        //Date-filter-range display on top
+        if ($("#fromInputDateVoucher1").val() != undefined && $("#fromInputDateVoucher1").val() != "") {
+            var value = $("#fromInputDateVoucher1").val() + " To " + $("#toInputDateVoucher1").val();
+            if (value != " To ") {
+                $("#date-filter-value").html("<span class='date-filter-icon'>" + value + "</span>");
+            }
+            else {
+                $("#date-filter-value").html();
+            }
+
+        }
+        else {
+            $("#date-filter-value").html();
+        }
+    }
+
+    function loadDateFilter1(selector, callback) {
+        $.support.cors = true;
+        var current_date = getNepaliDate();
+        var date = current_date.split("-");
+        var currentFiscalYear = (parseInt(date[0]) - 1).toString() + "/" + date[0].toString().substring(2, date[0].toString().length);
+        var readUrl = window.location.protocol + "//" + window.location.host + "/api/Common/GetDateFilters?fiscalYear=" + currentFiscalYear;
+
+        $.ajax({
+            type: "GET",
+            url: readUrl,
+            beforeSend: function () {
+                $(selector).html("<option> loading ... </option>");
+            },
+            success: function (data) {
+                $(selector).empty();
+                $.each(data, function (i) {
+                    $(selector).append($("<option></option>")
+                        .attr("value", data[i].RangeName).attr("data-start-date", data[i].StartDateString).attr("data-end-date", data[i].EndDateString)
+                        .text(data[i].RangeName));
+                });
+                //this year for testing purpose
+                var ddlselector = $(selector + " option[value='This Month']");
+                ddlselector.prop('selected', true);
+                //will get the selected date in this area
+                //$('#ddlDateFilterVoucher').trigger('change');
+                $('#FromDateVoucher1').val(moment(ddlselector.attr("data-start-date")).format("YYYY-MMM-DD"));
+                $('#ToDateVoucher1').val(moment(ddlselector.attr("data-end-date")).format("YYYY-MMM-DD"));
+                $('#fromInputDateVoucher1').val(AD2BS(moment($("#FromDateVoucher1").val()).format("YYYY-MM-DD")));
+                $('#toInputDateVoucher1').val(AD2BS(moment($("#ToDateVoucher1").val()).format("YYYY-MM-DD")));
+
+                //selected date reflected on the top righ panel 
+                var formNepali = $('#fromInputDateVoucher1').val();
+                var toNepali = $('#toInputDateVoucher1').val();
+                var FormEnglish = $('#FromDateVoucher1').val();
+                var toEnglish = $('#ToDateVoucher1').val();
+                var stringFormat = formNepali + "(" + FormEnglish + ")  To " + toNepali + "(" + toEnglish + ")"
+                $("#spandate1").html(stringFormat);
+
+                $(".date-tooltip1").attr("data-original-title", $("#spandate1").html());
+                //Date-filter-range display on top
+                if ($("#fromInputDateVoucher1").val() != undefined && $("#fromInputDateVoucher1").val() != "") {
+                    var value = $("#fromInputDateVoucher1").val() + " To " + $("#toInputDateVoucher1").val();
+                    if (value != " To ") {
+                        $("#date-filter-value").html("<span class='date-filter-icon'>" + value + "</span>");
+                    }
+                    else {
+                        $("#date-filter-value").html();
+                    }
+
+                }
+                else {
+                    $("#date-filter-value").html();
+                }
+                $("#applydp1").on("click", function () {
+                    var formNepali = $('#fromInputDateVoucher1').val();
+                    var toNepali = $('#toInputDateVoucher1').val();
+                    var FormEnglish = $('#FromDateVoucher1').val();
+                    var toEnglish = $('#ToDateVoucher1').val();
+                    var stringFormat = formNepali + "(" + FormEnglish + ")  To " + toNepali + "(" + toEnglish + ")"
+                    $("#spandate1").html(stringFormat);
+                    $(".date-tooltip1").attr("data-original-title", $("#spandate1").html());
+                    //$('#form_modal2').modal('toggle');
+                    $('#form_modal1').modal('hide');
+                    //Date-filter-range display on top
+                    if ($("#fromInputDateVoucher1").val() != undefined && $("#fromInputDateVoucher1").val() != "") {
+                        var value = $("#fromInputDateVoucher1").val() + " To " + $("#toInputDateVoucher1").val();
+                        if (value != " To ") {
+                            $("#date-filter-value").html("<span class='date-filter-icon'>" + value + "</span>");
+                        }
+                        else {
+                            $("#date-filter-value").html();
+                        }
+
+                    }
+                    else {
+                        $("#date-filter-value").html();
+                    }
+                    // $('#form_modal2').modal('disabled', 'disabled');
+                });
+                if (callback != undefined) {
+                    //callback();
+                    BindGrid1(callback)
+                }
+
+            },
+            error: function (xhr, status, error) {
+                $(selector).html("<option> Error </option>");
+            }
+        });
+    }
+
+    
+</script>
+
+

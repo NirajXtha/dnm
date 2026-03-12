@@ -1,0 +1,144 @@
+﻿
+<style>
+    .btnadd {
+        margin-top: 2px;
+        float: right;
+        margin-right: 5px !important;
+    }
+
+    div.k-treeview {
+        overflow: unset !important;
+    }
+
+    .addcolor {
+        color: #ffffff;
+    }
+</style>
+<div class="portlet box green-box main">
+    <item></item>
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="icon-pin"></i>
+            <span class="caption-subject bold uppercase">Terms And Condition</span>
+        </div>
+        <div class="actions">
+            <a class="btn dark-green btn-sm" id="adddocumentformdata" @*ng-disabled="newrootinsertFlag!= 'Y'"*@ ng-click="addNewTNC(event)" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Processing..." href="javascript:;">
+                <i class="fa fa-plus addcolor"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="portlet-body">
+        <div class="row">
+            <div class="col-md-offset-0 col-md-12">
+                <div class="topmaingroupsearch">
+                    <input class="k-textbox txtMainGroupSearchString"
+                           type="text"
+                           ng-model="txtMainGroupSearchString"
+                           ng-change="filterTreeView()"
+                           placeholder="Search Terms And Condition Tree..."
+                           style="width:100%" />
+                </div>
+            </div>
+        </div>
+
+
+        <div id="tnctree" class="disableLeftClickOnTree" kendo-tree-view="tree"
+             k-data-source="treeData"
+             k-options="tncoptions"
+             k-data-bound="itemonDataBound">
+            <span k-template ng-click="BindGrid(dataItem.masterTNCCode)">
+                {{dataItem.TNC_EDESC}}
+            </span>
+        </div>
+
+        <ul kendo-context-menu
+            k-filter="'.hasTreeCustomMenu'"
+            k-on-open="menuOpen = menuOpen + 1"
+            k-on-close="menuOpen = menuOpen - 1"
+            k-on-select="onContextSelect(kendoEvent)">
+            <li>Add</li>
+            <li>Update</li>
+            <li>Delete</li>
+        </ul>
+        <ul kendo-context-menu k-filter="'.disableLeftClickOnTree'"></ul>
+
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        setTimeout(function () {
+            $('.treeviewspliter .k-widget.k-treeview').slimScroll({
+                height: '250px'
+            });
+        }, 10);
+    })
+
+
+    $(document).ready(function () {
+        $("#acctxtProductSearchString").on("keyup", function () {
+            var searchTerm = $(this).val().trim().toLowerCase();
+            filterTree(searchTerm);
+        });
+        function filterTree(searchTerm) {
+            var treeView = $("#tnctree").data("kendoTreeView");
+            if (!treeView || !treeView.dataSource) {
+                console.error("TreeView or dataSource is not initialized.");
+                return;
+            }
+            var dataSource = treeView.dataSource;
+            if (!searchTerm) {
+                dataSource.filter({});
+                setTimeout(function () {
+                    treeView.expand(".k-item");
+                }, 100);
+                return;
+            }
+            dataSource.filter({
+                field: "ITEM_EDESC",
+                operator: "contains",
+                value: searchTerm
+            });
+            setTimeout(function () {
+                expandFilteredNodes(treeView);
+            }, 100);
+        }
+        function expandFilteredNodes(treeView) {
+            var dataSource = treeView.dataSource;
+            var view = dataSource.view();
+            function expandParents(node, treeView) {
+                var parent = treeView.parent(node);
+                while (parent.length > 0) {
+                    treeView.expand(parent);
+                    parent = treeView.parent(parent);
+                }
+            }
+            function processNode(item, treeView) {
+                var node = treeView.findByUid(item.uid);
+                if (!node) return false;
+                var matches = item.ITEM_EDESC &&
+                    item.ITEM_EDESC.toLowerCase().includes($("#acctxtProductSearchString").val().toLowerCase());
+                var hasMatchingChildren = false;
+                if (item.hasChildren) {
+                    var children = item.children.view();
+                    children.forEach(function (child) {
+                        if (processNode(child, treeView)) {
+                            hasMatchingChildren = true;
+                        }
+                    });
+                }
+                if (matches || hasMatchingChildren) {
+                    treeView.expand(node);
+                    expandParents(node, treeView);
+                    return true;
+                }
+                return false;
+            }
+            view.forEach(function (item) {
+                processNode(item, treeView);
+            });
+        }
+    });
+
+
+</script>

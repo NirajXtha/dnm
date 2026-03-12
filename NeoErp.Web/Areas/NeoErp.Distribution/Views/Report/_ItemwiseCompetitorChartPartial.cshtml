@@ -1,0 +1,189 @@
+﻿@model NeoErp.Distribution.Service.Model.CustomerModel
+<style>
+    .chart {
+        height: 400px;
+    }
+</style>
+
+<div id="itemSelectModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                <h4 class="modal-title">
+                    Select Item
+                </h4>
+            </div>
+            <div class="modal-body">
+                <div class="row" style="margin-bottom:15px;">
+                    <div class="col-md-4 col-sm-4">
+                        <label for="sourceSelect">Select Item</label>
+                    </div>
+                    <div class="col-md-6 col-md-6">
+                        <select id="itemSelect" name="itemSelect" style="width:100%"></select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" id="apply" class="btn btn-green">Apply</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="portlet portlet-sortable light bordered" id="@Model.Code">
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="icon-bar-chart font-green-haze"></i>
+            <span class="caption-subject bold uppercase font-green-haze custom-modal">Competitor Chart (@Model.Name)</span>
+        </div>
+        <div class="tools">
+            <a href="javascript:;" class="collapse"></a>
+            <div class="btn-group">
+                <a class="btn dropdown-toggle download-btn" title="Download" data-toggle="dropdown" href="#">
+                    <i class="icon-arrow-down Elvcustom"></i>
+                </a>
+                <ul class="dropdown-menu custom Elvslidetoggle">
+                    <div class="btn-group-custom">
+                        @*<h4>Advanced Export options</h4>*@
+                        <button type="button" data-id="Category_Chart" class="export-pdf btn default red-stripe"><i class="fa fa-file-pdf-o"></i>PDF</button>
+                        <button type="button" data-id="Category_Chart" class="export-img btn default blue-stripe"><i class="fa fa-image-o"></i>Image</button>
+                        <button type="button" data-id="Category_Chart" class="export-svg btn default green-stripe">SVG</button>
+                    </div>
+                </ul>
+            </div>
+            @*<a href="#Model_@actionPageId" data-toggle="modal" class="config"></a>*@
+            <a href="javascript:;" class="reload" id="compItem-reload_@Model.Code"></a>
+            <a href="javascript:;" class="fullscreen"></a>
+            <a href="javascript:;" class="remove"></a>
+            @*<a data-toggle="modal" data-target="#itemSelectModal">
+                <i class="fa fa-cog"></i>
+            </a>*@
+        </div>
+    </div>
+    <div class="portlet-body">
+        <div class="k-content wide">
+            <div id="ItemWiseComp_chart_@Model.Code" class="chart"></div>
+            <div class="overlay"><div>No data Found</div></div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    function createChart(url) {
+        $("#ItemWiseComp_chart_@Model.Code").kendoChart({
+            dataSource: {
+                transport: {
+                    read: {
+                        url: url,
+                        dataType: "json",
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8"
+                    },
+                    parameterMap: function (options, type) {
+                        var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+                    }
+                },
+                sort: {
+                    field: "QUANTITY",
+                    dir: "asc"
+                }
+            },
+            title: {
+                position: "bottom",
+                text: "@Model.Name"
+            },
+            legend: {
+                position: "bottom"
+            },
+            seriesDefaults: {
+                type: "column",
+                labels: {
+                    visible: false,
+                    background: "transparent",
+                    template: "#= category #: \n #= value#%"
+                }
+            },
+            series: [{
+                field: "PERCENT",
+                categoryField: "ITEM_EDESC",
+            }],
+            valueAxis: {
+                max: 100,
+                line: {
+                    visible: false
+                },
+                minorGridLines: {
+                    visible: true
+                },
+                labels: {
+                    rotation: "auto"
+                }
+            },
+            categoryAxis: {
+                labels: {
+                    rotation: -45
+                },
+                majorGridLines: {
+                    visible: false
+                }
+            },
+            tooltip: {
+                visible: true,
+                format: "N0",
+                template: "#= category # - #=value#% (#=dataItem.QUANTITY#/#=dataItem.TOTAL#)"
+            },
+            dataBound: function (e) {
+                var data = e.sender.dataSource.view();
+                $("#ItemWiseComp_chart_@Model.Code").next(".overlay").toggle(data.length <= 0);
+            },
+        });
+    }
+
+    $(document).ready(function () {
+        var url = window.location.protocol + "//" + window.location.host + "/api/Report/GetCompetitorReport?Item_code=@Model.Code";
+        createChart(url);
+
+        //$("#itemSelect").kendoMultiSelect({
+        //    dataTextField: "ITEM_EDESC",
+        //    dataValueField: "ITEM_CODE",
+        //    height: 600,
+        //    valuePrimitive: true,
+        //    maxSelectedItems: 1,
+        //    headerTemplate: '<div class="col-md-offset-3"><strong>Select item...</strong></div>',
+        //    placeholder: "Select item...",
+        //    autoClose: false,
+        //    dataBound: function (e) {
+        //        $(".k-list.k-reset").slimScroll({ 'height': '179px', 'scroll': 'scroll' });
+        //    },
+        //    dataSource: {
+        //        transport: {
+        //            read: {
+        //                url: window.location.protocol + "//" + window.location.host + "/api/DistributionPurchase/GetAllItems?type=D",
+        //                dataType: "json"
+        //            }
+        //        }
+        //    },
+        //});
+        //$("#apply").on('click', function () {
+        //    var selectedItems = $("#itemSelect").data("kendoMultiSelect").value();
+        //    if (selectedItems.length > 0) {
+        //        $("#ItemWiseComp_chart").html("");
+        //        $("#ItemWiseComp_chart").next(".overlay").html("<div>No data found<div>");
+        //        createChart(url + selectedItems[0]);
+        //        $('#itemSelectModal').modal('toggle');
+        //    }
+        //});
+
+        $("#compItem-reload_@Model.Code").on('click', function () {
+            $("#ItemWiseComp_chart_@Model.Code").data("kendoChart").dataSource.read();
+            $("#ItemWiseComp_chart_@Model.Code").data("kendoChart").refresh();
+        });
+    });
+</script>
+<script src="@Scripts.Url("~/JS/reportFilter.js")"></script>

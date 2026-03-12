@@ -1,0 +1,500 @@
+﻿@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+<style>
+   
+
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+
+    }
+    /*#grid thead{
+         font-size:11px;
+    }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+</style>
+<div class="page-content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+            @*<li>
+                <i class="fa fa-home"></i>
+                <a href="/sales/SalesHome/Dashboard">Home</a>
+                <i class="fa fa-angle-right"></i>
+            </li>*@
+            @*<li>
+                <a href="#/journal/DayJournbook">DayJournbook</a>
+                <i class="fa fa-angle-right"></i>
+            </li>*@
+            @*<li>
+                <a href="sales/saleshome/dashboard/Dashboard">Organiser</a>
+                <i class="fa fa-angle-right"></i>
+            </li>*@
+        </ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+
+                <div class="actions">
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                    </div>
+                    @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+
+                    @Html.Partial("~/Views/Shared/Controls/_reportFilterSettings.cshtml", new ReportFilterSettingsModel(){
+                          ShowAmountFigureFilter = true, ShowQuantityFigureFilter = true,
+                           ShowAmountFilter = true,ShowAmountRoundUpFilter = true,ShowQuantityRoundUpFilter=true,ShowQuantityFilter=true
+                       })
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#" data-toggle="tooltip" data-html="true" title="Refresh" data-placement="left">
+                        <i class="icon-control-play"></i>
+                    </a>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "DayJournbook")
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div id="grid" class="table-grid"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+@Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+<script src="@Scripts.Url("~/JS/DateFilter.js?V5")" type="text/javascript"></script>
+<script src="@Scripts.Url("~/JS/dynamicReport.js?V2")" type="text/javascript"></script>
+<script type="text/javascript">
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+
+</script>
+<script>
+
+    var reportConfig = GetReportSetting("DayJournbook");
+    function getDateFormat(date) {
+        return kendo.format("{0:" + reportConfig.dateFormat + "}", date);
+    }
+
+    $(".applydp").on("click", function (evt) {
+        evt.preventDefault();
+
+        $("#RunQuery").trigger("click");
+        $(this).closest("#applydp").modal('hide');
+    });
+
+    $(document).ready(function () {
+
+        DateFilter.init(function () {
+                  consolidate.init(function () {
+                    BindGrid(urltest);
+                });
+            });
+
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/JournalVoucher/GetDaySubledgerVoucher"
+
+        $("#RunQuery").click(function (evt) {
+            
+            evt.preventDefault();
+            urltest = window.location.protocol + "//" + window.location.host + "/api/JournalVoucher/GetDaySubledgerVoucher";
+            KendoGridRefresh(urltest);
+        });
+
+       //BindGrid(urltest);
+    });
+
+    function BindGrid(readurl) {
+        var companyName = ('@workingContent.CurrentUserinformation.company_name');
+        var fromADdate = $("#FromDateVoucher").val()
+        var toADdate = $("#ToDateVoucher").val();
+        var fromBSdate = $("#fromInputDateVoucher").val();
+        var toBSdate = $("#toInputDateVoucher").val();
+        var branches = ReportFilter.getBranchs();
+        reportConfig = GetReportSetting("DayJournbook");
+        var dataSource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: {
+                    url: readurl, // <-- Get data from here.
+                    dataType: "json", // <-- The default was "jsonp".
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8"
+                },
+                parameterMap: function (options, type) {
+                    var paramMap = JSON.stringify($.extend(options,ReportFilter.filterAdditionalData()));
+                    //  paramMap.formDate = $("#FromDateVoucher").val();
+                    delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                    delete paramMap.$format; // <-- remove format parameter.
+                    return paramMap;
+                }
+            },
+
+            error: function (e) {
+                displayPopupNotification("Sorry error occured while processing data", "error");
+            },
+            serverFiltering: false,
+            serverAggregates: true,
+            schema: {
+                data: "gridJournalVoucherReport", // records are returned in the "data" field of the response
+                total: "total", // total number of records is in the "total" field of the response
+                aggregates: "AggregationResult",
+                model: {
+                    fields: {
+                        VOUCHER_DATE: { type: "date" },
+                        ACC_CODE: { type: "string" },
+                        ACC_EDESC: { type: "string" },
+                        FORM_CODE: { type: "string" },
+                        VOUCHER_NO: { type: "string" },
+                        MANUAL_NO: { type: "string" },
+                        IN_MU_CODE: { type: "string" },
+                        OUT_MU_CODE: { type: "string" },
+                        DR_AMOUNT: { type: "number" },
+                        CR_AMOUNT: { type: "number" },
+                        SERIAL_NO: { type: "number" },
+                        PARTICULARS: { type: "string" },
+                        REMARKS: { type: "string" },
+                        Quantity: { type: "number" },
+                        MITI: { type: "string" },
+                        IN_QUANTITY: { type: "number" },
+                        OUT_QUANTITY: { type: "number" },
+                        FORM_EDESC: {type:"string"}
+                    }
+                }
+            },
+            //],
+            group:{field:"FORM_EDESC"},
+            serverPaging: false,
+            serverGrouping: false,
+            //serverSorting: true,
+            pageSize: reportConfig.defaultPageSize,
+        });
+
+
+        var grid = $("#grid").kendoGrid({
+            dataSource: dataSource,
+            toolbar: kendo.template($("#toolbar-template").html()),
+            excel:{
+                allPages: true,
+                fileName:" journal DayJournbook"
+            },
+
+            excelExport:function(e){
+                var rows = e.workbook.sheets[0].rows;
+                var workbook = e.workbook;
+                for (var len = 1; len < workbook.sheets[0].columns.length; len++) {
+                    workbook.sheets[0].columns[len].autoWidth = true;
+                }
+                rows.unshift({
+                    height: 20,
+                    autoWidth: true,
+                    cells: [{
+                        value: "Journal DayJournbook".split('').join(' '),
+                        //background: "#FFFFFF",
+                        //textAlign: "center",
+                        colSpan: 10,
+                        fontSize: 12,
+                    }]
+                });
+                rows.unshift({
+                    height: 20,
+                    autoWidth: true,
+                    cells: [{
+                        value: "From :- " + fromADdate + "(" + fromBSdate + ")" + "\t To :- " + toADdate + "(" + toBSdate + ")",
+                        //background: "#FFFFFF",
+                        //textAlign: "center",
+                        colSpan: 10,
+                        fontSize: 12,
+                    }]
+                });
+                for (var companyCount = 0; companyCount < branches.length; companyCount++) {
+                    rows.unshift({
+                        height: 20,
+                        autoWidth: true,
+                        cells: [{
+                            value: branches[companyCount].Company + " :- " + branches[companyCount].Branches.join(','),
+                            //background: "#FFFFFF",
+                            //textAlign: "center",
+                            colSpan: 10,
+                            fontSize: 12,
+
+                        }]
+                    });
+                }
+                rows.unshift({
+                    height: 20,
+                    autoWidth: true,
+                    cells: [{
+                        value: companyName.split('').join(' '),
+                        //background: "#FFFFFF",
+                        //textAlign: "center",
+                        colSpan: 10,
+                        fontSize: 12,
+                    }]
+                });
+            },
+
+            pdf: {
+                allPages: true,
+                avoidLinks: true,
+                pageSize: "auto",
+                margin: {
+                    top: "2m",
+                    right: "1m",
+                    left: "1m",
+                    buttom:"1m",
+                },
+                landscape: true,
+                repeatHeaders: true,
+                scale:0.8,
+
+            },
+            group:{ field: "FORM_EDESC" },
+            height: window.innerHeight - 50,
+            sortable: true,
+            reorderable: true,          
+            resizable: true,
+            filterable: {
+                extra: false,
+                operators: {
+                    number: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "is greater than or equal to	",
+                        gt: "is greater than",
+                        lte: "is less than or equal",
+                        lt: "is less than",
+                    },
+                    string: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        startswith: "Starts with	",
+                        contains: "Contains",
+                        doesnotcontain: "Does not contain",
+                        endswith: "Ends with",
+                    },
+                    date: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "Is after or equal to",
+                        gt: "Is after",
+                        lte: "Is before or equal to",
+                        lt: "Is before",
+                    }
+                }
+            },
+            columnMenu: true,
+            //groupable: true,
+            serverGrouping: false,
+            columnMenuInit: function (e) {
+                    wordwrapmenu(e);
+                    checkboxItem = $(e.container).find('input[type="checkbox"]');
+                },
+                columnShow: function (e) {
+                    if($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                        SaveReportSetting('DayJournbook', 'grid');
+                },
+                columnHide: function (e) {
+                    if($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                        SaveReportSetting('DayJournbook', 'grid');
+                },
+                pageable: {
+                    refresh: true,
+                    pageSizes: reportConfig.itemPerPage,
+                    buttonCount: 5
+                },
+            //  autoBind: true,
+            scrollable: {
+                virtual: true
+            },
+            dataBound: function (o) {
+                mergeGridRows("grid", "VOUCHER_NO", ["MITI", "VOUCHER_DATE", "FORM_EDESC"]);
+                var grid = o.sender;
+                if (grid.dataSource.total() == 0) {
+                     var colCount = grid.columns.length;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    displayPopupNotification("No Data Found Given Date Filter.", "info");
+                }
+                else {
+                    var g = $("#grid").data("kendoGrid");
+                    for (var i = 0; i < g.columns.length; i++) {
+                        g.showColumn(i);
+                    }
+                    $("div.k-group-indicator").each(function (i, v) {
+                        g.hideColumn($(v).data("field"));
+                    });
+                }
+                 UpdateReportUsingSetting("DayJournbook", "grid");
+            },
+            columns: [
+                          {
+                              field: "VOUCHER_DATE",
+                              title: "Date",
+                              width: "10",
+                              format: "{0:" + reportConfig.dateFormat + "}"
+                          },
+                          {
+                              field: "MITI",
+                              title: "Miti",
+                              width: "10",
+                          },
+                          {
+                              field: "ACC_EDESC",
+                              title: "Particulars",
+                              width: "30",
+
+                          },
+                          {
+                              field: "SUB_EDESC",
+                              title: "Sub Desc",
+                              width: "30",
+
+                          },
+                          {
+                              field: "MANUAL_NO",
+                              title: "Manual No",
+                              width: "30",
+
+                },
+                          {
+                              field: "TRACKING_NO",
+                              title: "Sub OrderId",
+                              width: "30",
+
+                          },
+                          {
+                              field: "FORM_EDESC",
+                              title: "Voucher Type",
+                              width: "20",
+                              groupHeaderTemplate: "#= value #"
+                          },
+                          {
+                              field: "VOUCHER_NO",
+                              title: "Voucher No",
+                              width: "90px"
+
+                          },
+                          {
+                              title: "Debit Amount",
+                              columns: [ {
+                                  field: "DR_AMOUNT",
+                                  title: "DR_AMOUNT",
+                                  width: "80px",
+                                  format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString() + "}",
+                                  attributes: {
+                                      style: "text-align: right;"
+                                  },
+                              }]
+                          },
+                          {
+                              title: "Credit Amount",
+                              columns: [ {
+                                  field: "CR_AMOUNT",
+                                  title: "CR_AMOUNT",
+                                  width: "80px",
+                                  format: "{0:n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()+"}",
+                                  attributes: {
+                                      style: "text-align: right;"
+                                  },
+                              }]
+                          }]
+
+        });
+
+    };
+
+
+
+
+    function mergeGridRows(gridId, distinctMergeColumnField,otherMergeColumnField ) {
+        $('#' + gridId + '>.k-grid-content' ).find('table[role="grid"]').each(function (index, item) {
+
+            var dimension_col = 1;
+            // First, scan first row of headers for the "Dimensions" column.
+            var columnDefinition = $('#' + gridId + '>.k-grid-header>.k-grid-header-wrap>table');
+            var columnIndex =  $(columnDefinition).find("th[data-field='" + distinctMergeColumnField + "']").index()+1;
+
+            if(columnIndex-1 != -1){
+                        // first_instance holds the first instance of identical td
+                        var first_instance = null;
+
+                        $(item).find('tr').each(function (index, trItem) {
+
+                            // find the td of the correct column (determined by the colTitle)
+                            var dimension_td = $(trItem).find('td:nth-child(' + columnIndex + ')');
+
+                            if (first_instance == null) {
+                                first_instance = dimension_td;
+                            } else if (dimension_td.text() == first_instance.text()) {
+                                if (otherMergeColumnField != undefined && otherMergeColumnField.length != undefined && otherMergeColumnField.length > 0) {
+                                    $.each(otherMergeColumnField, function (index,otherColumnItem) {
+                                        var otherColumnIndex = $(columnDefinition).find("th[data-field='" + otherColumnItem + "']").index() + 1;
+                                        if (otherColumnIndex - 1 != -1) {
+                                            $(trItem).find('td:nth-child(' + otherColumnIndex + ')').text("");
+                                        }
+
+                                    });
+                                }
+                                // if current td is identical to the previous
+                                // then remove the current td
+                                dimension_td.text("");
+                                // increment the rowspan attribute of the first instance
+                            // first_instance.attr('rowspan', typeof first_instance.attr('rowspan') == "undefined" ? 2 : first_instance.attr('rowspan') + 1);
+                            } else {
+                                // this cell is different from the last
+                                first_instance = dimension_td;
+                            }
+                        });
+                        return;
+            }
+        });
+    }
+
+    function KendoGridRefresh(readUrl) {
+        $('#grid').val('');
+        $('#grid').html('');
+        BindGrid(readUrl)
+    }
+</script>
+

@@ -1,0 +1,822 @@
+﻿@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+
+<style>
+    a#RunQuery {
+        margin-right: 5px;
+    }
+
+    #grid {
+        height: 100%;
+    }
+
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+    }
+
+    .page-bar {
+        margin-bottom: 0px !important;
+    }
+
+    .modal-custom .form-horizontal .input-group {
+        display: flex;
+    }
+
+    .input-group-addon {
+        align-content: center;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content, .k-grid-header {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    a.k-button.k-button-icontext.k-grid-excel {
+        float: right;
+    }
+
+    tr.k-group-footer {
+        text-align: right !important;
+    }
+
+    span.input-group-addon, #ddlDateFilterVoucher {
+        display: none !important;
+    }
+
+    input#toInputDateVoucher, input#ToDateVoucher {
+        display: block !important;
+    }
+
+    input#fromInputDateVoucher, input#FromDateVoucher {
+        display: none !important;
+    }
+
+    .form-group {
+        display: block !important;
+    }
+</style>
+
+<script src="@Scripts.Url("~/JS/reportFilter.js?v9")"></script>
+<script src="@Scripts.Url("~/JS/DateFilter.js?v5")" type="text/javascript"></script>
+
+<div class="content">
+    <div class="page-bar">
+        @if (workingContent.CurrentUserinformation.LoginType.Trim() == "Distributor")
+        {
+            <ul class="page-breadcrumb">
+                <li>
+                    <i class="fa fa-home"></i>
+                    <a href="/Distribution/Distributor/Index#!Distributor/Dashboard">Home</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>
+                <li><a href="#">Outlet Closing Report</a></li>
+            </ul>
+        }
+        else
+        {
+            <ul class="page-breadcrumb"></ul>
+        }
+
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+                <div class="actions">
+
+                    <!-- DATE FILTER -->
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                    </div>
+                    @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+                    <!-- ADVANCED FILTER -->
+                    <div class="btn-group">
+                            @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml",
+                                new AdvancedFilterSettingsModel()
+                                {
+                                    ShowCustomerFilter = true,
+                                    ShowResellerFilter = true,
+                                    ShowBrandFilter = true,
+                                })
+                        </div>
+
+                    <!-- UNIT FILTER (ADDED) -->
+                    <div class="btn-group">
+                        <select id="unitFilter" class="form-control" style="width:150px;">
+                            <option value="">All Units</option>
+                        </select>
+                    </div>
+
+                    <!-- RUN QUERY -->
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                        <i class="icon-control-play"></i>
+                    </a>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div id="grid"></div>
+                        @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="detailsModal" class="modal fade" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h4 class="modal-title">Day-wise Stock Detail</h4>
+                </div>
+
+                <div class="modal-body">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Closing Stock</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailsBody"></tbody>
+                    </table>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+<script src="@Scripts.Url("~/JS/reportFilter.js?V1")"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+
+<!-- NAVIGATION -->
+<script type="text/javascript">
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+</script>
+
+<!-- MAIN SCRIPT -->
+<script type="text/javascript">
+    var url = window.location.protocol + "//" + window.location.host + "/api/Report/GetResellerClosingStock";
+    var reportConfig = GetReportSetting("DistPoIndex");
+
+    function loadUnitFilter() {
+        $.ajax({
+            url: window.location.protocol + "//" + window.location.host + "/api/Report/GetAllUnitFilter",
+            type: "GET",
+            success: function (res) {
+
+                $("#unitFilter").empty();
+                $("#unitFilter").append(`<option value="" selected disabled>Select Unit</option>`);
+
+                $.each(res, function (i, v) {
+                    $("#unitFilter").append(`<option value="${v}">${v}</option>`);
+                });
+            },
+            error: function () {
+                console.log("Error loading unit filter");
+            }
+        });
+    }
+
+    var originalAdditionalData = ReportFilter.filterAdditionalData;
+
+    ReportFilter.filterAdditionalData = function () {
+        var base = originalAdditionalData ? originalAdditionalData() : {};
+        base.UNIT = $("#unitFilter").val();
+        return base;
+    };
+
+    $(".applydp").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+        $(this).closest("#applydp").modal('hide');
+    });
+
+    $("#loadAdvancedFilters").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    });
+
+    $("#RunQuery").click(function (evt) {
+        evt.preventDefault();
+        KendoGridRefresh(url);
+    });
+
+    $("#unitFilter").on("change", function () {
+        KendoGridRefresh(url);
+    });
+    function GridSearch() {
+        var grid = $("#grid").data("kendoGrid");
+        if (!grid) return;
+        var searchText = $(".grid-search").val().trim();
+        if (!searchText) {
+            grid.dataSource.filter({});
+            return;
+        }
+        grid.dataSource.filter({
+            logic: "or",
+            filters: [
+                { field: "ITEM_EDESC", operator: "contains", value: searchText },
+                { field: "BRAND_NAME", operator: "contains", value: searchText },
+                { field: "MU_CODE", operator: "contains", value: searchText },
+                { field: "RESELLER_EDESC", operator: "contains", value: searchText },
+                { field: "CUSTOMER_EDESC", operator: "contains", value: searchText },
+                { field: "GROUP_EDESC", operator: "contains", value: searchText }
+            ]
+        });
+    }
+    function getBrandTotals(group) {
+        var totals = {};
+        function recurse(items) {
+            if (!items) return;
+            items.forEach(function (item) {
+                if (item.field !== undefined) {
+                    recurse(item.items);
+                } else {
+                    var brand = item.BRAND_NAME || "(No Brand)";
+                    if (!totals[brand]) totals[brand] = { opening: 0, closing: 0 };
+                    totals[brand].opening += (item.OPENING_STOCK || 0);
+                    totals[brand].closing += (item.CLOSING_STOCK || 0);
+                }
+            });
+        }
+        recurse(group.items || []);
+        return totals;
+    }
+
+    function flattenGroups(groups, level) {
+        var result = [];
+        (groups || []).forEach(function (g) {
+            if (g.field === undefined) return;
+            result.push({ level: level, group: g, brandTotals: getBrandTotals(g) });
+            if (g.items && g.items.length && g.items[0].field !== undefined) {
+                result = result.concat(flattenGroups(g.items, level + 1));
+            }
+        });
+        return result;
+    }
+    var brandSyncObserver = null;
+
+    function syncBrandRowVisibility() {
+        $("#grid tbody .brand-totals-row").each(function () {
+            var $brandRow = $(this);
+
+            var $owningHeader = null;
+            var $cur = $brandRow.prev();
+            while ($cur.length) {
+                if ($cur.hasClass("k-grouping-row")) { $owningHeader = $cur; break; }
+                if (!$cur.hasClass("brand-totals-row")) break;
+                $cur = $cur.prev();
+            }
+
+            if (!$owningHeader || !$owningHeader.length) return;
+
+            var $toggle = $owningHeader.find("[aria-expanded]");
+            var isCollapsed = $toggle.length
+                ? $toggle.attr("aria-expanded") === "false"
+                : $owningHeader.find(".k-i-expand, .k-i-caret-alt-right, .k-plus, .k-i-arrow-60-right").length > 0;
+
+            if ($owningHeader.is(":hidden") || isCollapsed) {
+                $brandRow.hide();
+            } else {
+                $brandRow.show();
+            }
+        });
+    }
+
+    function initBrandSyncObserver() {
+        if (brandSyncObserver) {
+            brandSyncObserver.disconnect();
+            brandSyncObserver = null;
+        }
+
+        var tbody = document.querySelector("#grid tbody");
+        if (!tbody) return;
+
+        brandSyncObserver = new MutationObserver(function (mutations) {
+            var shouldSync = mutations.some(function (m) {
+                return (m.type === "attributes" && (m.attributeName === "style" || m.attributeName === "class"))
+                    || m.type === "childList";
+            });
+            if (shouldSync) {
+                clearTimeout(window._brandSyncTimer);
+                window._brandSyncTimer = setTimeout(syncBrandRowVisibility, 80);
+            }
+        });
+
+        brandSyncObserver.observe(tbody, {
+            attributes: true,
+            attributeFilter: ["style", "class"],
+            childList: true,
+            subtree: true
+        });
+    }
+
+    function BindGrid(readurl) {
+        var unitFilter = $("#unitFilter").val() || "";
+        var dataSource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: {
+                    url: readurl + "?unitFilter=" + unitFilter,
+                    dataType: "json",
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8"
+                },
+                parameterMap: function (options, type) {
+                    var paramMap = JSON.stringify($.extend({}, options, ReportFilter.filterAdditionalData(), {
+                        unitFilter: $("#unitFilter").val() || ""
+                    }));
+                    delete paramMap.$inlinecount;
+                    delete paramMap.$format;
+                    return paramMap;
+                }
+            },
+            error: function (e) {
+                displayPopupNotification("Error while loading data", "error");
+            },
+            model: {
+                fields: {
+                    GROUP_EDESC: { type: "string" },
+                    CUSTOMER_EDESC: { type: "string" },
+                    RESELLER_EDESC: { type: "string" },
+                    BRAND_NAME: { type: "string" },
+                    ITEM_EDESC: { type: "string" },
+                    MU_CODE: { type: "string" },
+                    OPENING_STOCK: { type: "number" },
+                    CLOSING_STOCK: { type: "number" },
+                    OPENING_DATE: { type: "date" },
+                    CLOSING_DATE: { type: "date" }
+                }
+            },
+            group: [
+                {
+                    field: "GROUP_EDESC",
+                    dir: "asc",
+                    aggregates: [
+                        { field: "OPENING_STOCK", aggregate: "sum" },
+                        { field: "CLOSING_STOCK", aggregate: "sum" }
+                    ]
+                },
+                {
+                    field: "CUSTOMER_EDESC",
+                    dir: "asc",
+                    aggregates: [
+                        { field: "OPENING_STOCK", aggregate: "sum" },
+                        { field: "CLOSING_STOCK", aggregate: "sum" }
+                    ]
+                },
+                {
+                    field: "RESELLER_EDESC",
+                    dir: "asc",
+                    aggregates: [
+                        { field: "OPENING_STOCK", aggregate: "sum" },
+                        { field: "CLOSING_STOCK", aggregate: "sum" }
+                    ]
+                },
+                {
+                    field: "BRAND_NAME",
+                    dir: "asc",
+                    aggregates: [
+                        { field: "OPENING_STOCK", aggregate: "sum" },
+                        { field: "CLOSING_STOCK", aggregate: "sum" }
+                    ]
+                }
+            ],
+            pageSize: 100,
+        });
+        
+        $("#grid").kendoGrid({
+            dataSource: dataSource,
+            toolbar: kendo.template($("#toolbar-template").html()),
+            excel: {
+                fileName: "ResellerClosingStock.xlsx",
+                allPages: true
+            },
+            excelExport: function (e) {
+                var sheet = e.workbook.sheets[0];
+                if (!sheet || !sheet.rows || !sheet.columns) return;
+
+                var columnCount = sheet.columns.length;
+
+                var openingStockCol = -1;
+                var closingStockCol = -1;
+                if (sheet.rows[0]?.cells) {
+                    sheet.rows[0].cells.forEach(function (cell, idx) {
+                        if (cell.value === "Opening Stock") openingStockCol = idx;
+                        if (cell.value === "Closing Stock") closingStockCol = idx;
+                    });
+                }
+
+                sheet.rows.forEach(function (row) {
+                    if (!row?.cells) return;
+                    if (row.type === "group-header") {
+                        let titleCell = null;
+                        for (let i = 0; i < row.cells.length; i++) {
+                            if (row.cells[i]?.value && row.cells[i].value !== "") {
+                                titleCell = row.cells[i];
+                                break;
+                            }
+                        }
+                        if (!titleCell) titleCell = row.cells[0] || {};
+
+                        const originalTitle = titleCell.value ?? "";
+                        row.cells = Array.from({ length: columnCount }, (_, colIdx) => {
+                            const cell = {
+                                bold: true,
+                                background: titleCell.background,
+                                color: titleCell.color
+                            };
+                            if (colIdx === 0) {
+                                cell.value = originalTitle;
+                                if ((row.level ?? 0) > 0) cell.marginLeft = ((row.level * 10)) + "px";
+                            } else {
+                                cell.value = "";
+                            }
+                            return cell;
+                        });
+                    }
+                });
+
+                const headerStack = [];
+                sheet.rows.forEach(function (row) {
+                    if (!row?.cells) return;
+                    if (row.type === "group-header") {
+                        headerStack.push({ headerRow: row, level: row.level ?? 0, paired: false });
+                    } else if (row.type === "group-footer") {
+                        const footerLevel = row.level ?? 0;
+                        for (let i = headerStack.length - 1; i >= 0; i--) {
+                            const headerInfo = headerStack[i];
+                            if (!headerInfo.paired && headerInfo.level === footerLevel) {
+                                for (let colIdx = 2; colIdx < columnCount; colIdx++) {
+                                    const ftrCell = row.cells[colIdx];
+                                    if (!ftrCell || ftrCell.value == null || ftrCell.value === "") continue;
+                                    headerInfo.headerRow.cells[colIdx].value = ftrCell.value;
+                                    if (ftrCell.format) headerInfo.headerRow.cells[colIdx].format = ftrCell.format;
+                                }
+                                headerInfo.paired = true;
+                                break;
+                            }
+                        }
+                    }
+                });
+
+                sheet.rows = sheet.rows.filter(function (row) { return row.type !== "group-footer"; });
+
+                var flatGroups = flattenGroups(this.dataSource.view(), 0);
+                var groupIdx = 0;
+
+                var levelBg = { 0: "#E8E8E8", 1: "#E8E8E8", 2: "#E8E8E8" };
+                var labelPrefix = { 0: "  ", 1: "    ", 2: "      " };
+
+                var newRows = [];
+                sheet.rows.forEach(function (row) {
+                    newRows.push(row);
+
+                    if (row.type === "group-header") {
+                        var info = flatGroups[groupIdx++];
+                        if (!info || info.level >= 3) return;
+
+                        var brands = Object.keys(info.brandTotals).sort();
+                        if (!brands.length) return;
+
+                        brands.forEach(function (brand, i) {
+                            var t = info.brandTotals[brand];
+                            var isLast = (i === brands.length - 1);
+                            var bg = levelBg[info.level] || levelBg[0];
+                            var prefix = labelPrefix[info.level] || "  ";
+
+                            var cells = Array.from({ length: columnCount }, function (_, colIdx) {
+                                var cell = {
+                                    background: bg,
+                                    italic: true,
+                                    bold: false,
+                                    borderBottom: isLast
+                                        ? { color: "#999999", size: 2 }
+                                        : { color: "#cccccc", size: 1 }
+                                };
+
+                                if (colIdx === 0) {
+                                    cell.value = prefix + "\uD83C\uDFF7 " + brand; // 🏷
+                                    cell.color = "#333333";
+                                } else if (colIdx === openingStockCol) {
+                                    cell.value = t.opening;
+                                    cell.format = "#,##0.00";
+                                    cell.color = "#555555";
+                                    cell.textAlign = "right";
+                                } else if (colIdx === closingStockCol) {
+                                    cell.value = t.closing;
+                                    cell.format = "#,##0.00";
+                                    cell.color = "#555555";
+                                    cell.textAlign = "right";
+                                } else {
+                                    cell.value = "";
+                                }
+                                return cell;
+                            });
+
+                            newRows.push({ type: "data", cells: cells });
+                        });
+                    }
+                });
+
+                sheet.rows = newRows;
+
+                sheet.columns.forEach(function (col, idx) {
+                    col.autoWidth = true;
+                    if (idx > 1) col.width = 8;
+                });
+            },
+            height: window.innerHeight - 50,
+            sortable: true,
+            reorderable: true,
+            groupable: true,
+            resizable: true,
+            filterable: { extra: false },
+            columnMenu: true,
+            pageable: { refresh: true, pageSizes: ["50", "100", "500", "1000", "All"], buttonCount: 5 },
+            scrollable: { virtual: true },
+
+            dataBound: function (o) {
+                var grid = o.sender;
+
+                grid.wrapper.find(".brand-totals-row").remove();
+
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.filter(function (c) { return !c.hidden; }).length;
+                    $(o.sender.wrapper).find('tbody')
+                        .append('<tr class="kendo-data-row"><td colspan="' + colCount + '" class="alert alert-danger">No Data Found</td></tr>');
+                    return;
+                }
+
+                var visibleColumns = grid.columns.filter(function (c) { return !c.hidden; });
+                var visibleColCount = visibleColumns.length;
+
+                function getBrandTotals(group) {
+                    var totals = {};
+                    function recurse(items) {
+                        if (!items) return;
+                        items.forEach(function (item) {
+                            if (item.field !== undefined) {
+                                recurse(item.items);
+                            } else {
+                                var brand = item.BRAND_NAME || "(No Brand)";
+                                if (!totals[brand]) totals[brand] = { opening: 0, closing: 0 };
+                                totals[brand].opening += (item.OPENING_STOCK || 0);
+                                totals[brand].closing += (item.CLOSING_STOCK || 0);
+                            }
+                        });
+                    }
+                    recurse(group.items || []);
+                    return totals;
+                }
+
+                function flattenGroups(groups, level) {
+                    var result = [];
+                    (groups || []).forEach(function (g) {
+                        if (g.field === undefined) return;
+                        result.push({ level: level, group: g, brandTotals: getBrandTotals(g) });
+                        if (g.items && g.items.length && g.items[0].field !== undefined) {
+                            result = result.concat(flattenGroups(g.items, level + 1));
+                        }
+                    });
+                    return result;
+                }
+
+                var levelStyles = {
+                    0: { bg: "#eef2ff", border: "#c5cfe8", labelColor: "#5a6a99", textColor: "#333", subColor: "#666" },
+                    1: { bg: "#f0faf0", border: "#b0d8b0", labelColor: "#3a7a3a", textColor: "#333", subColor: "#666" },
+                    2: { bg: "#fff8ee", border: "#e0c87a", labelColor: "#8a6a00", textColor: "#333", subColor: "#666" }
+                };
+
+                function buildBrandRows(brandTotals, level) {
+                    var brands = Object.keys(brandTotals).sort();
+                    if (!brands.length) return "";
+
+                    var s = levelStyles[level] || levelStyles[0];
+                    var leftPad = (level * 28 + 16) + "px";
+                    var openingIdx = -1, closingIdx = -1;
+                    visibleColumns.forEach(function (col, i) {
+                        if (col.field === "OPENING_STOCK") openingIdx = i;
+                        if (col.field === "CLOSING_STOCK") closingIdx = i;
+                    });
+                    var groupCellCount = grid.dataSource.group().length;
+                    var html = "";
+
+                    brands.forEach(function (brand, i) {
+                        var t = brandTotals[brand];
+                        var isLast = (i === brands.length - 1);
+                        var borderBottom = "border-bottom:" + (isLast ? "2px" : "1px") + " solid " + s.border + ";";
+                        var baseStyle = "background:" + s.bg + "; font-size:12px;" + borderBottom;
+
+                        html += '<tr class="brand-totals-row">';
+
+                        for (var g = 0; g < groupCellCount; g++) {
+                            html += '<td class="k-group-cell" style="' + baseStyle + '"></td>';
+                        }
+
+                        visibleColumns.forEach(function (col, colIdx) {
+                            if (colIdx === 0) {
+                                html += '<td style="' + baseStyle + ' padding:3px 8px 3px ' + leftPad + '; color:' + s.textColor + ';">' +
+                                    '<i class="fa fa-tag" style="color:' + s.labelColor + '; margin-right:5px;"></i>' +
+                                    '<strong>' + brand + '</strong></td>';
+                            } else if (colIdx === openingIdx) {
+                                html += '<td style="' + baseStyle + ' text-align:right; padding:3px 8px; color:' + s.subColor + ';">' +
+                                    kendo.toString(t.opening, 'n2') + '</td>';
+                            } else if (colIdx === closingIdx) {
+                                html += '<td style="' + baseStyle + ' text-align:right; padding:3px 8px; color:' + s.subColor + ';">' +
+                                    kendo.toString(t.closing, 'n2') + '</td>';
+                            } else {
+                                html += '<td style="' + baseStyle + '"></td>';
+                            }
+                        });
+
+                        html += '</tr>';
+                    });
+
+                    return html;
+                }
+
+                var flatGroups = flattenGroups(grid.dataSource.view(), 0);
+                var $allGroupHeaders = grid.wrapper.find("tbody tr.k-grouping-row");
+
+                $allGroupHeaders.each(function (idx) {
+                    var info = flatGroups[idx];
+                    if (!info) return;
+
+                    if (info.level >= 3) return;
+
+                    var html = buildBrandRows(info.brandTotals, info.level, visibleColCount);
+                    if (html) $(this).after(html);
+                });
+                initBrandSyncObserver();
+            },
+            columns: [
+                { field: "GROUP_EDESC", title: "Group", hidden: true },
+                { field: "CUSTOMER_EDESC", title: "Distributor", hidden: true },
+                { field: "RESELLER_EDESC", title: "Reseller", hidden: true },
+                { field: "BRAND_NAME", title: "Brand", hidden: true },
+
+                { field: "ITEM_EDESC", title: "Item", width: "35%" },
+                { field: "MU_CODE", title: "Unit", width: "8%" },
+
+                {
+                    field: "OPENING_STOCK",
+                    title: "Opening Stock",
+                    width: "15%",
+                    attributes: { style: "text-align:right;" },
+                    aggregate: ["sum"],
+                    groupFooterTemplate: "#=kendo.toString(sum,'n2')#",
+                    headerAttributes: {
+                        title: "Stock quantity from the last stock update prior to the current closing stock date."
+                    },
+                },
+                {
+                    field: "OPENING_DATE",
+                    title: "Opening Date",
+                    width: "12%",
+                    template: "#= OPENING_DATE ? kendo.toString(kendo.parseDate(OPENING_DATE),'yyyy-MM-dd') : '-' #",
+                    headerAttributes: {
+                        title: "Date of the previous stock update immediately before the closing stock update."
+                    },
+                },
+                {
+                    field: "CLOSING_STOCK",
+                    title: "Closing Stock",
+                    width: "15%",
+                    attributes: { style: "text-align:right;" },
+                    aggregate: ["sum"],
+                    groupFooterTemplate: "#=kendo.toString(sum,'n2')#",
+                    headerAttributes: {
+                        title: "Latest stock quantity updated  on or before the selected As On Date."
+                    },
+                },
+                {
+                    field: "CLOSING_DATE",
+                    title: "Closing Date",
+                    width: "12%",
+                    template: "#= CLOSING_DATE ? kendo.toString(kendo.parseDate(CLOSING_DATE),'yyyy-MM-dd') : '-' #",
+                    headerAttributes: {
+                        title: "Date on which the distributor last updated stock on or before the selected As On Date."
+                    },
+                },
+                {
+                    field: "DAYS",
+                    title: "Days since update",
+                    width: "15%",
+                    attributes: {
+                        style: "text-align: right;"
+                    },
+                    headerAttributes: {
+                        title: "Number of days since the distributor last updated stock, calculated up to the selected As On Date."
+                    },
+                }
+            ]
+        });
+    }
+
+    function KendoGridRefresh(readUrl) {
+        $('#grid').html('');
+        BindGrid(readUrl);
+    }
+
+    $(document).ready(function () {
+
+        loadUnitFilter();
+        DateFilter.init(function () {
+            consolidate.init(function () {
+                BindGrid(url);
+            });
+        });
+
+        var $formGroups = $("#form_modal2 .form-horizontal .form-group");
+
+        var $firstLabel = $formGroups.eq(0).find("label");
+        $firstLabel.css("width", "100%");
+        $firstLabel.text("Stock As On Date ");
+        var $infoIcon = $('<i class="fa fa-info-circle" style="margin-left:5px;" title="Shows stock level exactly as of the selected date. The report considers the latest stock update on or before this date for each distributor."></i>');
+
+        $firstLabel.append($infoIcon);
+    });
+    $(document).on("click", ".view-details", function () {
+        let itemCode = $(this).data("item");
+        let reseller = $(this).data("reseller");
+        let mu = $(this).data("mu");
+        let itemName = $(this).data("itemname");
+
+        const grid = $("#grid").data("kendoGrid");
+        const data = grid.dataSource.data();
+
+        const record = data.find(r =>
+            r.ITEM_CODE == itemCode &&
+            r.RESELLER_CODE == reseller &&
+            r.MU_CODE == mu
+        );
+
+        $("#detailsModal .modal-title").html(`StockDetail: ${itemName}`);
+        $("#detailsBody").empty();
+
+        if (!record || !record.Details || record.Details.length === 0) {
+            $("#detailsBody").append("<tr><td colspan='2'>No Data Found</td></tr>");
+            $("#detailsModal").modal("show");
+            return;
+        }
+
+        const details = record.Details;
+
+        details.forEach(d => {
+            $("#detailsBody").append(`
+            <tr>
+                <td>${d.DAY}</td>
+                <td style="text-align:right;padding-right: 5px;">${d.CLOSING_QTY ?? 0}</td>
+            </tr>
+        `);
+        });
+
+        $("#detailsModal").modal("show");
+    });
+</script>
+
+@if (workingContent.CurrentUserinformation.LoginType.Trim() != "Distributor")
+{
+    <script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js")"></script>
+}

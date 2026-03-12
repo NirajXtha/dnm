@@ -1,0 +1,185 @@
+@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+
+@{
+    ViewBag.Title = "Target Plan Report";
+    Layout = null;
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+
+<style>
+    .k-grid-header th.k-header,
+    tr.k-filter-row > th {
+        text-align: center;
+    }
+
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content,
+    .k-grid-header {
+        font-size: 11px;
+    }
+
+    #filters {
+        margin-bottom: 10px;
+    }
+
+        #filters .k-textbox,
+        #filters .k-dropdown,
+        #filters .k-datepicker {
+            margin-right: 10px;
+        }
+</style>
+
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+            <li><i class="fa fa-home"></i><a href="/Home">Home</a><i class="fa fa-angle-right"></i></li>
+            <li><a href="/Distribution/Home/Dashboard#">Report</a><i class="fa fa-angle-right"></i></li>
+            <li><a href="">Target Plan Report</a></li>
+        </ul>
+    </div>
+
+    <!-- Filters -->
+    <div id="filters">
+        <input type="text" id="targetSearch" class="k-textbox" placeholder="Search..." />
+
+        <input id="subTargetType" style="width:150px;" />
+        <input id="filterType" style="width:150px;" />
+        <input id="dateFilter" style="width:150px;" />
+
+        <button id="RunQuery" class="k-button k-primary">Run</button>
+    </div>
+
+    <div id="grid"></div>
+</div>
+
+<script>
+    var urlTargetPlan = window.location.protocol + "//" + window.location.host + "/api/Report/GetTargetPlan";
+
+    $(document).ready(function () {
+
+        $("#subTargetType").kendoDropDownList({
+            optionLabel: "Select Sub Target Type",
+            dataTextField: "text",
+            dataValueField: "value",
+            dataSource: [
+                { text: "Sale", value: "SALE" },
+                { text: "Customer", value: "Customer" },
+                { text: "Product", value: "Product" },
+                { text: "Area", value: "Area" }
+            ],
+            valuePrimitive: true
+        });
+
+        $("#filterType").kendoDropDownList({
+            optionLabel: "Select Filter Type",
+            dataTextField: "text",
+            dataValueField: "value",
+            dataSource: [
+                { text: "Reseller", value: "Reseller" },
+                { text: "Distributor", value: "Distributor" },
+                { text: "Consolidate", value: "Consolidate" }
+            ],
+            valuePrimitive: true
+        });
+        $("#dateFilter").kendoDropDownList({
+            optionLabel: "Select Date Filter",
+            dataTextField: "text",
+            dataValueField: "value",
+            dataSource: [
+                { text: "This Month", value: "This Month" },
+                { text: "This Year", value: "This Year" },
+                { text: "1st Quarter", value: "1st Quarter" },
+                { text: "2nd Quarter", value: "2nd Quarter" },
+                { text: "3rd Quarter", value: "3rd Quarter" },
+                { text: "4th Quarter", value: "4th Quarter" }
+            ],
+            valuePrimitive: true
+        });
+
+        var grid = $("#grid").kendoGrid({
+            dataSource: {
+                transport: {
+                    read: {
+                        url: urlTargetPlan,
+                        dataType: "json",
+                        data: function () {
+                            return {
+                                subTargetType: $("#subTargetType").val() || "",
+                                filterType: $("#filterType").val() || "",
+                                dateFilter: $("#dateFilter").val() || ""
+                            };
+                        }
+                    }
+                },
+                schema: {
+                    //data: "data", 
+                    model: {
+                        fields: {
+                            TargetName: { type: "string" },
+                            Employee_Name: { type: "string" },
+                            Duration: { type: "string" },
+                            TargetType: { type: "string" },
+                            TargetQuantity: { type: "number" },
+                            TargetAmount: { type: "number" },
+                            Achieved_Quantity: { type: "number" },
+                            Achieved_Amount: { type: "number" },
+                            Accomplished_Quantity: { type: "number" },
+                            Accomplished_Amount: { type: "number" }
+                        }
+                    }
+                },
+                pageSize: 20
+            },
+            pageable: true,
+            sortable: true,
+            filterable: true,
+            resizable: true,
+            toolbar: ["excel"],
+            excel: {
+                fileName: "TargetPlanReport.xlsx",
+                allPages: true,
+                filterable: true
+            },
+            columns: [
+                { field: "TargetName", title: "Target Name", width: 150 },
+                { field: "Employee_Name", title: "Employee Name", width: 120 },
+                { field: "Duration", title: "Duration", width: 100 },
+                { field: "TargetType", title: "Target Type", width: 100 },
+                { field: "TargetQuantity", title: "Target Quantity", width: 120, format: "{0:n0}" },
+                { field: "TargetAmount", title: "Target Amount", width: 120, format: "{0:n2}" },
+                { field: "Achieved_Quantity", title: "Achieved Quantity", width: 120, format: "{0:n0}" },
+                { field: "Achieved_Amount", title: "Achieved Amount", width: 120, format: "{0:n2}" },
+                { field: "Accomplished_Quantity", title: "Accomplished Quantity", width: 120, format: "{0:n0}" },
+                { field: "Accomplished_Amount", title: "Accomplished Amount", width: 120, format: "{0:n2}" }
+            ]
+        }).data("kendoGrid");
+
+        $("#targetSearch").on("keyup", function () {
+            var value = $(this).val();
+            if (value) {
+                grid.dataSource.filter({
+                    logic: "or",
+                    filters: [
+                        { field: "TargetName", operator: "contains", value: value },
+                        { field: "Employee_Name", operator: "contains", value: value },
+                        { field: "TargetType", operator: "contains", value: value },
+                        { field: "Duration", operator: "contains", value: value }
+                    ]
+                });
+            } else {
+                grid.dataSource.filter({});
+            }
+        });
+
+        $("#RunQuery").on("click", function (e) {
+            e.preventDefault();
+            grid.dataSource.read();
+        });
+    });
+</script>

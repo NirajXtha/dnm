@@ -1,0 +1,257 @@
+﻿
+<div style="width: 80%; margin: 20px auto;">
+    <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 20px;">User Access Management</h2>
+
+    <label for="userDropdown" style="font-weight: 500;">Select User:</label>
+    <select id="userDropdown" style="width: 300px; margin-bottom: 20px; padding: 6px 10px; border-radius: 4px; border: 1px solid #ccc;"></select>
+
+
+    <div id="accessContainer"></div>
+
+    <button id="saveAccess" class="k-button k-primary" style="margin-top: 30px;">Save Access</button>
+</div>
+
+<style>
+    .card {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 15px;
+        border: 1px solid #e0e0e0;
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        padding: 15px 20px;
+        font-weight: 600;
+        font-size: 18px;
+        border-bottom: 1px solid #ddd;
+        transition: background 0.2s ease;
+    }
+
+        .card-header:hover {
+            background-color: #f9f9f9;
+        }
+
+    .card-body {
+        display: none;
+        padding: 15px 20px 20px;
+        padding-left: 30px;
+    }
+
+    .checkbox-label {
+        display: inline-block;
+        margin: 5px 15px 5px 0;
+        font-weight: 500;
+    }
+
+    .chevron {
+        font-size: 16px;
+        margin-left: 10px;
+        transition: transform 0.3s ease;
+    }
+
+        .chevron.rotate {
+            transform: rotate(180deg);
+        }
+
+    #userDropdown {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+</style>
+
+<script>
+    var user_id = null;
+
+    function loadUserList() {
+        $.get("/api/Setup/GetUserList", function (users) {
+            const $dropdown = $("#userDropdown");
+            $dropdown.empty();
+            $dropdown.append('<option value="" disabled selected>Select a user...</option>');
+
+            users.forEach(user => {
+                $dropdown.append(`<option value="${user.USERID}">${user.USER_NAME}</option>`);
+            });
+        });
+    }
+
+    // Call once on page load
+    loadUserList();
+
+    // Listen to native change event
+    $("#userDropdown").on("change", function () {
+        user_id = $(this).val();
+        if (user_id) {
+            loadModuleAccess(user_id);
+        } else {
+            $("#accessContainer").empty();
+        }
+    });
+
+    function groupAccessData(data) {
+        const grouped = {};
+
+        data.forEach(item => {
+            const menuEdesc = item.MENU_EDESC
+            if (menuEdesc === "profile" || menuEdesc === "setting") {
+                return;
+            }
+            const displayName = item.MENU_NDESC;
+
+            if (!grouped[item.MODULE_CODE]) {
+                grouped[item.MODULE_CODE] = {
+                    user_id: item.USER_ID,
+                    module_code: item.MODULE_CODE,
+                    module_name: displayName,
+                    company_code: item.COMPANY_CODE,
+                    branch_code: item.BRANCH_CODE,
+                    module_access: null,
+                    sub_components: []
+                };
+            }
+
+            if (!item.MENU_NO) {
+                grouped[item.MODULE_CODE].module_name = displayName;
+                grouped[item.MODULE_CODE].module_access = item.ACCESS_FLAG === "Y";
+            } else {
+                grouped[item.MODULE_CODE].sub_components.push({
+                    id: item.MENU_NO,
+                    name: displayName,
+                    access: item.ACCESS_FLAG === "Y"
+                });
+            }
+        });
+
+        return Object.values(grouped);
+    }
+
+    function loadModuleAccess(userId) {
+        $.get(`/api/Setup/GetUserAcccessList?id=${userId}`, function (data) {
+            const groupedData = groupAccessData(data);
+
+            let html = '';
+
+            groupedData.forEach((module, index) => {
+                const moduleChecked = module.module_access ? "checked" : "";
+                const moduleId = `module_${index}`;
+                const chevronId = `chevron_${index}`;
+
+                html += `
+                    <div class="card">
+                        <div class="card-header" onclick="toggleCard('${moduleId}', '${chevronId}')">
+                            <span>${module.module_name}</span>
+                            <div>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" class="module-access-checkbox"
+                                        data-user-id="${module.user_id}"
+                                        data-module-id="${module.module_code}"
+                                        data-company="${module.company_code}"
+                                        data-branch="${module.branch_code}"
+                                        ${moduleChecked} />
+                                    Module Access
+                                </label>
+                                <span id="${chevronId}" class="chevron">▼</span>
+                            </div>
+                        </div>
+                        <div class="card-body" id="${moduleId}">
+                            ${renderSubComponentCheckboxes(module)}
+                        </div>
+                    </div>
+                `;
+            });
+
+            $("#accessContainer").html(html);
+
+            $("#accessContainer").on("change", ".module-access-checkbox", function () {
+                const moduleCode = $(this).data("module-id");
+                const isChecked = $(this).is(":checked");
+
+                $(`.sub-component-checkbox[data-module-id="${moduleCode}"]`).prop("checked", isChecked);
+            });
+        });
+    }
+
+    function renderSubComponentCheckboxes(module) {
+        return module.sub_components.map(sub => `
+            <label class="checkbox-label">
+                <input type="checkbox" class="sub-component-checkbox"
+                       data-user-id="${module.user_id}"
+                       data-module-id="${module.module_code}"
+                       data-sub-id="${sub.id}"
+                       data-company="${module.company_code}"
+                       data-branch="${module.branch_code}"
+                       ${sub.access ? "checked" : ""} />
+                ${sub.name}
+            </label>
+        `).join("");
+    }
+
+    function toggleCard(cardId, chevronId) {
+        const body = document.getElementById(cardId);
+        const chevron = document.getElementById(chevronId);
+        const isOpen = body.style.display === "block";
+        body.style.display = isOpen ? "none" : "block";
+        chevron.classList.toggle("rotate", !isOpen);
+    }
+
+    $("#saveAccess").on("click", function () {
+        const anyModuleChecked = $(".module-access-checkbox:checked").length > 0;
+
+        if (!anyModuleChecked) {
+            displayPopupNotification("Please select access for at least one module.", "error");
+
+            // Optionally scroll to the first module card
+            const firstCard = $(".card").first();
+            if (firstCard.length) {
+                $('html, body').animate({
+                    scrollTop: firstCard.offset().top - 60
+                }, 400);
+            }
+
+            return; // Stop execution
+        }
+        const accessData = [];
+        debugger;
+
+        $(".module-access-checkbox").each(function () {
+            accessData.push({
+                USER_ID: user_id,
+                MODULE_CODE: $(this).data("module-id"),
+                MENU_NO: null,
+                COMPANY_CODE: $(this).data("company"),
+                BRANCH_CODE: $(this).data("branch"),
+                ACCESS_FLAG: $(this).is(":checked") ? "Y" : "N"
+            });
+        });
+
+        $(".sub-component-checkbox").each(function () {
+            accessData.push({
+                USER_ID: user_id,
+                MODULE_CODE: $(this).data("module-id"),
+                MENU_NO: $(this).data("sub-id"),
+                COMPANY_CODE: $(this).data("company"),
+                BRANCH_CODE: $(this).data("branch"),
+                ACCESS_FLAG: $(this).is(":checked") ? "Y" : "N"
+            });
+        });
+
+        console.log(accessData);
+
+        $.ajax({
+            url: "/api/Setup/setUserAccess",
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(accessData),
+            success: function () {
+                displayPopupNotification("Access saved successfully!", "success");
+            },
+            error: function () {
+                displayPopupNotification("Something went wrong while saving access.", "error");
+            }
+        });
+    });
+</script>

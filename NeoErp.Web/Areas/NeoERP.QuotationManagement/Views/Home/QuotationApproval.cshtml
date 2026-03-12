@@ -1,0 +1,185 @@
+﻿@{
+    Layout = null;
+}
+
+<link href="@Styles.Url("~/Areas/NeoERP.QuotationManagement/Content/quotationSetup.css")" rel="stylesheet" />
+
+<style>
+    .modal-table-container {
+        overflow-x: auto;
+        max-width: 100%;
+    }
+
+    .modal-body {
+        overflow-x: hidden; /* prevent outer modal scrollbars */
+    }
+
+    .modal-content {
+        max-width: 95vw; /* prevent modal from overflowing viewport */
+    }
+
+    .modal-dialog {
+        max-width: 98%; /* allow a bit more room */
+        margin: auto;
+    }
+    .modal-table .sticky {
+        position: sticky;
+        left: 0;
+        background: #fff;
+        z-index: 2;
+    }
+    .modal-table td,
+    .modal-table th {
+        min-height: 40px;
+        padding: 8px 12px;
+        vertical-align: middle;
+    }
+    .modal-table tr {
+        min-height: 40px;
+    }
+
+</style>
+<div class="col-md-12 bodyController" ng-controller="quotationApproval">
+    <div class="portlet light form-fit bordered bottomspance">
+        <div class="portlet box green-box main">
+            <div class="portlet-title">
+                <div class="caption">
+                    <a class="btn-back pull-left" data-toggle="tooltip" data-placement="top" title="Back" href="javascript:history.back();">
+                        <i class="fa fa-arrow-circle-left"></i>
+                    </a>
+                    <i class="fa fa-gift font-white-haze"></i>
+                    <span class="caption-subject font-white-haze bold uppercase">Quotation Approval Setup</span>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="quoteViewModal" tabindex="-1" role="dialog" aria-labelledby="quoteViewModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <h5 class="modal-title">Quotation Details - {{selectedItem.TENDER_NO}}</h5>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong>Issue Date:</strong> {{selectedItem.ISSUE_DATE | date:'dd MMM yyyy'}}</p>
+                        <p><strong>Nepali Date:</strong> {{selectedItem.NEPALI_DATE}}</p>
+                        <p><strong>Delivery Date:</strong> {{selectedItem.VALID_DATE | date:'dd MMM yyyy'}}</p>
+                        <p><strong>Approved Status:</strong> {{selectedItem.APPROVED_STATUS}}</p>
+
+                        <div class="table-responsive modal-table-container">
+                            <table class="table-bordered table-striped modal-table">
+                                <tr>
+                                    <td style="width: 49px;" class="table-head sticky">S.N</td>
+                                    <td class="table-head sticky">Item Description</td>
+                                    <td class="table-head">
+                                        Specification
+                                        <span class="arrow-wrapper" title="More Specification">
+                                            <span>
+                                                <i class="fa fa-arrow-circle-left" ng-click="toggleDetails()" ng-show="showSpecificationDetail" aria-hidden="true"></i>
+                                                <i class="fa fa-arrow-circle-right" ng-click="toggleDetails()" ng-hide="showSpecificationDetail" aria-hidden="true"></i>
+                                            </span>
+                                        </span>
+                                    </td>
+                                    <td ng-show="showSpecificationDetail" class="table-head">Category</td>
+                                    <td ng-show="showSpecificationDetail" class="table-head">Brand Name</td>
+                                    <td ng-show="showSpecificationDetail" class="table-head">Interface</td>
+                                    <td ng-show="showSpecificationDetail" class="table-head">Type</td>
+                                    <td ng-show="showSpecificationDetail" class="table-head">Lamination</td>
+                                    <td ng-show="showSpecificationDetail" class="table-head">Item Size</td>
+                                    <td ng-show="showSpecificationDetail" class="table-head">Thickness</td>
+                                    <td ng-show="showSpecificationDetail" class="table-head">Color</td>
+                                    <td ng-show="showSpecificationDetail" class="table-head">Grade</td>
+                                    <td ng-show="showSpecificationDetail" class="table-head">Size Length</td>
+                                    <td ng-show="showSpecificationDetail" class="table-head">Size Width</td>
+                                    <td class="table-head">Image</td>
+                                    <td class="table-head">Unit</td>
+                                    <td class="table-head">Quantity</td>
+                                </tr>
+                                <tr ng-repeat="product in selectedItem.Items track by $index">
+                                    <td class="sticky">{{$index + 1}}</td>
+                                    <td class="sticky">{{product.ItemDescription}}</td>
+                                    <td>{{product.SPECIFICATION}}</td>
+                                    <td ng-show="showSpecificationDetail">{{product.CATEGORY}}</td>
+                                    <td ng-show="showSpecificationDetail">{{product.BRAND_NAME}}</td>
+                                    <td ng-show="showSpecificationDetail">{{product.INTERFACE}}</td>
+                                    <td ng-show="showSpecificationDetail">{{product.TYPE}}</td>
+                                    <td ng-show="showSpecificationDetail">{{product.LAMINATION}}</td>
+                                    <td ng-show="showSpecificationDetail">{{product.ITEM_SIZE}}</td>
+                                    <td ng-show="showSpecificationDetail">{{product.THICKNESS}}</td>
+                                    <td ng-show="showSpecificationDetail">{{product.COLOR}}</td>
+                                    <td ng-show="showSpecificationDetail">{{product.GRADE}}</td>
+                                    <td ng-show="showSpecificationDetail">{{product.SIZE_LENGTH}}</td>
+                                    <td ng-show="showSpecificationDetail">{{product.SIZE_WIDTH}}</td>
+                                    <td>
+                                        <img ng-if="product.IMAGE" ng-src="/Areas/NeoERP.QuotationManagement/Image/Items/{{product.IMAGE}}" height="50" alt="Item Image">
+                                    </td>
+                                    <td>{{product.UNIT}}</td>
+                                    <td>{{product.QUANTITY}}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        @*<button type="button" class="btn btn-success" ng-disabled="!QuotationApproval" ng-click="approveQuotation(selectedItem)">Approve</button>
+        <button type="button" class="btn btn-danger" ng-disabled="!QuotationApproval" ng-click="rejectQuotation(selectedItem)">Reject</button>*@
+                        <button class="btn btn-success"
+                                ng-disabled="!QuotationApproval"
+                                ng-click="openActionPopup(selectedItem, 'APPROVE')">
+                            Approve
+                        </button>
+
+                        <button class="btn btn-danger"
+                                ng-disabled="!QuotationApproval"
+                                ng-click="openActionPopup(selectedItem, 'REJECT')">
+                            Reject
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="approvalRemarksModal" tabindex="-1">
+            <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">{{remarksActionTitle}}</h5>
+                    </div>
+
+                    <div class="modal-body">
+                        <textarea class="form-control"
+                                  rows="4"
+                                  placeholder="Enter remarks..."
+                                  ng-model="approvalRemarks">
+                </textarea>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button class="btn"
+                                ng-class="remarksAction === 'APPROVE' ? 'btn-success' : 'btn-danger'"
+                                ng-click="submitRemarksAction()">
+                            {{remarksAction}}
+                        </button>
+
+                        <button class="btn btn-secondary" data-dismiss="modal">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="portlet-body light bg-inverse" ng-show="tablePanel">
+            <div class="row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
+                <div class="col-md-3" style="flex: 1;">
+                    <div class="topsearch" style="display: block;">
+                        <input class="k-textbox txtSearchString" type="text" id="itemtxtSearchString" ng-model="txtSearchString" name="search" placeholder="Search...." style="width: 35%;" />
+                    </div>
+                </div>
+            </div>
+            <div id="kGrid"></div>
+        </div>
+    </div>
+</div>

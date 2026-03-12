@@ -1,0 +1,1639 @@
+@{
+    ViewBag.Title = "Print Setup";
+}
+
+<link href="~/Areas/NeoErp.Print.Module/Content/print-setup.css" rel="stylesheet" />
+
+<h5>Report Setup</h5>
+
+<div class="print-setup-container">
+    <!-- Left Block -->
+    <div class="print-setup-left">
+        <div class="module-filter">
+            <label for="moduleDropdown">Select Module:</label>
+            <select id="moduleDropdown" class="form-control">
+                <option value="">-- Select Module --</option>
+            </select>
+        </div>
+
+        <h4>Report Groups</h4>
+        <div class="tree-container" id="treeContainer">
+            <div class="no-data">Please select a module</div>
+        </div>
+    </div>
+
+    <!-- Right Block -->
+    <div class="print-setup-right">
+        <h4>Report List</h4>
+        <div id="reportTableContainer">
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th style="width: 100px;">Report No</th>
+                        <th>Report Description</th>
+                    </tr>
+                </thead>
+                <tbody id="reportTableBody">
+                    <tr>
+                        <td colspan="2" class="no-data">Select a group to view reports</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Print Configuration Modal -->
+<div class="modal fade" id="printConfigModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">
+                    <i class="fa fa-print"></i> Report Configuration - <span id="modalFormEdesc"></span>
+                </h4>
+            </div>
+
+            <div class="modal-body">
+                <!-- Form Info -->
+                <div class="form-info-panel" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong>Form Code:</strong> <span id="modalFormCode"></span> |
+                        <strong>Form Type:</strong> <span id="modalFormType"></span>
+                    </div>
+                    <button type="button" class="btn btn-success btn-sm" id="addPatternBtn" style="background: #46a930; border-color: #46a930;">
+                        <i class="fa fa-plus"></i> Add Pattern
+                    </button>
+                </div>
+
+                <!-- Pattern Tabs -->
+                <ul class="nav nav-tabs" id="patternTabs" role="tablist">
+                    <!-- Tabs will be dynamically generated -->
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content pattern-tab-content" id="patternTabContent" style="min-height: 500px; padding: 15px; margin-top: 10px;">
+                    <!-- Tab panes will be dynamically generated -->
+                </div>
+            </div>
+
+
+
+            
+        </div>
+    </div>
+</div>
+
+<!-- Add Pattern Modal -->
+<div class="modal fade" id="addPatternModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background: #46a930; color: #fff;">
+                <button type="button" class="close" data-dismiss="modal" style="color: #fff;">&times;</button>
+                <h4 class="modal-title" style="color: #fff; font-size: 14px;">
+                    <i class="fa fa-plus"></i> Add New Pattern
+                </h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label style="font-size: 12px;">Pattern Name</label>
+                    <input type="text" class="form-control input-sm" id="newPatternName" placeholder="Enter pattern name" style="font-size: 12px;">
+                </div>
+                <input type="hidden" id="newPatternFormCode">
+                <input type="hidden" id="newPatternCompanyCode">
+            </div>
+            <div class="modal-footer" style="padding: 10px;">
+                <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success btn-sm" id="saveNewPatternBtn" style="background: #46a930; border-color: #46a930;">
+                    <i class="fa fa-save"></i> Create Pattern
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script type="text/javascript">
+        var printSetup = {
+            currentModuleCode: '',
+            reportGroups: [],
+
+            init: function () {
+                this.loadModules();
+                this.bindEvents();
+            },
+
+            bindEvents: function () {
+                var self = this;
+
+                // Module dropdown change event
+                $('#moduleDropdown').on('change', function () {
+                    var moduleCode = $(this).val();
+                    if (moduleCode) {
+                        self.currentModuleCode = moduleCode;
+                        self.loadReportGroups(moduleCode);
+                    } else {
+                        $('#treeContainer').html('<div class="no-data">Please select a module</div>');
+                        self.clearReportTable();
+                    }
+                });
+            },
+
+            loadModules: function () {
+                var self = this;
+                $.ajax({
+                    url: '@Url.Action("GetModules", "Home")',
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.success) {
+                            self.populateModuleDropdown(response.data);
+                        } else {
+                            alert('Error loading modules: ' + response.message);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error loading modules:', error);
+                        alert('Failed to load modules');
+                    }
+                });
+            },
+
+            populateModuleDropdown: function (modules) {
+                var dropdown = $('#moduleDropdown');
+                dropdown.empty().append('<option value="">-- Select Module --</option>');
+
+                $.each(modules, function (index, module) {
+                    dropdown.append($('<option></option>')
+                        .val(module.MODULE_CODE)
+                        .text(module.MODULE_CODE + ' - ' + module.MODULE_EDESC));
+                });
+            },
+
+            loadReportGroups: function (moduleCode) {
+                var self = this;
+                $('#treeContainer').html('<div class="loading-spinner">Loading...</div>');
+
+                $.ajax({
+                    url: '@Url.Action("GetReportGroups", "Home")',
+                    type: 'POST',
+                    data: JSON.stringify({ moduleCode: moduleCode }),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.success) {
+                            self.reportGroups = response.data;
+                            self.buildTreeView(response.data);
+                        } else {
+                            $('#treeContainer').html('<div class="no-data">Error: ' + response.message + '</div>');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error loading report groups:', error);
+                        $('#treeContainer').html('<div class="no-data">Failed to load report groups</div>');
+                    }
+                });
+            },
+
+            buildTreeView: function (groups) {
+                var self = this;
+                var container = $('#treeContainer');
+                container.empty();
+
+                if (!groups || groups.length === 0) {
+                    container.html('<div class="no-data">No report groups found</div>');
+                    return;
+                }
+
+                // Build hierarchical structure
+                var tree = self.buildTreeStructure(groups);
+                var treeHtml = self.renderTreeNodes(tree);
+                container.html(treeHtml);
+
+                // Bind click events on tree labels
+                $('.tree-label').on('click', function (e) {
+                    e.stopPropagation();
+                    $('.tree-node').removeClass('selected');
+                    $(this).closest('.tree-node').addClass('selected');
+
+                    var masterCode = $(this).closest('.tree-node').data('master-form-code');
+                    self.loadReportItems(masterCode);
+                });
+
+                // Bind toggle events
+                $('.tree-toggle').on('click', function (e) {
+                    e.stopPropagation();
+                    var toggle = $(this);
+                    var treeItem = toggle.closest('.tree-item');
+                    var children = treeItem.find('> .tree-children');
+                    
+                    if (children.is(':visible')) {
+                        children.hide();
+                        toggle.text('+');
+                    } else {
+                        children.show();
+                        toggle.text('-');
+                    }
+                });
+            },
+
+            buildTreeStructure: function (groups) {
+                var tree = [];
+                var lookup = {};
+
+                // Create lookup
+                $.each(groups, function (index, item) {
+                    lookup[item.MASTER_FORM_CODE] = {
+                        data: item,
+                        children: []
+                    };
+                });
+
+                // Build tree
+                $.each(groups, function (index, item) {
+                    if (item.PRE_FORM_CODE === '00') {
+                        tree.push(lookup[item.MASTER_FORM_CODE]);
+                    } else {
+                        var parent = lookup[item.PRE_FORM_CODE];
+                        if (parent) {
+                            parent.children.push(lookup[item.MASTER_FORM_CODE]);
+                        }
+                    }
+                });
+
+                return tree;
+            },
+
+            renderTreeNodes: function (nodes, level) {
+                level = level || 0;
+                var html = '';
+
+                $.each(nodes, function (index, node) {
+                    var hasChildren = node.children && node.children.length > 0;
+                    var toggleIcon = hasChildren ? '-' : '&nbsp;&nbsp;';
+                    var nodeClass = level === 0 ? 'tree-node-group' : 'tree-node-child';
+
+                    html += '<div class="tree-item">';
+                    html += '<div class="tree-node ' + nodeClass + '" data-master-form-code="' + node.data.MASTER_FORM_CODE + '">';
+                    html += '<span class="tree-toggle">' + toggleIcon + '</span>';
+                    html += '<span class="tree-label">';
+                    html += node.data.FORM_EDESC;
+                    html += '</span>';
+                    html += '</div>';
+
+                    if (hasChildren) {
+                        html += '<div class="tree-children">';
+                        html += printSetup.renderTreeNodes(node.children, level + 1);
+                        html += '</div>';
+                    }
+                    html += '</div>';
+                });
+
+                return html;
+            },
+
+            loadReportItems: function (masterReportCode) {
+                var self = this;
+                var tbody = $('#reportTableBody');
+                tbody.html('<tr><td colspan="2" class="loading-spinner">Loading...</td></tr>');
+
+                console.log('=== loadReportItems ===');
+                console.log('Master Form Code:', masterReportCode);
+                console.log('Module Code:', self.currentModuleCode);
+
+                $.ajax({
+                    url: '@Url.Action("GetReportItems", "Home")',
+                    type: 'POST',
+                    data: JSON.stringify({
+                        moduleCode: self.currentModuleCode,
+                        masterFormCode: masterReportCode
+                    }),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function (response) {
+                        console.log('GetReportItems response:', response);
+                        if (response.success) {
+                            console.log('Report items count:', response.data ? response.data.length : 0);
+                            self.populateReportTable(response.data);
+                        } else {
+                            console.error('GetReportItems failed:', response.message);
+                            tbody.html('<tr><td colspan="2" class="no-data">Error: ' + response.message + '</td></tr>');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error loading report items:', error);
+                        console.error('Response:', xhr.responseText);
+                        tbody.html('<tr><td colspan="2" class="no-data">Failed to load reports</td></tr>');
+                    }
+                });
+            },
+
+
+            populateReportTable: function (reports) {
+                var self = this;
+                var tbody = $('#reportTableBody');
+                tbody.empty();
+
+                if (!reports || reports.length === 0) {
+                    tbody.html('<tr><td colspan="2" class="no-data">No reports found</td></tr>');
+                    return;
+                }
+
+                $.each(reports, function (index, report) {
+                    var row = $('<tr></tr>');
+                    row.append($('<td></td>').text(report.FORM_CODE));
+                    row.append($('<td></td>').text(report.FORM_EDESC));
+
+                    // Store report data on the row
+                    row.data('reportData', report);
+
+                    row.on('click', function () {
+                        tbody.find('tr').removeClass('selected');
+                        $(this).addClass('selected');
+                        
+                        // Open print configuration modal
+                        self.openPrintConfigModal(report);
+                    });
+
+                    tbody.append(row);
+                });
+            },
+
+            clearReportTable: function () {
+                $('#reportTableBody').html('<tr><td colspan="2" class="no-data">Select a group to view reports</td></tr>');
+            },
+
+            // ===== PRINT CONFIGURATION FUNCTIONS =====
+            openPrintConfigModal: function (formData) {
+                var self = this;
+                
+                console.log('=== openPrintConfigModal ===');
+                console.log('Form data:', formData);
+                
+                self.currentFormData = formData;
+                
+                // Set modal header info
+                $('#modalFormEdesc').text(formData.FORM_EDESC || formData.form_edesc);
+                $('#modalFormCode').text(formData.FORM_CODE || formData.form_code);
+                
+                var formTypeMap = {
+                    'OT': 'Others',
+                    'CH': 'Cash',
+                    'JV': 'Journal',
+                    'BK': 'Bank',
+                    'PV': 'Post Journal'
+                };
+                $('#modalFormType').text(formTypeMap[formData.FORM_TYPE || formData.form_type] || formData.FORM_TYPE || formData.form_type || '-');
+
+                // Load configuration from database
+                self.loadFormConfiguration(formData.FORM_CODE || formData.form_code);
+
+                // Show modal
+                $('#printConfigModal').modal('show');
+                
+                // Bind Add Pattern button
+                $('#addPatternBtn').off('click').on('click', function() {
+                    $('#newPatternFormCode').val(formData.FORM_CODE || formData.form_code);
+                    $('#newPatternCompanyCode').val(self.getCompanyCode());
+                    $('#newPatternName').val('');
+                    $('#addPatternModal').modal('show');
+                });
+                
+                // Bind Create Pattern button
+                $('#saveNewPatternBtn').off('click').on('click', function() {
+                    var patternName = $('#newPatternName').val().trim();
+                    var formCode = $('#newPatternFormCode').val();
+                    var companyCode = $('#newPatternCompanyCode').val();
+                    
+                    if (!patternName) {
+                        alert('Please enter pattern name');
+                        return;
+                    }
+                    
+                    self.createNewPattern(patternName, formCode, companyCode);
+                });
+            },
+
+            getCompanyCode: function() {
+                // You can adjust this to get company code from your context
+                return '01'; // Default company code
+            },
+
+            createNewPattern: function(patternName, formCode, companyCode) {
+                var self = this;
+                
+                console.log('=== createNewPattern ===');
+                console.log('Pattern Name:', patternName);
+                console.log('Form Code:', formCode);
+                console.log('Company Code:', companyCode);
+                
+                $.ajax({
+                    url: '/Print/Home/AddPattern',
+                    type: 'POST',
+                    data: {
+                        patternName: patternName,
+                        formCode: formCode,
+                        companyCode: companyCode
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            alert('Pattern created successfully!');
+                            $('#addPatternModal').modal('hide');
+                            // Reload patterns
+                            self.loadFormConfiguration(formCode);
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Error creating pattern: ' + error);
+                    }
+                });
+            },
+
+            loadFormConfiguration: function (formCode, patternId) {
+                var self = this;
+                
+                console.log('=== loadFormConfiguration START ===');
+                console.log('Form Code:', formCode);
+                console.log('Pattern ID:', patternId || 'default (first pattern)');
+                
+                $.ajax({
+                    url: '/Print/Home/GetAllPatterns',
+                    type: 'POST',
+                    data: { 
+                        formCode: formCode,
+                        patternId: patternId || null
+                    },
+                    success: function (response) {
+                        console.log('=== GetAllPatterns RESPONSE ===');
+                        console.log('Success:', response.success);
+                        
+                        if (response.success && response.data) {
+
+                            console.log('--- PATTERNS LIST ---');
+                            console.log(response.data.Patterns);                            
+                            console.log('--- PATTERN DETAIL ---');
+                            console.log(response.data.PatternDetail);                            
+                            console.log('--- HEAD FIELDS ---');
+                            console.log(response.data.HeadFields);                            
+                            console.log('--- COLUMN FIELDS ---');
+                            console.log(response.data.ColumnFields);
+                            
+                            // Store for future use
+                            self.currentPatternConfig = response.data;
+                            
+                            // Render pattern tabs
+                            self.renderPatternTabs(response.data.Patterns);
+                        } else {
+                            console.error('No data returned or error:', response.message);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('=== GetAllPatterns ERROR ===');
+                        console.error('Status:', status);
+                        console.error('Error:', error);
+                        console.error('Response:', xhr.responseText);
+                    }
+                });
+            },
+
+            renderPatternTabs: function(patterns) {
+                var self = this;
+                
+                if (!patterns || patterns.length === 0) {
+                    $('#patternTabs').html('<li><a href="#">No patterns found</a></li>');
+                    $('#patternTabContent').html('<div class="alert alert-warning">No patterns configured for this form.</div>');
+                    return;
+                }
+                
+                console.log('=== renderPatternTabs ===');
+                console.log('Number of patterns:', patterns.length);
+                
+                var tabsHtml = '';
+                var contentHtml = '';
+                
+                // Loop through patterns and create tabs
+                $.each(patterns, function(index, pattern) {
+                    var isActive = index === 0 ? 'active' : '';
+                    var patternId = pattern.PATTERN_ID;
+                    var patternName = pattern.PATTERN_NAME;
+                    
+                    console.log('Creating tab for:', patternName, '(ID:', patternId + ')');
+                    
+                    // Create tab
+                    tabsHtml += '<li class="' + isActive + '">';
+                    tabsHtml += '<a href="#pattern_' + patternId + '" data-toggle="tab" data-pattern-id="' + patternId + '">';
+                    tabsHtml += patternName;
+                    tabsHtml += '</a>';
+                    tabsHtml += '</li>';
+                    
+                    // Create tab content placeholder
+                    contentHtml += '<div class="tab-pane ' + isActive + '" id="pattern_' + patternId + '">';
+                    contentHtml += '<div class="pattern-content">';
+                    contentHtml += '<p>Loading pattern details...</p>';
+                    contentHtml += '</div>';
+                    contentHtml += '</div>';
+                });
+                
+                // Update DOM
+                $('#patternTabs').html(tabsHtml);
+                $('#patternTabContent').html(contentHtml);
+                
+                console.log('Pattern tabs rendered successfully');
+                console.log('Tab content HTML updated');
+                
+                // Bind click event to tabs
+                $('#patternTabs a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
+                    var patternId = $(e.target).data('pattern-id');
+                    var formCode = self.currentFormData.FORM_CODE || self.currentFormData.form_code;
+                    
+                    console.log('=== Tab switched to pattern ID:', patternId);
+                    
+                    // Call API to load pattern details
+                    self.loadPatternDetail(formCode, patternId);
+                });
+                
+                // Load first pattern details immediately (with small delay to ensure DOM is ready)
+                if (patterns.length > 0) {
+                    setTimeout(function() {
+                        var formCode = self.currentFormData.FORM_CODE || self.currentFormData.form_code;
+                        console.log('Loading first pattern details...');
+                        self.loadPatternDetail(formCode, patterns[0].PATTERN_ID);
+                    }, 100);
+                }
+            },
+
+            loadPatternDetail: function(formCode, patternId) {
+                var self = this;
+                
+                console.log('=== loadPatternDetail ===');
+                console.log('Form Code:', formCode);
+                console.log('Pattern ID:', patternId);
+                
+                $.ajax({
+                    url: '/Print/Home/GetAllPatterns',
+                    type: 'POST',
+                    data: { 
+                        formCode: formCode,
+                        patternId: patternId
+                    },
+                    success: function (response) {
+                        console.log('=== Pattern Detail Response ===');
+                        
+                        if (response.success && response.data) {
+                            console.log('Pattern Detail:', response.data.PatternDetail);
+                            console.log('Head Fields:', response.data.HeadFields);
+                            console.log('Column Fields:', response.data.ColumnFields);
+                            
+                            // Update current pattern config
+                            self.currentPatternConfig = response.data;
+                            
+                            // Render pattern content
+                            self.renderPatternContent(patternId, response.data);
+                        } else {
+                            console.error('Failed to load pattern detail');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error loading pattern detail:', error);
+                    }
+                });
+            },
+
+            renderPatternContent: function(patternId, data) {
+                var self = this;
+                
+                console.log('=== renderPatternContent for pattern ID:', patternId);
+                
+                var pattern = data.PatternDetail || {};
+                var headFields = data.HeadFields || [];
+                var columnFields = data.ColumnFields || [];
+                
+                // Build editable form with compact styling
+                var html = '<div class="pattern-detail-panel" style="padding: 10px; font-size: 12px;">';
+                
+                // === PATTERN DETAILS === (Single Row - No title)
+                html += '<div class="row" style="margin-bottom: 10px;">';
+                
+                // Pattern Name (col-md-3)
+                html += '<div class="col-md-3">';
+                html += '<div class="form-group" style="margin-bottom: 0;">';
+                html += '<label style="font-size: 11px; margin-bottom: 3px;">Pattern Name</label>';
+                html += '<input type="text" class="form-control input-sm pattern-name" value="' + (pattern.PATTERN_NAME || '') + '" style="font-size: 12px; height: 24px;">';
+                html += '</div>';
+                html += '</div>';
+                
+                // Form Code (col-md-2)
+                html += '<div class="col-md-2">';
+                html += '<div class="form-group" style="margin-bottom: 0;">';
+                html += '<label style="font-size: 11px; margin-bottom: 3px;">Form Code</label>';
+                html += '<input type="text" class="form-control input-sm" value="' + (pattern.FORM_CODE || '') + '" readonly style="font-size: 12px; height: 24px;">';
+                html += '</div>';
+                html += '</div>';
+                
+                // Charge Exist checkbox (col-md-2)
+                html += '<div class="col-md-2">';
+                html += '<div class="form-group" style="margin-bottom: 0;">';
+                html += '<label style="font-size: 11px; margin-bottom: 3px; display: block;">&nbsp;</label>'; // Spacer to align with inputs
+                html += '<div class="checkbox" style="margin-top: 0; margin-bottom: 0;">';
+                html += '<label style="font-size: 11px;">';
+                html += '<input type="checkbox" class="charge-exist-cb" ' + (pattern.CHARGE_EXIST ? 'checked' : '') + '> Charge Exist';
+                html += '</label>';
+                html += '</div>';
+                html += '</div>';
+                html += '</div>';
+                
+                // Active checkbox (col-md-2)
+                html += '<div class="col-md-2">';
+                html += '<div class="form-group" style="margin-bottom: 0;">';
+                html += '<label style="font-size: 11px; margin-bottom: 3px; display: block;">&nbsp;</label>'; // Spacer to align with inputs
+                html += '<div class="checkbox" style="margin-top: 0; margin-bottom: 0;">';
+                html += '<label style="font-size: 11px;">';
+                html += '<input type="checkbox" class="active-cb" ' + (pattern.ACTIVE ? 'checked' : '') + '> Active';
+                html += '</label>';
+                html += '</div>';
+                html += '</div>';
+                html += '</div>';
+                
+                // Auto from Form Setup - Button (col-md-3)
+                html += '<div class="col-md-3">';
+                html += '<div class="form-group" style="margin-bottom: 0;">';
+                html += '<label style="font-size: 11px; margin-bottom: 3px; display: block;">&nbsp;</label>'; // Spacer to align with inputs
+                html += '<button type="button" class="btn btn-sm auto-from-form-btn" data-pattern-id="' + patternId + '" style="background: #46a930; color: #fff; font-size: 11px; height: 24px; line-height: 12px; padding: 5px 10px; border: none;">';
+                html += '<i class="fa fa-magic"></i> Auto from Form Setup';
+                html += '</button>';
+                html += '</div>';
+                html += '</div>';
+                
+                html += '</div>'; // end row
+                
+                // === NEW ROW for FILE_NAME, FORM_TYPE, MAIN_FIELD, and ITEM_COUNT ===
+                html += '<div class="row" style="margin-bottom: 10px;">';
+                
+                // File Name (col-md-3)
+                html += '<div class="col-md-3">';
+                html += '<div class="form-group" style="margin-bottom: 0;">';
+                html += '<label style="font-size: 11px; margin-bottom: 3px;">File Name</label>';
+                html += '<input type="text" class="form-control input-sm file-name" value="' + (pattern.FILE_NAME || '') + '" style="font-size: 12px; height: 24px;">';
+                html += '</div>';
+                html += '</div>';
+                
+                // Form Type (col-md-3)
+                html += '<div class="col-md-3">';
+                html += '<div class="form-group" style="margin-bottom: 0;">';
+                html += '<label style="font-size: 11px; margin-bottom: 3px;">Form Type</label>';
+                html += '<select class="form-control input-sm form-type" style="font-size: 12px; height: 24px;">';
+                html += '<option value="">-- Select --</option>';
+                html += '<option value="OT" ' + (pattern.FORM_TYPE === 'OT' ? 'selected' : '') + '>Others</option>';
+                html += '<option value="JV" ' + (pattern.FORM_TYPE === 'JV' ? 'selected' : '') + '>Journal</option>';
+                html += '</select>';
+                html += '</div>';
+                html += '</div>';
+                
+                // Main Field (col-md-3)
+                html += '<div class="col-md-3">';
+                html += '<div class="form-group" style="margin-bottom: 0;">';
+                html += '<label style="font-size: 11px; margin-bottom: 3px;">Main Field</label>';
+                html += '<input type="text" class="form-control input-sm main-field" value="' + (pattern.MAIN_FIELD || '') + '" style="font-size: 12px; height: 24px;">';
+                html += '</div>';
+                html += '</div>';
+                
+                // Item Count (col-md-3)
+                html += '<div class="col-md-3">';
+                html += '<div class="form-group" style="margin-bottom: 0;">';
+                html += '<label style="font-size: 11px; margin-bottom: 3px;">Item Count</label>';
+                html += '<input type="number" class="form-control input-sm item-count" value="' + (pattern.ITEM_COUNT || '') + '" style="font-size: 12px; height: 24px;">';
+                html += '</div>';
+                html += '</div>';
+                
+                html += '</div>'; // end row
+
+                // === ROW for Linked Menu (Read-only display) ===
+                html += '<div class="row" style="margin-bottom: 10px;">';
+                html += '<div class="col-md-6">';
+                html += '<div class="form-group" style="margin-bottom: 0;">';
+                html += '<label style="font-size: 11px; margin-bottom: 3px;">Linked Menu</label>';
+                html += '<input type="text" class="form-control input-sm linked-menu-display" readonly value="' + (pattern.MENU_NO ? (pattern.MENU_NO + ' - Loading...') : 'No menu linked') + '" style="font-size: 12px; height: 24px; background-color: #f5f5f5;" data-menu-no="' + (pattern.MENU_NO || '') + '">';
+                html += '</div>';
+                html += '</div>';
+                html += '</div>';
+
+                
+                html += '<hr style="margin: 10px 0;">';
+                
+                // === HEAD FIELDS ===
+                html += '<h5 style="font-size: 13px; margin-bottom: 8px; font-weight: 600;">Head Fields <button type="button" class="btn btn-success btn-xs add-head-field-btn" style="margin-left: 10px; font-size: 11px;"><i class="fa fa-plus"></i> Add</button></h5>';
+                html += '<table class="table table-bordered table-condensed head-fields-table" style="font-size: 11px; margin-bottom: 8px;">';
+                html += '<thead><tr style="background: #f5f5f5;">';
+                html += '<th style="width:30%; padding: 5px;">Label</th>';
+                html += '<th style="width:30%; padding: 5px;">Field</th>';
+                html += '<th style="width:30%; padding: 5px;">Default Value</th>';
+                html += '<th style="width:10%; padding: 5px;">Action</th>';
+                html += '</tr></thead>';
+                html += '<tbody>';
+                
+                if (headFields.length === 0) {
+                    html += '<tr class="no-data-row"><td colspan="4" class="text-center text-muted" style="padding: 8px;">No head fields</td></tr>';
+                } else {
+                    $.each(headFields, function(i, field) {
+                        html += '<tr>';
+                        html += '<td style="padding: 3px;"><input type="text" class="form-control input-sm head-label" value="' + (field.LABEL || '') + '" style="font-size: 11px; height: 24px;"></td>';
+                        html += '<td style="padding: 3px;"><input type="text" class="form-control input-sm head-field" value="' + (field.FIELD || '') + '" style="font-size: 11px; height: 24px;"></td>';
+                        html += '<td style="padding: 3px;"><input type="text" class="form-control input-sm head-default" value="' + (field.DEFAULT_VAL || '') + '" style="font-size: 11px; height: 24px;"></td>';
+                        html += '<td style="padding: 3px;"><button type="button" class="btn btn-danger btn-xs remove-head-field-btn" style="font-size: 10px;"><i class="fa fa-trash"></i></button></td>';
+                        html += '</tr>';
+                    });
+                }
+                
+                html += '</tbody>';
+                html += '</table>';
+                
+                html += '<hr style="margin: 10px 0;">';
+                
+                // === COLUMN FIELDS ===
+                html += '<h5 style="font-size: 13px; margin-bottom: 8px; font-weight: 600;">Column Fields <button type="button" class="btn btn-success btn-xs add-column-field-btn" style="margin-left: 10px; font-size: 11px;"><i class="fa fa-plus"></i> Add</button></h5>';
+                html += '<table class="table table-bordered column-fields-table" style="margin-bottom: 0;">';
+                html += '<thead>';
+                html += '<tr style="background: #f5f5f5;">';
+                html += '<th style="padding: 5px; font-size: 11px; width: 8%;">SN</th>';
+                html += '<th style="padding: 5px; font-size: 11px; width: 8%;">M/C</th>';
+                html += '<th style="padding: 5px; font-size: 11px; width: 20%;">Label</th>';
+                html += '<th style="padding: 5px; font-size: 11px; width: 20%;">Field</th>';
+                html += '<th style="padding: 5px; font-size: 11px; width: 15%;">Default Val</th>';
+                html += '<th style="padding: 5px; font-size: 11px; width: 10%;">Width</th>';
+                html += '<th style="padding: 5px; font-size: 11px; width: 10%;">Action</th>';
+                html += '</tr>';
+                html += '</thead>';
+                html += '<tbody>';
+                
+                if (columnFields.length === 0) {
+                    html += '<tr class="no-data-row"><td colspan="7" class="text-center text-muted" style="padding: 8px;">No column fields</td></tr>';
+                } else {
+                    $.each(columnFields, function(i, field) {
+                        html += '<tr>';
+                        html += '<td style="padding: 3px;"><input type="number" class="form-control input-sm column-sn" value="' + (field.SN || '') + '" style="font-size: 11px; height: 24px;"></td>';
+                        html += '<td style="padding: 3px;"><select class="form-control input-sm column-mc-flag" style="font-size: 11px; height: 24px;">';
+                        html += '<option value="M" ' + (field.MASTER_CHILD_FLAG === 'M' ? 'selected' : '') + '>Master</option>';
+                        html += '<option value="C" ' + (field.MASTER_CHILD_FLAG === 'C' ? 'selected' : '') + '>Child</option>';
+                        html += '</select></td>';
+                        html += '<td style="padding: 3px;"><input type="text" class="form-control input-sm column-label" value="' + (field.LABEL || '') + '" style="font-size: 11px; height: 24px;"></td>';
+                        html += '<td style="padding: 3px;"><input type="text" class="form-control input-sm column-field" value="' + (field.FIELD || '') + '" style="font-size: 11px; height: 24px;"></td>';
+                        html += '<td style="padding: 3px;"><input type="text" class="form-control input-sm column-default" value="' + (field.DEFAULT_VAL || '') + '" style="font-size: 11px; height: 24px;"></td>';
+                        html += '<td style="padding: 3px;"><input type="number" class="form-control input-sm column-width" value="' + (field.WIDTH || '') + '" style="font-size: 11px; height: 24px;"></td>';
+                        html += '<td style="padding: 3px;"><button type="button" class="btn btn-danger btn-xs remove-column-field-btn" style="font-size: 10px;"><i class="fa fa-trash"></i></button></td>';
+                        html += '</tr>';
+                    });
+                }
+                
+                html += '</tbody>';
+                html += '</table>';
+                
+                html += '<hr style="margin: 10px 0;">';
+                
+                // === FOOTER FIELDS ===
+                html += '<h5 style="font-size: 13px; margin-bottom: 8px; font-weight: 600;">Footer Fields <button type="button" class="btn btn-success btn-xs add-footer-field-btn" style="margin-left: 10px; font-size: 11px;"><i class="fa fa-plus"></i> Add</button></h5>';
+                html += '<table class="table table-bordered table-condensed footer-fields-table" style="font-size: 11px; margin-bottom: 8px;">';
+                html += '<thead><tr style="background: #f5f5f5;">';
+                html += '<th style="width:30%; padding: 5px;">Label</th>';
+                html += '<th style="width:30%; padding: 5px;">Field</th>';
+                html += '<th style="width:30%; padding: 5px;">Default Value</th>';
+                html += '<th style="width:10%; padding: 5px;">Action</th>';
+                html += '</tr></thead>';
+                html += '<tbody>';
+                
+                var footerFields = data.FooterFields || [];
+                if (footerFields.length === 0) {
+                    html += '<tr class="no-data-row"><td colspan="4" class="text-center text-muted" style="padding: 8px;">No footer fields</td></tr>';
+                } else {
+                    $.each(footerFields, function(i, field) {
+                        html += '<tr>';
+                        html += '<td style="padding: 3px;"><input type="text" class="form-control input-sm footer-label" value="' + (field.LABEL || '') + '" style="font-size: 11px; height: 24px;"></td>';
+                        html += '<td style="padding: 3px;"><input type="text" class="form-control input-sm footer-field" value="' + (field.FIELD || '') + '" style="font-size: 11px; height: 24px;"></td>';
+                        html += '<td style="padding: 3px;"><textarea class="form-control input-sm footer-default" rows="2" style="font-size: 11px; resize: vertical;">' + (field.DEFAULT_VAL || '') + '</textarea></td>';
+                        html += '<td style="padding: 3px;"><button type="button" class="btn btn-danger btn-xs remove-footer-field-btn" style="font-size: 10px;"><i class="fa fa-trash"></i></button></td>';
+                        html += '</tr>';
+                    });
+                }
+                
+                html += '</tbody>';
+                html += '</table>';
+                
+                html += '<hr style="margin: 10px 0;">';
+                
+                // === SQL QUERY === (Moved to end)
+                html += '<div class="form-group" style="margin-bottom: 8px;">';
+                html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">';
+                html += '<label style="font-size: 11px; margin-bottom: 0;">SQL Query</label>';
+                html += '<button type="button" class="btn btn-sm generate-sql-btn" data-pattern-id="' + patternId + '" style="background: #2196F3; color: #fff; font-size: 11px; height: 24px; line-height: 12px; padding: 5px 10px; border: none;">';
+                html += '<i class="fa fa-code"></i> Generate SQL';
+                html += '</button>';
+                html += '</div>';
+                html += '<textarea class="form-control sql-query" rows="4" placeholder="Enter SQL query here..." style="font-size: 11px; font-family: monospace;">' + (pattern.SQL_QUERY || '') + '</textarea>';
+                html += '</div>';
+                
+                html += '<hr style="margin: 10px 0;">';
+                
+                // === MAIN FIELD VALUE & PREVIEW ===
+                html += '<div class="row" style="margin-bottom: 8px;">';
+                html += '<div class="col-md-8">';
+                html += '<div class="form-group" style="margin-bottom: 0;">';
+                html += '<label style="font-size: 11px; margin-bottom: 3px;">Main Field Value</label>';
+                html += '<input type="text" class="form-control main-field-value" placeholder="Enter main field value (e.g., 00022)" style="font-size: 11px; height: 28px;">';
+                html += '</div>';
+                html += '</div>';
+                html += '<div class="col-md-4">';
+                html += '<div class="form-group" style="margin-bottom: 0;">';
+                html += '<label style="font-size: 11px; margin-bottom: 3px;">&nbsp;</label>';
+                html += '<button type="button" class="btn btn-info btn-block preview-pattern-btn" data-pattern-id="' + patternId + '" style="font-size: 11px; height: 28px; line-height: 16px; padding: 5px 10px;">';
+                html += '<i class="fa fa-eye"></i> Preview';
+                html += '</button>';
+                html += '</div>';
+                html += '</div>';
+                html += '</div>';
+                
+                html += '<hr style="margin: 10px 0;">';
+                
+                // === MAKE MENU SECTION ===
+                html += '<h5 style="font-size: 13px; margin-bottom: 8px; font-weight: 600;"><i class="fa fa-sitemap"></i> Make Menu</h5>';
+                
+                // Store pattern ID as data attribute
+                html += '<input type="hidden" class="pattern-id-for-menu" value="' + patternId + '">';
+                
+                // Row 1: Module and Group
+                html += '<div class="row" style="margin-bottom: 8px;">';
+                html += '<div class="col-md-6">';
+                html += '<div class="form-group" style="margin-bottom: 0;">';
+                html += '<label style="font-size: 11px; margin-bottom: 3px;">Module</label>';
+                html += '<select class="form-control input-sm menu-module" style="font-size: 11px; height: 28px;">';
+                html += '<option value="">-- Select Module --</option>';
+                html += '</select>';
+                html += '</div>';
+                html += '</div>';
+                html += '<div class="col-md-6">';
+                html += '<div class="form-group" style="margin-bottom: 0;">';
+                html += '<label style="font-size: 11px; margin-bottom: 3px;">Group Menu</label>';
+                html += '<select class="form-control input-sm menu-group" style="font-size: 11px; height: 28px;" disabled>';
+                html += '<option value="">-- Select Group --</option>';
+                html += '</select>';
+                html += '</div>';
+                html += '</div>';
+                html += '</div>';
+                
+                // Row 2: Next Menu Code (read-only) - Hidden but kept in DOM for code compatibility
+                html += '<div class="row" style="margin-bottom: 8px; display: none;">';
+                html += '<div class="col-md-6">';
+                html += '<div class="form-group" style="margin-bottom: 0;">';
+                html += '<label style="font-size: 11px; margin-bottom: 3px;">Next Menu Code</label>';
+                html += '<input type="text" class="form-control input-sm menu-next-code" readonly style="font-size: 11px; height: 28px; background-color: #f5f5f5;">';
+                html += '</div>';
+                html += '</div>';
+                html += '</div>';
+                
+                // Row 3: Menu Description and Object Name
+                html += '<div class="row" style="margin-bottom: 8px;">';
+                html += '<div class="col-md-6">';
+                html += '<div class="form-group" style="margin-bottom: 0;">';
+                html += '<label style="font-size: 11px; margin-bottom: 3px;">Menu Description</label>';
+                html += '<input type="text" class="form-control input-sm menu-edesc" placeholder="Enter menu description" style="font-size: 11px; height: 28px;">';
+                html += '</div>';
+                html += '</div>';
+                html += '<div class="col-md-6">';
+                html += '<div class="form-group" style="margin-bottom: 0;">';
+                html += '<label style="font-size: 11px; margin-bottom: 3px;">Menu Object Name</label>';
+                html += '<input type="text" class="form-control input-sm menu-object-name" placeholder="Enter object name" style="font-size: 11px; height: 28px;">';
+                html += '</div>';
+                html += '</div>';
+                html += '</div>';
+                
+                // Row 4: Full Path and Virtual Path
+                html += '<div class="row" style="margin-bottom: 8px;">';
+                html += '<div class="col-md-6">';
+                html += '<div class="form-group" style="margin-bottom: 0;">';
+                html += '<label style="font-size: 11px; margin-bottom: 3px;">Full Path</label>';
+                html += '<input type="text" class="form-control input-sm menu-full-path" placeholder="/Sales/Dashboard/index" style="font-size: 11px; height: 28px;">';
+                html += '</div>';
+                html += '</div>';
+                html += '<div class="col-md-6">';
+                html += '<div class="form-group" style="margin-bottom: 0;">';
+                html += '<label style="font-size: 11px; margin-bottom: 3px;">Virtual Path</label>';
+                html += '<input type="text" class="form-control input-sm menu-virtual-path" placeholder="Sales/Dashboard/index" style="font-size: 11px; height: 28px;">';
+                html += '</div>';
+                html += '</div>';
+                html += '</div>';
+                
+                // Row 5: Save Menu Button
+                html += '<div class="row" style="margin-bottom: 8px;">';
+                html += '<div class="col-md-12 text-right">';
+                html += '<button type="button" class="btn btn-success btn-sm save-menu-btn" style="font-size: 11px;">';
+                html += '<i class="fa fa-plus"></i> Save Menu';
+                html += '</button>';
+                html += '</div>';
+                html += '</div>';
+                
+                html += '<hr style="margin: 10px 0;">';
+                
+                // Buttons
+                html += '<div class="text-right">';
+                html += '<button type="button" class="btn btn-default btn-sm" data-dismiss="modal" style="font-size: 12px; margin-right: 5px;"><i class="fa fa-times"></i> Close</button>';
+                html += '<button type="button" class="btn btn-primary btn-sm save-pattern-btn" data-pattern-id="' + patternId + '" style="font-size: 12px;"><i class="fa fa-save"></i> Save Pattern</button>';
+                html += '</div>';
+                
+                html += '</div>'; // end pattern-detail-panel
+                
+                console.log('Built HTML length:', html.length);
+                console.log('Target selector: #pattern_' + patternId + ' .pattern-content');
+                
+                // Update the tab content
+                var targetElement = $('#pattern_' + patternId + ' .pattern-content');
+                console.log('Target element found:', targetElement.length);
+                
+                if (targetElement.length === 0) {
+                    console.error('ERROR: Target element not found!');
+                    console.error('Available pattern containers:', $('.pattern-content').length);
+                    return;
+                }
+                
+                targetElement.html(html);
+                console.log('HTML inserted successfully');
+                
+                // Bind events
+                self.bindPatternFormEvents(patternId);
+                
+                console.log('Pattern content rendered with editable form');
+            },
+
+            bindPatternFormEvents: function(patternId) {
+                var self = this;
+                var container = $('#pattern_' + patternId);
+                
+                // Add head field
+                container.find('.add-head-field-btn').off('click').on('click', function() {
+                    var tbody = container.find('.head-fields-table tbody');
+                    tbody.find('.no-data-row').remove();
+                    
+                    var newRow = '<tr>';
+                    newRow += '<td><input type="text" class="form-control head-label" placeholder="Label"></td>';
+                    newRow += '<td><input type="text" class="form-control head-field" placeholder="Field"></td>';
+                    newRow += '<td><input type="text" class="form-control head-default" placeholder="Default"></td>';
+                    newRow += '<td><button type="button" class="btn btn-danger btn-sm remove-head-field-btn"><i class="fa fa-trash"></i></button></td>';
+                    newRow += '</tr>';
+                    tbody.append(newRow);
+                    
+                    // Rebind remove event
+                    self.bindPatternFormEvents(patternId);
+                });
+                
+                // Remove head field
+                container.find('.remove-head-field-btn').off('click').on('click', function() {
+                    var row = $(this).closest('tr');
+                    row.remove();
+                    
+                    var tbody = container.find('.head-fields-table tbody');
+                    if (tbody.find('tr').length === 0) {
+                        tbody.html('<tr class="no-data-row"><td colspan="4" class="text-center text-muted" style="padding: 8px;">No head fields. Click "Add" to add.</td></tr>');
+                    }
+                });
+                
+                // Add footer field
+                container.find('.add-footer-field-btn').off('click').on('click', function() {
+                    var tbody = container.find('.footer-fields-table tbody');
+                    tbody.find('.no-data-row').remove();
+                    
+                    var newRow = '<tr>';
+                    newRow += '<td><input type="text" class="form-control footer-label" placeholder="Label"></td>';
+                    newRow += '<td><input type="text" class="form-control footer-field" placeholder="Field"></td>';
+                    newRow += '<td><textarea class="form-control footer-default" rows="2" placeholder="Default" style="resize: vertical;"></textarea></td>';
+                    newRow += '<td><button type="button" class="btn btn-danger btn-sm remove-footer-field-btn"><i class="fa fa-trash"></i></button></td>';
+                    newRow += '</tr>';
+                    tbody.append(newRow);
+                    
+                    // Rebind remove event
+                    self.bindPatternFormEvents(patternId);
+                });
+                
+                // Remove footer field
+                container.find('.remove-footer-field-btn').off('click').on('click', function() {
+                    var row = $(this).closest('tr');
+                    var tbody = row.closest('tbody');
+                    row.remove();
+                    
+                    // If no more rows, add "no data" message
+                    if (tbody.find('tr').length === 0) {
+                        tbody.append('<tr class="no-data-row"><td colspan="4" class="text-center text-muted">No footer fields</td></tr>');
+                    }
+                });
+                
+                // Allow Enter key in footer textarea for line breaks
+                container.find('.footer-default').off('keydown').on('keydown', function(e) {
+                    // Allow Enter key to create new lines (prevent form submission)
+                    if (e.keyCode === 13 || e.which === 13) {
+                        e.stopPropagation();
+                        // Don't prevent default - let the textarea handle the newline naturally
+                    }
+                });
+                
+                // Remove footer field - using event delegation on container (pattern-specific)
+                container.on('click.deleteFooter', '.remove-footer-field', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    $(this).closest('tr').remove();
+                    
+                    // Show "no data" row if table is empty
+                    var tbody = container.find('.footer-fields-table tbody');
+                    if (tbody.find('tr').length === 0) {
+                        tbody.html('<tr class="no-data-row"><td colspan="4" class="text-center text-muted" style="padding: 8px;">No footer fields. Click "Add" to add.</td></tr>');
+                    }
+                });
+                
+                // Remove head field - using event delegation on container (pattern-specific)
+                container.on('click.deleteHead', '.remove-head-field', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    $(this).closest('tr').remove();
+                    
+                    // Show "no data" row if table is empty
+                    var tbody = container.find('.head-fields-table tbody');
+                    if (tbody.find('tr').length === 0) {
+                        tbody.html('<tr class="no-data-row"><td colspan="4" class="text-center text-muted" style="padding: 8px;">No head fields. Click "Add" to add.</td></tr>');
+                    }
+                });
+                
+                // Add column field
+                container.find('.add-column-field-btn').off('click').on('click', function() {
+                    var tbody = container.find('.column-fields-table tbody');
+                    tbody.find('.no-data-row').remove();
+                    
+                    var newRow = '<tr>';
+                    newRow += '<td style="padding: 3px;"><input type="number" class="form-control input-sm column-sn" value="0" style="font-size: 11px; height: 24px;"></td>';
+                    newRow += '<td style="padding: 3px;"><select class="form-control input-sm column-mc-flag" style="font-size: 11px; height: 24px;"><option value="M">Master</option><option value="C" selected>Child</option></select></td>';
+                    newRow += '<td style="padding: 3px;"><input type="text" class="form-control input-sm column-label" style="font-size: 11px; height: 24px;"></td>';
+                    newRow += '<td style="padding: 3px;"><input type="text" class="form-control input-sm column-field" style="font-size: 11px; height: 24px;"></td>';
+                    newRow += '<td style="padding: 3px;"><input type="text" class="form-control input-sm column-default" style="font-size: 11px; height: 24px;"></td>';
+                    newRow += '<td style="padding: 3px;"><input type="number" class="form-control input-sm column-width" value="30" style="font-size: 11px; height: 24px;"></td>';
+                    newRow += '<td style="padding: 3px;"><button type="button" class="btn btn-danger btn-xs remove-column-field-btn" style="font-size: 11px;"><i class="fa fa-trash"></i></button></td>';
+                    newRow += '</tr>';
+                    tbody.append(newRow);
+                });
+                
+                // Remove column field - handle BOTH class names (remove-column-field and remove-column-field-btn)
+                container.on('click.deleteColumn', '.remove-column-field-btn, .remove-column-field', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    $(this).closest('tr').remove();
+                    
+                    // Show "no data" row if table is empty
+                    var tbody = container.find('.column-fields-table tbody');
+                    if (tbody.find('tr').length === 0) {
+                        tbody.html('<tr class="no-data-row"><td colspan="7" class="text-center text-muted" style="padding: 8px;">No column fields. Click "Add" to add.</td></tr>');
+                    }
+                });
+                
+                // Save button
+                container.find('.save-pattern-btn').off('click').on('click', function() {
+                    var patternId = $(this).data('pattern-id');
+                    self.savePattern(patternId);
+                });
+                
+                // Auto from Form Setup button
+                container.find('.auto-from-form-btn').off('click').on('click', function() {
+                    var patternId = $(this).data('pattern-id');
+                    var formCode = self.currentFormData.FORM_CODE || self.currentFormData.form_code;
+                    
+                    if (confirm('Do you want to auto-fill this pattern from Form Setup?\n\nThis will populate fields automatically based on the form configuration.')) {
+                        self.autoFillFromFormSetup(formCode, patternId);
+                    }
+                });
+                
+                // Generate SQL button
+                container.find('.generate-sql-btn').off('click').on('click', function() {
+                    var patternId = $(this).data('pattern-id');
+                    var formCode = self.currentFormData.FORM_CODE || self.currentFormData.form_code;
+                    
+                    self.generateSqlQuery(formCode, patternId);
+                });
+                
+                // Preview button
+                container.find('.preview-pattern-btn').off('click').on('click', function() {
+                    var mainFieldValue = container.find('.main-field-value').val();
+                    var formCode = self.currentFormData.FORM_CODE || self.currentFormData.form_code;
+                    var companyCode = self.getCompanyCode();
+                    var patternId = $(this).data('pattern-id');
+                    
+                    // Build URL: if mainFieldValue is empty, use activePatternId instead
+                    var url = '/Print/Home/PreviewPattern?formCode=' + formCode + '&companyCode=' + companyCode;
+                    
+                    if (mainFieldValue) {
+                        // If mainFieldValue is provided, add it to URL
+                        url += '&mainFieldValue=' + encodeURIComponent(mainFieldValue);
+                    } else {
+                        // If mainFieldValue is empty, add activePatternId instead
+                        url += '&activePatternId=' + patternId;
+                    }
+                    
+                    window.open(url, '_blank');
+                });
+                
+                // ===== MAKE MENU EVENT HANDLERS =====
+                
+                // Load menu modules first, then load linked menu info (if exists)
+                self.loadMenuModules(container, function() {
+                    // After modules are loaded, load linked menu info
+                    self.loadLinkedMenuInfo(container);
+                });
+                
+                // Menu module change event
+                container.find('.menu-module').off('change').on('change', function() {
+                    var moduleCode = $(this).val();
+                    if (moduleCode) {
+                        self.loadMenuGroups(container, moduleCode);
+                    } else {
+                        container.find('.menu-group').prop('disabled', true).html('<option value="">-- Select Group --</option>');
+                        container.find('.menu-next-code').val('');
+                    }
+                });
+                
+                // Menu group change event
+                container.find('.menu-group').off('change').on('change', function() {
+                    var groupMenuNo = $(this).val();
+                    var moduleCode = container.find('.menu-module').val();
+                    
+                    if (groupMenuNo && moduleCode) {
+                        self.generateNextMenuCode(container, moduleCode, groupMenuNo);
+                    } else {
+                        container.find('.menu-next-code').val('');
+                    }
+                });
+                
+                // Save menu button
+                container.find('.save-menu-btn').off('click').on('click', function() {
+                    var patternId = container.find('.pattern-id-for-menu').val();
+                    self.saveNewMenu(container, patternId);
+                });
+            },
+
+            // ===== MENU MANAGEMENT FUNCTIONS =====
+            
+            loadLinkedMenuInfo: function(container) {
+                var self = this;
+                var menuNo = container.find('.linked-menu-display').data('menu-no');
+                
+                if (!menuNo) {
+                    return;
+                }
+                
+                $.ajax({
+                    url: '/Print/Home/GetMenuInfo',
+                    type: 'POST',
+                    data: { menuNo: menuNo },
+                    success: function(response) {
+                        if (response.success && response.data) {
+                            var menuData = response.data;
+                            
+                            // Update the read-only display field
+                            container.find('.linked-menu-display').val(menuData.MENU_NO + ' - ' + menuData.MENU_EDESC);
+                            
+                            // Populate the Make Menu section fields
+                            if (menuData.MODULE_CODE) {
+                                // Set module dropdown
+                                container.find('.menu-module').val(menuData.MODULE_CODE);
+                                
+                                // Load groups for this module, then set the group
+                                self.loadMenuGroups(container, menuData.MODULE_CODE, function() {
+                                    if (menuData.PRE_MENU_NO) {
+                                        container.find('.menu-group').val(menuData.PRE_MENU_NO);
+                                        
+                                        // Set the EXISTING menu number (not next code) since we're editing
+                                        container.find('.menu-next-code').val(menuData.MENU_NO);
+                                    }
+                                });
+                            }
+                            
+                            // Populate other fields
+                            container.find('.menu-edesc').val(menuData.MENU_EDESC || '');
+                            container.find('.menu-object-name').val(menuData.MENU_OBJECT_NAME || '');
+                            container.find('.menu-full-path').val(menuData.FULL_PATH || '');
+                            container.find('.menu-virtual-path').val(menuData.VIRTUAL_PATH || '');
+                        } else {
+                            container.find('.linked-menu-display').val(menuNo + ' - (Menu not found)');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error loading menu info:', error);
+                        container.find('.linked-menu-display').val(menuNo + ' - (Error loading)');
+                    }
+                });
+            },
+            
+            loadMenuModules: function(container, callback) {
+                var self = this;
+                
+                $.ajax({
+                    url: '/Print/Home/GetMenuModules',
+                    type: 'GET',
+                    success: function(response) {
+                        if (response.success) {
+                            var dropdown = container.find('.menu-module');
+                            dropdown.empty().append('<option value="">-- Select Module --</option>');
+                            
+                            $.each(response.data, function(index, module) {
+                                dropdown.append($('<option></option>')
+                                    .val(module.MODULE_CODE)
+                                    .text(module.MODULE_CODE + ' - ' + module.MODULE_EDESC));
+                            });
+                            
+                            // Call callback after modules are loaded
+                            if (typeof callback === 'function') {
+                                callback();
+                            }
+                        } else {
+                            alert('Error loading modules: ' + response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error loading menu modules:', error);
+                        alert('Failed to load menu modules');
+                    }
+                });
+            },
+            
+            loadMenuGroups: function(container, moduleCode, callback) {
+                var self = this;
+                
+                container.find('.menu-group').prop('disabled', true).html('<option value="">Loading...</option>');
+                
+                $.ajax({
+                    url: '/Print/Home/GetMenuGroups',
+                    type: 'POST',
+                    data: { moduleCode: moduleCode },
+                    success: function(response) {
+                        if (response.success) {
+                            var dropdown = container.find('.menu-group');
+                            dropdown.empty().append('<option value="">-- Select Group --</option>');
+                            
+                            $.each(response.data, function(index, group) {
+                                dropdown.append($('<option></option>')
+                                    .val(group.MENU_NO)
+                                    .text(group.MENU_NO + ' - ' + group.MENU_EDESC));
+                            });
+                            
+                            dropdown.prop('disabled', false);
+                            
+                            // Call callback if provided
+                            if (typeof callback === 'function') {
+                                callback();
+                            }
+                        } else {
+                            alert('Error loading groups: ' + response.message);
+                            container.find('.menu-group').html('<option value="">-- Select Group --</option>');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error loading menu groups:', error);
+                        alert('Failed to load menu groups');
+                        container.find('.menu-group').prop('disabled', false).html('<option value="">-- Select Group --</option>');
+                    }
+                });
+            },
+            
+            generateNextMenuCode: function(container, moduleCode, groupMenuNo) {
+                var self = this;
+                
+                container.find('.menu-next-code').val('Generating...');
+                
+                $.ajax({
+                    url: '/Print/Home/GetNextMenuCode',
+                    type: 'POST',
+                    data: { 
+                        moduleCode: moduleCode,
+                        groupMenuNo: groupMenuNo
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            container.find('.menu-next-code').val(response.nextMenuCode);
+                        } else {
+                            alert('Error generating menu code: ' + response.message);
+                            container.find('.menu-next-code').val('');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error generating menu code:', error);
+                        alert('Failed to generate menu code');
+                        container.find('.menu-next-code').val('');
+                    }
+                });
+            },
+            
+            saveNewMenu: function(container, patternId) {
+                var self = this;
+                
+                // Collect form data
+                var moduleCode = container.find('.menu-module').val();
+                var groupMenuNo = container.find('.menu-group').val();
+                var menuEdesc = container.find('.menu-edesc').val();
+                var menuObjectName = container.find('.menu-object-name').val();
+                var fullPath = container.find('.menu-full-path').val();
+                var virtualPath = container.find('.menu-virtual-path').val();
+                
+                // Validation
+                if (!moduleCode || !groupMenuNo || !menuEdesc) {
+                    alert('Please select Module, Group, and enter Menu Description');
+                    return;
+                }
+                
+                // Show saving indicator
+                var saveBtn = container.find('.save-menu-btn');
+                var originalText = saveBtn.html();
+                saveBtn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
+                
+                $.ajax({
+                    url: '/Print/Home/SaveNewMenu',
+                    type: 'POST',
+                    data: {
+                        ModuleCode: moduleCode,
+                        GroupMenuNo: groupMenuNo,
+                        MenuEdesc: menuEdesc,
+                        MenuObjectName: menuObjectName || '',
+                        FullPath: fullPath || '',
+                        VirtualPath: virtualPath || '',
+                        PatternId: patternId || ''  // Backend uses this to check for existing menu
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            alert('Menu saved successfully!');
+                            
+                            // Get the saved menu code from hidden field
+                            var savedMenuCode = container.find('.menu-next-code').val();
+                            
+                            // Update linked menu display and data attribute
+                            if (patternId && savedMenuCode) {
+                                container.find('.linked-menu-display')
+                                    .val(savedMenuCode + ' - ' + menuEdesc)
+                                    .data('menu-no', savedMenuCode);
+                                
+                                // Reload the menu info to show saved data in the form
+                                self.loadLinkedMenuInfo(container);
+                            } else {
+                                // If no pattern ID, just clear the form for creating another menu
+                                container.find('.menu-edesc').val('');
+                                container.find('.menu-object-name').val('');
+                                container.find('.menu-full-path').val('');
+                                container.find('.menu-virtual-path').val('');
+                                
+                                // Generate next code for subsequent entries
+                                self.generateNextMenuCode(container, moduleCode, groupMenuNo);
+                            }
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                        
+                        // Restore button
+                        saveBtn.prop('disabled', false).html(originalText);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error saving menu:', error);
+                        alert('Failed to save menu: ' + error);
+                        
+                        // Restore button
+                        saveBtn.prop('disabled', false).html(originalText);
+                    }
+                });
+            },
+
+            autoFillFromFormSetup: function(formCode, patternId) {
+                var self = this;
+                
+                console.log('=== autoFillFromFormSetup ===');
+                console.log('Form Code:', formCode);
+                console.log('Pattern ID:', patternId);
+                
+                $.ajax({
+                    url: '/Print/Home/AutoFillPattern',
+                    type: 'POST',
+                    data: {
+                        formCode: formCode,
+                        patternId: patternId
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            alert('Pattern data fetched successfully! Populating form...');
+                            
+                            var container = $('#pattern_' + patternId);
+                            
+                            // Clear existing head fields table
+                            container.find('.head-fields-table tbody').empty();
+                            
+                            // Populate head fields
+                            if (response.headFields && response.headFields.length > 0) {
+                                $.each(response.headFields, function(i, field) {
+                                    var row = '<tr>';
+                                    row += '<td style="padding: 3px;"><input type="text" class="form-control input-sm head-label" value="' + (field.LABEL || '') + '" style="font-size: 11px; height: 24px;"></td>';
+                                    row += '<td style="padding: 3px;"><input type="text" class="form-control input-sm head-field" value="' + (field.FIELD || '') + '" style="font-size: 11px; height: 24px;"></td>';
+                                    row += '<td style="padding: 3px;"><input type="text" class="form-control input-sm head-default" value="' + (field.DEFAULT_VAL || '') + '" style="font-size: 11px; height: 24px;"></td>';
+                                    row += '<td style="padding: 3px;"><button type="button" class="btn btn-danger btn-xs remove-head-field" style="font-size: 11px;"><i class="fa fa-trash"></i></button></td>';
+                                    row += '</tr>';
+                                    container.find('.head-fields-table tbody').append(row);
+                                });
+                            }
+                            
+                            // Clear existing footer fields table
+                            container.find('.footer-fields-table tbody').empty();
+                            
+                            // Populate footer fields
+                            if (response.footerFields && response.footerFields.length > 0) {
+                                $.each(response.footerFields, function(i, field) {
+                                    var row = '<tr>';
+                                    row += '<td style="padding: 3px;"><input type="text" class="form-control input-sm footer-label" value="' + (field.LABEL || '') + '" style="font-size: 11px; height: 24px;"></td>';
+                                    row += '<td style="padding: 3px;"><input type="text" class="form-control input-sm footer-field" value="' + (field.FIELD || '') + '" style="font-size: 11px; height: 24px;"></td>';
+                                    row += '<td style=\"padding: 3px;\"><textarea class=\"form-control input-sm footer-default\" rows=\"2\" style=\"font-size: 11px; resize: vertical;\">' + (field.DEFAULT_VAL || '') + '</textarea></td>';
+                                    row += '<td style="padding: 3px;"><button type="button" class="btn btn-danger btn-xs remove-footer-field" style="font-size: 11px;"><i class="fa fa-trash"></i></button></td>';
+                                    row += '</tr>';
+                                    container.find('.footer-fields-table tbody').append(row);
+                                });
+                            }
+                            
+                            // Clear existing column fields table
+                            container.find('.column-fields-table tbody').empty();
+                            
+                            // Populate column fields
+                            if (response.columnFields && response.columnFields.length > 0) {
+                                $.each(response.columnFields, function(i, field) {
+                                    var row = '<tr>';
+                                    row += '<td style="padding: 3px;"><input type="number" class="form-control input-sm column-sn" value="' + (field.SN || 0) + '" style="font-size: 11px; height: 24px;"></td>';
+                                    row += '<td style="padding: 3px;"><select class="form-control input-sm column-mc-flag" style="font-size: 11px; height: 24px;">';
+                                    row += '<option value="M" ' + (field.MASTER_CHILD_FLAG === 'M' ? 'selected' : '') + '>Master</option>';
+                                    row += '<option value="C" ' + (field.MASTER_CHILD_FLAG === 'C' ? 'selected' : '') + '>Child</option>';
+                                    row += '</select></td>';
+                                    row += '<td style="padding: 3px;"><input type="text" class="form-control input-sm column-label" value="' + (field.LABEL || '') + '" style="font-size: 11px; height: 24px;"></td>';
+                                    row += '<td style="padding: 3px;"><input type="text" class="form-control input-sm column-field" value="' + (field.FIELD || '') + '" style="font-size: 11px; height: 24px;"></td>';
+                                    row += '<td style="padding: 3px;"><input type="text" class="form-control input-sm column-default" value="' + (field.DEFAULT_VAL || '') + '" style="font-size: 11px; height: 24px;"></td>';
+                                    row += '<td style="padding: 3px;"><input type="number" class="form-control input-sm column-width" value="' + (field.WIDTH || 30) + '" style="font-size: 11px; height: 24px;"></td>';
+                                    row += '<td style="padding: 3px;"><button type="button" class="btn btn-danger btn-xs remove-column-field" style="font-size: 11px;"><i class="fa fa-trash"></i></button></td>';
+                                    row += '</tr>';
+                                    container.find('.column-fields-table tbody').append(row);
+                                });
+                            }
+                            
+                            // Re-bind events for the new rows
+                            self.bindPatternFormEvents(patternId);
+                            
+                            // Fetch and update only MAIN_FIELD and FORM_TYPE without reloading everything
+                            $.ajax({
+                                url: '/Print/Home/GetAllPatterns',
+                                type: 'POST',
+                                data: { 
+                                    formCode: formCode,
+                                    patternId: patternId
+                                },
+                                success: function (resp) {
+                                    if (resp.success && resp.data && resp.data.PatternDetail) {
+                                        // Update only MAIN_FIELD, FORM_TYPE, and ITEM_COUNT inputs
+                                        container.find('.main-field').val(resp.data.PatternDetail.MAIN_FIELD || '');
+                                        container.find('.form-type').val(resp.data.PatternDetail.FORM_TYPE || '');
+                                        container.find('.item-count').val(resp.data.PatternDetail.ITEM_COUNT || '');
+                                    }
+                                }
+                            });
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Error auto-filling pattern: ' + error);
+                    }
+                });
+            },
+
+            savePattern: function(patternId) {
+                var self = this;
+                var container = $('#pattern_' + patternId);
+                
+                console.log('=== savePattern ===');
+                console.log('Pattern ID:', patternId);
+                
+                // Collect pattern details (property names must match C# model)
+                var patternData = {
+                    PATTERN_ID: patternId,
+                    PATTERN_NAME: container.find('.pattern-name').val(),
+                    FORM_CODE: self.currentFormData.FORM_CODE || self.currentFormData.form_code,
+                    COMPANY_CODE: self.getCompanyCode(),
+                    CHARGE_EXIST: container.find('.charge-exist-cb').is(':checked') ? 1 : 0,
+                    SQL_QUERY: container.find('.sql-query').val(),
+                    FILE_NAME: container.find('.file-name').val(),
+                    FORM_TYPE: container.find('.form-type').val(),
+                    ACTIVE: container.find('.active-cb').is(':checked') ? 1 : 0,
+                    MAIN_FIELD: container.find('.main-field').val(),
+                    ITEM_COUNT: parseInt(container.find('.item-count').val()) || 0
+                };
+                
+                // Collect head fields
+                var headFields = [];
+                container.find('.head-fields-table tbody tr:not(.no-data-row)').each(function() {
+                    var row = $(this);
+                    headFields.push({
+                        LABEL: row.find('.head-label').val(),
+                        FIELD: row.find('.head-field').val(),
+                        DEFAULT_VAL: row.find('.head-default').val()
+                    });
+                });
+                
+                // Collect footer fields
+                var footerFields = [];
+                container.find('.footer-fields-table tbody tr:not(.no-data-row)').each(function() {
+                    var row = $(this);
+                    footerFields.push({
+                        LABEL: row.find('.footer-label').val(),
+                        FIELD: row.find('.footer-field').val(),
+                        DEFAULT_VAL: row.find('.footer-default').val()
+                    });
+                });
+                
+                console.log('Footer Fields Count:', footerFields.length);
+                console.log('Footer Fields Data:', footerFields);
+                
+                // Collect column fields
+                var columnFields = [];
+                container.find('.column-fields-table tbody tr').not('.no-data-row').each(function() {
+                    var row = $(this);
+                    columnFields.push({
+                        SN: parseInt(row.find('.column-sn').val()) || 0,
+                        MASTER_CHILD_FLAG: row.find('.column-mc-flag').val(),
+                        LABEL: row.find('.column-label').val(),
+                        FIELD: row.find('.column-field').val(),
+                        DEFAULT_VAL: row.find('.column-default').val(),
+                        WIDTH: parseInt(row.find('.column-width').val()) || 0
+                    });
+                });
+                
+                var saveData = {
+                    PatternDetail: patternData,
+                    HeadFields: headFields,
+                    FooterFields: footerFields,
+                    ColumnFields: columnFields
+                };
+                
+                console.log('Save Data:', saveData);
+                
+                // Call backend API
+                $.ajax({
+                    url: '/Print/Home/SavePattern',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(saveData),
+                    success: function(response) {
+                        if (response.success) {
+                            alert('Pattern saved successfully!');
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Error saving pattern: ' + error);
+                    }
+                });
+            },
+            
+            generateSqlQuery: function(formCode, patternId) {
+                var self = this;
+                
+                console.log('=== generateSqlQuery ===');
+                console.log('Form Code:', formCode);
+                console.log('Pattern ID:', patternId);
+                
+                $.ajax({
+                    url: '/Print/Home/GenerateSqlQuery',
+                    type: 'POST',
+                    data: {
+                        formCode: formCode,
+                        patternId: patternId
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Update the SQL query textarea
+                            var container = $('#pattern_' + patternId);
+                            container.find('.sql-query').val(response.sqlQuery);
+                            alert('SQL query generated successfully!');
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Error generating SQL query: ' + error);
+                    }
+                });
+            },
+            
+
+            
+
+        };
+
+        // Initialize on document ready
+        $(document).ready(function () {
+            printSetup.init();
+        });
+    </script>
+}

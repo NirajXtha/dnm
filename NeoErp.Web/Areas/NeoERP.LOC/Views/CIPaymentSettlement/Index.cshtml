@@ -1,0 +1,546 @@
+﻿@{
+    var myAreaName = string.Empty;
+    object areaObj;
+    Layout = null;
+    if (ViewContext.RouteData.Values.TryGetValue("area", out areaObj))
+    {
+        myAreaName = areaObj.ToString();
+    }
+}
+<style>
+    legend {
+        width: 17%;
+    }
+
+    .btn-xs {
+        padding: 0px 5px;
+    }
+
+    .portlet.light.bordered.main {
+        min-height: 550px !important;
+    }
+
+    a.btn.btn-xs {
+        color: grey;
+    }
+
+    #CIPaymentSettlementCtrl input[type="text"] {
+        font-size: 11px !important;
+    }
+
+    #CIPaymentSettlementCtrl input [type="checkbox"] {
+        height: auto !important;
+    }
+
+    div#grid {
+        height: 500px;
+    }
+
+    .required {
+        color: #b94a48;
+    }
+
+    i.fa.fa-file-image-o.image {
+        margin: 1px;
+    }
+
+    .image-placeholder > img {
+        display: inline;
+        margin: 1px;
+        height: 40px;
+        width: 40px;
+    }
+
+    .form-group.image-placeholder > div {
+        display: inline-block;
+        float: left;
+        width: 78px;
+    }
+
+    .k-grid-content.k-auto-scrollable {
+        height: 400px !important;
+    }
+
+    .main .k-dropdown-wrap {
+        height: 21px;
+        font-size: 12px;
+    }
+
+    .actionbutton i {
+        color: #666;
+        border: solid #ddd 1px;
+        padding: 0px 3px;
+        font-size: 10px;
+        margin-right: 2px;
+    }
+
+    .k-clear-value {
+        display: none;
+    }
+
+    span.k-icon.k-i-loading {
+        display: none;
+    }
+
+    .reload {
+        margin-top: 30px;
+    }
+
+    .tooltip {
+        font-size: 9px !important;
+        color: red;
+    }
+
+    .shipmet_details {
+        background-color: #ded9d9;
+        margin: 0px 0px 8px 0px;
+        padding-top: 5px;
+        box-shadow: 2px 2px 2px #c5bebe;
+        -moz-box-shadow: 2px 2px 2px #c5bebe;
+        -o-box-shadow: 2px 2px 2px #c5bebe;
+        -webkit-box-shadow: 2px 2px 2px #c5bebe;
+    }
+
+        .shipmet_details .form-group {
+            padding-bottom: 5px !important;
+            margin-bottom: 0px !important;
+        }
+
+    .legend_head {
+        font-size: 16px;
+        width: auto;
+        padding-left: 4px;
+        padding-right: 4px;
+        font-weight: 600;
+    }
+
+    .main_div .k-picker-wrap.k-state-default {
+        height: 22px;
+    }
+
+    .main_div .k-icon.k-i-warning {
+        display: none;
+    }
+
+    .main_div .k-icon.k-i-calendar {
+        margin-top: -5px !important;
+        display: inline-block;
+    }
+
+    .main_div input.form-control {
+        height: 24px;
+    }
+
+    .main_div .k-widget.k-datepicker.k-header {
+        width: 100%;
+    }
+
+    .buttonbox {
+        margin-left: 0px !important;
+        padding-left: 0px !important;
+        margin: 0px;
+        padding: 0px 5px;
+    }
+
+    .diviberbox {
+        box-shadow: 5px 5px 5px -2px #ddd;
+        margin-bottom: 30px;
+        border: solid 1px #ddd;
+        padding: 8px;
+        background-color: #f5f4f4;
+    }
+   
+</style>
+<div ng-app="myApp">
+    <div ng-controller="CIPaymentSettlementCtrl" id="CIPaymentSettlementCtrl">
+        <div class="portlet light bordered main">
+            <div class="portlet-title titleheading">
+                <i class="fa fa-list-alt fontgreen"></i>
+                <span class="caption-subject fontgreen bold uppercase">
+                    Commercial Invoice Payment Settlement
+                </span>
+                <span class="pull-right" ng-show="!showFormPanel">
+                  
+                    <button type="button" id="addTarget" name="addTarget" ng-click="CIPaymentSettlement()" class="btn buttongreen btn-sm">[+] Add</button>
+                </span>
+
+                <span class="pull-right" ng-show="showFormPanel">
+                    <button type="submit" id="EditContent" name="EditContent" ng-hide="ContentModal" ng-click="EditContent()" class="btn btn-default btn-sm" data-toggle="modal" data-target="#ContentModal"> Edit Content</button>
+                    <button type="button" id="cancelci" name="cancelci" class="btn btn-default btn-sm" ng-click="cancelCIPaymentSettlement();">Cancel</button>
+                    <button type="reset" id="saveandcontinue" name="saveandcontinue" class="btn btn-success btn-sm" ng-disabled="disablesave" ng-click="AddUpdateCIPaymentSettlement(CIPSForm.$valid,'saveandcontinue')">{{scAction}}</button>
+                    <button type="submit" id="saveshipment" name="saveshipment" ng-disabled="disablesave" ng-click="AddUpdateCIPaymentSettlement(CIPSForm.$valid,'save')" class="btn buttongreen btn-sm">{{saveAction}}</button>
+                </span>
+
+            </div><!-- /portlet-title-->
+
+
+
+
+
+            <div class="portlet-body main_div">
+                <form id="CIPSForm" name="CIPSForm" novalidate>
+                    <div class="row" ng-show="showFormPanel">
+
+
+
+                      
+
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Invoice Number<span style="color:red" ng-show="CIPSForm.cinvoiceno.$invalid">
+                                        <span ng-show="CIPSForm.cinvoiceno.$error.required">*</span>
+                                    </span>
+                                </label>
+                                <input id="invoiceNumber" ng-model="CIPS.INVOICE_CODE" name="cinvoiceno" kendo-auto-complete
+                                       k-data-text-field="'INVOICE_NUMBER'"
+                                       k-data-value-field="'INVOICE_CODE'"
+                                       k-data-source="ipPurchaseOrder"
+                                       k-min-length="1"
+                                       k-on-change="InvoiceNoOnChange(kendoEvent)"
+                                       k-value-primitive="true"
+                                       k-ng-disabled="disableCI"
+                                       k-placeholder="'Select Commercial Number...'"
+                                       style="width: 100%" required />
+
+                            </div>
+                        </div>
+
+
+
+
+
+                    </div>
+                    <div ng-show="showForm">
+                        <div class="row">
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Settlement Date
+                                    <span style="color:red" ng-show="CIPSForm.SETTLEMENT_DATE.$invalid">
+                                        <span ng-show="CIPSForm.SETTLEMENT_DATE.$error.required">*</span>
+                                    </span>
+                                </label>
+                                <input type="text" id="SETTLEMENT_DATE" name="SETTLEMENT_DATE" autocomplete="off" class="form-control maskdate" ng-model="CIPS.SETTLEMENT_DATE" ng-disabled="!check_SETTLEMENT_DATE" @*ng-change="LoadCIInfo()"*@ required />
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6 col-md-3" ng-hide="hide_ppdate">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    PP Date
+                                    <span style="color:red" ng-show="CIPSForm.PP_DATE.$invalid">
+                                        <span ng-show="CIPSForm.PP_DATE.$error.required">*</span>
+                                    </span>
+                                </label>
+                                @*ng-change="LoadCIInfo()"*@
+                                <input type="text" id="PP_DATE" name="PP_DATE" autocomplete="off" class="form-control maskdate" ng-model="CIPS.PP_DATE" ng-disabled="!check_PP_DATE" />
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Type
+
+                                </label>
+                                <input type="text" id="pterm" name="pterm" autocomplete="off" class="form-control maskdate" ng-model="pterm" ng-disabled="true" />
+                            </div>
+                        </div>
+                        </div>
+                        <div class="row">
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Commercial Amount   <span style="color:red" ng-show="CIPSForm.CI_AMOUNT.$invalid">
+                                        <span ng-show="CIPSForm.CI_AMOUNT.$error.required">*</span>
+                                    </span>
+                                </label>
+                                <input type="text" id="CI_AMOUNT" name="CI_AMOUNT" ng-change="GETOTALAMOUNT()" ng-model="CIPS.CI_AMOUNT" ng-disabled="!check_CI_AMOUNT" class="form-control input-sm" required />
+
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Currency<span style="color:red" ng-show="CIPSForm.CURRENCY.$invalid">
+                                        <span ng-show="CIPSForm.CURRENCY.$error.required">*</span>
+                                    </span>
+                                </label>
+                                <select id="CURRENCY" k-value-primitive="true" k-ng-model="CIPS.CURRENCY" ng-model="CIPS.CURRENCY" ng-disabled="!check_CURRENCY" name="CURRENCY" kendo-drop-down-list style="width: 100%"
+                                        k-options="currencylist" required></select>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Exchange Rate at Payment<span style="color:red" ng-show="CIPSForm.EXCHANGE_RATE_AT_PAYMENT.$invalid">
+                                        <span ng-show="CIPSForm.EXCHANGE_RATE_AT_PAYMENT.$error.required">*</span>
+                                    </span>
+                                </label>
+                                <input type="text" id="EXCHANGE_RATE_AT_PAYMENT" name="EXCHANGE_RATE_AT_PAYMENT" ng-change="GETOTALAMOUNT()" ng-model="CIPS.EXCHANGE_RATE_AT_PAYMENT" ng-disabled="!check_EXCHANGE_RATE" class="form-control input-sm" required />
+
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6 col-md-3">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Total Amount<span style="color:red" ng-show="CIPSForm.DERIVED_TOTAL_AMOUNT.$invalid">
+                                        <span ng-show="CIPSForm.DERIVED_TOTAL_AMOUNT.$error.required">*</span>
+                                    </span>
+                                </label>
+                                <input type="text" id="DERIVED_TOTAL_AMOUNT" name="DERIVED_TOTAL_AMOUNT" ng-model="CIPS.DERIVED_TOTAL_AMOUNT" ng-disabled="!check_DERIVED_TOTAL_AMOUNT" class="form-control input-sm" required />
+
+                            </div>
+                        </div>
+                       </div>
+
+
+
+
+                        <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="control-label block">Uploads</label>
+                                <button type="button" data-toggle="modal" data-target="#itemimages" class="btn buttongreen cbtn upload">
+                                    <i class="fa fa-upload iconupload" aria-hidden="true"></i>
+                                    Upload
+                                </button>
+
+
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-md-6">
+                            <label class="control-label block"></label>
+                            <div class="form-group image-placeholder">
+
+                            </div>
+                        </div>
+                            </div>
+                    </div>
+                </form>
+
+
+
+
+                <div class="clearfix">
+                </div>
+                <kendo-grid id="grid" class="commercialgrid" options="mainGridOptions" k-rebind="mainGridOptions" style="margin-top:10px;">
+
+                </kendo-grid>
+                @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                <div class="modal fade" id="historymodal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <div class="form-inline">
+
+                                </div>
+                                <h4 class="modal-title">Document History</h4>
+                            </div>
+                            <div id="example" ng-app="KendoDemos">
+                                <div class="demo-section k-content">
+
+                                    <div kendo-tab-strip k-content-urls="[ null, null]">
+                                        <!-- tab list -->
+                                        <ul>
+                                            <li class="k-state-active">CI Settlement Document History</li>
+                                          
+                                            <li></li>
+                                        </ul>
+
+                                        <div style="padding: 1em">
+                                            <div class="historyitemgrid" k-rebind="historyitemGridOptions" kendo-grid k-options="historyitemGridOptions(dataItem)"></div>
+                                        </div>
+
+                               
+                                        <div style="padding: 1em">
+                                            <div class="historydocumentgrid" k-rebind="historydocumentGridOptions" kendo-grid k-options="historydocumentGridOptions(dataItem)"></div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-success pull-right" data-dismiss="modal" aria-hidden="true">Ok</button>
+
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+                <div class="modal fade" id="itemimages" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <div class="form-inline">
+
+                                </div>
+                                <h4 class="modal-title">Image Upload</h4>
+                            </div>
+
+                            <form action="~/CIPaymentSettlement/Upload" method="post" enctype="multipart/form-data" class="dropzone form-horizontal form-bordered" id="myAwesomeDropzone">
+                                <div class="form-group form-actions">
+                                    <div class="col-md-9 col-md-offset-4">
+                                        <input type="text" style="display:none" ng-model="dropzonePSCODE" name="dropzonePSCODE" id="dropzonePSCODE" />
+                                        <input type="text" style="display:none" ng-model="doclctrackno" name="doclctrackno" id="doclctrackno" />
+                                    </div>
+                                </div>
+                            </form>
+
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-success pull-right" data-dismiss="modal" aria-hidden="true">Ok</button>
+
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+
+
+            </div>
+        </div><!--/portlet-body-->
+        <div class="modal fade" id="ContentModal" role="dialog">
+            <div class="modal-dialog inputcontent">
+
+                <!-- Modal content-->
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Enable/Disable</h4>
+                    </div>
+                    <div class="modal-body">
+                        <!------------------------------------------For All Enable/Disable------------------------------------>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <input type="checkbox" ng-change='AllcheckboxEnableDisable()' id="Allcheckbox" ng-model="Allcheckbox" />
+                                All
+                            </div>
+                        </div>
+                        <!------------------------------------------For Plan shippment-------------------------------------->
+                        <div>
+                            <span ng-hide="hide_ppdate" >
+                                <input type="checkbox" ng-model="check_PP_RECEIEVE_DATE" class="enabledisable" />
+                                PP Recieved Date
+                                <br>
+                            </span>
+                            
+
+                            <span ng-hide="hide_ppdate">
+                                <input  type="checkbox" ng-model="check_PP_NO" class="enabledisable" />
+                                PP Number
+                                <br>
+                            </span>
+                           
+
+                            <input type="checkbox" ng-model="check_CI_AMOUNT" class="enabledisable" />
+                            CI Amount <br>
+                          
+                            <input type="checkbox" ng-model="check_EXCHANGE_RATE" class="enabledisable" />
+                            Exchange Rate <br>
+
+                            <input type="checkbox" ng-model="check_DERIVED_TOTAL_AMOUNT" class="enabledisable" />
+                            Total Amount <br>
+
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" data-dismiss="modal">Ok</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <!--container end -->
+        </div>
+    </div><!-- /portlet-->
+
+</div>
+
+
+<script>
+
+    myDropzone = new Dropzone('#myAwesomeDropzone', { // Make the whole body a dropzone
+        thumbnailWidth: 200,
+        thumbnailHeight: 75,
+        autoDiscover: false,
+        autoProcessQueue: false,
+        addRemoveLinks: true,
+        paramName: "inputFiles",
+        uploadMultiple: true,
+        parallelUploads: 100,
+        maxFiles: 100,
+        maxFileSize: 10,
+    });
+
+    myDropzone.on("success", function (file, responseText) {
+
+        if (responseText.status == "Error") {
+
+            displayPopupNotification("File upload does not success. Please update.", "error");
+        }
+        else {
+            myDropzone.removeFile(file);
+            RefreshGrid();
+        }
+
+
+    });
+    $('.nav-tabs a').on('click', function (e) {
+
+        e.preventDefault();
+
+    });
+    function RemoveImage(el) {
+
+        var $this = $(this);
+        bootbox.confirm("Are you sure you want to delete?", function (result) {
+
+            if (result) {
+
+                var imageremovedetails = {
+                    Path: $(el).data("src"),
+                    LocCode: $('#dropzonePSCODE').val(),
+                };
+
+                $.ajax({
+                    url: "/api/CIPaymentSettlement/RemoveCIPSImage",
+                    type: "POST",
+                    dataType: "json",
+                    data: imageremovedetails,
+                    success: function (result) {
+                        RefreshGrid();
+                        el.closest('div').remove();
+                        displayPopupNotification("Succesfully Removed File.", "Success");
+                    },
+                    error: function (result) {
+
+                      
+                    }
+                });
+
+            }
+        });
+    }
+
+    function RefreshGrid() {
+        $("#grid").data("kendoGrid").dataSource.read();
+    }
+
+</script>
+
+
+
+<script>
+    $(document).ready(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+
+</script>
+

@@ -1,0 +1,760 @@
+﻿@using NeoErp.Core.Models;
+@{
+    var actionPageId = "MonthlyBranchBillCount";
+    var chartTitle = "Shopwise bill  (Monthly)";
+}
+
+<div class="modal fade" id="Model_@actionPageId" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog custom-chart">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close btn btn-danger" data-dismiss="modal" aria-hidden="true"></button>
+                <h4 class="modal-title">@chartTitle</h4>
+            </div>
+            <div class="modal-body bottom-gappingtwo">
+                <div class="row">
+                    <div class="clearfix">
+                        <div class="btn-group options_@actionPageId responsivegap col-sm-12 col-md-12" data-toggle="buttons">
+                            <button type="button" class="btn default red-stripe">
+                                <i class="fa fa-bar-chart"></i>
+                                <input id="typeColumn" name="seriesType_@actionPageId"
+                                       type="radio" value="column" autocomplete="off" />column
+                            </button>
+                            <button type="button" class="btn default green-stripe">
+                                <i class="fa fa-bar-chart"></i>
+                                <input id="typeBar" name="seriesType_@actionPageId"
+                                       type="radio" value="bar" autocomplete="off" />bar
+                            </button>
+                            <button type="button" class="btn default purple-stripe active">
+                                <i class="fa fa-line-chart"></i>
+                                <input id="typeLine" name="seriesType_@actionPageId"
+                                       type="radio" value="line" checked="checked" autocomplete="off" />Line
+                            </button>
+                            <button class="btn btn-success btn-xs pull-right saveChartConfig_@actionPageId" data-id="@actionPageId" title="Save Setting">Save <i class="fa fa-save"></i></button>
+                        </div>
+                        <div class="col-xs-12 col-md-6 col-sm-6 margin-buttom" style="display:none;">
+                            <h4> Choose Value Field</h4>
+                            <div class="btn-group" data-toggle="buttons">
+                                <button id="QuantityBtn_@actionPageId" type="button" class="btn default red-stripe">
+                                    <i class="fa fa-cart-arrow-down"></i>
+                                    <input id="QuantityColumn" name="fieldType_@actionPageId"
+                                           type="radio" value="BillCount" autocomplete="off" /> Quantity
+                                </button>
+                                <button id="GrossAmountBtn_@actionPageId" type="button" class="btn default green-stripe active">
+                                    <i class=""></i>
+                                    <input id="typeBar" name="fieldType_@actionPageId"
+                                           type="radio" value="BillCount" checked="checked" autocomplete="off" /> Gross Amt
+                                </button>
+                                <hr class="red-stripe" />
+                                <button id="NetAmountBtn_@actionPageId" type="button" class="btn default red-stripe">
+                                    <i class="fa fa-cart-arrow-down"></i>
+                                    <input id="QuantityColumn" name="fieldType_@actionPageId"
+                                           type="radio" value="BillCount" autocomplete="off" /> Net Amt
+                                </button>
+                                <button id="TotalAmountBtn_@actionPageId" type="button" class="btn default green-stripe">
+                                    <i class=""></i>
+                                    <input id="typeBar" name="fieldType_@actionPageId"
+                                           type="radio" value="BillCount" autocomplete="off" /> Total Amt
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="br"><div class="br"></div> </div>
+                            <div class="clearfix">
+                                <div class="dateOption_@actionPageId">
+                                    <label>
+                                        <input type="radio" id="ADFormat" name="DateFormat_@actionPageId" value="AD" /> AD
+                                    </label>
+                                    <label>
+                                        <input type="radio" id="BSFormat" name="DateFormat_@actionPageId" checked="checked" value="BS" /> BS
+                                    </label>
+                                </div>
+                            </div>
+                            <div>
+                                <!-- show labels & inStack option-->
+                                <div class="input-group">
+                                    <div class="icheck-inline">
+                                        <label>
+                                            <input id="showLabel_@actionPageId" type="checkbox" autocomplete="off" /> Show Labels
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="input-group" style="display:none;">
+                                    <div class="icheck-inline">
+                                        <label>
+                                            <input id="showSalesReturn_@actionPageId" type="checkbox" autocomplete="off" /> Sales Return
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="br"></div>
+                <div class="row" style="display:none;">
+                    <div class="col-md-12">
+                        <div class="nogap">
+                            <h4>Advance Filter</h4>
+                        </div>
+
+                        @Html.Partial("~/Views/Shared/Controls/DashboardChartFilter/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                   {
+                       ShowCustomerFilter = false,
+                       ShowProductFilter = false,
+                       ShowPartyTypeFilter = false,
+                       ShowCategoryFilter = false,
+                       ShowLocationFilter = false,
+                       ShowDocumentFilter = false,
+                       ShowCompanyFilter = false,
+                       ShowBranchFilter = false,
+                       ShowEmployeeFilter = false,
+                       ShowAgentFilter = false,
+                       ShowDivisionFilter = false,
+                       IsPopUp = false,
+                       ActionPageId = actionPageId
+                   })
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn green applydp" data-dismiss="modal" id="apply_@actionPageId">Apply</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="SeriesModel_@actionPageId" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog custom-chart">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close btn btn-danger" data-dismiss="modal" aria-hidden="true"></button>
+                <h4 class="modal-title">Choose Options</h4>
+            </div>
+            <div class="modal-body bottom-gappingtwo">
+                <div class="row">
+                    <div class="clearfix">
+                        <div class="col-md-12">
+                            <div class="br"><div class="br"></div> </div>
+                            <div class="clearfix">
+                                <div class="SeriesOptions_@actionPageId">
+                                    <label>
+                                        <input type="radio" id="Day" name="SeriesOption_@actionPageId" checked="checked" value="Day" /> Daywise
+                                    </label>
+                                    <label>
+                                        <input type="radio" id="Item" name="SeriesOption_@actionPageId" value="Item" /> ItemWise
+                                    </label>
+                                </div>
+                                <input type="hidden" id="hiddenBranch" />
+                                <input type="hidden" id="hiddenMonthInt" />
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn green" data-dismiss="modal" id="seriesApply_@actionPageId">Apply</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="portlet portlet-sortable light bordered" id="@actionPageId">
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="icon-bar-chart font-green-haze"></i>
+            <span class="caption-subject bold uppercase font-green-haze custom-modal">@chartTitle</span>
+        </div>
+        <div class="tools">
+            <a href="javascript:;" class="collapse"></a>
+            <a class="btnGrid btnGrid_@actionPageId" data-type="Chart" data-title="Grid" data-valuefor="month" data-month="0" data-selectedValue="0" data-category="0">
+                <i class="fa fa-table"></i>
+            </a>
+            <div class="btn-group">
+                <a class="btn dropdown-toggle download-btn" data-title="Download" data-toggle="dropdown" href="#">
+                    <i class="icon-arrow-down Thirdcustom"></i>
+                </a>
+                <ul class="dropdown-menu custom">
+                    <div class="btn-group-custom">
+                        <button type="button" data-id="MonthlyBranchBillCountChart" class="export-pdf btn default red-stripe"><i class="fa fa-file-pdf-o"></i>PDF</button>
+                        <button type="button" data-id="MonthlyBranchBillCountChart" class="export-img btn default blue-stripe"><i class="fa fa-image-o"></i>Image</button>
+                        <button type="button" data-id="MonthlyBranchBillCountChart" class="export-svg btn default green-stripe">SVG</button>
+                    </div>
+                </ul>
+            </div>
+            <a href="#Model_@actionPageId" data-toggle="modal" class="config"></a>
+            <a href="javascript:;" class="reload"></a>
+            <a href="javascript:;" class="fullscreen"></a>
+            <a href="javascript:;" class="remove"></a>
+        </div>
+    </div>
+    <div class="portlet-body">
+        <script type="text/x-kendo-template" id="toolbar-template">
+            <div class="k-header k-grid-toolbar pull-right">
+                <a class="k-button k-button-icontext k-grid-excel" href="javascript:">
+                    <i class="fa fa-file-excel-o"></i>
+                </a>
+        </script>
+        <div class="k-content wide">
+            <div id="MonthlyBranchBillCountChart"></div>
+            <div class="overlay"><div>No data available</div></div>
+            <div class="AmountFigureType"></div>
+            <div class="DisplayFilterContent"><a href="javascript:;" data-toggle="tooltip" title=""></a></div>
+        </div>
+    </div>
+
+    <script>
+        var pageId = '@actionPageId';
+        var MonthlyBranchBillCount = (function () {
+            //initialize variables
+
+            var config = {
+                url: window.location.protocol + "//" + window.location.host + "/api/SalesDashboard/GetSalesBillBranchMonthlyReport"
+                    + "?DateFormat=" + $("input[name=DateFormat_MonthlyBranchBillCount]:checked").val()
+                    + "&customerCode=&itemCode=&categoryCode=&companyCode=&branchCode=&partyTypeCode=&formCode="
+                    + "&salesReturn=" + $("#showSalesReturn_MonthlyBranchBillCount").prop("checked")
+                    + "&AmountType=" + $("input[name=fieldType_MonthlyBranchBillCount]:checked").val(),
+                series: [{
+                    field: $("input[name=fieldType_MonthlyBranchBillCount]:checked").val(),
+                    name: "#= group.value #"
+                }],
+                color: ["#428bca", "#da3b36", "#e67d4a", "#5bc0de", "#5cb85c", "#f2b661"],
+                categoryField: "Month",
+                categoryTitle: $("input[name=fieldType_MonthlyBranchBillCount]:checked").val(),
+                group: { field: "BranchName" },
+                sortField: "NepaliMonthInt",
+
+                isStack: false,
+                fieldValue: $("input[name=fieldType_MonthlyBranchBillCount]:checked").val(),
+                showLabel: $("#showLabel_MonthlyBranchBillCount").prop("checked"),
+                seriesType: $("input[name=seriesType_MonthlyBranchBillCount]:checked").val(),
+
+                _oldData: {
+                    dateFormat: $("input[name=DateFormat_MonthlyBranchBillCount]:checked").val(),
+                    fieldValue: $("input[name=fieldType_MonthlyBranchBillCount]:checked").val()
+                },
+
+            };
+            var _oldConfig = JSON.stringify(config);
+
+            function PreInit() {
+                //var pageId = pageId_MonthlyBranchBillCount;
+                $.ajax({
+                    type: 'POST',
+                    data: { 'ChartName': pageId },
+                    async: false,
+                    url: window.location.protocol + "//" + window.location.host + "/Main/GetUserWiseChartConfig",
+                    success: function (data) {
+                        if (data != "") {
+                            //for series Type
+                            $("input[name=seriesType_" + pageId + "]").filter('[value=' + data.ChartType + ']').prop('checked', true);
+                            $("input[name=seriesType_" + pageId + "]").parent().removeClass("active");
+                            $("input[name=seriesType_" + pageId + "]:checked").parent().addClass("active");
+                            //for dateFormat
+                            $("input[name=DateFormat_" + pageId + "]").filter('[value=' + data.DateFormat + ']').prop('checked', true);
+                            //for fieldValue
+                            $("input[name=fieldType_" + pageId + "]").filter('[value=' + data.FieldValue + ']').prop('checked', true);
+                            $("input[name=fieldType_" + pageId + "]").parent().removeClass("active");
+                            $("input[name=fieldType_" + pageId + "]:checked").parent().addClass("active");
+                            //for showLabel
+                            data.ShowLabel == "true" ? $("#showLabel_" + pageId).prop("checked", true) : $("#showLabel_" + pageId).prop("checked", false);
+                            //for sales return
+                            data.SalesReturn == "true" ? $("#showSalesReturn_MonthlyBranchBillCount").prop("checked", true) : $("#showSalesReturn_MonthlyBranchBillCount").prop("checked", false);
+                            config.seriesType = data.ChartType;
+                            config.dateFormat = data.DateFormat;
+                            config.fieldValue = data.FieldValue;
+                            config.isStack = data.IsStack;
+                            config.showLabel = data.ShowLabel;
+                        }
+                    }
+                });
+                loadDataSource()
+            }
+            function loadDataSource() {
+                
+                reportFilter = reportFilter == undefined ? ReportFilter.filterAdditionalData() : reportFilter;
+                var filter = $.extend(true, {}, reportFilter);
+                config.dateFormat = $("input[name=DateFormat_MonthlyBranchBillCount]:checked").val();
+                // config.url = window.location.protocol + "//" + window.location.host + "/api/SalesDashboard/GetSalesMonthlyFiscalYearReport?DateFormat=" + $("input[name=DateFormat_MonthlyBranchBillCountChart]:checked").val();
+                config.showLabel = $("#showLabel_MonthlyBranchBillCount").prop("checked");
+                var dataSource = new kendo.data.DataSource({
+                    transport: {
+                        read: {
+                            url: config.url, //,
+                            dataType: "json", // <-- The default was "jsonp".
+                            type: "POST",
+                            contentType: "application/json; charset=utf-8"
+                        },
+                        parameterMap: function (options, type) {
+                            var paramMap = JSON.stringify($.extend(options, filter));
+                            delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                            delete paramMap.$format; // <-- remove format parameter.
+                            return paramMap;
+                        }
+                    },
+                    requestStart: function () {
+                        if (IsDataGrid != "Grid") {
+                            kendo.ui.progress($("#MonthlyBranchBillCountChart"), true);
+                        }
+                    },
+                    requestEnd: function () {
+                        kendo.ui.progress($("#MonthlyBranchBillCountChart"), false);
+                    },
+                    group: config.group,
+                    sort: {
+                        field: config.sortField,
+                        dir: "asc"
+                    }
+
+                });
+
+                $("#MonthlyBranchBillCount .DisplayFilterContent a").text("");
+                var IsDataGrid = $('.btnGrid_MonthlyBranchBillCount').data("type");
+                //if (IsDataGrid == "Grid") {
+                //    CreateGrid(dataSource);
+                //    return;
+                //}
+                CreateChart(dataSource);
+            }
+            function CreateChart(dataSource) {
+                $('.btnGrid_MonthlyBranchBillCount').data("type", "Chart");
+                $("#MonthlyBranchBillCountChart").html('');
+                $("#MonthlyBranchBillCountChart").removeAttr("style");
+                $("#MonthlyBranchBillCountChart").removeAttr("class");
+                $("#MonthlyBranchBillCountChart").kendoChart({
+                    chartArea: {
+                        height: ($("#MonthlyBranchBillCountChart").hasClass("portlet-fullscreen")) ? 550 : 350,
+                    },
+                    onDrag: function (e) {
+                        var chart = e.sender;
+                        var ds = chart.dataSource;
+                        var options = chart.options;
+
+                        var categoryRange = e.axisRanges.CategoryAxis;
+
+                        if (categoryRange) {
+                            var xMin = categoryRange.min;
+                            var xMax = categoryRange.max;
+
+                            options.categoryAxis.min = xMin;
+                            options.categoryAxis.max = xMax;
+
+                            ds.filter(viewModel.getFilter(xMin, xMax));
+                        }
+                    },
+                    pannable: {
+                        lock: "y"
+                    },
+                    zoomable: {
+                        mousewheel: {
+                            lock: "y"
+                        },
+                        selection: {
+                            lock: "y"
+                        }
+                    },
+                    dataSource: dataSource,
+                    legend: {
+                        position: "bottom"
+                    },
+                    seriesColors: config.color,
+                    seriesDefaults: {
+                        type: config.seriesType,
+                        labels: {
+                            visible: config.showLabel,
+                            template: "#= FormatLabels(value)#",
+                            rotation: '270',
+                            padding: {
+                                left: -5
+                            },
+                        },
+                        style: "smooth",
+                    },
+                    series: config.series,
+                    categoryAxis: {
+                        field: config.categoryField,
+                        labels: {
+                            rotation: -45,
+                        },
+                        //title: { text: config.categoryTitle }
+                    },
+                    valueAxis: {
+                        line: {
+                            visible: true
+                        },
+                        labels: {
+                            rotation: 'auto',
+                            template: "#= FormatLabels(value)#"
+                        },
+                        title: { text: amountFigureType }
+                    },
+                    tooltip: {
+                        visible: true,
+                        format: "{0}",
+                        template: "#= category #: \n #= FormatLabels(value)#"
+                    },
+                    dataBound: function (e) {
+                        var maxValue = getMaxValueFromDataSource(e);
+                        var majorunit = Math.max(6, maxValue / 6);
+                        e.sender.options.valueAxis.majorUnit = majorunit;
+                        e.sender.options.valueAxis.max = maxValue + majorunit;
+                        e.sender.options.valueAxis.axisCrossingValue = [0, -(maxValue + majorunit)];
+                        $("#MonthlyBranchBillCountChart").next(".overlay").toggle(maxValue <= 0);
+                        e.sender.options.categoryAxis.categories = getCategoryFromDataSource(e);
+                    },
+                    seriesClick: function (e) {
+                        
+                        if (e.dataItem.Branch_Code == null || typeof (e.dataItem.Branch_Code) == 'undefined')
+                            return;
+                        $("#hiddenBranch").val(e.dataItem.Branch_Code);
+                        $("#hiddenMonthInt").val(e.dataItem.NepaliMonthInt);
+                        $("#SeriesModel_" + pageId).modal("show");
+                        $('#seriesApply_MonthlyBranchBillCount').unbind("click");
+                        $('#seriesApply_MonthlyBranchBillCount').bind("click", seriesApplyEvent);
+                    },
+                });
+            }
+            function seriesApplyEvent(e) {
+                
+                var checkedValue = $("input[name=SeriesOption_MonthlyBranchBillCount]:checked").val();
+                if (checkedValue == "Day") {
+                    config.url = window.location.protocol + "//" + window.location.host + "/api/SalesDashboard/GetSalesBranchDailyReport"
+                        + "?monthName=" + String($("#hiddenMonthInt").val())
+                        + "&branchName=" + String($("#hiddenBranch").val())
+                        + "&DateFormat=" + $("input[name=DateFormat_MonthlyBranchBillCount]:checked").val()
+                        + "&salesReturn=" + $("#showSalesReturn_MonthlyBranchBillCount").prop("checked")
+                        + "&AmountType=" + $("input[name=fieldType_MonthlyBranchBillCount]:checked").val();
+
+                    config.categoryField = "day";
+                    config.sortField = "day";
+                    reportFilter = reportFilter == undefined ? ReportFilter.filterAdditionalData() : reportFilter;
+                }
+                else {
+                    $("#NetAmountBtn_@actionPageId").hide();
+                    $("#TotalAmountBtn_@actionPageId").hide();
+                    ShowFilters();
+                    config.url = window.location.protocol + "//" + window.location.host + "/api/SalesDashboard/GetSalesBranchItemWiseReport"
+                        + "?monthCode=" + String($("#hiddenMonthInt").val())
+                        + "&branchCode=" + String($("#hiddenBranch").val())
+                        + "&companyCode=";
+                    
+                    $("input[name=fieldType_" + pageId + "]").filter('[value=GrossAmount]').prop('checked', true);
+                    $("input[name=fieldType_" + pageId + "]").parent().removeClass("active")
+                    $("input[name=fieldType_" + pageId + "]:checked").parent().addClass("active");
+                    config.categoryField = "Description";
+                    config.sortField = "Code";
+                    reportFilter = reportFilter == undefined ? ReportFilter.filterAdditionalData() : reportFilter;
+                }
+                loadDataSource();
+            }
+            function CreateGrid(dataSource) {
+                $("#MonthlyBranchBillCountChart").html('');
+                $("#MonthlyBranchBillCountChart").removeAttr("style");
+                $("#MonthlyBranchBillCountChart").removeAttr("class");
+                $('.btnGrid_MonthlyBranchBillCount').data("type", "Grid");
+
+                var Column = [],
+                dataSource = dataSource == undefined ? $("#MonthlyBranchBillCountChart").data("kendoChart").dataSource : dataSource;
+                if (dataSource.data()[0].Branch_Code != null) {
+                    Column = [{
+                        field: "Month",
+                        title: "Month",
+                    }, {
+                            field: "BillCount",
+                        title: "Quantity",
+                        format: "{0:n0}",
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                    }];
+                }
+                else if (dataSource.data()[0].day != null) {
+                    Column = [{
+                        field: "day",
+                        title: "Day [" + dataSource.data()[0].Month + "]",
+                    }, {
+                        field: "Quantity",
+                        title: "Quantity",
+                        format: "{0:n0}",
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                    }, {
+                        field: "GrossAmount",
+                        title: "Gross Amount",
+                        format: "{0:n}",
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                    }, {
+                        field: "NetAmount",
+                        title: "Net Amount",
+                        format: "{0:n}",
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                    }, {
+                        field: "TotalAmount",
+                        title: "Total Amount",
+                        format: "{0:n}",
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                    }];
+                }
+                else {
+                    Column = [{
+                        field: "Description",
+                        title: "Item",
+                        width: 240
+                    }, {
+                        field: "Quantity",
+                        title: "Quantity",
+                        format: "{0:n0}",
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                    }, {
+                        field: "GrossAmount",
+                        title: "Amount",
+                        format: "{0:n}",
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                    }];
+                }
+                $("#MonthlyBranchBillCountChart").kendoGrid({
+                    dataSource: dataSource,
+                    height: $("#MonthlyBranchBillCountChart").hasClass("portlet-fullscreen") ? 550 : 350,
+                    groupable: false,
+                    sortable: true,
+                    //selectable: "multiple",
+                    toolbar: [{ template: kendo.template($("#toolbar-template").html()) }],
+                    excel: {
+                        fileName: "BranchWise Sales Report",
+                        allPages: true
+                    },
+                    columns: Column,
+                    dataBound: function (e) {
+                        
+                        var gird = e.sender;
+                        gird.table.find(".k-grouping-row:not(:first-child)").each(function () {
+                            gird.collapseGroup(this);
+                        });
+                    }
+                });
+            }
+            function refreshChart(flag) {
+                //check if showlevel and stack changed
+                if (flag != undefined && flag.data == false) {
+                    if ($(".btnGrid_MonthlyBranchBillCount").data("type") == "Grid") {
+                        $(".btnGrid_MonthlyBranchBillCount").data("type", "Chart");
+                        loadDataSource();
+                        return;
+                    }
+                }
+                //check if series type changed
+                if (flag != undefined && flag.data.options != undefined) {
+                    if ($(".btnGrid_MonthlyBranchBillCount").data("type") == "Grid") {
+                        chart_grid_option_change("btnGrid_MonthlyBranchBillCount", MonthlyBranchBillCount.init);
+                        return;
+                    }
+                }
+                var chart = $("#MonthlyBranchBillCountChart").data("kendoChart"),
+                    type = $("input[name=seriesType_MonthlyBranchBillCount]:checked").val(),
+                    stack = $("#Stack_MonthlyBranchBillCount").prop("checked"),
+                    IsLebelShow = $("#showLabel_MonthlyBranchBillCount").prop("checked"),
+                    fieldType = $("input[name=fieldType_MonthlyBranchBillCount]:checked").val();
+
+                for (var i = 0, length = chart.options.series.length; i < length; i++) {
+                    chart.options.series[i].stack = stack;
+                    chart.options.series[i].type = type;
+                    chart.options.series[i].field = fieldType;
+                    chart.options.series[i].labels.visible = IsLebelShow;
+                }
+                chart.refresh();
+            }
+
+            //event Bind
+            function applyClickEvent() {
+                
+                var checkedFieldValue = $("input[name=fieldType_@actionPageId]:checked").val();
+                var checkedDateFormat = $("input[name=DateFormat_@actionPageId]:checked").val();
+                var idx = config.url.indexOf("DateFormat=") + 11;
+                config.url = idx > 10 ? config.url.substr(0, idx) + checkedDateFormat + config.url.substr(idx + 2) : config.url;
+                idx = config.url.indexOf("AmountType=") + 11;
+                config.url = idx > 10 ? (config.url.substr(0, idx) + checkedFieldValue + config.url.substr(idx + config.url.length)) : config.url;
+                //var IsChanged = false;
+                //if (config._oldData.dateFormat != checkedDateFormat) {
+                //    IsChanged = true;
+                //    config.url = window.location.protocol + "//" + window.location.host + "/api/SalesDashboard/GetSalesBranchMonthlyReport";
+                //    config._oldData.dateFormat = checkedDateFormat;
+
+                //}
+                //if (config._oldData.fieldValue != checkedFieldValue) {
+                //    refreshChart();
+                //    config._oldData.fieldValue = checkedFieldValue;
+                //}
+                //config.url = window.location.protocol + "//" + window.location.host + "/api/SalesDashboard/GetSalesBranchMonthlyReport"
+                //        + "?DateFormat=" + $("input[name=DateFormat_MonthlyBranchBillCount]:checked").val()
+                //        + "&customerCode=&itemCode=&categoryCode=&companyCode=&branchCode=&partyTypeCode=&formCode="
+                //        + "&salesReturn=" + $("#showSalesReturn_MonthlyBranchBillCount").prop("checked");
+                config.series = [{
+                    field: checkedFieldValue,
+                    name: "#= group.value #"
+                }];
+                ChartFilter('MonthlyBranchBillCount', MonthlyBranchBillCount.init, true);
+            }
+            function reloadClickEvent() {
+                RefreshChartFilterControl('MonthlyBranchBillCount');
+                PreInit();
+                config = JSON.parse(_oldConfig);
+
+
+                reportFilter.ReportFilters.BranchFilter = [];
+
+                $("#NetAmountBtn_@actionPageId").show();
+                $("#TotalAmountBtn_@actionPageId").show();
+                ShowFilters();
+                PreInit();
+            }
+            function chartGridSwitchEvent() {
+                var datasource = $("#MonthlyBranchBillCountChart").data("kendoChart").dataSource;
+                $('.btnGrid_MonthlyBranchBillCount').data("type") == "Chart" ? CreateGrid(datasource) : CreateChart(datasource);
+                $("i", this).toggleClass("icon-bar-chart");
+            }
+            function saveChartConfig() {
+                var pageId = $(this).data("id");
+                var data = {
+                    ChartName: pageId,
+                    ChartType: $("input[name=seriesType_" + pageId + "]:checked").val(),
+                    FieldValue: $("input[name=fieldType_" + pageId + "]:checked").val(),
+                    DateFormat: $("input[name=DateFormat_" + pageId + "]:checked").val(),
+                    ShowLabel: $("#showLabel_" + pageId).prop("checked"),
+                    IsStack: false,
+                    SalesReturn: $("#showSalesReturn_MonthlyBranchBillCount").prop("checked"),
+                }
+
+                $.ajax({
+                    type: 'POST',
+                    data: data,
+                    url: window.location.protocol + "//" + window.location.host + "/Main/SaveUserWiseChartConfig",
+                    success: function (xhr, status) {
+                        displayPopupNotification("Setting Saved", "success");
+                    },
+                    error: function (xhr, status) {
+                        displayPopupNotification("Error", "error");
+                    }
+                });
+
+            }
+            function HideFilters() {
+                $("#productMultiselect_@actionPageId").closest(".row ").hide();
+                $("#employeeMultiSelect_@actionPageId").closest(".row ").hide();
+                $("#agentMultiSelect_@actionPageId").closest(".row ").hide();
+                $("#partyTypeMultiSelect_@actionPageId").closest(".row ").hide();
+                $("#locationMultiSelect_@actionPageId").closest(".row ").hide();
+                //br
+                $("#productMultiselect_@actionPageId").closest(".row ").prev("br").hide();
+                $("#employeeMultiSelect_@actionPageId").closest(".row ").prev("br").hide();
+                $("#agentMultiSelect_@actionPageId").closest(".row ").prev("br").hide();
+                $("#partyTypeMultiSelect_@actionPageId").closest(".row ").prev("br").hide();
+                $("#locationMultiSelect_@actionPageId").closest(".row ").prev("br").hide();
+                //clear the selected values
+                $("#productMultiselect_@actionPageId").data("kendoMultiSelect").value([]);
+                $("#employeeMultiSelect_@actionPageId").data("kendoMultiSelect").value([]);
+                $("#agentMultiSelect_@actionPageId").data("kendoMultiSelect").value([]);
+                $("#partyTypeMultiSelect_@actionPageId").data("kendoMultiSelect").value([]);
+                $("#locationMultiSelect_@actionPageId").data("kendoMultiSelect").value([]);
+            }
+            function ShowFilters() {
+                $("#productMultiselect_@actionPageId").closest(".row ").show();
+                $("#employeeMultiSelect_@actionPageId").closest(".row ").show();
+                $("#agentMultiSelect_@actionPageId").closest(".row ").show();
+                $("#partyTypeMultiSelect_@actionPageId").closest(".row ").show();
+                $("#locationMultiSelect_@actionPageId").closest(".row ").show();
+
+                $("#productMultiselect_@actionPageId").closest(".row ").prev("br").show();
+                $("#employeeMultiSelect_@actionPageId").closest(".row ").prev("br").show();
+                $("#agentMultiSelect_@actionPageId").closest(".row ").prev("br").show();
+                $("#partyTypeMultiSelect_@actionPageId").closest(".row ").prev("br").show();
+                $("#locationMultiSelect_@actionPageId").closest(".row ").prev("br").show();
+            }
+
+            return {
+                preInit: PreInit,
+                init: loadDataSource,
+                refreshChart: refreshChart,
+                applyClick: applyClickEvent,
+                reloadClick: reloadClickEvent,
+                btnGridClick: chartGridSwitchEvent,
+                saveConfig: saveChartConfig,
+                hideFilters: HideFilters,
+                showFilters: ShowFilters,
+            };
+        })();
+
+        $(document).ready(function () {
+            MonthlyBranchBillCount.preInit();
+
+            //start Binding
+            $(document).bind("kendo:skinChange", MonthlyBranchBillCount.init);
+            $('#MonthlyBranchBillCountChart').closest('.portlet').find('.reload').bind("click", MonthlyBranchBillCount.reloadClick);
+            $('#apply_MonthlyBranchBillCount').bind("click", MonthlyBranchBillCount.applyClick);
+            $(".btnGrid_MonthlyBranchBillCount").bind('click', MonthlyBranchBillCount.btnGridClick);
+            $("#showLabel_MonthlyBranchBillCount").bind("change", true, MonthlyBranchBillCount.refreshChart);
+            $('#Stack_MonthlyBranchBillCount').bind('click', true, MonthlyBranchBillCount.refreshChart);
+            $(".options_MonthlyBranchBillCount").bind("change", { "options": true }, MonthlyBranchBillCount.refreshChart);
+            $(".options_MonthlyBranchBillCount").bind("change", { "options": true }, MonthlyBranchBillCount.refreshChart);
+            $(".saveChartConfig_MonthlyBranchBillCount").bind("click", MonthlyBranchBillCount.saveConfig);
+            $("#TotalAmountBtn_@actionPageId,#NetAmountBtn_@actionPageId").bind("click", MonthlyBranchBillCount.hideFilters);
+            $("#GrossAmountBtn_@actionPageId,#QuantityBtn_@actionPageId").bind("click", MonthlyBranchBillCount.showFilters);
+        });
+
+
+
+        //Export 
+        $(".export-pdf").click(function () {
+            var chartid = $(this).data("id");
+            var chart = $("#" + chartid).getKendoChart();
+            var filename = $(this).closest(".portlet-title").find(".custom-modal").html();
+            chart.exportPDF({ paperSize: "auto", margin: { left: "1cm", top: "1cm", right: "1cm", bottom: "1cm" } }).done(function (data) {
+                kendo.saveAs({
+
+                    dataURI: data,
+                    fileName: filename + ".pdf",
+                    proxyURL: "//demos.telerik.com/kendo-ui/service/export"
+                });
+            });
+        });
+
+        $(".export-img").click(function () {
+            var chartid = $(this).data("id");
+            var chart = $("#" + chartid).getKendoChart();
+            var filename = $(this).closest(".portlet-title").find(".custom-modal").html();
+            chart.exportImage().done(function (data) {
+                kendo.saveAs({
+                    dataURI: data,
+                    fileName: filename + ".png",
+                    proxyURL: "//demos.telerik.com/kendo-ui/service/export",
+
+                });
+            });
+        });
+
+        $(".export-svg").click(function () {
+            var chartid = $(this).data("id");
+            var chart = $("#" + chartid).getKendoChart();
+            var filename = $(this).closest(".portlet-title").find(".custom-modal").html();
+            chart.exportSVG().done(function (data) {
+                kendo.saveAs({
+                    dataURI: data,
+                    fileName: filename + ".svg",
+                    proxyURL: "//demos.telerik.com/kendo-ui/service/export"
+                });
+            });
+        });
+    </script>
+</div>

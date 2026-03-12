@@ -1,0 +1,293 @@
+﻿<style>
+    #tolocationModalScrn2 .modal-header {
+        padding: 10px !important;
+        background-color: #eee;
+    }
+
+
+    /*#tolocationModal input {
+        width: auto !important;
+    }*/
+
+    #tolocationModalScrn2 .k-icon {
+        display: inline-block;
+    }
+
+
+    #locationTreeViewdocument {
+        width: 40%;
+        float: left;
+        margin-right: 20px;
+    }
+
+    .expand {
+        height: 370px;
+        padding-left: 10px;
+    }
+
+    .verticalLine {
+        border-left: solid #ddd 1px;
+    }
+
+    .k-group.k-treeview-lines {
+        max-height: 230px !important;
+    }
+
+    .mingapright, .mingapleft {
+        padding-right: 0px !important;
+        padding-left: 0px !important;
+    }
+
+    #tolocationGridScrn2 {
+        font-size: 9px;
+        /*height: 345px !important;*/
+    }
+
+
+    /*#locationtxtSearchString {
+        margin: 3px;
+        height: 27px !important;
+        margin-top: 0px;
+    }*/
+
+    .show-displaygrid {
+        display: none;
+    }
+
+    #locationFilterValueScrn2 {
+        /*width: 97% !important;
+        margin-left: 3px;
+        height: 26px !important;*/
+    }
+
+    .btn-link {
+        position: absolute;
+        top: -1px;
+        background-color: #ddd;
+        padding: 5px 8px;
+        right: 38px;
+    }
+
+        .btn-link:hover {
+            background-color: #ccc;
+        }
+
+    .modal-body {
+        padding: 0px 10px 10px 15px !important;
+        padding-bottom: 0px !important;
+    }
+
+
+    .customcolumn-one {
+        width: 27%;
+    }
+
+    .columnbg {
+        background-color: #eee;
+    }
+
+    .customcolumn-two {
+        width: 73%;
+    }
+
+    .topsearch {
+        margin-right: 51px;
+    }
+
+
+    #locations-list li {
+        border-bottom: solid #ded5d5 1px;
+    }
+    /*.rightallign {
+        font-weight: bold;
+        font-size: 8px !important;
+         float:right;
+    }*/
+    .custname {
+        width: 260px;
+        display: inline-block;
+    }
+</style>
+<div id="TolocationCtrlScrn2" ng-controller="TolocationCtrlScrn2">
+    <label for="element">
+        {{element.COLUMN_HEADER}}  <i class="fa fa-info-circle font-green" data-toggle="tooltip" title="{{element.HELP_DESCRIPTION}}"></i><span style="color:red">{{loactionerror}}</span>
+    </label>
+
+    <div class="input-group">
+        
+        <input id="tolocationScrn2" ng-model="masterModels[element.COLUMN_NAME]" name="tolocationScrn2" class="tolocation location mtolocation w-100" kendo-combo-box
+               k-placeholder="'Select Location Code'"
+               k-data-text-field="'LocationName'"
+               k-data-value-field="'LocationCode'"
+               k-filter="'contains'"
+               k-auto-bind="true"
+               k-options="tolocationCodeOptionScrn2"
+               k-suggest="false"
+               k-on-change="MasterTolocationCodeOnChange(kendoEvent)"
+               k-min-length="3"
+               @*k-data-source="TolocationDataSource"*@ />
+
+
+
+        <span class="input-group-addon addon-iconbox" style="cursor:pointer" ng-click="BrowseTreeListFortolocation()">
+            <i class="fa fa-search" data-toggle="tooltip" title="Search location"></i>
+            @*<i class="fa fa-location-arrow"></i>*@
+        </span>
+    </div>
+
+    <div class="modal fade-out" id="tolocationModalScrn2" data-backdrop="static" tabindex="-1" data-width="760">
+        <div class="modal-dialog  modal-dialog-box">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <b>Location TreeView</b>
+                        <div type="button" class="close" data-dismiss="modal" aria-hidden="true" next-on-tab data-toggle="tooltip" title="Close">&times;</div>
+                    </div>
+
+                </div>
+
+                <div class="modal-body modal-dialogbox-body">
+                    <div class="row">
+                        <div class="col-md-5 mingapright customcolumn-one columnbg">
+                            <input id="locationFilterValueScrn2" class="form-control filterText" name="search" type="text" placeholder="Search categories" />
+                            <div id="tolocationtreeScrn2" kendo-tree-view="tree"
+                                 k-data-source="treeDataScrn2"
+                                 k-options="options"
+                                 k-data-bound="onDataBound">
+
+                                <span k-template>
+                                    {{dataItem.LocationName}}
+                                </span>
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-7 customcolumn-two mingapleft">
+                            <div class="expand verticalLine">
+                                <div class="row">
+                                    <div class="col-md-offset-8 col-md-4 search_box">
+                                        <div class="topsearch">
+                                            <a class="btn-link fa fa-search" ng-click="BindSearchGrid()" data-toggle="tooltip" title="Search list"></a>
+                                            <input class="k-textbox" type="text" id="locationtxtSearchStringScrn2" ng-model="locationtxtSearchStringScrn2"
+                                                   ng-enter="BindSearchGrid()"
+                                                   name="search" placeholder="enter search text..." />
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <kendo-grid id="tolocationGridScrn2" options="tolocationGridOptionsScrn2" k-rebind="tolocationGridOptionsScrn2" class="search-grid">
+
+                                </kendo-grid>
+                            </div>
+
+                        </div>
+                    </div>
+
+
+                    <div class="row">
+                        <div class="col-md-5" style="padding-top:1%;">
+                            <label>Routine Search:</label>
+                            <input style="width:46.5%;" class="k-textbox" type="text" ng-model="routineSearchTextScrn2" name="search" placeholder="Routine search text..." ng-enter="routineSearchTextFun()" />
+                            <button class="btn btn-success" type="button" ng-click="routineSearchTextFun()">
+                                <span class="glyphicon glyphicon-search"></span>
+                            </button>
+                        </div>
+                    </div>
+
+
+                </div>
+
+
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-default" data-dismiss="modal" ng-click="SubLedger_Cancel($index)" data-toggle="tooltip" title="Cancel">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    $("#locationFilterValueScrn2").keyup(function (e) {
+        var FilterValue = $(this).val();
+        var value = FilterValue.substring(0, 1).toUpperCase() + FilterValue.substring(1);
+
+        if (FilterValue !== "") {
+            $(".selectAll").css("visibility", "hidden");
+            $("#tolocationtreeScrn2 .k-group .k-group .k-in").closest("li").hide();
+            $("#tolocationtreeScrn2 .k-group").closest("li").hide();
+            $("#tolocationtreeScrn2 .k-group .k-group .k-in:contains(" + value + ")").each(function () {
+                $(this).parents("ul, li").each(function () {
+                    var treeView = $("#tolocationtreeScrn2").data("kendoTreeView");
+                    treeView.expand($(this).parents("li"));
+                    $(this).show();
+                });
+            });
+            $("#tolocationtreeScrn2 .k-group .k-in:contains(" + FilterValue + ")").each(function () {
+                $(this).parents("ul, li").each(function () {
+                    $(this).show();
+                });
+            });
+        }
+        else {
+            $("#tolocationtreeScrn2 .k-group").find("li").show();
+            var nodes = $("#tolocationtreeScrn2 > .k-group > li");
+
+            $.each(nodes, function (i, val) {
+                if (nodes[i].getAttribute("data-expanded") == null) {
+                    $(nodes[i]).find("li").hide();
+                }
+            });
+            $(".selectAll").css("visibility", "visible");
+        }
+    });
+
+    $("#locationtxtSearchStringScrn2").keyup(function () {
+
+        var val = $(this).val();
+        var grid = $("#tolocationGridScrn2").data("kendoGrid");
+        if (grid != undefined) {
+            var tempServerFilter = grid.dataSource.options.serverFiltering;
+            grid.dataSource.options.serverFiltering = false;
+            var filter = [];
+            $.each(grid.columns, function (i, v) {
+                if (v.field != undefined) {
+                    var searchText = $.trim($("#locationtxtSearchStringScrn2").val());
+                    var model = grid.dataSource.options.schema.model.fields[v.field];
+                    var type = "string";
+                    if (model != undefined)
+                        type = model.type;
+                    if (type === "string")
+                        filter.push({ field: v.field, operator: "contains", value: searchText });
+                    else if (type === "number")
+                        filter.push({ field: v.field, operator: "eq", value: searchText });
+                    else if (type === "date") {
+                        var dateValue = new Date(searchText);
+                        searchText = dateValue == "Invalid Date" ? searchText : dateValue;
+                        filter.push({ field: v.field, operator: "eq", value: searchText });
+                    }
+                }
+
+            });
+            var filter = {
+                logic: "or",
+                filters: filter,
+            }
+
+            grid.dataSource.filter(filter);
+
+            if ($("#locationtxtSearchStringScrn2").val().length == 0)
+                grid.dataSource.filter([]);
+            grid.bind("dataBound", function () {
+                grid.dataSource.options.serverFiltering = tempServerFilter;
+            });
+        }
+    });
+
+</script>
+
+
+
+

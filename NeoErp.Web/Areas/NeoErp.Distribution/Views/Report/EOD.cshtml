@@ -1,0 +1,1156 @@
+﻿
+@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    Layout = null;
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+<style>
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+        // width: 183px !important;
+    }
+
+    .k-footer-template div {
+        border-bottom: none;
+    }
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+         font-size:11px;
+    }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    a.k-button.k-button-icontext.k-grid-excel {
+        float: right;
+    }
+
+    .bootbox-form {
+        padding: 3px !important;
+    }
+
+    .bootbox-input.bootbox-input-text.form-control {
+        height: 27px !important;
+    }
+</style>
+
+<style type="text/css">
+    #spDetailLocationMap {
+        width: 100%;
+        height: 450px;
+        background-color: grey;
+    }
+
+    #legend {
+        font-family: Arial, sans-serif;
+        background: #fff;
+        border: 3px solid #000;
+        display: inline-flex;
+    }
+
+        #legend h3 {
+            margin-top: 0;
+        }
+
+        #legend img {
+            vertical-align: middle;
+        }
+</style>
+<script>
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+</script>
+
+<head>
+    <link href="@Styles.Url("https://unpkg.com/leaflet@1.9.4/dist/leaflet.css")" rel="stylesheet" />
+</head>
+
+<div class="content">
+    <!--MODAL-->
+    <div id="mapModal" class="modal fade" role="dialog">
+        <div class="modal-dialog" style="width:65%;height:80%">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Location Details</h4>
+                </div>
+                <div class="modal-body">
+                    <div id="spDetailLocationMap"></div>
+                    <div id="legend"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--END MODAl-->
+    <div class="page-bar">
+        <ul class="page-breadcrumb"></ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+
+                <div class="actions">
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                    </div>
+                    @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                        {
+                            ShowItemBrandFilter = true,
+                        })
+                    </div>
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                        <i class="icon-control-play"></i>
+                    </a>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "EOD")
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div id="grid"></div>
+                        <script type="text/x-kendo-template" id="template">
+                            <div class="tabstrip">
+                                <ul>
+                                    <li class="k-state-active">Distributers</li>
+                                    <li>Reseller</li>
+                                    <li>Outlet Added</li>
+                                    <li>Closing Stock</li>
+                                    <li>Brand Wise</li>
+                                </ul>
+                                <div>
+                                    <div class="Distributor"></div>
+                                </div>
+                                <div>
+                                    <div class="Reseller"></div>
+                                </div>
+                                <div>
+                                    <div class="Outlet"></div>
+                                </div>
+                                <div>
+                                    <div class="ClosingStock"></div>
+                                </div>
+                                <div>
+                                    <div class="BrandWise"></div>
+                                </div>
+                            </div>
+
+                        </script>
+                        @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+
+<script src="@Scripts.Url("~/JS/reportFilter.js")"></script>
+
+<script src="@Scripts.Url("~/JS/DateFilter.js")" type="text/javascript"></script>
+
+<script>
+    var map = null;
+    var markerAtn = null;
+    var markerEod = null;
+
+    async function loadLeaflet() {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+            script.type = "text/javascript";
+            script.async = true;
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+        });
+    }
+
+    //$(document).ready(function () {
+    //    $("#mapModal").modal('show');//show the modal in order to initialize the map,
+    //    //otherwise map will not display until resized manually
+
+    //    var uluru = { lat: 27.710234, lng: 85.328426 };
+    //    map = new google.maps.Map(document.getElementById('spDetailLocationMap'), {
+    //        mapOptions: {
+    //            mapTypeControlOptions: {
+    //                mapTypeIds: ['custom', google.maps.MapTypeId.ROADMAP, google.maps.MapTypeId.TERRAIN]
+    //            },
+    //            mapTypeControl: false,
+    //            zoomControl: true,
+    //            zoomControlOptions: {
+    //                style: google.maps.ZoomControlStyle.SMALL,
+    //                position: google.maps.ControlPosition.TOP_LEFT
+    //            },
+    //            streetViewControl: false,
+    //            zoom: 7,
+    //            //minZoom: 7,
+    //            center: { lat: 28.43443095421775, lng: 84.20351049414055 },
+    //            mapTypeId: google.maps.MapTypeId.ROADMAP,
+    //        },
+    //        zoom: 10,
+    //        center: uluru
+
+
+    //    });
+    //    markerEod = new google.maps.Marker({
+    //        position: uluru,
+    //        map: map,
+    //        title: 'EOD'
+    //    });
+
+    //});
+
+
+
+    //var reportConfig = GetReportSetting("EOD");
+    var expandedDetailRowDistributor = "";
+
+    function getDateFormat(date) {
+        var test = new Date(date);
+        if (test.getFullYear() == '1970')
+            return '-';
+        return kendo.format("{0:" + reportConfig.dateFormat + "}", new Date(date));
+    }
+    function getTimeFormat(date) {
+        var test = new Date(date);
+        if (test.getFullYear() == '1970')
+            return '-';
+        return kendo.format("{0:hh:mm tt}", moment(date)._d)
+    }
+    function ExportToExcel(e) {
+        var SheetRow = [];//array to store the rows
+        SheetRow.push({ //Header
+            cells: [
+                { value: "Code", background: "#A9A7A6", },
+                { value: "Employee", background: "#A9A7A6", },
+                { value: "Date", background: "#A9A7A6", },
+                { value: "Zone", background: "#A9A7A6", },
+                { value: "Address", background: "#A9A7A6", },
+                { value: "Contact", background: "#A9A7A6", },
+                { value: "Remarks", background: "#A9A7A6", }
+                //{ value: "Time", background: "#A9A7A6", },
+                //{ value: "Distance(KM)", background: "#A9A7A6", },
+                //{ value: "Remarks", background: "#A9A7A6", },
+            ]
+        });
+        WriteData(e.data);
+
+        //recursive function to write the grouped/ungrouped data
+        function WriteData(array) {
+            array.forEach(function (row, index) {
+                console.log(row);
+                console.log(row.items);
+                if (typeof (row.items) != "undefined") { //if array contains nested items, write a row with group field and enter recursion
+                    Mvalue = row.value;
+                    MField = row.field;
+                    if (MField == "Visit_Date") {
+                        Mvalue = getDateFormat(Mvalue);
+                        MField="Date"
+                    }
+                    else if (MField == "ASSIGN_DATE") {
+                        Mvalue = getDateFormat(Mvalue);
+                        MField = "Assign Date"
+                    }
+                    else if (row.field == "Visit_Time") {
+                        Mvalue = getTimeFormat(Mvalue);
+                        MField = "Visit Time"
+                    }
+                    SheetRow.push({
+                        cells: [{
+                            value: MField + " : " + Mvalue,
+                            background: "#E1E1E1",
+                            colSpan: 10,//to span the total number of columns
+                            fontSize: 12,
+                        }]
+                    });
+                    WriteData(row.items);
+                }
+                else {
+                    //var dist = differenceDownload(row.CUST_LAT, row.CUST_LONG, row.VISIT_LAT, row.VISIT_LONG, 'K', row.Visit_Type);
+                    //var distColor = dist < 0.3 ? "#008000" : "#ff0000";
+                    SheetRow.push({ //Header
+                        cells: [
+                            { value: row.SP_CODE },
+                            { value: row.EMPLOYEE_EDESC},
+                            { value: getDateFormat(row.SUBMIT_DATE) },
+                            { value: row.GROUP_EDESC },
+                            { value: row.ADDRESS },
+                            { value: row.CONTACT },
+                            { value: row.REMARKS }
+
+                            //{ value: getDateFormat(row.ASSIGN_DATE) },
+                            //{ value: dist, color: distColor },
+                            //{ value: row.REMARKS },
+                        ]
+                    });
+                }
+            });
+        }
+        //initializing a workbook with above prepared rows
+        var Workbook = new kendo.ooxml.Workbook({
+            sheets: [{
+                columns: [
+                    @for(int i=0;i<10; i++)
+                    {
+                        <text>{ autoWidth: true },</text>
+                    }
+                ],
+                rows: SheetRow,
+            }]
+        });
+        //finally saving the excel sheet
+        kendo.saveAs({
+            dataURI: Workbook.toDataURL(),
+            fileName: "EOD Report.xlsx"
+        });
+    }
+
+    $(".applydp").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+        $(this).closest("#applydp").modal('hide');
+    });
+
+    $("#loadAdvancedFilters").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    });
+
+    $("#RunQuery").click(function (evt) {
+        evt.preventDefault();
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/Report/GetEODList";
+        KendoGridRefresh(urltest);
+    });
+
+
+
+    function BindGrid(readurl) {
+        var branches = ReportFilter.getBranchs();
+        reportConfig = GetReportSetting("EOD");
+        var grid = $("#grid").kendoGrid({
+            dataSource: new kendo.data.DataSource({
+                type: "json",
+                transport: {
+                    read: {
+                        url: readurl, // <-- Get data from here.
+                        dataType: "json", // <-- The default was "jsonp".
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8"
+                    },
+                    parameterMap: function (options, type) {
+                        var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+                    }
+                },
+
+                error: function (e) {
+                    displayPopupNotification("Sorry error occured while processing data", "error");
+                },
+                model: {
+                    fields: {
+                        SUBMIT_DATE: { type: "date" },
+                    }
+                },
+                pageSize: reportConfig.defaultPageSize,
+            }),
+            toolbar: kendo.template($("#toolbar-template").html()),
+            excel: {
+                fileName: "EOD Report",
+                allPages: true,
+            },
+            excelExport: function (e) {
+
+                ExportToExcel(e);
+                e.preventDefault();
+            },
+            pdf: {
+                fileName: "Received Schedule",
+                allPages: true,
+                avoidLinks: true,
+                pageSize: "auto",
+                margin: {
+                    top: "2m",
+                    right: "1m",
+                    left: "1m",
+                    buttom: "1m",
+                },
+
+                landscape: true,
+                repeatHeaders: true,
+                scale: 0.8,
+            },
+            height: 550,
+            sortable: true,
+            reorderable: true,
+            groupable: true,
+            resizable: true,
+            filterable: {
+                extra: false,
+                operators: {
+                    number: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "is greater than or equal to   ",
+                        gt: "is greater than",
+                        lte: "is less than or equal",
+                        lt: "is less than",
+                    },
+                    string: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        startswith: "Starts with    ",
+                        contains: "Contains",
+                        doesnotcontain: "Does not contain",
+                        endswith: "Ends with",
+                    },
+                    date: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "Is after or equal to",
+                        gt: "Is after",
+                        lte: "Is before or equal to",
+                        lt: "Is before",
+                    }
+                }
+            },
+            columnMenu: true,
+            columnMenuInit: function (e) {
+                wordwrapmenu(e);
+                checkboxItem = $(e.container).find('input[type="checkbox"]');
+            },
+            columnShow: function (e) {
+                if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                    SaveReportSetting('EOD', 'grid');
+            },
+            columnHide: function (e) {
+                if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                    SaveReportSetting('EOD', 'grid');
+            },
+            detailTemplate: kendo.template($("#template").html()),
+            detailInit: detailInit,
+            pageable: {
+                refresh: true,
+                pageSizes: reportConfig.itemPerPage,
+                buttonCount: 5
+            },
+            dataBound: function (o) {
+                var grid = o.sender;
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.length;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    displayPopupNotification("No Data Found Given Date Filter.", "info");
+                }
+                else {
+                    var g = $("#grid").data("kendoGrid");
+                    for (var i = 0; i < g.columns.length; i++) {
+                        g.showColumn(i);
+                    }
+                    $("div.k-group-indicator").each(function (i, v) {
+                        g.hideColumn($(v).data("field"));
+                    });
+                }
+
+                UpdateReportUsingSetting("EOD", "grid");
+                $('div').removeClass('.k-header k-grid-toolbar');
+            },
+            columns: [
+                           {
+                               field: "SP_CODE",
+                               title: "Code",
+                               width: "170px"
+                           },
+                               {
+                                   field: "EMPLOYEE_EDESC",
+                                   title: "Employee",
+                               },
+
+                           {
+                               field: "SUBMIT_DATE",
+                               title: "Date",
+                               template: "#= getDateFormat(SUBMIT_DATE) #",
+                               groupHeaderTemplate: "#= getDateFormat(value) #",
+
+                           },
+                           {
+                               field: "GROUP_EDESC",
+                               title: "ZONE",
+
+
+                           },
+                               {
+
+                                   field: "ADDRESS",
+                                   title: "Address",
+                               },
+
+                          {
+                              field: "CONTACT",
+                              title: "Contact",
+                              template: "#= CONTACT == ',' ? '' : CONTACT #",
+                              //groupHeaderTemplate: "#= getDateFormat(value) #",
+                          },
+                          {
+
+                              field: "REMARKS",
+                              title: "Remarks",
+                          },
+                          {
+                              command: {
+                                  text: "View Details",
+                                  click: function (e) {
+                                      e.preventDefault();
+                                      var dataItem = this.dataItem($(e.currentTarget).closest("tr"));
+
+                                      var uluru = [27.710234, 85.328426];
+
+                                      if (map) {
+                                          map.remove();
+                                      }
+
+                                      map = L.map('spDetailLocationMap').setView(uluru, 16);
+
+                                      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                          maxZoom: 19,
+                                          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                      }).addTo(map);
+
+                                      markerEod = L.marker(uluru, {
+                                          icon: L.icon({
+                                              iconUrl: "http://maps.google.com/mapfiles/ms/icons/red-dot.png",
+                                              iconSize: [25, 41],
+                                              iconAnchor: [12, 20]
+                                          }),
+                                          title: 'EOD'
+                                      });
+
+                                      if (dataItem.EOD_LOCATION) {
+                                          var EodLocation = dataItem.EOD_LOCATION.split(',');
+                                          markerEod.setLatLng([EodLocation[0], EodLocation[1]]).addTo(map);
+                                      }
+
+                                      if (dataItem.EOD_LOCATION) {
+                                          map.setView([EodLocation[0], EodLocation[1]], 12);
+                                      }
+
+                                      $("#mapModal").modal('show');
+                                  }
+                              },
+                              title: "Actions",
+                              width: "10%"
+                          },
+            ]
+
+        });
+
+    }
+
+
+    function KendoGridRefresh(readUrl) {
+        $('#grid').data("kendoGrid").destroy();
+        $('#grid').val('');
+        $('#grid').html('');
+        BindGrid(readUrl)
+    }
+
+    function detailInit(e) {
+        var detailRow = e.detailRow;
+        var Rowdata = e.data;
+        expandedDetailRowDistributor = e.detailRow.find(".Distributor");
+
+        detailRow.find(".tabstrip").kendoTabStrip({
+            animation: {
+                open: { effects: "fadeIn" }
+            },
+        });
+        //  var companyCode = Rowdata.COMPANY_CODE;
+        var companyCode = ReportFilter.getCompanyFilter().join("','");
+
+
+        detailRow.find(".Distributor").kendoGrid({
+            dataSource: new kendo.data.DataSource({
+                type: "json",
+                batch: true,
+                transport: {
+                    read: {
+                        url: window.location.protocol + "//" + window.location.host + "/" + "api/Report/GetEODDetail?SP_CODE=" + Rowdata.SP_CODE+"&type=Distributor",
+                        dataType: "json", // <-- The default was "jsonp".
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8"
+                    },
+                    parameterMap: function (options, type) {
+                        var reportFilter = $.extend({}, true, ReportFilter.filterAdditionalData());
+                        reportFilter.ReportFilters.FromDate = moment(Rowdata.SUBMIT_DATE).format("YYYY-MM-DD");
+                        reportFilter.ReportFilters.toDate = moment(Rowdata.SUBMIT_DATE).format("YYYY-MM-DD");
+                        var paramMap = JSON.stringify($.extend(options, reportFilter));
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+                    }
+                },
+                error: function (e) {
+                    displayPopupNotification("Sorry error occured while processing data", "error");
+                },
+                //serverFiltering: false,
+                //serverGrouping: false,
+                //serverAggregates: false,
+                //serverPaging: false,
+                schema: {
+                    model: {
+                        id: "ORDER_NO",
+                        fields: {
+                            ORDER_DATE: { editable: false, nullable: true, type: "date" },
+                            UNIT_PRICE:{type:"number"},
+                        }
+                    }
+                },
+                group: { field: "ORDER_NO", dir: "desc"  },
+                sort: [{ field: "CUSTOMER_EDESC" }, { field:"ITEM_EDESC"}],
+                pageSize: 100,
+                pageable: true,
+            }),
+            sortable: true,
+            pageable: false,
+            sortable: true,
+            reorderable: true,
+            resizable: true,
+            scrollable: {
+                virtual: true
+            },
+            columns: [
+                {
+                    field: "ORDER_NO",
+                    title: "Order no.",
+                    //width: "6%",
+                },
+                {
+                    field: "CUSTOMER_EDESC",
+                    title: "Customer",
+                   // width: "15%",
+                   // format: "{0:n0}"
+                },
+                {
+                    field: "ITEM_EDESC",
+                    title: "Item",
+                  //  width: "5%",
+                },
+                {
+                    field: "MU_CODE",
+                    title: "Unit",
+
+                },
+                {
+                    field: "QUANTITY",
+                    title: "Quantity",
+                   // width: "9%",
+                    template: '<span style="float:right">#= kendo.toString(QUANTITY) #</span>',
+                    format: "{0:n}",
+                   // footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                }, {
+                    field: "UNIT_PRICE",
+                    title: "Unit Price",
+                    template: '<span style="float:right">#= kendo.toString(UNIT_PRICE,"n") #</span>',
+                   // width: "10%",
+                   // footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                }, {
+                    field: "TOTAL_PRICE",
+                    title: "Total Price",
+                   // width: "10%",
+                    template: '<span style="float:right">#= kendo.toString(TOTAL_PRICE,"n") #</span>',
+                   // footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                },
+
+
+
+            ],
+            dataBound: function (o) {
+                var grid = o.sender;
+                var parentRow = grid.element.closest(".k-detail-row").prev();
+                var parentGrid = parentRow.closest("[data-role=grid]").data("kendoGrid");
+                var parentData = parentGrid.dataItem(parentRow);
+                var totalPOSend = parentData.PO_DCOUNT;
+                var totalPOArrived = _.uniq(grid.dataSource.data(), "ORDER_NO").length;
+                if (totalPOArrived == 0 && totalPOSend == 0)
+                {
+                    var colCount = grid.columns.length + 1;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                   // displayPopupNotification("No Data Found Given Date Filter.", "info");
+                }
+                else {
+                    var colCount = grid.columns.length + 1;
+                    var remainingPO = totalPOSend - totalPOArrived;
+                    var t = "Synchronized <b>" + totalPOArrived + "</b> of <b>" + totalPOSend + "</b> Order";
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .prepend('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-success">'+t+'</td></tr>');
+                }
+            },
+
+        });
+        detailRow.find(".Reseller").kendoGrid({
+            dataSource: new kendo.data.DataSource({
+                type: "json",
+                batch: true,
+                transport: {
+                    read: {
+                        url: window.location.protocol + "//" + window.location.host + "/" + "api/Report/GetEODDetail?SP_CODE=" + Rowdata.SP_CODE + "&type=Reseller",
+                        dataType: "json", // <-- The default was "jsonp".
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8"
+                    },
+                    parameterMap: function (options, type) {
+                        var reportFilter = $.extend({}, true, ReportFilter.filterAdditionalData());
+                        reportFilter.ReportFilters.FromDate = moment(Rowdata.SUBMIT_DATE).format("YYYY-MM-DD");
+                        reportFilter.ReportFilters.toDate = moment(Rowdata.SUBMIT_DATE).format("YYYY-MM-DD");
+                        var paramMap = JSON.stringify($.extend(options, reportFilter));
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+                    }
+                },
+                error: function (e) {
+                    displayPopupNotification("Sorry error occured while processing data", "error");
+                },
+                //serverFiltering: false,
+                //serverGrouping: false,
+                //serverAggregates: false,
+                //serverPaging: false,
+                schema: {
+                    model: {
+                        id: "ORDER_NO",
+                        fields: {
+                            ORDER_DATE: { editable: false, nullable: true, type: "date" },
+                            UNIT_PRICE: { type: "number" },
+                        }
+                    }
+                },
+                group: { field: "ORDER_NO",dir:"desc" },
+                sort: [{ field: "CUSTOMER_EDESC" }, { field: "ITEM_EDESC" }],
+                pageSize: 100,
+                pageable: true,
+            }),
+            sortable: true,
+            pageable: false,
+            sortable: true,
+            reorderable: true,
+            resizable: true,
+            scrollable: {
+                virtual: true
+            },
+            columns: [
+                {
+                    field: "ORDER_NO",
+                    title: "Order no.",
+                    //width: "6%",
+                },
+                {
+                    field: "CUSTOMER_EDESC",
+                    title: "Customer",
+                    // width: "15%",
+                    // format: "{0:n0}"
+                },
+                {
+                    field: "ITEM_EDESC",
+                    title: "Item",
+                    //  width: "5%",
+                },
+                {
+                    field: "MU_CODE",
+                    title: "Unit",
+
+                },
+                {
+                    field: "QUANTITY",
+                    title: "Quantity",
+                    // width: "9%",
+                    template: '<span style="float:right">#= kendo.toString(QUANTITY) #</span>',
+                    format: "{0:n}",
+                    // footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                }, {
+                    field: "UNIT_PRICE",
+                    title: "Unit Price",
+                    template: '<span style="float:right">#= kendo.toString(UNIT_PRICE,"n") #</span>',
+                    // width: "10%",
+                    // footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                }, {
+                    field: "TOTAL_PRICE",
+                    title: "Total Price",
+                    // width: "10%",
+                    template: '<span style="float:right">#= kendo.toString(TOTAL_PRICE,"n") #</span>',
+                    // footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                },
+
+
+
+            ],
+            dataBound: function (o) {
+                var grid = o.sender;
+                var parentRow = grid.element.closest(".k-detail-row").prev();
+                var parentGrid = parentRow.closest("[data-role=grid]").data("kendoGrid");
+                var parentData = parentGrid.dataItem(parentRow);
+
+                var totalPOSend = parentData.PO_RCOUNT;
+                var totalPOArrived = _.uniq(grid.dataSource.data(), "ORDER_NO").length;
+
+                if (totalPOArrived == 0 && totalPOSend == 0) {
+                    var colCount = grid.columns.length + 1;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    //displayPopupNotification("No Data Found Given Date Filter.", "info");
+                }
+                else {
+                    var colCount = grid.columns.length + 1;
+                    var remainingPO = totalPOSend - totalPOArrived;
+                    var t = "Synchronized <b>" + totalPOArrived + "</b> of <b>" + totalPOSend + "</b> Order";
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .prepend('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-success">' + t + '</td></tr>');
+                }
+            },
+
+        });
+        detailRow.find(".Outlet").kendoGrid({
+            dataSource: new kendo.data.DataSource({
+                type: "json",
+                batch: true,
+                transport: {
+                    read: {
+                        url: window.location.protocol + "//" + window.location.host + "/" + "api/Report/GetEODDetail?SP_CODE=" + Rowdata.SP_CODE + "&type=Outlet",
+                        dataType: "json", // <-- The default was "jsonp".
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8"
+                    },
+                    parameterMap: function (options, type) {
+                        var reportFilter = $.extend({}, true, ReportFilter.filterAdditionalData());
+                        reportFilter.ReportFilters.FromDate = moment(Rowdata.SUBMIT_DATE).format("YYYY-MM-DD");
+                        reportFilter.ReportFilters.toDate = moment(Rowdata.SUBMIT_DATE).format("YYYY-MM-DD");
+                        var paramMap = JSON.stringify($.extend(options, reportFilter));
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+                    }
+                },
+                error: function (e) {
+                    displayPopupNotification("Sorry error occured while processing data", "error");
+                },
+                //serverFiltering: false,
+                //serverGrouping: false,
+                //serverAggregates: false,
+                //serverPaging: false,
+                schema: {
+                    model: {
+                        id: "ORDER_NO",
+                        fields: {
+                            ORDER_DATE: { editable: false, nullable: true, type: "date" },
+                            UNIT_PRICE: { type: "number" },
+                        }
+                    }
+                },
+               // group: { field: "ORDER_NO", dir: "desc" },
+               // sort: [{ field: "CUSTOMER_EDESC" }, { field: "ITEM_EDESC" }],
+                pageSize: 100,
+                pageable: true,
+            }),
+            sortable: true,
+            pageable: false,
+            sortable: true,
+            reorderable: true,
+            resizable: true,
+            scrollable: {
+                virtual: true
+            },
+            columns: [
+                {
+                    field: "RESELLER_NAME",
+                    title: "Outlet Name",
+                    //width: "6%",
+                },
+                {
+                    field: "AREA_NAME",
+                    title: "Area",
+                    // width: "15%",
+                    // format: "{0:n0}"
+                },
+                {
+                    field: "ADDRESS",
+                    title: "Address",
+                    // width: "15%",
+                    // format: "{0:n0}"
+                },
+                {
+                    field: "CONTACT",
+                    title: "Contact",
+                    //  width: "5%",
+                },
+            ],
+            dataBound: function (o) {
+                var grid = o.sender;
+
+                if (grid.dataSource.data().length == 0) {
+                    var colCount = grid.columns.length + 1;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    //displayPopupNotification("No Data Found.", "info");
+                }
+            },
+
+        });
+        detailRow.find(".ClosingStock").kendoGrid({
+            dataSource: new kendo.data.DataSource({
+                type: "json",
+                batch: true,
+                transport: {
+                    read: {
+                        url: window.location.protocol + "//" + window.location.host + "/" + "api/Report/GetEODDetail?SP_CODE=" + Rowdata.SP_CODE + "&type=Stock",
+                        dataType: "json", // <-- The default was "jsonp".
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8"
+                    },
+                    parameterMap: function (options, type) {
+                        var reportFilter = $.extend({}, true, ReportFilter.filterAdditionalData());
+                        reportFilter.ReportFilters.FromDate = moment(Rowdata.SUBMIT_DATE).format("YYYY-MM-DD");
+                        reportFilter.ReportFilters.toDate = moment(Rowdata.SUBMIT_DATE).format("YYYY-MM-DD");
+                        var paramMap = JSON.stringify($.extend(options, reportFilter));
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+                    }
+                },
+                error: function (e) {
+                    displayPopupNotification("Sorry error occured while processing data", "error");
+                },
+                //serverFiltering: false,
+                //serverGrouping: false,
+                //serverAggregates: false,
+                //serverPaging: false,
+                schema: {
+                    model: {
+                        id: "ORDER_NO",
+                        fields: {
+                            ORDER_DATE: { editable: false, nullable: true, type: "date" },
+                            UNIT_PRICE: { type: "number" },
+                        }
+                    }
+                },
+                group: [{ field: "TYPE", dir: "asc" }, { field: "NAME", dir: "asc" }],
+                sort: [{ field: "ITEM_EDESC" }],
+                pageSize: 100,
+                pageable: true,
+            }),
+            sortable: true,
+            pageable: false,
+            sortable: true,
+            reorderable: true,
+            resizable: true,
+            //scrollable: {
+            //    virtual: true
+            //},
+            columns: [
+                //{
+                //    field: "NAME",
+                //    title: "Name",
+                //    //width: "6%",
+                //},
+                {
+                    field: "ITEM_EDESC",
+                    title: "Item",
+                    // width: "15%",
+                    // format: "{0:n0}"
+                },
+                {
+                    field: "MU_CODE",
+                    title: "Unit",
+                    // width: "15%",
+                    // format: "{0:n0}"
+                },
+                {
+                    field: "CURRENT_STOCK",
+                    title: "Stock",
+                    template: '<span style="float:right">#= kendo.toString(CURRENT_STOCK,"n0") #</span>',
+                    //  width: "5%",
+                },
+                {
+                    field: "PURCHASE_QTY",
+                    title: "Purchase Qty",
+                    template: '<span style="float:right">#= kendo.toString(PURCHASE_QTY,"n0") #</span>',
+                    //  width: "5%",
+                },
+            ],
+            dataBound: function (o) {
+                var grid = o.sender;
+
+                if (grid.dataSource.data().length == 0) {
+                    var colCount = grid.columns.length + 1;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    //displayPopupNotification("No Data Found.", "info");
+                }
+            },
+
+        });
+        detailRow.find(".BrandWise").kendoGrid({
+            dataSource: {
+                type: "json",
+                batch: true,
+                transport: {
+                    read: {
+                        url: window.location.protocol + "//" + window.location.host + "/" + "api/Report/GetEmployeeBrandSales?SP_CODE=" + Rowdata.SP_CODE,
+                        dataType: "json", // <-- The default was "jsonp".
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8"
+                    },
+                    parameterMap: function (options, type) {
+                        var date = kendo.toString(kendo.parseDate(Rowdata.SUBMIT_DATE), "yyyy-MMM-dd");
+                        var filters = $.extend(options, ReportFilter.filterAdditionalData());
+                        filters.ReportFilters.FromDate = date;
+                        filters.ReportFilters.ToDate = date;
+                        var paramMap = JSON.stringify(filters);
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+                    },
+                },
+                schema: {
+                    model: {
+                        fields: {
+                            BRAND_NAME: { type: "string" },
+                            TOTAL_QUANTITY: { type: "number" },
+                            TOTAL_AMOUNT: { type: "number" },
+                            MU_CODE: { type: "string" },
+                        }
+                    }
+                },
+                aggregate: [{ field: "TOTAL_QUANTITY", aggregate: "sum" },
+                              { field: "TOTAL_AMOUNT", aggregate: "sum" }, ],
+                error: function (e) {
+                    displayPopupNotification("Sorry error occured while processing data", "error");
+                },
+                sort: { field: "BRAND_NAME", dir: "asc" },
+                pageSize: 100,
+                pageable: true,
+            },
+            sortable: true,
+            groupable: true,
+            pageable: false,
+            sortable: true,
+            reorderable: true,
+            resizable: true,
+            reorderable: false,
+            // height: 300,
+            //scrollable: {
+            //    virtual: true
+            //},
+            columns: [
+                {
+                    field: "BRAND_NAME",
+                    title: "Brand",
+                    footerTemplate: "Total"
+                },
+                {
+                    field: "TOTAL_QUANTITY",
+                    title: "Total Quantity",
+                    attributes:
+                    {
+                        style: "text-align:right;"
+                    },
+                    format: '{0:n0}',
+                    aggregates: ["sum"],
+                    footerTemplate: "<div style='text-align:right;'>#=sum#</div>"
+                },
+                {
+                    field: "TOTAL_AMOUNT",
+                    title: "Total Amount",
+                    attributes:
+                    {
+                        style: "text-align:right;"
+                    },
+                    format: '{0:n0}',
+                    aggregates: ["sum"],
+                    footerTemplate: "<div style='text-align:right;'>#=sum#</div>"
+                },
+                {
+                    field: "MU_CODE",
+                    title: "Unit",
+                },
+            ],
+            dataBound: function (o) {
+                var grid = o.sender;
+                if (grid.dataSource.data().length <= 0) {
+                    var colCount = grid.columns.length + 1;
+                    var table = $(o.sender.wrapper).find('tbody')[0];
+                    $(table).append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                }
+            },
+        });
+
+    };
+
+    $(document).ready(function () {
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/Report/GetEODList"
+        //  BindGrid(urltest);
+        DateFilter.init(function () {
+            consolidate.init(function () {
+                loadLeaflet();
+                BindGrid(urltest);
+                $("#mapModal").modal('hide');             //the map is loaded and works fine
+            });
+        });
+        $('#mapModal').on('shown.bs.modal', function () {
+            map.invalidateSize(); // Trigger a resize event on the map
+        });
+    });
+</script>
+<script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js")"></script>

@@ -1,0 +1,204 @@
+﻿
+@{
+    ViewBag.Title = "Competitor field Setup";
+    Layout = null;
+}
+<style>
+    #CompFieldForm h4 {
+        margin-top: 0px !important;
+    }
+
+    #NotificationSetup .k-auto-scrollable {
+        overflow: hidden !important;
+    }
+
+    .k-splitter {
+        min-height: 404px;
+    }
+
+    .form-control {
+        width: 97% !important;
+    }
+
+    .custom-panel-body {
+        padding: 7px 30px 0px 10px !important;
+        height: 182px;
+    }
+
+    .custom-panel-body .caption {
+        font-size: 12px !important;
+        padding: 5px 0 6px 0 !important;
+    }
+
+    .custom-panel-body .portlet-title {
+        min-height: auto !important;
+    }
+
+    .tblresponsive {
+        border: 1px solid #e1e1e1 !important;
+    }
+
+    .table thead tr th {
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    input#NotificationCode {
+        font-size: 12px;
+    }
+
+    input#NotificationName {
+        font-size: 12px;
+    }
+
+    #NotificationSetup .k-grid-header {
+        padding-right: 0px !important
+    }
+
+    .titleheading {
+        padding: 5px 0px 5px !important
+    }
+</style>
+
+<div ng-controller="CompFieldCtrl">
+    <div class="content">
+        <div class="page-bar">
+            <ul class="page-breadcrumb"></ul>
+            <div class="pull-right">
+                <div class="btn-group">
+                    @Html.Partial("~/Views/Shared/Controls/_SetupConfig.cshtml", "GetCompFields")
+                </div>
+                <div class="btn-group">
+                    <a href="javascript:void(0)" id="uploadExcel" class="pull-right btn btn-circle btn-icon-only btn-default" ng-click="SaveDefaults()" title="Save all default fileds">
+                        <i class="fa fa-floppy-o"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="splitter">
+        <div id="pane1">
+            <div id="Grid">
+                <kendo-grid options="grid" id="grid"></kendo-grid>
+            </div>
+        </div>
+        <div>
+            <form id="CompFieldForm" name="CompFieldForm" novalidate>
+                <div class="panel-body custom-panel-body clearfix">
+                    <div class="portlet box box-green">
+                        <div class="portlet-title">
+                            <div class="caption adduser">
+                                <i class="fa fa-plus-square"></i>Competitor Items Field
+                            </div>
+                        </div>
+                        <div class="portlet-body form">
+                        </div>
+                    </div>
+
+
+                    <div class="portlet light bordered main">
+                        <div class="portlet-title">
+                            <div class="caption">
+                                <i class="icon-equalizer font-green-haze"></i>
+                                <span class="caption-subject font-green-haze bold uppercase text-center" style="text-align: center">
+                                    Field setup
+                                </span>
+                            </div>
+                            <div class="actions pull-right">
+                                @*<button type="button" id="deleteNotification" name="deleteNotification" ng-click="Delete(Notification.NOTIFICATION_ID)" ng-disabled="!Notification.NOTIFICATION_ID" class="btn btn-danger btn-sm">Delete</button>*@
+                                <button type="button" id="saveNotification" name="saveNotification" ng-click="SaveFields()" class="btn btn-green btn-sm">Save</button>
+                                <button type="button" id="cancelNotification" name="cancelNotification" ng-click="Cancel()" class="btn btn-default btn-sm">Reset</button>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12 col-sm-12">
+                                <div class="row">
+                                    <div class="col-md-4 col-sm-4">
+                                        <div class="form-group">
+                                            <label class="control-label">
+                                                Item <span style="color:red" ng-show="CompFieldForm.itemsSelect.$invalid">
+                                                    <span ng-show="CompFieldForm.itemsSelect.$error.required">*</span>
+                                                </span>
+                                            </label>
+                                            <select id="itemsSelect" name="itemsSelect"
+                                                    kendo-multi-select k-options="distItemSelect"
+                                                    slim-scroll ng-model="Item.ITEM_CODE"
+                                                    k-ng-model="Item.ITEM_CODE"
+                                                    k-value-primitive="true"
+                                                    k-on-select="onItemSelect(kendoEvent)"
+                                                    k-on-deselect="onItemDeselect(kendoEvent)"
+                                                    style="width:100%;" required></select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-1 pull-right">
+                                        <button type="button" id="AddField" name="AddField" ng-click="AddField()" class="btn btn-green btn-sm">Add</button>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-11">
+                                        <table class="table table-bordered table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th class="col-md-1">S.N.</th>
+                                                    <th class="col-md-5">Field</th>
+                                                    <th class="col-md-5">Type</th>
+                                                    <th class="col-md-1">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr ng-repeat="field in Item.FIELDS">
+                                                    <td>{{$index+1}}.</td>
+                                                    <td>
+                                                        <input type="text" class="form-control input-sm"
+                                                               id="fieldName_{{$index}}" name="fieldName_{{$index}}"
+                                                               ng-disabled="field.COL_NAME == 'Available' || field.COL_NAME == 'Rate'"
+                                                               ng-change="onFieldNameChange(field.COL_NAME,$index)"
+                                                               ng-model="field.COL_NAME" required />
+                                                    </td>
+                                                    <td>
+                                                        <select id="typeSelect_{{$index}}" name="typeSelect_{{$index}}"
+                                                                k-options="DataTypeOptions"
+                                                                kendo-multi-select ng-model="field.COL_DATA_TYPE"
+                                                                ng-disabled="field.COL_NAME == 'Available' || field.COL_NAME == 'Rate'"
+                                                                k-ng-model="field.COL_DATA_TYPE" required></select>
+                                                    </td>
+                                                    <td>
+                                                        <button class="btn btn-xs btn-danger"
+                                                                ng-disabled="field.COL_NAME == 'Available' || field.COL_NAME == 'Rate'"
+                                                                ng-click="RemoveField($index)">
+                                                            <i class="fa fa-trash"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+        var a = location.hash;
+        var b = location.pathname;
+        var url = (b + a);
+        $(".active").removeClass();
+        $("a[href='" + url + "']").parent().addClass("active");
+        $("a[href='" + url + "']").parent().parent().slideDown("slow");
+
+        $("#splitter").kendoSplitter();
+        var splitter = $("#splitter").data("kendoSplitter");
+        splitter.size(".k-pane:first", "20%");
+        splitter.max("#pane1", "550px");
+        splitter.min("#pane1", "200px");
+
+
+</script>
+<script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js?V2")"></script>

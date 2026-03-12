@@ -1,0 +1,365 @@
+﻿@{
+    var actionPageId = "HeatMapRuslanSales";
+    var myAreaName = "NeoErp.Distribution";
+    var Heading = "Heat Map (Ruslan)";
+    /* CompanyCode ="'06','06'"*/
+    var companyCode = "'06'";
+    /* DivisionCode ="'06.01','06.02'"*/
+
+    var DivisionCode = "'06.01'";
+
+    var orderfromoutlet = true;
+}
+
+       
+            <div class="portlet portlet-sortable  light bordered" id="@actionPageId">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="icon-bar-chart font-green-haze"></i>
+                        <span class="caption-subject bold uppercase font-green-haze custom-modal">@Heading </span><span style="color:forestgreen" id="max_@actionPageId"></span>
+                    </div>
+                    <div class="tools">
+                    
+                        <a data-target="#Model_@actionPageId" id="heatMap_@actionPageId" data-toggle="modal" class="config"></a>
+                        <a href="javascript:;" class="collapse">
+                        </a>
+                        <a href="javascript:;" class="remove">
+                        </a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <div class="k-content wide">
+                        <div class="panel-body1">
+                            <div id="map-canvas_@actionPageId" class="map-canvas"  style="width:100%; height:500px;" > </div>
+
+                            <!-- the draggable input and display controls -->
+                            <div id="draggable_@actionPageId" style="display:none" class="draggable">
+                                <div id="project"></div>
+                                <input type="file" id="csv-file_@actionPageId" name="files" style="display:none" />
+
+                                <div id="radius-label_@actionPageId" class="radius-label">radius: 20</div>
+                                <div id="radius-slider_@actionPageId" class="radius-slider"></div>
+
+                                <div id="opacity-label_@actionPageId" class="opacity-label">opacity: 0.5</div>
+                                <div id="opacity-slider_@actionPageId" class="opacity-slider"></div>
+
+                                <div id="max-label_@actionPageId" class="max-label">max: -</div>
+                                <div id="max-slider_@actionPageId" class="max-slider"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+           
+        @*@Html.Partial("_PartialDashboard.cshtml", new DashboardViewModel()
+            {
+                AllchartList = ViewBag.widgetsAll as List<string>,
+                chartList= ViewBag.widgets as List<string>,
+            })*@
+  
+
+<link href='http://fonts.googleapis.com/css?family=Open+Sans|Raleway' rel='stylesheet' type='text/css'>
+<style>
+    .map-canvas {
+        height: 100%;
+        margin: 0px;
+        padding: 0px;
+        font-family: 'Raleway', sans-serif;
+        z-index: 1;
+    }
+
+    .draggable {
+        z-index: 100;
+        background-color: rgba(200,200,255,.7);
+        width: 250px;
+        padding: 20px;
+        position: absolute;
+          top: 247px;
+    left: 60px;
+        cursor: move;
+        border: black 1px solid;
+    }
+
+    .radius-label, .opacity-label, .max-label {
+        margin-top: 10px;
+    }
+
+    .radius-slider, .opacity-slider, .max-slider {
+        /*width: 250px;*/
+        margin-top: 10px;
+    }
+
+    #project {
+        font-size: 10pt;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .radius-slider .ui-slider-handle,
+    .opacity-slider .ui-slider-handle,
+    .max-slider .ui-slider-handle {
+        cursor: pointer;
+    }
+</style>
+@*<script defer src='@Scripts.Url("~/Areas/"+myAreaName+"/js/papaparse.min.js")'></script>*@
+@*<script src="./papaparse.min.js"></script>*@
+@*<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&libraries=visualization"></script>*@
+
+
+
+<script>
+
+    $("#heatMap_@actionPageId").on("click", function () {
+
+        if ($('#draggable_@actionPageId').css('display') == 'none') {
+            $("#draggable_@actionPageId").show();
+        }
+        else {
+            $("#draggable_@actionPageId").hide();
+        }
+    })
+    var mapHeatMapRuslanSales, pointarrayHeatMapRuslanSales, heatmapHeatMapRuslanSales;
+        var csvHeatMapRuslanSales = [];
+        handleFileHeatMapRuslanSales();
+		//$("#csv-file").change(handleFileSelectCSV);
+		$("#draggable_@actionPageId").draggable();
+        initializeHeatMapRuslanSales();
+		//google.maps.event.addDomListener(window, 'load', initialize);
+		$("#radius-slider_@actionPageId").slider({
+		    orientation: "horizontal",
+		    range: "min",
+		    min: 1,
+		    max: 50,
+		    value: 20,
+		    slide: function (event, ui) {
+		        $("#radius-label_@actionPageId").html("radius: " + ui.value);
+                if (heatmapHeatMapRuslanSales == null) return;
+                heatmapHeatMapRuslanSales.set('radius', ui.value);
+		    }
+		});
+
+		$("#opacity-slider_@actionPageId").slider({
+		    orientation: "horizontal",
+		    range: "min",
+		    min: 0,
+		    max: 100,
+		    value: 50,
+		    slide: function (event, ui) {
+		        $("#opacity-label_@actionPageId").html("opacity: " + ui.value / 100);
+                if (heatmapHeatMapRuslanSales == null) return;
+                heatmapHeatMapRuslanSales.set('opacity', ui.value / 100);
+		    }
+		});
+
+		$("#max-slider_@actionPageId").slider({
+		    orientation: "horizontal",
+		    range: "min",
+		    min: 0,
+		    max: 1,
+		    value: 0,
+		    slide: function (event, ui) {
+                $("#max-label_@actionPageId").html("max: " + numberWithCommas(ui.value));
+                $("#max_@actionPageId").html("max: " + numberWithCommas(ui.value));
+
+                if (heatmapHeatMapRuslanSales == null) return;
+                heatmapHeatMapRuslanSales.set('maxIntensity', ui.value);
+		    }
+		});
+		function numberWithCommas(x) {
+				return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+		}
+
+        function handleFileHeatMapRuslanSales(evt) {
+            $.param({ Company_code: '@companyCode', DivisoinCode: '@DivisionCode'})
+		    $.ajax({
+                url: window.location.protocol + "//" + window.location.host + "/api/Distribution/GetCustomerSales?" + $.param({ Company_code: '@companyCode', DivisoinCode: '@DivisionCode', orderfromoutlet:'@orderfromoutlet'}),
+                type: "POST",
+                // data: JSON.stringify(report),
+                dataType: "json",
+                traditional: true,
+                contentType: "application/json; charset=utf-8",
+                success: function (response) {
+                    
+                    var max = 0;
+                    csv = [];
+                    for (var i = 0; i < response.length; i++) {
+                        max = Math.max(max, response[i].sales);
+                        csvHeatMapRuslanSales.push({
+                            location: new google.maps.LatLng(response[i].LATITUDE, response[i].LONGITUDE),
+                            weight: response[i].sales
+                        });
+
+                    }
+
+                    loadHeatmapHeatMapRuslanSales(csvHeatMapRuslanSales);
+                    $("#max_@actionPageId").html("max: " + numberWithCommas(max));
+                    $("#max-label_@actionPageId").html("max: " + numberWithCommas(max));
+                    $("#max-slider_@actionPageId").slider("option", "max", max);
+                    $("#max-slider_@actionPageId").slider("option", "value", max);
+                },
+                error: function () {
+
+                }
+            });
+
+            //var file = evt.target.files[0];
+
+            //Papa.parse(file, {
+            //	header: true,
+            //	dynamicTyping: true,
+            //	complete: function(results) {
+            //		csv = [];
+
+            //		if(results.meta.fields.indexOf("weight") == -1) {
+            //			for(idx in results["data"]) {
+            //				var row = results["data"][idx];
+            //				csv.push(new google.maps.LatLng(row["lat"], row["lon"]))
+            //			}
+            //		} else {
+            //			var max = results["data"][0]["weight"];
+
+            //			for(idx in results["data"]) {
+            //				var row = results["data"][idx];
+
+            //				max = Math.max(max, row["weight"]);
+
+            //				csv.push({
+            //					location: new google.maps.LatLng(row["lat"], row["lon"]),
+            //					weight: row["weight"]
+            //				});
+            //			}
+
+            //			$("#max-label").html("max: "+numberWithCommas(max));
+            //			$("#max-slider").slider("option","max",max);
+            //			$("#max-slider").slider("option","value",max);
+            //		}
+
+            //		console.log(results);
+
+            //		loadHeatmap(csv);
+            //	}
+            //});
+        }
+
+        function handleFileSelectCSVHeatMapRuslanSales(evt) {
+
+
+            var file = evt.target.files[0];
+
+            Papa.parse(file, {
+                header: true,
+                dynamicTyping: true,
+                complete: function (results) {
+                    csv = [];
+
+                    if (results.meta.fields.indexOf("weight") == -1) {
+                        for (idx in results["data"]) {
+                            var row = results["data"][idx];
+                            csvHeatMapRuslanSales.push(new google.maps.LatLng(row["lat"], row["lon"]))
+                        }
+                    } else {
+                        var max = results["data"][0]["weight"];
+
+                        for (idx in results["data"]) {
+                            var row = results["data"][idx];
+
+                            max = Math.max(max, row["weight"]);
+
+                            csvHeatMapRuslanSales.push({
+                                location: new google.maps.LatLng(row["lat"], row["lon"]),
+                                weight: row["weight"]
+                            });
+                        }
+
+                        $("#max-label_@actionPageId").html("max: " + numberWithCommas(max));
+                        $("#max-slider_@actionPageId").slider("option", "max", max);
+                        $("#max-slider_@actionPageId").slider("option", "value", max);
+                    }
+
+                    console.log(results);
+
+                    loadHeatmapHeatMapRuslanSales(csv);
+                }
+            });
+        }
+
+        function initializeHeatMapRuslanSales() {
+            var mapOptions = {
+                zoom: 7,
+                fullscreenControl: true,
+                //minZoom: 7,
+                //maxZoom: 25,
+                center: new google.maps.LatLng(28.43443095421775, 84.20351049414055),
+                mapTypeId: google.maps.MapTypeId.ROADMAP
+            };
+
+            mapHeatMapRuslanSales = new google.maps.Map(document.getElementById('map-canvas_@actionPageId'),
+                mapOptions);
+        }
+
+        function loadHeatmapHeatMapRuslanSales(csvHeatMapRuslanSales) {
+            var pointArray = new google.maps.MVCArray(csvHeatMapRuslanSales);
+
+            if (heatmapHeatMapRuslanSales) heatmapHeatMapRuslanSales.setMap(null);
+
+            heatmapHeatMapRuslanSales = new google.maps.visualization.HeatmapLayer({
+                data: pointArray,
+                radius: $("#radius-slider_@actionPageId").slider("value"),
+                opacity: $("#opacity-slider_@actionPageId").slider("value")
+            });
+
+            heatmapHeatMapRuslanSales.setMap(mapHeatMapRuslanSales);
+        }
+
+		//$(document).ready(function(){
+		//	$("#csv-file").change(handleFileSelect);
+
+		//	google.maps.event.addDomListener(window, 'load', initialize);
+
+		//	$(function() {
+		//		$( "#draggable" ).draggable();
+		//	});
+
+		//	$(function() {
+		//		$( "#radius-slider" ).slider({
+		//			orientation: "horizontal",
+		//			range: "min",
+		//			min: 1,
+		//			max: 50,
+		//			value: 20,
+		//			slide: function(event, ui) {
+		//				$("#radius-label").html("radius: " + ui.value);
+		//				if(heatmap == null) return;
+		//				heatmap.set('radius', ui.value);
+		//			}
+		//		});
+
+		//		$( "#opacity-slider" ).slider({
+		//			orientation: "horizontal",
+		//			range: "min",
+		//			min: 0,
+		//			max: 100,
+		//			value: 50,
+		//			slide: function(event, ui) {
+		//				$("#opacity-label").html("opacity: " + ui.value/100);
+		//				if(heatmap == null) return;
+		//				heatmap.set('opacity', ui.value/100);
+		//			}
+		//		});
+
+		//		$( "#max-slider" ).slider({
+		//			orientation: "horizontal",
+		//			range: "min",
+		//			min: 0,
+		//			max: 1,
+		//			value: 0,
+		//			slide: function(event, ui) {
+		//				$("#max-label").html("max: " + numberWithCommas(ui.value));
+		//				if(heatmap == null) return;
+		//				heatmap.set('maxIntensity', ui.value);
+		//			}
+		//		});
+		//	});
+		//});
+</script>

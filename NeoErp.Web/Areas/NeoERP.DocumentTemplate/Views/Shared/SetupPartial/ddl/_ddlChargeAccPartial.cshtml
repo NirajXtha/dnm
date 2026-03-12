@@ -1,0 +1,270 @@
+﻿<style>
+    #AccountModel .modal-header {
+        padding: 10px !important;
+        background-color: #eee;
+    }
+
+
+    /*#customerModal input {
+        width: auto !important;
+    }*/
+
+    #AccountModel .k-icon {
+        display: inline-block;
+    }
+
+
+
+    /*#customerTreeViewdocument {
+        width: 40%;
+        float: left;
+        margin-right: 20px;
+    }*/
+
+
+    .verticalLine {
+        border-left: solid #ddd 1px;
+    }
+
+    .k-group.k-treeview-lines {
+        max-height: 230px !important;
+    }
+
+
+
+
+    #accountGrid {
+        font-size: 9px;
+        /*height: 345px !important;*/
+    }
+
+
+
+    .show-displaygrid {
+        display: none;
+    }
+
+    #filterText {
+        width: 98% !important;
+        margin-left: 3px;
+        height: 26px !important;
+    }
+
+
+
+
+
+    .customcolumn-one {
+        width: 27%;
+    }
+
+    .columnbg {
+        background-color: #eee;
+    }
+
+    .customcolumn-two {
+        width: 73%;
+    }
+
+    .topsearch {
+        margin-right: 51px;
+    }
+
+
+
+    #masteracccode-list li {
+        /*border-bottom: solid #ded5d5 1px;*/
+    }
+
+    .rightallign {
+        font-weight: bold;
+        font-size: 8px !important;
+        float: right;
+    }
+
+    .custName {
+        width: 71% !important;
+        display: inline-block !important;
+    }
+    .input-group-addon, .input-group-btn {
+    width: 0%;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+</style>
+<div id="accSchemeCtrl" ng-controller="accSchemeChargeCtrl">
+
+
+
+    <div class="input-group">
+        <input id="masteracccode" ng-model="Scheme.CHARGE_ACCOUNT_CODE" name="acccode" class="acccode accmaster macccode " kendo-combo-box
+               k-placeholder="'Select Account'"
+               k-data-text-field="'ACC_EDESC'"
+               k-data-value-field="'ACC_CODE'"
+               k-filter="'contains'"
+               k-auto-bind="true"
+               k-suggest="false"
+               k-options="masteraccountCodeOption"
+               k-on-change="MasterAccCodeOnChange(kendoEvent)"
+               k-min-length="3" />
+        <span class="input-group-addon addon-iconbox" style="cursor:pointer" ng-click="BrowseTreeListForAccountCode()">
+            <i class="fa fa-search" data-toggle="tooltip" title="Search account"></i>
+            @*<i class="glyphicon glyphicon-book"></i>*@
+        </span>
+        </div>
+
+        <div class="modal fade-out" id="AccountModel" data-backdrop="static" tabindex="-1" data-width="760">
+            <div class="modal-dialog modal-dialog-box">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div>
+                            <b>Chart Of Account</b>
+                            <div type="button" class="close" data-dismiss="modal" aria-hidden="true" next-on-tab>&times;</div>
+                        </div>
+
+                    </div>
+
+                    <div class="modal-body modal-dialogbox-body">
+                        <div class="row">
+                            <div class="col-md-5 mingapright customcolumn-one columnbg">
+                                <input id="masterAccfilterText" class="form-control filterText" name="search" type="text" placeholder="Search categories" />
+                                <div id="accounttree" kendo-tree-view="tree"
+                                     k-data-source="acctreeData"
+                                     k-options="accoptions"
+                                     k-data-bound="acconDataBound">
+
+                                    <span k-template>
+                                        {{dataItem.AccountName}}
+                                    </span>
+                                </div>
+
+                            </div>
+                            <div class="col-md-7 customcolumn-two mingapleft">
+                                <div class="expand verticalLine">
+                                    <div class="row">
+                                        <div class="col-md-4 search_box">
+                                            <div class="topsearch">
+                                                <a class="btn-linkicon fa fa-search" ng-click="BindSearchGrid()" data-toggle="tooltip" title="Search list"></a>
+                                                <input class="k-textbox txtSearchString" type="text" id="masterAcctxtSearchString" ng-model="txtSearchString" name="search" placeholder="enter search text..." />
+
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <kendo-grid id="accountGrid" options="AccountCodeGridOptions" k-rebind="AccountCodeGridOptions" class="search-grid">
+
+                                    </kendo-grid>
+                                </div>
+
+                            </div>
+                        </div>
+
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-sm btn-default" data-dismiss="modal" ng-click="SubLedger_Cancel($index)" data-toggle="tooltip" title="Cancel">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function () {
+            setTimeout(function () {
+                $(".k-list").slimScroll({
+                    position: 'right',
+                    //alwaysVisible: false,
+                    //height: '150',
+                });
+            }, 100)
+        });
+        $("#masterAccfilterText").keyup(function (e) {
+
+            var FilterValue = $(this).val();
+            var value = FilterValue.substring(0, 1).toUpperCase() + FilterValue.substring(1);
+
+            if (FilterValue !== "") {
+                $(".selectAll").css("visibility", "hidden");
+
+                $("#accounttree .k-group .k-group .k-in").closest("li").hide();
+                $("#accounttree .k-group").closest("li").hide();
+                $("#accounttree .k-group .k-group .k-in:contains(" + value + ")").each(function () {
+                    $(this).parents("ul, li").each(function () {
+                        var treeView = $("#accounttree").data("kendoTreeView");
+                        treeView.expand($(this).parents("li"));
+                        $(this).show();
+                    });
+                });
+                $("#accounttree .k-group .k-in:contains(" + value + ")").each(function () {
+                    $(this).parents("ul, li").each(function () {
+                        $(this).show();
+                    });
+                });
+            }
+            else {
+                $("#accounttree .k-group").find("li").show();
+                var nodes = $("#accounttree > .k-group > li");
+
+                $.each(nodes, function (i, val) {
+                    if (nodes[i].getAttribute("data-expanded") == null) {
+                        $(nodes[i]).find("li").hide();
+                    }
+                });
+                $(".selectAll").css("visibility", "visible");
+            }
+        });
+
+        $("#masterAcctxtSearchString").keyup(function () {
+
+            var val = $(this).val();
+            var grid = $("#accountGrid").data("kendoGrid");
+            if (grid != undefined) {
+                var tempServerFilter = grid.dataSource.options.serverFiltering;
+                grid.dataSource.options.serverFiltering = false;
+                var filter = [];
+                $.each(grid.columns, function (i, v) {
+                    if (v.field != undefined) {
+                        var searchText = $.trim($("#masterAcctxtSearchString").val());
+                        var model = grid.dataSource.options.schema.model.fields[v.field];
+                        var type = "string";
+                        if (model != undefined)
+                            type = model.type;
+                        if (type === "string")
+                            filter.push({ field: v.field, operator: "contains", value: searchText });
+                        else if (type === "number")
+                            filter.push({ field: v.field, operator: "eq", value: searchText });
+                        else if (type === "date") {
+                            var dateValue = new Date(searchText);
+                            searchText = dateValue == "Invalid Date" ? searchText : dateValue;
+                            filter.push({ field: v.field, operator: "eq", value: searchText });
+                        }
+                    }
+
+                });
+                var filter = {
+                    logic: "or",
+                    filters: filter,
+                }
+
+                grid.dataSource.filter(filter);
+
+                if ($("#masterAcctxtSearchString").val().length == 0)
+                    grid.dataSource.filter([]);
+                grid.bind("dataBound", function () {
+                    grid.dataSource.options.serverFiltering = tempServerFilter;
+                });
+            }
+        });
+        //function formatValue(value, text) {
+        //    if (text.indexOf("#") > -1)
+        //        text = text.split("#")[1];
+        //    var textMatcher = new RegExp(text, "ig");
+        //    return value.replace(textMatcher, function (match) {
+        //        return "<u><strong>" + match + "</strong></u>";
+        //    });
+        //}
+    </script>
+
+
+
+

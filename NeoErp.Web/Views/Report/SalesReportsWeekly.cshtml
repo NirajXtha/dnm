@@ -1,0 +1,1180 @@
+﻿@using System.Globalization
+@{   
+    ViewBag.Title = "Overview";
+    Layout = "~/Views/Common/Master.cshtml";
+    ViewBag.DemoSettings = true;
+}
+
+<link href="~/Content/JGrid/JQGridDemo.css" rel="stylesheet" media="screen">
+@{ string[] xvalue = Session["XaxisSelected"] as string[];
+   string yvalue = Convert.ToString(Session["Yaxis"]);
+}
+<div class="window-load" id="Loading">
+    <img src="~/Images/Loading.gif" />
+</div>
+<div class="row">
+    <div class="col-lg-12" style="background-color: #f5f5f5; height:38px;">
+           <div class="btn-group" role="group" style="float: right; padding-top:6px;">
+            @Html.Partial("~/Views/Report/Search.cshtml")
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-lg-12">
+        <form class="form-horizontal" action="~/Report/SalesReportsWeekly" method="post" onsubmit="return ValidateDate(); ">
+      @Html.Partial("~/Views/Report/SearchContent.cshtml")<div id="divBalanceSheetReport" class="row"></div>
+            </form>
+    </div>
+</div>
+<div class="container-fluid wrapper">
+    <div class="row">
+          <div class="col-md-12">
+            <div class="btn-group btn-group-xs pull-right">
+                <a href="~/Report/SalesReportsWeekly" style="text-decoration: none">
+                    <button value="W" name="Weekly" type="button" class="btn btn-default">Weekly</button></a>
+                <a href="~/Report/SalesReports" style="text-decoration: none">
+                    <button value="M" name="Monthly" type="button" class="btn btn-default">Monthly</button></a>
+                    <a href="~/Report/SalesReportsQuarterly" style="text-decoration: none">
+                        <button value="Q" name="Quarterly" type="button" class="btn btn-default">Quarterly</button></a>
+            </div>
+           <div class="table-content" style="margin-top:26px;overflow-x: auto;" id="salesreport">
+                <table id="grid" class="table table-bordered" style:"padding-right:10px;"></table>
+                <div id='pager'></div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+<div class="col-md-12">
+   <!-- Modal -->
+   <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" >
+      <div class="modal-dialog" role="document">
+         <div class="modal-content" style="width:800px;">
+            <div class="modal-header">
+               <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+               <div id="PopupHeader">
+                  <h4 class="modal-title" id="myModalLabel">Preference Setup</h4>
+               </div>
+            </div>
+            <form class="form-horizontal" action="~/Report/SalesReportsWeekly" method="post">
+               <div class="modal-body">
+                  <div class="panel-body">
+                     <div class="form-group">
+                        <div class="col-md-12 filterizeDate">
+                           <label>Date Filter</label>
+                           <select class="dateFilterSelect" id="ddlDateFilter" name="DateStep">
+                              <option value="TD" selected="selected">Today</option>
+                              <option value="TM">This Month</option>
+                              <option value="LM">Last Month</option>
+                              <option value="TQ">This Quater</option>
+                              <option value="LQ">Last Quarter</option>
+                              <option value="TH">This Half Year</option>
+                              <option value="LH">Last Half Year</option>
+                              <option value="TY">This Year</option>
+                              <option value="LY">Last Year</option>
+                           </select>
+                           <label>From Date</label>
+                           <input type="text" id="fromInputDate" class="frmDataInput" placeholder="From Date" />
+                           <input type="text" name="FromDate" id="FromDate" class="readOnlyInput" placeholder="From Date" readonly />
+                           <label>To Date</label>
+                           <input type="text" class="frmDataInput" id="toInputDate" placeholder="To Date">
+                           <input type="text" name="ToDate" class="readOnlyInput" id="ToDate" placeholder="To Date" readonly>
+                        </div>
+                     </div>
+                     <div class="col-md-6">
+                        <div class="form-group">
+                           @*<div class="pref-slide">
+                              <p>
+                                 <input type="text" id="period" readonly="" style="font-size: 10px; border: 0; color: #009999; font-weight: bold;">
+                              </p>
+                              <div id="periodSlider">
+                                 <label for="period" style="font-size: 12px; font-weight: normal">Date Step</label>
+                              </div>
+                           </div>*@
+                        </div>
+                        <div class="form-group">
+                           <div class="checkbox">
+                              <label style="font-size: 12px">
+                              <input type="checkbox" id="Quantity" name="Quantity" checked >
+                              Show Quantity
+                              </label>
+                           </div>
+                           <div class="pref-slide">
+                              <p>
+                                 <input type="text" id="figure" name="figureQuantity" readonly="" style="font-size: 10px; border: 0; color: #009999; font-weight: bold;">
+                              </p>
+                              <div id="slider">
+                                 <label for="figure" style="font-size: 12px; font-weight: normal">figure in</label>
+                              </div>
+                           </div>
+                           <div class="pref-slide"">
+                              <p>
+                                 <input type="text" id="round" name="roundupQuantity" readonly="" style="font-size: 10px; border: 0; color: #009999; font-weight: bold;">
+                              </p>
+                              <div id="roundSlider">
+                                 <label for="round" style="font-size: 12px; font-weight: normal">round up</label>
+                              </div>
+                           </div>
+                        </div>
+                        <div class="form-group">
+                           <div class="checkbox">
+                              <label style="font-size: 12px">
+                              <input type="checkbox" id="Amount" name="Amount" checked>
+                              Show Amount
+                              </label>
+                           </div>
+                           <div class="pref-slide">
+                              <p>
+                                 <input type="text" name="figureAmount"id="figure1" readonly="" style="font-size: 10px; border: 0; color: #009999; font-weight: bold;">
+                              </p>
+                              <div id="slider1">
+                                 <label for="figure" style="font-size: 12px; font-weight: normal">figure in</label>
+                              </div>
+                           </div>
+                           <div class="pref-slide">
+                              <p>
+                                 <input type="text" id="round1" name="roundupAmount"readonly="" style="font-size: 10px; border: 0; color: #009999; font-weight: bold;">
+                              </p>
+                              <div id="roundSlider1">
+                                 <label for="round" style="font-size: 12px; font-weight: normal">round up</label>
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+                     <div class="col-md-6">
+                        <label>X-axis:</label>
+                         <select multiple="multiple" id="multiXaxis" name="xaxis" required>
+                           <option value='Product'>Product</option>
+                           <option value="ProductTree">Product Tree</option>
+                           <option value='Customer'>Customer</option>
+                           <option value="Category">Category</option>
+                           <option value="CustomerTree">Customer Tree</option>
+                           <option value='Timeline'>Timeline</option>
+                        </select>
+                        <input type="hidden" name="multiple_value" id="multiple_value" />
+                         <select multiple="multiple" id="ProductList" name="ProductList"  hidden></select>
+                        <br />
+                        <label>Y-axis:</label>
+                        <select multiple="multiple" id="multiYaxis" name="yaxis" required>
+                           <option value='Product'>Product</option>
+                           <option value='Customer'>Customer</option>
+                           <option value='Timeline'>Timeline</option>
+                        </select>
+                     </div>
+                  </div>
+               </div>
+               <div class="modal-footer">
+                  <button type="submit" id="btnOk" class="btn btn-primary">OK</button>
+                  <button id="btnLoad" onclick="return false;" class="btn btn-primary">Load</button>
+                  <button id="btnSave" onclick="return false;" class="btn btn-primary" data-toggle="modal" data-target="#mysave">Save</button>
+               </div>
+              <div class="modal fade" id="mysave" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" >
+                  <div class="modal-content modal-inner-popup">
+                     <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="mysavelabel">Save As</h4>
+                     </div>
+                     <div class="modal-body">
+                         <div class="pref-input-div">
+                             <label>Preference Name:</label>
+                        <input type="text" name="PreferenceName" />
+                         </div>                        
+                        <label style="margin-left:10px">Default:</label>
+                        <input type="checkbox" name="DefaultPreference" />                        
+                     </div>
+                      <div class="modal-footer">
+                           <button type="submit" class="btn btn-primary"> <span class="fa fa-floppy-o" aria-hidden="true"></span></button>
+                           <button type="button" class="btn btn-danger" data-dismiss="modal"><span class="fa fa-close"></span></button>
+                        </div>
+                  </div>
+               </div>
+            </form>
+         </div>
+      </div>
+   </div>
+</div>
+    </div>
+<script src="../Sales/Content/jquery.ba-throttle-debounce.min.js"></script>
+<script src="~/Sales/Content/jquery.stickyheader.js"></script>
+<link href="~/Sales/Content/nepali.datepicker.v2.1.min.css" rel="stylesheet" />
+<script src="~/Sales/Content/nepali.datepicker.v2.1.min.js"></script>
+<link href="~/Content/multi-select-master/css/multi-select.css" rel="stylesheet" />
+<script src="~/Content/multi-select-master/multi-select-master/js/jquery.multi-select.js"></script>
+<script>
+
+    $('#multiXaxis').multiSelect({
+        keepOrder: true,
+        afterSelect: function (value) {
+            if ($("#multiple_value").val() == "") {
+                $("#multiple_value").val(value);
+            } else {
+                $("#multiple_value").val($("#multiple_value").val() + "," + value);
+            }
+            if (value == "Category") {
+
+                $('#ProductList').multiSelect(
+                {
+                    selectableHeader: "<b>Filter Product</b>",
+                    selectionHeader: "<b>Selection items</b>",
+                }
+                );
+                $.ajax({
+                    url: "../Report/Filter?value=" + value, success: function (result) {
+
+                        var ob = JSON.parse(result);
+
+                        var arrayLength = ob.length;
+
+
+                        for (var i = 0; i < arrayLength; i++) {
+
+
+                            $('#ProductList').multiSelect('addOption', { value: '' + ob[i].CATEGORY_CODE + '', text: '' + ob[i].CATEGORY_EDESC + '', index: i });
+                        }
+                    }
+                });
+            }
+        },
+        afterDeselect: function (value) {
+
+            if ($("#multiple_value").val().indexOf(value + ",") != -1) {
+                $("#multiple_value").val($("#multiple_value").val().replace(value + ",", ""));
+            } else {
+                $("#multiple_value").val($("#multiple_value").val().replace(value, ""));
+            }
+            if (value == "Category") {
+                $('#ms-ProductList').empty();
+            }
+
+
+        }
+    });
+
+
+    var v_xaxis = '@ViewData["Xaxis"]';
+    v_xaxis = v_xaxis.split(',');
+    var v_yaxis='@ViewData["Yaxis"]';
+    v_yaxis = v_yaxis.split(',');
+    
+    $('#multiYaxis').multiSelect();
+    $('#multiXaxis').multiSelect('select', v_xaxis);
+    $('#multiYaxis').multiSelect('select', v_yaxis);
+
+
+</script>
+<script>
+    var steps = [
+    "weekly",
+    "monthly",
+    "quartely"
+    ];
+    var rsteps = [
+    "0",
+    "0.0",
+    "0.00",
+    "0.000",
+    "0.0000"
+    ];
+    var fsteps = [
+    "Actual",
+    "thousand",
+    "lakh",
+    "crore",
+    ];
+    $(function () {
+        $("#slider1").slider({
+            value: 0,
+            min: 0,
+            max: 3,
+            slide: function (event, ui) {
+                $("#figure1").val(fsteps[ui.value]);
+            }
+        });
+        var decimalPlacesAmount = '@ViewData["roundupAmount"]';
+        decimalPlacesAmount = decimalPlacesAmount.split(".");
+        if (decimalPlacesAmount == 0) {
+            decimalPlacesAmount = 0;
+
+        }
+        else {
+            decimalPlacesAmount = decimalPlacesAmount[1].length;
+        }
+        var decimalPlacesQuantity = '@ViewData["roundupQuantity"]';
+        decimalPlacesQuantity = decimalPlacesQuantity.split(".");
+        if (decimalPlacesQuantity == 0) {
+            decimalPlacesQuantity = 0;
+        }
+        else {
+            decimalPlacesQuantity = decimalPlacesQuantity[1].length;
+        }
+        $("#figure1").val(fsteps[$("#slider1").slider("value")]);
+        $("#roundSlider1").slider({
+            value: decimalPlacesAmount,
+            min: 0,
+            max: 4,
+            slide: function (event, ui) {
+                $("#round1").val(rsteps[ui.value]);
+            }
+        });
+        $("#round1").val(rsteps[$("#roundSlider1").slider("value")]);
+        $("#Amount").click(function () {
+            if (this.checked) {
+                // set the slider as disable
+                $("#slider1").slider("option", "disabled", false);
+                $("#roundSlider1").slider("option", "disabled", false);
+                var trial = true;
+            }
+            else {
+                // set the slider as enable again when you click to uncheck
+                $("#slider1").slider("option", "disabled", true);
+                $("#roundSlider1").slider("option", "disabled", true);
+                trial = false;
+            }
+        });
+
+        $("#slider").slider({
+            value: 0,
+            min: 0,
+            max: 2,
+            slide: function (event, ui) {
+                $("#figure").val(fsteps[ui.value]);
+            }
+        });
+        $("#figure").val(fsteps[$("#slider").slider("value")]);
+
+        $("#roundSlider").slider({
+            value: decimalPlacesQuantity,
+            min: 0,
+            max: 4,
+            slide: function (event, ui) {
+                $("#round").val(rsteps[ui.value]);
+            }
+        });
+        $("#round").val(rsteps[$("#roundSlider").slider("value")]);
+        $("#Quantity").click(function () {
+            if (this.checked) {
+                // set the slider as disable
+                $("#slider").slider("option", "disabled", false);
+                $("#roundSlider").slider("option", "disabled", false);
+            }
+            else {
+                // set the slider as enable again when you click to uncheck
+                $("#slider").slider("option", "disabled", true);
+                $("#roundSlider").slider("option", "disabled", true);
+            }
+        });
+        $("#periodSlider").slider({
+            range: "min",
+            value: 1,
+            min: 0,
+            max: 2,
+            slide: function (event, ui) {
+                $("#period").val(steps[ui.value]);
+            }
+        });
+        $("#period").val(steps[$("#periodSlider").slider("value")]);
+        $('#Quantity').on("click", function () {
+            $("#roundSlider1").show();
+        });
+    });
+
+</script>
+<script type="text/javascript">
+    var Preference = {
+        BindEvents: function () {
+            $("#btnPreference").on('click', function () { });
+        },
+    }
+</script>
+<script>
+    $('#btnCommonSearch').click(function () {
+        var DateFilter = $('#ddlDateFilter').val();
+        var fromDate = $('#fromInputDate').val();
+        var toDate = $('#toInputDate').val();
+        var Currency = $('#ddlCurrency').val();
+        var Consolidated = $('#chkConsolidated').is(':checked');
+        var Monthly = $("#chkMonthly").is(':checked');
+        var YearType = $('#ddlYearType').val();
+        var DataType = $('#ddlDataType').val();
+    });
+</script>
+
+<script>
+    function UpdateChart(CPeriod) {
+        var ChartPeriod = CPeriod;
+        var url = window.location.href + "?change=" + ChartPeriod;
+        var urlc = url.split("?");
+        url = urlc[0] + "?change=" + ChartPeriod;
+        window.location.href = url;
+        alert(url);
+    };
+
+</script>
+
+<script type="text/javascript">
+    var trial = '@ViewData["Amount"]';
+    var trial1 = '@ViewData["Quantity"]';
+    var yaxis = '@ViewData["Yaxis"]';
+    var decimalPlacesAmount = '@ViewData["roundupAmount"]';
+    var defaultAmount = decimalPlacesAmount;
+    decimalPlacesAmount = decimalPlacesAmount.split(".");
+    if (decimalPlacesAmount == 0) {
+        decimalPlacesAmount = 0;
+
+    }
+    else {
+        decimalPlacesAmount = decimalPlacesAmount[1].length;
+    }
+    var decimalPlacesQuantity = '@ViewData["roundupQuantity"]';
+    var defaultQuantity = decimalPlacesQuantity;
+    decimalPlacesQuantity = decimalPlacesQuantity.split(".");
+    if (decimalPlacesQuantity == 0) {
+        decimalPlacesQuantity = 0;
+    }
+    else {
+        decimalPlacesQuantity = decimalPlacesQuantity[1].length;
+    }
+    Amount = false;
+    Quantity = false;
+    $('#Quantity').prop('checked', true);
+    $('#Amount').prop('checked', true);
+    if (trial == 'on') {
+        var Amount = false;
+        $('#Amount').prop('checked', true);
+    }
+    else {
+        Amount = true;
+        $('#Amount').prop('checked', false);
+
+    }
+    if (trial1 == 'on') {
+        var Quantity = false;
+        $('#Quantity').prop('checked', true);
+    }
+    else {
+        Quantity = true;
+        $('#Quantity').prop('checked', false);
+    }
+    var divwidth = $(document).width();
+    var divheight = $(window).height();
+    jQuery(document).ready(function () {
+        jQuery("#grid").jqGrid('jqPivot',
+        [@if (ViewData.Model != null)
+         {
+             var roundupAmount = Convert.ToString(ViewData["roundupAmount"]);
+             var roundupQuantity = Convert.ToString(ViewData["roundupQuantity"]);
+             var figureQuantity = Convert.ToDouble(ViewData["figureQuantity"]);
+             var figureAmount = Convert.ToDouble(ViewData["figureAmount"]);
+             foreach (var item in ViewData.Model)
+             {<text>
+            {
+                customerparent: "@Convert.ToString(item["CUSTOMERPARENT"])",
+                customergparent: "@Convert.ToString(item["GRANDPARENTCUSTOMER"])",
+                type: "@Convert.ToString(item["CATEGORY_EDESC"])",
+                grandparent: "<b>@Convert.ToString(item["GRANDPARENT"])</b>",
+                category: "<b>@Convert.ToString(item["PARENT"])</b>",
+                name: "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@Convert.ToString(item["ITEM_EDESC"])",
+                customer:"@Convert.ToString(item["CUSTOMER_EDESC"])",
+                timeline:"<div class='hidden'>@Convert.ToInt16(item["MONTH"])</div>@CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(Convert.ToInt16(item["MONTH"]))-@Convert.ToString(item["YEAR"])",
+                year: "@Convert.ToString(item["YEAR"])",
+                yaxis: "@{
+                    switch (Convert.ToString(ViewData["Yaxis"]))
+                    {
+                        case "Customer":<text>@Convert.ToString(item["CUSTOMER_EDESC"])"</text>
+                            break;
+                        case "Timeline":<text><div class='hidden'>@Convert.ToInt16(item["MONTH"])</div>@CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(Convert.ToInt16(item["MONTH"]))-@Convert.ToString(item["YEAR"])"</text>
+                            break;
+                        case "Product":<text>@Convert.ToString(item["ITEM_EDESC"])"</text>
+                            break;
+                    }
+                  },
+                week: "Wk-@Convert.ToString(item["WEEK"])",
+        Qty: @{double b = (Convert.ToDouble(item["QUANTITY"]) / figureQuantity);
+                      string values = b.ToString(roundupAmount);}"@values",
+        Amt:@{
+                      double a = 0;
+                      if (item["PRICE"] is DBNull)
+                      {
+                          a = 0;
+                      }
+                      else
+                      {
+                          a = (Convert.ToDouble(item["PRICE"]) / figureAmount);
+                      }
+                      string roundupvalue = a.ToString(roundupAmount);}"@roundupvalue",
+              
+        },</text>}
+         }
+         else
+         {<text>{ category: "", name: "", year: "", month: "", week: "", quantity: "", price: "" }</text>}
+        ],
+        // pivot options
+        {
+    xDimension: [@{
+        switch (Convert.ToString(ViewData["Xaxis"]))
+        {
+            case "ProductTree":<text>
+{ dataName: 'grandparent', label: "parent", frozen: true },
+{ dataName: 'category', label: "Category", frozen: true },
+{ dataName: 'name', label: "Item Description", width: 300, sortable: true }
+</text>
+                break;
+            case "Customer":<text>
+    { dataName: 'customer', label: "Customer", width: 300, sortable: true },
+</text>
+                break;
+            case "Category":<text>
+    { dataName: 'type', label: "Category", width: 300, sortable: true },
+</text>
+                break;
+            case "Product":<text>
+    { dataName: 'name', label: "Item Description", width: 300, sortable: true }
+</text>
+                break;
+            case ",ProductTree":<text>
+    { dataName: 'grandparent', label: "parent", frozen: true },
+    { dataName: 'category', label: "Category", frozen: true },
+    { dataName: 'name', label: "Item Description", width: 300, sortable: true }
+</text>
+                break;
+            case ",Customer":<text>
+    { dataName: 'customer', label: "Customer", width: 300, sortable: true },
+</text>
+                break;
+            case ",Category":<text>
+    { dataName: 'type', label: "Category", width: 300, sortable: true },
+</text>
+                break;
+            case ",Product":<text>
+    { dataName: 'name', label: "Item Description", width: 300, sortable: true }
+</text>
+                break;
+
+
+
+            case "Product,Customer":<text>
+    { dataName: 'name', label: "Item", width: 300, sortable: true },
+    { dataName: 'customer', label: "Item Description", width: 300, sortable: true }
+</text>
+                break;
+            case "Customer,Product":<text>
+    { dataName: 'customer', label: "Item", width: 300, sortable: true },
+    { dataName: 'name', label: "Customer", width: 300, sortable: true }
+</text>
+                break;
+            case ",Timeline":<text>
+    { dataName: 'timeline', label: "Month", width: 300, sortable: true },
+    { dataName: 'week', label: "Customer",width: 300, sortable: true },
+</text>
+                break;
+            case "ProductTree,Customer":<text>
+    { dataName: 'grandparent', label: "parent", frozen: true },
+    { dataName: 'category', label: "Category", frozen: true },
+    { dataName: 'name', label: "Item Description", width: 300, sortable: true },
+    { dataName: 'customer', label: "Item Description", width: 300, sortable: true }
+</text>
+                break;
+            case "ProductTree,Timeline":<text>
+    { dataName: 'grandparent', label: "parent", frozen: true },
+    { dataName: 'category', label: "Category", frozen: true },
+    { dataName: 'name', label: "Item Description", width: 300, sortable: true },
+    { dataName: 'timeline', label: "Item Description", width: 300, sortable: true },
+    { dataName: 'week', label: "Customer",width: 300, sortable: true },
+</text>
+                break;
+            case "Product,Timeline":<text>
+    { dataName: 'name', label: "Item", width: 300, sortable: true },
+    { dataName: 'timeline', label: "Item Description", width: 300, sortable: true },
+    { dataName: 'week', label: "Customer",width: 300, sortable: true },
+</text>
+                break;
+            case "Customer,Timeline":<text>
+    { dataName: 'customer', label: "Item Description", width: 300, sortable: true },
+    { dataName: 'timeline', label: "Customer", width: 300, sortable: true },
+    { dataName: 'week', label: "Customer",width: 300, sortable: true },
+</text>
+                break;
+            case "Timeline,Customer":<text>
+    { dataName: 'timeline', label: "Item Description", width: 300, sortable: true },
+    { dataName: 'week', label: "Customer",width: 300, sortable: true },
+    { dataName: 'customer', label: "Month", width: 300, sortable: true }
+</text>
+                break;
+            case "Timeline,Product":<text>
+    { dataName: 'timeline', label: "Item Description", width: 300, sortable: true },
+    { dataName: 'week', label: "Customer",width: 300, sortable: true },
+    { dataName: 'name', label: "Month", width: 300, sortable: true }
+</text>
+                break;
+            case "Timeline,ProductTree":<text>
+    { dataName: 'timeline', label: "Item Description", width: 300, sortable: true },
+    { dataName: 'week', label: "Customer",width: 300, sortable: true },
+    { dataName: 'grandparent', label: "parent", frozen: true },
+    { dataName: 'category', label: "Category", frozen: true },
+    { dataName: 'name', label: "Month", width: 300, sortable: true },
+</text>
+                break;
+
+            case "Category,Product":<text>
+    { dataName: 'type', label: "Item", width: 300, sortable: true },
+    { dataName: 'name', label: "Category", width: 300, sortable: true }
+</text>
+                break;
+            case ",Category,Product":<text>
+    { dataName: 'type', label: "Item", width: 300, sortable: true },
+    { dataName: 'name', label: "Category", width: 300, sortable: true }
+</text>
+                break;
+            case "Product,Category":<text>
+    { dataName: 'name', label: "Item", width: 300, sortable: true },
+    { dataName: 'type', label: "Item", width: 300, sortable: true }
+</text>
+                break;
+            case ",Product,Category":<text>
+    { dataName: 'name', label: "Item", width: 300, sortable: true },
+    { dataName: 'type', label: "Item", width: 300, sortable: true }
+</text>
+                break;
+
+            case "Category,ProductTree":<text>
+    { dataName: 'type', label: "Item", width: 300, sortable: true },
+    { dataName: 'grandparent', label: "parent", frozen: true },
+    { dataName: 'category', label: "Category", frozen: true },
+    { dataName: 'name', label: "Category", width: 300, sortable: true },
+</text>
+                break;
+            case ",Category,ProductTree":<text>
+    { dataName: 'type', label: "Item", width: 300, sortable: true },
+    { dataName: 'grandparent', label: "parent", frozen: true },
+    { dataName: 'category', label: "Category", frozen: true },
+    { dataName: 'name', label: "Category", width: 300, sortable: true },
+</text>
+                break;
+            case "ProductTree,Category":<text>
+    { dataName: 'grandparent', label: "parent", frozen: true },
+    { dataName: 'category', label: "Category", frozen: true },
+    { dataName: 'name', label: "Category", width: 300, sortable: true },
+    { dataName: 'type', label: "Item", width: 300, sortable: true },
+</text>
+                break;
+            case ",ProductTree,Category":<text>
+    { dataName: 'grandparent', label: "parent", frozen: true },
+    { dataName: 'category', label: "Category", frozen: true },
+    { dataName: 'name', label: "Category", width: 300, sortable: true },
+    { dataName: 'type', label: "Item", width: 300, sortable: true },
+</text>
+                break;
+
+            case "Customer,Category":<text>
+    { dataName: 'customer', label: "Item", width: 300, sortable: true },
+    { dataName: 'type', label: "Customer", width: 300, sortable: true }
+</text>
+                break;
+            case ",Customer,Category":<text>
+    { dataName: 'customer', label: "Item", width: 300, sortable: true },
+    { dataName: 'type', label: "Customer", width: 300, sortable: true }
+</text>
+                break;
+
+            case "Category,Customer":<text>
+    { dataName: 'type', label: "Item", width: 300, sortable: true },
+    { dataName: 'customer', label: "Category", width: 300, sortable: true }
+</text>
+                break;
+            case ",Category,Customer":<text>
+    { dataName: 'type', label: "Item", width: 300, sortable: true },
+    { dataName: 'customer', label: "Category", width: 300, sortable: true }
+</text>
+                break;
+            case "Category,Timeline":<text>
+    { dataName: 'type', label: "Item", width: 300, sortable: true },
+    { dataName: 'timeline', label: "Category", width: 300, sortable: true },
+    { dataName: 'week', label: "Customer",width: 300, sortable: true },
+</text>
+                break;
+            case ",Category,Timeline":<text>
+    { dataName: 'type', label: "Item", width: 300, sortable: true },
+    { dataName: 'timeline', label: "Category", width: 300, sortable: true },
+    { dataName: 'week', label: "Customer",width: 300, sortable: true },
+</text>
+                break;
+            case "Timeline,Category":<text>
+    { dataName: 'timeline', label: "Item", width: 300, sortable: true },
+    { dataName: 'week', label: "Customer",width: 300, sortable: true },
+    { dataName: 'type', label: "Timeline", width: 300, sortable: true }
+</text>
+                break;
+            case ",Timeline,Category":<text>
+    { dataName: 'timeline', label: "Item", width: 300, sortable: true },
+    { dataName: 'week', label: "Customer",width: 300, sortable: true },
+    { dataName: 'type', label: "Timeline", width: 300, sortable: true }
+</text>
+                break;
+
+            case ",Product,Customer":<text>
+    { dataName: 'name', label: "Item", width: 300, sortable: true },
+    { dataName: 'customer', label: "Item Description", width: 300, sortable: true }
+</text>
+                break;
+            case ",Customer,Product":<text>
+    { dataName: 'customer', label: "Item", width: 300, sortable: true },
+    { dataName: 'name', label: "Customer", width: 300, sortable: true }
+</text>
+                break;
+
+            case "Timeline":<text>
+    { dataName: 'timeline', label: "Month", width: 300, sortable: true },
+    { dataName: 'week', label: "Customer",width: 300, sortable: true },
+</text>
+                break;
+            case ",ProductTree,Customer":<text>
+    { dataName: 'grandparent', label: "parent", frozen: true },
+    { dataName: 'category', label: "Category", frozen: true },
+    { dataName: 'name', label: "Item Description", width: 300, sortable: true },
+    { dataName: 'customer', label: "Item Description", width: 300, sortable: true }
+</text>
+                break;
+            case ",ProductTree,Timeline":<text>
+    { dataName: 'grandparent', label: "parent", frozen: true },
+    { dataName: 'category', label: "Category", frozen: true },
+    { dataName: 'name', label: "Item Description", width: 300, sortable: true },
+    { dataName: 'timeline', label: "Item Description", width: 300, sortable: true },
+    { dataName: 'week', label: "Customer",width: 300, sortable: true },
+</text>
+                break;
+            case ",Product,Timeline":<text>
+    { dataName: 'name', label: "Item", width: 300, sortable: true },
+    { dataName: 'timeline', label: "Item Description", width: 300, sortable: true },
+    { dataName: 'week', label: "Customer",width: 300, sortable: true },
+</text>
+                break;
+            case ",Customer,Timeline":<text>
+    { dataName: 'customer', label: "Item Description", width: 300, sortable: true },
+    { dataName: 'timeline', label: "Customer", width: 300, sortable: true },
+    { dataName: 'week', label: "Customer",width: 300, sortable: true },
+</text>
+                break;
+            case ",Timeline,Customer":<text>
+    { dataName: 'timeline', label: "Item Description", width: 300, sortable: true },
+    { dataName: 'week', label: "Customer",width: 300, sortable: true },
+    { dataName: 'customer', label: "Month", width: 300, sortable: true }
+</text>
+                break;
+            case ",Timeline,Product":<text>
+    { dataName: 'timeline', label: "Item Description", width: 300, sortable: true },
+    { dataName: 'week', label: "Customer",width: 300, sortable: true },
+    { dataName: 'name', label: "Month", width: 300, sortable: true }
+</text>
+                break;
+            case ",Timeline,ProductTree":<text>
+    { dataName: 'timeline', label: "Item Description", width: 300, sortable: true },
+    { dataName: 'week', label: "Customer",width: 300, sortable: true },
+    { dataName: 'grandparent', label: "parent", frozen: true },
+    { dataName: 'category', label: "Category", frozen: true },
+    { dataName: 'name', label: "Month", width: 300, sortable: true },
+</text>
+                break;
+            case "Timeline,CustomerTree":<text>
+    { dataName: 'timeline', label: "Item Description", width: 300, sortable: true },
+    { dataName: 'week', label: "Customer",width: 300, sortable: true },
+    { dataName: 'week', label: "Customer",width: 300, sortable: true },
+    { dataName: 'customergparent', label: "parent", frozen: true },
+    { dataName: 'customerparent', label: "Category", frozen: true },
+    { dataName: 'customer', label: "Month", width: 300, sortable: true },
+</text>
+                break;
+            case "Product,CustomerTree":<text>
+    { dataName: 'name', label: "Item Description", width: 300, sortable: true },
+    { dataName: 'customergparent', label: "parent", frozen: true },
+    { dataName: 'customerparent', label: "Category", frozen: true },
+    { dataName: 'customer', label: "Item Description", width: 300, sortable: true },
+</text>
+                break;
+            case "Category,CustomerTree":<text>
+    { dataName: 'type', label: "Item Description", width: 300, sortable: true },
+    { dataName: 'customergparent', label: "parent", frozen: true },
+    { dataName: 'customerparent', label: "Category", frozen: true },
+    { dataName: 'customer', label: "Item Description", width: 300, sortable: true },
+</text>
+                break;
+            case "CustomerTree,Timeline":<text>
+    { dataName: 'customergparent', label: "parent", frozen: true },
+    { dataName: 'customerparent', label: "Category", frozen: true },
+    { dataName: 'customer', label: "Month", width: 300, sortable: true },
+    { dataName: 'timeline', label: "Customer", width: 300, sortable: true },
+    { dataName: 'week', label: "Customer",width: 300, sortable: true },
+</text>
+                break;
+            case "CustomerTree,Product":<text>
+    { dataName: 'customergparent', label: "parent", frozen: true },
+    { dataName: 'customerparent', label: "Category", frozen: true },
+    { dataName: 'customer', label: "Item Description", width: 300, sortable: true },
+    { dataName: 'name', label: "Customer", width: 300, sortable: true },
+</text>
+                break;
+            case "CustomerTree,Category":<text>
+    { dataName: 'customergparent', label: "parent", frozen: true },
+    { dataName: 'customerparent', label: "Category", frozen: true },
+    { dataName: 'customer', label: "Item Description", width: 300, sortable: true },
+    { dataName: 'type', label: "Customer", width: 300, sortable: true },
+</text>
+                break;
+            case "CustomerTree":<text>
+    { dataName: 'customergparent', label: "parent", frozen: true },
+    { dataName: 'customerparent', label: "Category", frozen: true },
+    { dataName: 'customer', label: "Customer", width: 300, sortable: true },
+    </text>
+                break;
+
+        }
+                         }
+    ],
+            yDimension: [
+                        @if(Convert.ToString(ViewData["Yaxis"])=="Timeline")
+                        {
+                            <text>{ dataName: 'yaxis', label: "Month" },
+                                  { dataName: 'week', label: "Month" }
+                            </text>
+                        }else
+                        {
+                            <text>{ dataName: 'yaxis', label: "Month" }</text>
+                        }
+            ],
+    aggregates: [
+    {
+        member: "Qty", aggregator: "sum", label: "Qty.", summaryType: 'sum', width: 40, formatter: 'integer', align: 'right', hidden: Quantity,
+        formatoptions: { decimalSeparator: ".", thousandsSeparator: ",", decimalPlaces: decimalPlacesQuantity, defaultValue: defaultQuantity },
+    },
+    {
+        member: "Amt", aggregator: "sum", label: "Amt.", summaryType: 'sum', width: 100, align: 'right', search: false, hidden: Amount,
+        formatoptions: { decimalSeparator: ".", thousandsSeparator: ",", decimalPlaces: decimalPlacesAmount, defaultValue: defaultAmount },
+    },
+          
+    ],
+            footerTotals: true,
+            footerAggregator: "sum",
+            totals: true,
+            totalHeader: "Grand Total",
+            totalText: "<span style='font-style: italic'>Grand {0} {1}</span>",
+            frozenStaticCols: true,
+
+
+
+        },
+
+
+        // grid options
+        {
+            width: "100%",
+            height: ($('#page-wrapper').height() - 38 - $('.filterizeDate').outerHeight() - $('.btn-group').outerHeight() - 31 - 44 - 21 - 26),
+            shrinkToFit: false,
+            autowidth: true,
+            rowList: [50, 100, 200, "10000:All"],
+            autoresizeOnLoad: true,
+            scroll: true,
+            autoResizing: { compact: true },
+            gridview: true,
+            pager: "#pager",
+            rowNum: 10000,
+            caption: "Sales Report",
+            groupingView: {
+                "plusicon": "ui-icon-triangle-1-e",
+                "minusicon": "ui-icon-triangle-1-s",
+                "openicon": "ui-icon-arrowreturn-1-e",
+                groupCollapse: true,
+                showSummaryOnHide: false,
+                groupColumnShow: [false, false, false],
+                groupSummaryPos: ["header", "header"],
+                groupSummary: [true, true]
+            }
+
+        });
+    });
+
+
+</script>
+<script>
+    function ValidateDate() {
+        var FromDate = document.getElementById("fromInputDate").value;
+        var ToDate = document.getElementById("toInputDate").value;
+        var f = BS2AD(FromDate);
+        var t = BS2AD(ToDate);
+        var fsplit = f.split("-", 3);
+        var tsplit = t.split("-", 3);
+        var month = new Array();
+        month[01] = "Jan";
+        month[02] = "Feb";
+        month[03] = "Mar";
+        month[04] = "Apr";
+        month[05] = "May";
+        month[06] = "Jun";
+        month[07] = "Jul";
+        month[08] = "Aug";
+        month[09] = "Sep";
+        month[1] = "Jan";
+        month[2] = "Feb";
+        month[3] = "Mar";
+        month[4] = "Apr";
+        month[5] = "May";
+        month[6] = "Jun";
+        month[7] = "Jul";
+        month[8] = "Aug";
+        month[9] = "Sep";
+        month[10] = "Oct";
+        month[11] = "Nov";
+        month[12] = "Dec";
+        document.getElementById("FromDate").value = fsplit[2] + "-" + month[parseInt(fsplit[1])] + "-" + fsplit[0];
+        document.getElementById("ToDate").value = tsplit[2] + "-" + month[parseInt(tsplit[1])] + "-" + tsplit[0];
+
+        if (document.getElementById("FromDate").value == "" && document.getElementById("ToDate").value == "") {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+</script>
+<script>
+    $('html').mouseover(function () {
+        var FromDate = document.getElementById("fromInputDate").value;
+        var ToDate = document.getElementById("toInputDate").value;
+        var f = BS2AD(FromDate);
+        //alert(f);
+        var t = BS2AD(ToDate);
+        var fsplit = f.split("-", 3);
+        var tsplit = t.split("-", 3);
+        var month = new Array();
+        month[01] = "Jan";
+        month[02] = "Feb";
+        month[03] = "Mar";
+        month[04] = "Apr";
+        month[05] = "May";
+        month[06] = "Jun";
+        month[07] = "Jul";
+        month[08] = "Aug";
+        month[09] = "Sep";
+        month[1] = "Jan";
+        month[2] = "Feb";
+        month[3] = "Mar";
+        month[4] = "Apr";
+        month[5] = "May";
+        month[6] = "Jun";
+        month[7] = "Jul";
+        month[8] = "Aug";
+        month[9] = "Sep";
+        month[10] = "Oct";
+        month[11] = "Nov";
+        month[12] = "Dec";
+        document.getElementById("FromDate").value = fsplit[2] + "-" + month[parseInt(fsplit[1])] + "-" + fsplit[0];
+        document.getElementById("ToDate").value = tsplit[2] + "-" + month[parseInt(tsplit[1])] + "-" + tsplit[0];
+    });
+</script>
+
+<script>
+    $(document).ready(function () {
+        //alert(BS2AD('2072-04-27'));
+        // alert(AD2BS('2015-08-12'));
+        $('#fromInputDate').nepaliDatePicker();
+        $('#toInputDate').nepaliDatePicker();
+        var DbFromDate = AD2BS('@ViewData["FromDate"]');
+        var DbToDate = AD2BS('@ViewData["ToDate"]');
+        var FromDate = '@ViewData["FromDate"]';
+        var ToDate = '@ViewData["ToDate"]';
+        if (FromDate != "" && ToDate != "") {
+            $('#fromInputDate').val(DbFromDate);
+            $('#toInputDate').val(DbToDate);
+        } else {
+            var current_date = getNepaliDate();
+            $('#fromInputDate').val(current_date);
+            $('#toInputDate').val(current_date);
+        }
+
+    });
+</script>
+<script>
+    $('.extraBtn #btnToggle').click(function () {
+        $('#btnToggle').html($('#btnToggle').text() == 'Total Amount' ? 'Quantity' : 'Total Amount');
+        $('.Total').toggleClass('tbl-active');
+        $('.Quantity').toggleClass('tbl-inactive');
+        $('.MuEdesc').toggleClass('tbl-inactive');
+
+    });
+</script>
+<script type="text/javascript">
+    $(function () {
+        $("#ddlDateFilter").change(function () {
+            var month = new Array();
+            month[0] = "Jan";
+            month[1] = "Feb";
+            month[2] = "Mar";
+            month[3] = "Apr";
+            month[4] = "May";
+            month[5] = "Jun";
+            month[6] = "Jul";
+            month[7] = "Aug";
+            month[8] = "Sep";
+            month[9] = "Oct";
+            month[10] = "Nov";
+            month[11] = "Dec";
+            var today = new Date();
+            var n = month[today.getMonth()];
+            var dd = today.getDate();
+            var yyyy = today.getFullYear();
+            if (dd < 10) {
+                dd = '0' + dd
+            }
+            today = dd + '-' + n + '-' + yyyy;
+            var current_date = getNepaliDate();
+            var current_date = current_date.split("-");
+            var cYear = current_date[0];
+            var cMonth = current_date[1];
+            var cDay = current_date[2];
+
+            if ($('option:selected', this).val() == "TD") {
+                var FromDate = cYear + "-" + cMonth + "-" + cDay;
+                var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                $("#fromInputDate").val(FromDate);
+                $("#toInputDate").val(ToDate);
+            }
+            else if ($('option:selected', this).val() == "TY") {
+                var FromDate = cYear + "-" + "04" + "-" + "01";
+                var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                $("#fromInputDate").val(FromDate);
+                $("#toInputDate").val(ToDate);
+            }
+            else if ($('option:selected', this).val() == "LY") {
+                var FromDate = (cYear - 1) + "-" + "04" + "-" + "01";
+                var ToDate = cYear + "-" + "03" + "-" + numberOfBsDays(cYear, "2");
+                $("#fromInputDate").val(FromDate);
+                $("#toInputDate").val(ToDate);
+            }
+            else if ($('option:selected', this).val() == "TM") {
+                var FromDate = cYear + "-" + cMonth + "-" + "01";
+                var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                $("#fromInputDate").val(FromDate);
+                $("#toInputDate").val(ToDate);
+            }
+            else if ($('option:selected', this).val() == "LM") {
+                if (cMonth == 1) {
+                    cYear = cYear - 1;
+                    cMonth = "12";
+                }
+                else {
+                    cMonth = cMonth - 1;
+                }
+                var newToDate = numberOfBsDays(cYear, (cMonth - 1));
+                if (cMonth > 1 && (cMonth) < 10)
+                    cMonth = "0" + cMonth;
+                var FromDate = cYear + "-" + cMonth + "-" + "01";
+                var ToDate = cYear + "-" + cMonth + "-" + newToDate;
+                $("#fromInputDate").val(FromDate);
+                $("#toInputDate").val(ToDate);
+            }
+            else if ($('option:selected', this).val() == "TQ") {
+                if (cMonth > 3 && cMonth < 7) {
+                    var FromDate = cYear + "-" + "04" + "-" + "01";
+                    var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+                else if (cMonth > 6 && cMonth < 10) {
+                    var FromDate = cYear + "-" + "07" + "-" + "01";
+                    var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+                else if (cMonth > 9 && cMonth <= 12) {
+                    var FromDate = cYear + "-" + "10" + "-" + "01";
+                    var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+                else if (cMonth >= 1 && cMonth < 4) {
+                    var FromDate = cYear + "-" + "01" + "-" + "01";
+                    var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+            }
+            else if ($('option:selected', this).val() == "LQ") {
+                if (cMonth > 3 && cMonth < 7) {
+                    var FromDate = cYear + "-" + "01" + "-" + "01";
+                    var ToDate = cYear + "-" + "03" + "-" + numberOfBsDays(cYear, "2");
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+                else if (cMonth > 6 && cMonth < 10) {
+                    var FromDate = cYear + "-" + "04" + "-" + "01";
+                    var ToDate = cYear + "-" + "06" + "-" + numberOfBsDays(cYear, "5");
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+                else if (cMonth > 9 && cMonth <= 12) {
+                    var FromDate = cYear + "-" + "07" + "-" + "01";
+                    var ToDate = (cYear + 1) + "-" + "09" + "-" + numberOfBsDays((cYear + 1), "8");
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+                else if (cMonth >= 1 && cMonth < 4) {
+                    var FromDate = (cYear - 1) + "-" + "10" + "-" + "01";
+                    var ToDate = (cYear - 1) + "-" + "12" + "-" + numberOfBsDays((cYear - 1), "11");
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+            }
+            else if ($('option:selected', this).val() == "TH") {
+                if (cMonth > 3 && cMonth < 10) {
+                    var FromDate = cYear + "-" + "04" + "-" + "01";
+                    var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+                else {
+                    var FromDate = cYear + "-" + "10" + "-" + "01";
+                    var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+            }
+            else if ($('option:selected', this).val() == "LH") {
+                if (cMonth > 3 && cMonth < 10) {
+                    var FromDate = (cYear - 1) + "-" + "10" + "-" + "01";
+                    var ToDate = cYear + "-" + "03" + "-" + numberOfBsDays(cYear, "2");
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+                else if (cMonth >= 10) {
+                    var FromDate = cYear + "-" + "04" + "-" + "01";
+                    var ToDate = cYear + "-" + "09" + "-" + numberOfBsDays(cYear, "8");
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+                else {
+                    var FromDate = (cYear - 1) + "-" + "04" + "-" + "01";
+                    var ToDate = (cYear - 1) + "-" + "09" + "-" + numberOfBsDays((cYear - 1), "8");
+                    $("#fromInputDate").val(FromDate);
+                    $("#toInputDate").val(ToDate);
+                }
+            }
+        });
+    });
+</script>
+
+<script>
+    $(document).ready(function () {
+        var selected = '@ViewData["DateStep"]';
+        if (selected == "") {
+            document.getElementById("ddlDateFilter").value = 'TD';
+        } else {
+            document.getElementById("ddlDateFilter").value = selected;
+        }
+    });
+</script>
+<script>
+    $(document).ready(function () {
+        var pageHeight = $('div#search').outerHeight() + $('div.pull-right').outerHeight();
+        $('.overflow-y').height($('.page-wrapper').height() - pageHeight);
+    });
+
+
+</script>

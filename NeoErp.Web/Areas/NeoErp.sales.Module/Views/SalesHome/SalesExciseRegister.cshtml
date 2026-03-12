@@ -1,0 +1,748 @@
+﻿
+@using NeoErp.Core.Models
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    ViewBag.Title = "SalesExciseRegisterReport";
+}
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+@*<script src="https://kendo.cdn.telerik.com/2019.2.619/js/pako_deflate.min.js"></script>*@
+<style>
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+         font-size:11px;
+    }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+</style>
+<div class="page-content">
+
+
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+        </ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+                <div class="actions">
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+
+                    </div>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+                    </div>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                   {
+                       //ShowCustomerFilter = true,
+                       //ShowProductFilter = false,
+                       //ShowDivisionFilter = true,
+                       //ShowLocationFilter = false,
+                       //ShowDocumentFilter= true,
+                       //ShowEmployeeFilter=true,
+                       //ShowAgentFilter=true,
+                       ShowPartyTypeFilter = true,
+                       ShowCompanyFilter = true,
+
+                       //ShowBranchFilter = true
+                   })
+                    </div>
+                    @Html.Partial("~/Views/Shared/Controls/_reportFilterSettings.cshtml", new ReportFilterSettingsModel()
+               {
+                   ShowAmountFigureFilter = true,
+                   ShowAmountFilter = true,
+                   ShowAmountRoundUpFilter = true,
+                   ShowRangeAmountFilter = true
+               })
+
+                    @Html.Partial("~/Views/Shared/Controls/ComposeMail.cshtml")
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                        <i class="icon-control-play"></i>
+                    </a>
+
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "SalesExciseRegisterReport")
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div id="grid"></div>
+                        @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+<script type="text/javascript">
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+
+</script>
+<script>
+    /*
+        This demo renders the grid in "DejaVu Sans" font family, which is
+        declared in kendo.common.css. It also declares the paths to the
+        fonts below using <tt>kendo.pdf.defineFont</tt>, because the
+        stylesheet is hosted on a different domain.
+    */
+    kendo.pdf.defineFont({
+        "DejaVu Sans": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans.ttf",
+        "DejaVu Sans|Bold": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans-Bold.ttf",
+        "DejaVu Sans|Bold|Italic": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans-Oblique.ttf",
+        "DejaVu Sans|Italic": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans-Oblique.ttf",
+        "WebComponentsIcons": "https://kendo.cdn.telerik.com/2017.1.223/styles/fonts/glyphs/WebComponentsIcons.ttf"
+    });
+</script>
+<script src="@Scripts.Url("~/JS/DateFilter.js?V9")" type="text/javascript"></script>
+<script src="@Scripts.Url("~/JS/dynamicReport.js?V2")" type="text/javascript"></script>
+<script type="text/javascript">
+    var groupNetSalescount, groupDiscountCount,groupTaxableSalesCount,groupVatAmountCount = 0;
+    var urltest = window.location.protocol + "//" + window.location.host + "/api/SalesHome/SalesExciseRegister";
+    var reportConfig = {};
+    var ReportnameExcel = "SalesExciseRegister";
+    var fileMailSender = new ManualEmailSender({
+            gridName: "grid",
+            gridRefreshTriggerName: "RunQuery",
+            reportName: "SalesExciseRegister"
+    });
+    $(".applydp").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    })
+
+    $("#loadAdvancedFilters").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    })
+
+    function ExportToExcel(e) {
+
+        //Report header details
+        var companyName = ('@workingContent.CurrentUserinformation.company_name');
+        var fromADdate = $("#FromDateVoucher").val()
+        var toADdate = $("#ToDateVoucher").val();
+        var fromBSdate = $("#fromInputDateVoucher").val();
+        var toBSdate = $("#toInputDateVoucher").val();
+        var branches = ReportFilter.getBranchs();
+
+        //create a footer row to display totals
+        var footer = [];
+        footer.push({ value: "Gross Amount", colSpan: 6, textAlign: "center", bold: true, })
+        var footerTemp = e.workbook.sheets[0].rows[e.workbook.sheets[0].rows.length - 1].cells;
+        for (var i = 0; i < footerTemp.length; i++) {
+            if (typeof (footerTemp[i].value) != "undefined" && $(footerTemp[i].value).text() != "Gross Amount")
+                footer.push({ value: $(footerTemp[i].value).text(), textAlign: "right", bold: true });
+        }
+        var SheetRow = [];
+        SheetRow.push({
+            cells: [
+                { value: "Miti", background: "#A9A7A6", },
+                { value: "Invoice No", background: "#A9A7A6", },
+                { value: "Reference", background: "#A9A7A6", },
+                { value: "Party Name", background: "#A9A7A6", },
+                { value: "Vat No", background: "#A9A7A6", },
+                { value: "Credit Days", background: "#A9A7A6", },
+                { value: "Quantity", background: "#A9A7A6", },
+                { value: "Total Sales", background: "#A9A7A6", },
+                { value: "Excise Amount", background: "#A9A7A6", },
+                { value: "Sales Discount", background: "#A9A7A6", },
+            ],
+        });
+        WriteData(e.data);
+
+        //recursive function to write the grouped/ungrouped data
+        function WriteData(array) {
+            array.forEach(function (row, index) {
+                if (typeof (row.items) != "undefined") { //if array contains nested items, write a row with group field and enter recursion
+                    SheetRow.push({
+                        cells: [{
+                            value: row.field + " : " + row.value,
+                            background: "#E1E1E1",
+                            colSpan: 10,//to span the total number of columns
+                            fontSize: 12,
+                        }]
+                    });
+                    WriteData(row.items);
+                }
+                else { //if array contains no nested items write the row to excelsheet
+                    SheetRow.push({
+                        cells: [{
+                            value: row.Miti,
+                        }, {
+                            value: row.InvoiceNo,
+                        }, {
+                            value: row.MANUAL_NO,
+                        }, {
+                            value: row.PartyName,
+                        }, {
+                            value: row.PANNo,
+                        },{
+                            value: row.CREDIT_DAYS, textAlign:"right",
+                        },{
+                            value: row.QUANTITY, textAlign:"right",
+                        },{
+                            value: row.NetSales, textAlign:"right",
+                        }, {
+                            value: row.TaxExempSales, textAlign: "right",
+                        }, {
+                            value: row.Discount, textAlign: "right",
+                             //value: row.Discount .toFixed(2), textAlign: "right",
+                        }
+                        ]
+                    });
+                }
+            });
+        }
+
+        //push the footer variable containing total values
+        SheetRow.push({
+            cells: footer,
+        });
+
+        //pushing Report header details
+        SheetRow.unshift({
+            cells: [{ value: "Excise Sales Register".split('').join(' '), colSpan: 10 }]
+        });
+        var filterText = $("#AdvanceFilter").attr('data-original-title');
+        if (filterText.indexOf('|') < 0) {
+            filterText = $((filterText).replace(/<strong>/g, "|")).text().replace('|', '').split('|').reverse();;
+            $.each(filterText, function (k, item) {
+                SheetRow.unshift({
+                    cells: [{ value: item, colSpan: footerTemp.length }]
+                });
+            });
+        }
+        if (filterText.toString().indexOf('Date Range') < 0) {
+            SheetRow.unshift({
+                cells: [{ value: "From :- " + fromADdate + "(" + fromBSdate + ")" + "\t To :- " + toADdate + "(" + toBSdate + ")", colSpan: footerTemp.length }]
+            });
+        }
+        for (var companyCount = 0; companyCount < branches.length; companyCount++) {
+            SheetRow.unshift({
+                cells: [{ value: branches[companyCount].Company + " :- " + branches[companyCount].Branches.join(','), colSpan: footerTemp.length }]
+            });
+        }
+        SheetRow.unshift({
+            cells: [{ value: companyName.split('').join(' '), colSpan: footerTemp.length }]
+        });
+        var Workbook = new kendo.ooxml.Workbook({
+            sheets: [{
+                columns: [
+                    { width: 110 },
+                    @for (int i = 0; i < 10; i++)
+                    {
+                    <text>{ autoWidth: true },</text>
+                        }
+                ],
+                rows: SheetRow
+            }]
+        });
+        var favourite = document.globalFavourite;
+       // var ReportnameExcel="vatRegister"
+        if (favourite.length >= 1) {
+            console.log("salesexciseregister", favourite)
+            ReportnameExcel = favourite[0].Report.reportName;
+        }
+        //finally saving the excel sheet
+        kendo.saveAs({
+            dataURI: Workbook.toDataURL(),
+            fileName: ReportnameExcel + ".xlsx"
+        });
+    }
+
+    $(document).ready(function () {
+         DateFilter.init(function () {
+                  consolidate.init(function () {
+                      BindGrid(urltest);
+                      var favourite = document.globalFavourite;
+                      if (favourite.length >= 1)
+                      {
+                          debugger;
+                          console.log("salesexciseregister",favourite)
+                          ReportnameExcel =favourite[0].Report.reportName;
+                      }
+                });
+            });
+
+        //excel function called
+        function myCustomFunction(arrey, header) {
+            var result = $.grep(arrey, function (e) { return e.CHARGE_CODE === header; });
+
+            var value = 0;
+            if (result.length == 0) {
+
+            } else if (result.length == 1) {
+                value = result[0].CHARGE_AMOUNT
+            }
+            return value;
+        }
+
+        var reportConfig = GetReportSetting("SalesExciseRegisterReport");
+        function getDateFormat(date) {
+            return kendo.format("{0:" + reportConfig.dateFormat + "}", date);
+        }
+
+        function myCustomFunctionWithTitle(arrey, header) {
+            var result = $.grep(arrey, function (e) { return e.CHARGE_EDESC === header.value; });
+
+            var value = 0;
+            if (result.length == 0) {
+
+            } else if (result.length == 1) {
+                value = result[0].CHARGE_AMOUNT
+            }
+            return value;
+        }
+
+        fileMailSender.init();
+        var formEnglishDate = $("#FromDateVoucher").val();
+        var toEnglishDate = $("#ToDateVoucher").val();
+
+
+        $("#RunQuery").click(function (evt) {
+            evt.preventDefault();
+            //var ddvalue = $("#ddlDateFilterVoucher").val();
+            //var formNepalDate = $("#fromInputDateVoucher").val();
+            //var toNepalDate = $("#toInputDateVoucher").val();
+            //var formEnglishDate = $("#FromDateVoucher").val();
+            //var toEnglishDate = $("#ToDateVoucher").val();
+            urltest = window.location.protocol + "//" + window.location.host + "/api/SalesHome/SalesExciseRegister";
+            // BindGrid(urltest);
+            KendoGridRefresh(urltest);
+        });
+
+       // BindGrid(urltest);
+    });
+
+    function BindGrid(readurl) {
+
+        reportConfig = GetReportSetting("SalesExciseRegisterReport");
+        var dataSource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: {
+                    url: readurl, // <-- Get data from here.
+                    dataType: "json", // <-- The default was "jsonp".
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8"
+                },
+                parameterMap: function (options, type) {
+                    var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+                    //  paramMap.formDate = $("#FromDateVoucher").val();
+                    delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                    delete paramMap.$format; // <-- remove format parameter.
+                    return paramMap;
+
+                }
+            }, error: function (e) {
+                displayPopupNotification("Sorry error occured while processing data", "error");
+            },
+            serverPaging: true,
+            serverFiltering: true,
+            serverGrouping: false,
+            serverAggregates: false,
+            schema: {
+                data: "salesExciseRegisterModel", // records are returned in the "data" field of the response
+                total: "total", // total number of records is in the "total" field of the response
+                aggregates:"AggregationResult",
+                model: {
+                    fields: {
+                        Miti: { type: "string" },
+                        InvoiceNo: { type: "string" },
+                        PartyName: { type: "string" },
+                        PANNo: { type: "string" },
+                        CREDIT_DAYS: { type: "string" },
+                        QUANTITY: { type: "number" },
+                        NetSales: { type: "number" },
+                        TaxExempSales: { type: "number" },
+                        Discount: { type: "number" },
+                    }
+                }
+            },
+            //group: {
+            //    aggregates: [
+            //        { field: "NetSales", aggregate: "sum" },
+            //    ]
+            //},
+            aggregate: [
+                { field: "QUANTITY", aggregate: "sum" ,type:"number"},
+                { field: "NetSales", aggregate: "sum",type:"number" },
+                { field: "TaxExempSales", aggregate: "sum",type:"number" },
+                { field: "Discount", aggregate: "sum",type:"number" },
+            ],
+            pageSize: reportConfig.defaultPageSize,
+        });
+        var grid = $("#grid").kendoGrid({
+            dataSource: dataSource,
+
+            toolbar: kendo.template($("#toolbar-template").html()),
+            excel: {
+                fileName: "Sales Excise Register",
+                //proxyURL: "//demos.telerik.com/kendo-ui/service/export",
+                allPages: true
+            },
+            pdf: {
+                allPages: true,
+                avoidLinks: true,
+                paperSize: "A4",
+                margin: { top: "2cm", left: "1cm", right: "1cm", bottom: "1cm" },
+                landscape: true,
+                repeatHeaders: true,
+
+                scale: 0.8
+            },
+            excelExport: function (e) {
+
+                ExportToExcel(e);
+                e.preventDefault();
+            },
+
+            //pdf: {
+            //    allPages: true,
+            //    avoidLinks: true,
+            //    paperSize: "A4",
+            //    margin: { top: "2cm", left: "1cm", right: "1cm", bottom: "1cm" },
+            //    landscape: true,
+            //    repeatHeaders: true,
+            //    width: "500px",
+            //      fileName: ReportnameExcel+".pdf",
+            //    scale: 0.8
+            //},
+
+            allowCopy: true,
+            height: window.innerHeight - 50,
+            sortable: true,
+            reorderable: true,
+            groupable: true,
+            resizable: true,
+
+
+
+            filterable: {
+                extra: false,
+                operators: {
+                    number: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "is greater than or equal to	",
+                        gt: "is greater than",
+                        lte: "is less than or equal",
+                        lt: "is less than",
+
+                    },
+
+
+
+                    string: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        startswith: "Starts with	",
+                        contains: "Contains",
+                        doesnotcontain: "Does not contain",
+                        endswith: "Ends with",
+                    },
+                    date: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "Is after or equal to",
+                        gt: "Is after",
+                        lte: "Is before or equal to",
+                        lt: "Is before",
+                    }
+
+
+                }
+            },
+            columnMenu: true,
+            columnMenuInit: function (e) {
+                    wordwrapmenu(e);
+                    checkboxItem = $(e.container).find('input[type="checkbox"]');
+                },
+                columnShow: function (e) {
+                    if($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                        SaveReportSetting('SalesExciseRegisterReport', 'grid');
+                },
+                columnHide: function (e) {
+                    if($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                        SaveReportSetting('SalesExciseRegisterReport', 'grid');
+                },
+
+                pageable: {
+                    refresh: true,
+                    pageSizes: reportConfig.itemPerPage,
+                    buttonCount: 5
+                },
+            scrollable: {
+                virtual: true
+            },
+            dataBound: function (o) {
+                groupNetSalescount = 0;
+                groupDiscountCount = 0;
+                groupTaxableSalesCount = 0;
+                groupVatAmountCount = 0;
+                var grid = o.sender;
+
+
+                //$(o.sender.wrapper).find('tbody')
+                //       .find('.k-footer-template')
+                //       .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="5" class="no-data">Total Amount(</td></tr>');
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.length;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                }
+                else {
+                    var g = $("#grid").data("kendoGrid");
+                    for (var i = 0; i < g.columns.length; i++) {
+                        g.showColumn(i);
+                    }
+                    $("div.k-group-indicator").each(function (i, v) {
+                        g.hideColumn($(v).data("field"));
+                    });
+                }
+                $('div').removeClass('.k-header k-grid-toolbar');
+                 UpdateReportUsingSetting("SalesExciseRegisterReport", "grid");
+
+            },
+            columns: [
+                            {
+                                field: "Miti",
+                                title: "Miti",
+                                //groupHeaderTemplate: 'Miti:#=value# Net Sales=#=getNetSalesSum()# Discount=#=getDiscountSum()# Vat Amount=#=getVatAmountSum()# Taxable Sales=#=getTaxableSalesSum()#',
+                                //Vat Amount=(#=getVatAmountSum()#) Taxable Sales=(#=getTaxableSalesSum()#)
+                                //  width: "90",
+                                // template: '#= kendo.toString(SALES_DATE, "dd-MMM-yyyy") #'
+                                //format: "{0:dd-MMM-yyyy}",
+                            },
+                          {
+                              field: "InvoiceNo",
+                              title: "Invoice No",
+                              //groupHeaderTemplate: 'InvoiceNo:#=value# Net Sales=#=getNetSalesSum()# Discount=#=getDiscountSum()# Vat Amount=#=getVatAmountSum()# Taxable Sales=#=getTaxableSalesSum()#',
+                              //groupHeaderTemplate: '#=getSum("' + data.NetSales+'") #',
+                              //template: $.proxy(kendo.template($("#template").html()), { column: "NetSales" })
+                              // width: "90",
+                              // template: '#= kendo.toString(MITI, "dd/MM/yyyy") #'
+                            },
+                          {
+                              field: "MANUAL_NO",
+                              title: "Reference",
+                              //groupHeaderTemplate: 'InvoiceNo:#=value# Net Sales=#=getNetSalesSum()# Discount=#=getDiscountSum()# Vat Amount=#=getVatAmountSum()# Taxable Sales=#=getTaxableSalesSum()#',
+                              //groupHeaderTemplate: '#=getSum("' + data.NetSales+'") #',
+                              //template: $.proxy(kendo.template($("#template").html()), { column: "NetSales" })
+                              // width: "90",
+                              // template: '#= kendo.toString(MITI, "dd/MM/yyyy") #'
+                          },
+
+
+                          {
+                              field: "PartyName ",
+                              title: "Party Name",
+                              //groupHeaderTemplate: 'PartyName:#=value# Net Sales=#=getNetSalesSum()# Discount=#=getDiscountSum()# Vat Amount=#=getVatAmountSum()# Taxable Sales=#=getTaxableSalesSum()#',
+                              // width: "150",
+                              //title: "Group1",
+                              //headerTemplate: "Contact Name HT"
+                              // template: '<span style="float:right">#= kendo.toString(DR_OPENING, "n") #</span>'
+                              //aggregates: "sum",
+                              //footerTemplate: "<div style='float: right'>#= sum #</div>"
+                          },
+                          {
+                              field: "PANNo ",
+                              title: "Vat No",
+                              //groupHeaderTemplate: 'PANNo:#=value# Net Sales=#=getNetSalesSum()# Discount=#=getDiscountSum()# Vat Amount=#=getVatAmountSum()# Taxable Sales=#=getTaxableSalesSum()#',
+                              //footerTemplate: '<span style="float:left">Gross Amount</span>'
+                              // width: "150",
+
+                              //template: '<span style="float:right">#= kendo.toString(CR_OPENING, "n") #</span>'
+                          },
+                           {
+                              field: "CREDIT_DAYS ",
+                              title: "Credit Days",
+                              type: "number",
+                              filterable: { multi: true },
+                             // footerTemplate: '<span style="float:left">Gross Amount</span>'
+                          },
+                          {
+                               field: "QUANTITY",
+                               title: "Quantity",
+                               type: "number",
+                               filterable: { multi: true },
+                               width: "70",
+                               aggregates: ["count", "sum"],
+                               //groupHeaderTemplate: 'VatAmount:#=value# Net Sales=#=getNetSalesSum()# Discount=#=getDiscountSum()# Taxable Sales=#=getTaxableSalesSum()#',
+                               footerTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                               groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                               template: '<span style="float:right">#= kendo.toString(QUANTITY, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()) #</span>'
+                           },
+                           {
+                               field: "NetSales",
+                               title: "Total Sales",
+                               type: "number",
+                              filterable: { multi: true },
+                               width: "13%",
+                               aggregates: ["count", "sum"],
+                               footerTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+
+                               groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                               //groupHeaderTemplate: 'NetSales:#=value# Discount=#=getDiscountSum()# Vat Amount=#=getVatAmountSum()# Taxable Sales=#=getTaxableSalesSum()#',
+                               //encoded: false,
+                               template: '<span style="float:right">#= kendo.toString(NetSales, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()) #</span>',
+                               //groupFooterTemplate: "Total: #=sum#"
+                           },
+                           {
+                               field: "TaxExempSales",
+                               title: "Excise Amount",
+                               type: "number",
+                               filterable: { multi: true },
+                               aggregates: ["count", "sum"],
+                               //groupHeaderTemplate: 'TaxExempSales:#=value# Net Sales=#=getNetSalesSum()# Discount=#=getDiscountSum()# Vat Amount=#=getVatAmountSum()#',
+                               footerTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                               groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                               template: '<span style="float:right">#= kendo.toString(TaxExempSales, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()) #</span>',
+                               format: "{0:n}",
+                           },
+
+                           {
+                               field: "Discount",
+                               title: "Sales Discount",
+                               type: "number",
+                               filterable: { multi: true },
+                               aggregates: ["count", "sum"],
+                               footerTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                               groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                               //groupHeaderTemplate: 'Discount:#=value# Net Sales=#=getNetSalesSum()#  Vat Amount=#=getVatAmountSum()# Taxable Sales=#=getTaxableSalesSum()#',
+                               template: '<span style="float:right">#= kendo.toString(Discount, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()) #</span>'
+                           },
+            ]
+
+        });
+
+        //$("#grid").kendoTooltip({
+        //   filter: "td:nth-child(2)", //this filter selects the first column cells
+        //    position: "right",
+        //    content: function (e) {
+
+        //        var dataItem = $("#grid").data("kendoGrid").dataItem(e.target.closest("tr"));
+        //        var content = dataItem.subclass.SALES_NO.Text;
+        //        return content;
+        //    }
+        //}).data("kendoTooltip");
+    };
+    var length = 0;
+    //function getNetSalesSum() {
+    //
+    //    var result;
+    //    var datasource = $("#grid").data("kendoGrid").dataSource;
+    //    if (groupNetSalescount < datasource.view().length) {
+    //
+    //        if (datasource.view()[groupNetSalescount].hasSubgroups == true)
+    //        {
+    //            //if (groupNetSalescount % 2){
+    //                    result = datasource.view()[groupNetSalescount].items[0].aggregates.NetSales.sum;
+    //                    groupNetSalescount++;
+    //                    //return result.toFixed(2);
+    //                    return groupNetSalescount;
+    //           // }
+
+    //        }
+
+    //    else{
+    //            if (datasource.view()[groupNetSalescount] != undefined){
+    //            result = datasource.view()[groupNetSalescount].aggregates.NetSales.sum;
+    //            groupNetSalescount++;
+    //            return result.toFixed(2);
+    //        }
+    //    }
+    //    }
+    //}
+
+    //function getDiscountSum() {
+
+    //    //var datasource = $("#grid").data("kendoGrid").dataSource;
+    //    //var result;
+    //    //if (datasource.view()[groupDiscountCount] != undefined) {
+    //    //    result = datasource.view()[groupDiscountCount].aggregates.Discount.sum;
+    //    //    groupDiscountCount++;
+    //    //    return result.toFixed(2);
+    //    //}
+    //}
+
+    //function getTaxableSalesSum() {
+
+    //    //var datasource = $("#grid").data("kendoGrid").dataSource;
+    //    //var result;
+    //    //if (datasource.view()[groupTaxableSalesCount] != undefined) {
+    //    //    result = datasource.view()[groupTaxableSalesCount].aggregates.TaxableSales.sum;
+    //    //    groupTaxableSalesCount++;
+    //    //    return result.toFixed(2);
+    //    //}
+    //}
+    //function getVatAmountSum() {
+
+    //    //var datasource = $("#grid").data("kendoGrid").dataSource;
+    //    //var result;
+    //    //if (datasource.view()[groupVatAmountCount] != undefined) {
+    //    //    result = datasource.view()[groupVatAmountCount].aggregates.VatAmount.sum;
+    //    //    groupVatAmountCount++;
+    //    //    return result.toFixed(2);
+    //    //}
+    //}
+    function KendoGridRefresh(readUrl) {
+        $('#grid').val('');
+        $('#grid').html('');
+        BindGrid(readUrl)
+    }
+</script>
+
+
+
+
+
+
+

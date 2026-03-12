@@ -1,0 +1,903 @@
+﻿@{
+	Layout = null;
+
+}
+<style>
+	.table-responsive {
+		overflow-y: visible; /* or auto if you need scrolling */
+	}
+
+	/* === Main Table Columns === */
+	.SNo {
+		width: 60px;
+		text-align: center;
+	}
+
+	.Parameters {
+		width: 180px;
+	}
+
+	.ChecklistItems {
+		width: 200px;
+	}
+
+	.Status {
+		width: 130px;
+	}
+
+	.Remarks {
+		width: 200px;
+	}
+
+	/* === Inner Nested Table === */
+	.inner-table {
+		width: 100%;
+		border-collapse: collapse;
+	}
+
+		.inner-table td {
+			border: none;
+			vertical-align: middle;
+			padding: 3px 5px;
+		}
+
+	/* === Form Controls === */
+	.Sub-SNo {
+		width: 100%;
+		text-align: right;
+	}
+
+	.textbox {
+		width: 100%;
+		border: 1px solid #ddd !important;
+		height: 26px;
+	}
+
+	.dynamic-table th, .dynamic-table td {
+		font-size: 12px;
+		padding: 4px 8px;
+		vertical-align: middle;
+	}
+
+	.input-row {
+		border: solid #ddd 1px !important;
+		width: 233px !important;
+	}
+	.txtPopup{
+		width:115px !important;
+	}
+
+	.dynamic-table {
+		width: 100%;
+		table-layout: fixed;
+		border-collapse: collapse;
+	}
+
+	.inner-table {
+		width: 100%;
+		border-collapse: collapse;
+		table-layout: fixed; /* ← this is critical */
+	}
+	.table-responsive {
+		overflow-x: auto;
+	}
+
+	.dynamic-table th,
+	.dynamic-table td {
+		box-sizing: border-box;
+	}
+
+	.condition-row {
+		width: 265px !important;
+	}
+
+
+	.large-button {
+		padding: 8px 24px;
+		/*font-size: 18px;*/
+		border-radius: 6px;
+		background-color: #28a745;
+		color: white;
+		border: none;
+		cursor: pointer;
+		display: block; /* Ensures proper centering */
+		margin: auto; /* Centers horizontally */
+	}
+
+	.textpadding {
+		padding-left: 5px;
+	}
+
+	.material-font {
+		font-size: 11px;
+		width: 200px;
+	}
+
+	.kendo-row {
+		border: 1px solid #ddd;
+	}
+
+	.material-align {
+		margin-left: 50px;
+	}
+
+	.k-window {
+		position: fixed !important;
+		top: 50% !important;
+		left: 50% !important;
+		transform: translate(-50%, -50%) !important;
+	}
+	/*.date-width {
+		width: 87px !important;
+	}*/
+	.date-container {
+		display: flex;
+		flex-direction: column; /* label on top */
+	}
+
+	.date-label {
+		margin-bottom: 6px; /* space below label */
+		font-weight: 500;
+	}
+
+	.date-row {
+		display: flex;
+		gap: 12px; /* 👈 constant distance */
+		align-items: center;
+	}
+
+	.nepali-wrapper {
+		position: relative;
+		display: inline-flex;
+		align-items: center;
+	}
+
+	.nepali-calendar {
+		padding-right: 30px; /* space for icon */
+		height: 34px; /* match Kendo input height */
+	}
+
+
+	.calendar-icon-2 {
+		position: absolute;
+		right: 8px;
+		top: 50%;
+		transform: translateY(-50%);
+		font-size: 14px;
+		color: #555;
+		right: 9px !important;
+		top: 10px !important;
+		pointer-events: none;
+	}
+
+	.k-widget.k-datepicker {
+		width: 50% !important;
+	}
+</style>
+@*<link href="@Styles.Url("~/Areas/NeoERP.QCQAManagement/Content/QCQASetup.css")" rel="stylesheet" />*@
+<div class="col-md-12 bodyController" ng-controller="FinishedGoodsInspectionList">
+	<div class="portlet light form-fit bordered bottomspance">
+		<div class="portlet box green-box main">
+			<div class="portlet-title">
+				<div class="caption">
+					<a class="btn-back pull-left" data-toggle="tooltip" data-placement="top" title="Back To Dashboard" href="/QuotationManagement/Home/Dashboard">
+						<i class="fa fa-arrow-circle-left"></i>
+					</a>
+					<i class="fa fa-gift font-white-haze"></i>
+					<span class="caption-subject font-white-haze bold uppercase">Finished Goods Inspection Report</span>
+				</div>
+			</div>
+			<div class="portlet-body light bg-inverse">
+				<div id="ItemGrid">
+					<div class="row" style="margin-bottom: 10px; margin-top: 10px;">
+						<form id="registeredVehicle" name="registeredVehicle">
+							<div class="col-md-12 col-sm-12 form-group nopadding-right dynamicform">
+								<div class="form-group col-md-3 col-sm-3">
+									<label for="element">Dispatch No:</label>
+									<div>
+										<input type="text" ng-model="FINISH_GOODS_INSP_NO" ng-init="FINISH_GOODS_INSP_NO='@ViewBag.QCNO'" disabled>
+									</div>
+								</div>
+								<div class="form-group col-md-4 date-container">
+									<label class="date-label">Date / Miti</label>
+									<div class="date-row">
+										<input id="englishdatedocument"
+											   autocomplete="off"
+											   class="englishdate"
+											   kendo-date-picker
+											   ng-model="CREATED_DATE"
+											   k-options="monthSelectorOptions" />
+										<div class="nepali-wrapper nopadding-left pl-1">
+											<input type="text"
+												   id="nepaliDate5"
+												   class="nepali-calendar"
+												   data-checkfor="englishdatedocument"
+												   autocomplete="off"
+												   onchange="ConvertNepToEng(this)"
+												   next-on-tab />
+											<i class="fa fa-calendar calendar-icon-2"></i>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-12 col-sm-12 form-group nopadding-right dynamicform">
+								<div class="form-group col-md-3 col-sm-3">
+									<label for="element">Product Type</label>
+									<div class="topsearch" style="display: block;">
+
+										<select id="ddlProductType" k-ng-model="selectedProductType" kendo-drop-down-list
+												k-options="ddlProductType"
+												class="ddlProductType">
+										</select>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-12 col-sm-12 form-group nopadding-right dynamicform">
+								<div class="form-group col-md-5 col-sm-5">
+									<label for="element">Product Name</label>
+									<div class="topsearch" style="display: block;">
+										<select id="ddlMaterials" k-ng-model="ITEM_CODE" kendo-drop-down-list
+												k-options="ddlMaterials"
+												class="ddlMaterials" style="width:250px;">
+										</select>
+									</div>
+								</div>
+							</div>
+						</form>
+					</div>
+					<div class="portlet-body light bg-inverse">
+						<div id="ItemGrid" data-role="grid" class="k-grid k-widget k-display-block">
+							<div class="row" style="margin-bottom: 10px; margin-top: 10px;">
+								<form id="registeredVehicle" name="registeredVehicle">
+									<div class="col-md-12 col-sm-12 form-group nopadding-right dynamicform">
+										<div class="form-group col-md-3 col-sm-3">
+											<label for="element">Date of Receipt</label>
+											<div>
+												<input type="text" ng-model="RECEIPT_DATE" class="material-font" name="WB_SLIP_NO" id="txtReceiptDate" disabled />
+											</div>
+										</div>
+										<div class="form-group col-md-3 col-sm-3 material-align">
+											<label for="element">GRN No</label>
+											<div>
+												<input type="text" ng-model="GRN_NO" class="material-font" name="GRN_NO" id="txtGrnNo" disabled />
+											</div>
+										</div>
+										<div class="form-group col-md-3 col-sm-3 material-align">
+											<label for="element">Vendor Name</label>
+											<div>
+												<input type="text" ng-model="VENDOR_NAME" class="material-font" name="WB_SLIP_NO" id="txtVendorName" disabled />
+											</div>
+										</div>
+									</div>
+									<div class="col-md-12 col-sm-12 form-group nopadding-right dynamicform">
+										<div class="form-group  col-md-3 col-sm-3">
+											<label for="element">PO / Reference Number</label>
+											<div>
+												<input type="text" ng-model="REFERENCE_NO" class="material-font" name="WB_SLIP_NO" id="txtReferenceNo" disabled />
+											</div>
+										</div>
+										<div class="form-group col-md-3 col-sm-3 material-align">
+											<label for="element">Batch / Lot Number</label>
+											<div>
+												<input type="text" ng-model="BATCH_NO" class="material-font" name="WB_SLIP_NO" id="txtBatchNo" disabled />
+											</div>
+										</div>
+										<div class="form-group col-md-3 col-sm-3 material-align">
+											<label for="element">MFG</label>
+											<div>
+												<input type="text" ng-model="MFG_DATE" class="material-font" name="WB_SLIP_NO" id="txtMFGDate" disabled />
+											</div>
+										</div>
+									</div>
+									<div class="col-md-12 col-sm-12 form-group nopadding-right dynamicform">
+										<div class="form-group col-md-3 col-sm-3">
+											<label for="element">EXP</label>
+											<div>
+												<input type="text" ng-model="EXP_DATE" class="material-font" name="WB_SLIP_NO" id="txtExpiryDate" disabled />
+											</div>
+										</div>
+										<div class="form-group col-md-3 col-sm-3 material-align">
+											<label for="element">Barcode / Best before code</label>
+											<div>
+												<input type="text" ng-model="EXP_DATEsd" class="material-font" name="WB_SLIP_NO" id="txtExpiryDateasd" disabled />
+											</div>
+										</div>
+										<div class="form-group  col-md-3 col-sm-3 material-align">
+											<label for="element">Quantity Received</label>
+											<div>
+												<input type="text" ng-model="QUANTITY" class="material-font" name="WB_SLIP_NO" id="txtReceivedQty" disabled />
+											</div>
+										</div>
+									</div>
+								</form>
+							</div>
+							<div class="table-responsive" style="overflow-x: auto;">
+								<table class="document_child_table dynamic-table table-fixed dynamic_child_table dynamic_child_table6" style="min-width: 780px; border-collapse: collapse;">
+									<thead class="child-table-head">
+										<tr>
+											<th class="SNo" style="text-align: center; font-weight: bold;">SNo</th>
+											<th class="Parameters" style="text-align: center; font-weight: bold;">Section</th>
+											<th class="condition-row" style="text-align: center; font-weight: bold;">Field</th>
+											<th class="Status" style="text-align: center; font-weight: bold;">Notes</th>
+											<th class="condition-row-remarks" style="text-align: center; font-weight: bold;">Remarks</th>
+										</tr>
+									</thead>
+									<tbody class="table_body" style=" overflow-y: visible;">
+
+										<tr ng-repeat="(key,row) in PreDispatchItemsData" id="idFinishedGoods" style="overflow-y: hidden;">
+											<td class="SNo">
+												<div style="margin-left:-8px;">
+													<input type="text" style="text-align: right; width: 51px !important;" value="{{key + 1}}" class="form-control Sub-SNo" disabled />
+												</div>
+											</td>
+											<td class="Parameters">{{row.PARAMETERS}}</td>
+											<td colspan="3" style="padding: 0;">
+												<table class="table table-inner" style="width: 100%;">
+													<tr ng-repeat="(keys,rows) in row.FinishedGoodsInspectionDetailsList">
+														<td class="condition-row">{{rows.ITEM_EDESC}}</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Packaging_Condition'" class="Status">
+															<label style="display:inline-flex; align-items:center; gap:5px;">
+																<input type="checkbox"
+																	   class="PACK_CONDITION"
+																	   ng-checked="PACK_CONDITION === 'Y'"
+																	   ng-click="togglePackCondition()">
+																<span>Yes</span>
+															</label>
+															<label style="display:inline-flex; align-items:center; gap:5px;">
+																<input type="checkbox"
+																	   class="PACK_CONDITION_NO"
+																	   ng-checked="PACK_CONDITION_NO === 'Y'"
+																	   ng-click="togglePackConditionNo()">
+																<span>No</span>
+															</label>
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Label_Accuracy'" class="Status">
+															<label style="display:inline-flex; align-items:center; gap:5px;">
+																<input type="checkbox"
+																	   class="LABEL_ACCURACY"
+																	   ng-checked="LABEL_ACCURACY === 'Y'"
+																	   ng-click="toggleLabelAccuracy()">
+																<span>Yes</span>
+															</label>
+															<label style="display:inline-flex; align-items:center; gap:5px;">
+																<input type="checkbox"
+																	   class="LABEL_ACCURACY_NO"
+																	   ng-checked="LABEL_ACCURACY_NO === 'Y'"
+																	   ng-click="toggleLabelAccuracyNo()">
+																<span>No</span>
+															</label>
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Product_Appearance'" class="Status">
+															<label style="display:inline-flex; align-items:center; gap:5px;">
+																<input type="checkbox"
+																	   class="PRODUCT_APPEARANCE"
+																	   ng-checked="PRODUCT_APPEARANCE === 'Y'"
+																	   ng-click="toggleProductAppearance()">
+																<span>Yes</span>
+															</label>
+															<label style="display:inline-flex; align-items:center; gap:5px;">
+																<input type="checkbox"
+																	   class="PRODUCT_APPEARANCE_NO"
+																	   ng-checked="PRODUCT_APPEARANCE_NO === 'Y'"
+																	   ng-click="toggleProductAppearanceNo()">
+																<span>No</span>
+															</label>
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Dimensions_Weight_Check'" class="Status">
+															<label style="display:inline-flex; align-items:center; gap:5px;">
+																<input type="checkbox"
+																	   class="DIMENSIONS"
+																	   ng-checked="DIMENSIONS === 'Y'"
+																	   ng-click="toggleDimensions()">
+																<span>Yes</span>
+															</label>
+															<label style="display:inline-flex; align-items:center; gap:5px;">
+																<input type="checkbox"
+																	   class="DIMENSIONS_NO"
+																	   ng-checked="DIMENSIONS_NO === 'Y'"
+																	   ng-click="toggleDimensionsNo()">
+																<span>No</span>
+															</label>
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Compliance_Certificates'" class="Status">
+															<label style="display:inline-flex; align-items:center; gap:5px;">
+																<input type="checkbox"
+																	   class="COMPLIANCE_CERTIFICATES"
+																	   ng-checked="COMPLIANCE_CERTIFICATES === 'Y'"
+																	   ng-click="toggleComplianceCertificates()">
+																<span>Yes</span>
+															</label>
+															<label style="display:inline-flex; align-items:center; gap:5px;">
+																<input type="checkbox"
+																	   class="COMPLIANCE_CERTIFICATES_NO"
+																	   ng-checked="COMPLIANCE_CERTIFICATES_NO === 'Y'"
+																	   ng-click="toggleComplianceCertificatesNo()">
+																<span>No</span>
+															</label>
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Vendor_Test_Report'" class="Status">
+															<label style="display:inline-flex; align-items:center; gap:5px;">
+																<input type="checkbox"
+																	   class="VENDOR_TEST"
+																	   ng-checked="VENDOR_TEST === 'Y'"
+																	   ng-click="toggleVendorTest()">
+																<span>Yes</span>
+															</label>
+															<label style="display:inline-flex; align-items:center; gap:5px;">
+																<input type="checkbox"
+																	   class="VENDOR_TEST_NO"
+																	   ng-checked="VENDOR_TEST_NO === 'Y'"
+																	   ng-click="toggleVendorTestNo()">
+																<span>No</span>
+															</label>
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Number_Passed_Failed'" class="Status">
+															<label style="display:inline-flex; align-items:center; gap:5px;">
+																<input type="checkbox"
+																	   class="NUMBER_PASSED"
+																	   ng-checked="NUMBER_PASSED === 'Y'"
+																	   ng-click="toggleNumberPassed()">
+																<span>Yes</span>
+															</label>
+															<label style="display:inline-flex; align-items:center; gap:5px;">
+																<input type="checkbox"
+																	   class="NUMBER_PASSED_NO"
+																	   ng-checked="NUMBER_PASSED_NO === 'Y'"
+																	   ng-click="toggleNumberPassedNo()">
+																<span>No</span>
+															</label>
+														</td>
+														<td ng-if="rows.ITEM_EDESC === 'Sampling Method'" class="Status">
+															<select id="ddlSAMPLING_METHOD"
+																	kendo-drop-down-list
+																	k-ng-model="SAMPLING_METHOD"
+																	k-options="SamplingMethodOptions"
+																	style="width: 100%;">
+															</select>
+														</td>
+														<td ng-if="rows.ITEM_EDESC === 'Defect Type'" class="Status">
+															<select id="ddlDEFECT_TYPE"
+																	kendo-drop-down-list
+																	k-ng-model="DEFECT_TYPE"
+																	k-options="DefectTypeOptions"
+																	style="width: 100%;">
+															</select>
+														</td>
+														<td ng-if="rows.ITEM_EDESC === 'Sample Size'" class="Status">
+															<input type="text" ng-model="SAMPLE_SIZE"
+																   placeholder="Enter"
+																   class="form-control input-row textbox txtPopup SAMPLE_SIZE" />
+														</td>
+														<td ng-if="rows.ITEM_EDESC === 'Action Taken'" class="Status">
+															<input type="text" ng-model="ACTION_TAKEN"
+																   placeholder="Enter"
+																   class="form-control input-row textbox txtPopup ACTION_TAKEN" />
+														</td>
+														<td ng-if="rows.ITEM_EDESC === 'Remarks'" class="Status">
+															<input type="text" ng-model="REMARKS"
+																   placeholder="Enter"
+																   class="form-control input-row textbox txtPopup REMARKS" />
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Packaging_Condition'" class="condition-row-remarks">
+															<input type="text" ng-model="PACK_COND_REMARKS" placeholder="Enter Remarks" class="form-control input-row textbox txtPopup PACK_COND_REMARKS" />
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Label_Accuracy'" class="condition-row-remarks">
+															<input type="text" ng-model="LABEL_ACC_REMARKS" placeholder="Enter Remarks" class="form-control input-row textbox txtPopup LABEL_ACC_REMARKS" />
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Product_Appearance'" class="condition-row-remarks">
+															<input type="text" ng-model="PRODUCT_APP_REMARKS" placeholder="Enter Remarks" class="form-control input-row textbox txtPopup PRODUCT_APP_REMARKS" />
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Dimensions_Weight_Check'" class="condition-row-remarks">
+															<input type="text" ng-model="DIMENSIONS_REMARKS" placeholder="Enter Remarks" class="form-control input-row textbox txtPopup DIMENSIONS_REMARKS" />
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Compliance_Certificates'" class="condition-row-remarks">
+															<input type="text" ng-model="COMP_CERT_REMARKS" placeholder="Enter Remarks" class="form-control input-row textbox txtPopup COMP_CERT_REMARKS" />
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Vendor_Test_Report'" class="condition-row-remarks">
+															<input type="text" ng-model="VENDOR_TEST_REMARKS" placeholder="Enter Remarks" class="form-control input-row textbox txtPopup VENDOR_TEST_REMARKS" />
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Sampling_Method'" class="condition-row-remarks">
+															<input type="text" ng-model="SAMP_METHOD_REMARKS" placeholder="Enter Remarks" class="form-control input-row textbox txtPopup SAMP_METHOD_REMARKS" />
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Sample_Size'" class="condition-row-remarks">
+															<input type="text" ng-model="SAMP_SIZE_REMARKS" placeholder="Enter Remarks" class="form-control input-row textbox txtPopup SAMP_SIZE_REMARKS" />
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Number_Passed_Failed'" class="condition-row-remarks">
+															<input type="text" ng-model="NUMBER_PASSED_REMARKS" placeholder="Enter Remarks" class="form-control input-row textbox txtPopup NUMBER_PASSED_REMARKS" />
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Defect_Type'" class="condition-row-remarks">
+															<input type="text" ng-model="DEFECT_TYPE_REMARKS" placeholder="Enter Remarks" class="form-control input-row textbox txtPopup DEFECT_TYPE_REMARKS" />
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Action_Taken'" class="condition-row-remarks">
+															<input type="text" ng-model="ACTION_TAKEN_REMARKS" placeholder="Enter Remarks" class="form-control input-row textbox txtPopup ACTION_TAKEN_REMARKS" />
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Remarks'" class="condition-row-remarks">
+															<input type="text" ng-model="FINAL_REMARKS" placeholder="Enter Remarks" class="form-control input-row textbox txtPopup FINAL_REMARKS" />
+														</td>
+													</tr>
+												</table>
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</div>
+
+				</div>
+			</div>
+
+		</div>
+		<div class="modal-footer">
+			<button type="button" class="btn btn-sm btn-green" ng-hide="panelMode === 'view'" id="savedocumentformdata" ng-click="saveFinishedGoods()" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Processing..." href="javascript:;">
+				<i class="fa fa-floppy-o"></i> Save
+			</button>
+			<button type="button" class="btn btn-sm btn-danger" ng-click="ItemCancel()" data-dismiss="modal">
+				<i class="fa-solid fa-xmark"></i> Cancel
+			</button>
+		</div>
+	</div>
+</div>
+<script>
+	var a = location.hash;
+	var b = location.pathname;
+	var url = (b + a);
+	$(".active").removeClass();
+	$("a[href='" + url + "']").parent().addClass("active");
+	$("a[href='" + url + "']").parent().parent().slideDown("slow");
+</script>
+<script>
+	function dateSet(date) {
+		var month = date.getMonth() + 1;
+		var day = date.getDate();
+		date = date.getFullYear() + '/' +
+			(('' + month).length < 2 ? '0' : '') + month + '/' +
+			(('' + day).length < 2 ? '0' : '') + day;
+		return date;
+	}
+
+	function setNepaliDateFromEnglish() {
+		var engDate = $("#englishdatedocument").val();
+		var formattedDate = moment(engDate, 'M/D/YYYY').format('DD-MMM-YYYY');
+		$("#englishdatedocument").val(formattedDate);
+		var formattedEngDate = moment(engDate, 'M/D/YYYY').format('YYYY-MM-DD');
+		console.log("i m formatted date", formattedEngDate);
+		var nepaliDate = AD2BS(formattedEngDate);
+		$("#issueNep").val(nepaliDate);
+	}
+
+	function NepaliDateFromEnglish() {
+		var engDate = $("#validDt").val();
+		var formattedDate = moment(engDate, 'M/D/YYYY').format('DD-MMM-YYYY');
+		$("#validDt").val(formattedDate);
+
+		var formattedEngDate = moment(engDate, 'M/D/YYYY').format('YYYY-MM-DD');
+		var nepaliDate = AD2BS(formattedEngDate);
+		$("#nepaliDate").val(nepaliDate);
+
+		var issueDt = moment($("#englishdatedocument").val(), 'DD-MMM-YYYY');
+		var validUntilDt = moment(engDate, 'M/D/YYYY');
+
+		if (validUntilDt.isBefore(issueDt)) {
+			displayPopupNotification("To be Deliver Date cannot be greater than Date/Miti date.", "error");
+		}
+	}
+
+	function ConvertNepToEng(e) {
+		var date = BS2AD($("#issueNep").val());
+		var FormattedEngDate = moment(date).format('DD-MMM-YYYY');
+		$("#englishdatedocument").val(FormattedEngDate);
+	}
+
+	$(".nepali-calendar").nepaliDatePicker({
+		npdMonth: true,
+		onFocus: true,
+		npdYear: true,
+		npdYearCount: 10,
+		altFormat: "dd-MMM-YYYY",
+		dateFormat: "dd-MMM-YYYY",
+		onChange: function (evt) {
+			var nepaliDate = $("#issueNep").val(); // Get the Nepali date value
+			var engDate = BS2AD(nepaliDate); // Convert Nepali date to English date
+			var formattedEngDate = moment(engDate).format('DD-MMM-YYYY'); // Format the English date
+			$("#englishdatedocument").val(formattedEngDate); // Update the English date input field
+		}
+	});
+
+	function NepToEng(e) {
+		var date = BS2AD($("#nepaliDate").val());
+		var FormattedEngDate = moment(date).format('DD-MMM-YYYY');
+		$("#validDt").val(FormattedEngDate);
+	}
+
+	$(".nepali-calendar").nepaliDatePicker({
+		npdMonth: true,
+		onFocus: true,
+		npdYear: true,
+		npdYearCount: 10,
+		altFormat: "dd-MMM-YYYY",
+		dateFormat: "dd-MMM-YYYY",
+		onChange: function (evt) {
+			var nepalidate = $("#nepaliDate5").val();
+			var Engdate = BS2AD(nepalidate);
+			var cmpEngDate = moment(Engdate).format('YYYY/MM/DD');
+			var FormattedEngDate = moment(Engdate).format('DD-MMM-YYYY');
+			var date = new Date();
+			var formBackDays = $('#hdnformBackDays').val();
+			date.setDate(date.getDate() - formBackDays);
+			var minDate = dateSet(date);
+			var maxDate = dateSet(new Date());
+			$("#englishdatedocument").val(FormattedEngDate);
+		}
+	});
+</script>
+<script type="text/javascript">
+
+
+	$(document).ready(function () {
+		var grid = $("#ItemGrid").data("kendoGrid");
+		function formatDate(d) {
+
+			// Remove the time part if present
+			d = d.split("T")[0];    // "2025-12-17"
+
+			var parts = d.split("-");  // ["2025", "12", "17"]
+
+			var year = parts[0];
+			var month = parseInt(parts[1]) - 1;  // JS month index
+			var day = parts[2];
+
+			// Construct date WITHOUT timezone shift
+			var date = new Date(year, month, day);
+
+			var dayFormatted = ("0" + date.getDate()).slice(-2);
+			var monthShort = date.toLocaleString("en-US", { month: "short" });
+			var yearFormatted = date.getFullYear();
+
+			return dayFormatted + "-" + monthShort + "-" + yearFormatted;
+		}
+		function parseCustomDate(dateStr) {
+			var parts = dateStr.split("/");
+			if (parts.length === 3) {
+				return new Date(parts[2], parts[0] - 1, parts[1]); // Month is zero-based
+			}
+			return null;
+		}
+		$(document).on('click', '.clsSupplier', function (e) {
+			e.preventDefault();
+			var inputElement = $(this).closest('.input-group').find('.hidItemCode');
+			var productIndex = $(this).closest('.input-group').find('input[product-index]').attr('product-index');
+			var selectedVal = inputElement.val(); // Get value from input
+			if (selectedVal) {
+				ShowPopupList(selectedVal, productIndex, "RM"); // Show popup with details For Raw Materials
+			}
+		});
+		$(document).on('click', '.clsBatch', function (e) {
+			e.preventDefault();
+			var inputElement = $(this).closest('.input-group').find('.hidItemCode');
+			var productIndex = $(this).closest('.input-group').find('input[product-index]').attr('product-index');
+			var selectedVal = inputElement.val(); // Get value from input
+			if (selectedVal) {
+				ShowPopupList(selectedVal, productIndex, "Batch"); // Show popup with details For Raw Materials
+			}
+		});
+
+		$("#ddlMaterials").on('change', function (e) {
+			e.preventDefault();
+			var ddl = $("#ddlMaterials").data("kendoDropDownList");
+			var selectedVal = ddl ? ddl.value() : $(this).val();
+			bindingSelectedValue = selectedVal;
+			if (selectedVal) {
+				ShowPopupList(selectedVal);
+			}
+			ddl.unbind("select").bind("select", function (e) {
+				ShowPopupList(bindingSelectedValue);
+			});
+		});
+		function ShowPopupList(itemCode) {
+			$.get("/api/IncomingMaterialAPI/GetVoucherDetailsByItemId?ItemCode=" + itemCode, function (response) {
+				if ($("#popupWindow").length === 0) {
+					$("body").append('<div id="popupWindow"></div>');
+				}
+				$("#popupWindow").kendoWindow({
+					width: "800px",
+					height: "300px",
+					title: "Select Voucher",
+					visible: false,
+					modal: true,
+					actions: ["Close"]
+				});
+				var popupWindow = $("#popupWindow").data("kendoWindow");
+
+				$.each(response, function (index, value) {
+					if (value.Voucher_No && value.Voucher_No.includes('BH')) {
+						let contentHtml =
+							`<input type="text" id="searchInputText" placeholder="Search..." style="width: 35%;position: inherit; margin-bottom: 10px;margin-top: 4px; border: 1px solid #ccc;height: 25px;" />
+							<table id=voucherList class=voucher-list  border='1' style='border-collapse: collapse; width: 100%;'>
+						<tr style="padding:5px; border-bottom:1px solid #ccc; font-size: 14px;height: 25px;">
+					   <td class=textpadding><b>GRN NO</b></td>
+						<td class=textpadding><b>GRN MITI</b></td>
+						<td class=textpadding><b>SUPPLIER NAME</b></td>
+						<td class=textpadding><b>INVOICE NO</b></td>
+					</tr>`
+						$.each(response, function (index, value) {
+							contentHtml += `<tr id='voucherList' data-voucher="${value.Voucher_No}" style="padding:5px; border-bottom:1px solid #ccc; font-size: 14px;">
+						<td class=textpadding>${value.Voucher_No}</td>
+						<td class=textpadding>${value.MITI}</td>
+
+						<td class=textpadding>${value.supplier_edesc}</td>
+						<td class=textpadding>${value.invoice_no}</td>
+						<td><button class="btnClass voucher-item large-button  data-voucher=${value.Voucher_No} type ="button">Ref</button></td>
+					</tr>`;
+						});
+						contentHtml += "</table>"; // Closing the table tag
+						popupWindow.content(contentHtml);
+						popupWindow.center().open();
+						$("#searchInputText").on("keyup", function () {
+							var searchText = $(this).val().toLowerCase();
+							$("#voucherList tbody tr").each(function () {
+								var rowText = $(this).find("td").map(function () {
+									return $(this).text().toLowerCase();
+								}).get().join(" "); // Join all cell values for a full-row search
+
+								$(this).toggle(rowText.includes(searchText));
+							});
+						});
+					}
+					else {
+						let grn_ContentHtml =
+							`<input type="text" id="searchInputText" placeholder="Search..." style="width: 35%;position: inherit; margin-bottom: 10px; border: 1px solid #ccc;height: 25px;" />
+							<table id=voucherList class=voucher-list  border='1' style='border-collapse: collapse; width: 100%;'>
+						<tr  style="padding:5px; border-bottom:1px solid #ccc; font-size: 14px;height: 25px;">
+						<td class=textpadding><b>GATE ENTRY NO</b></td>
+						<td class=textpadding><b>GATE ENTRY MITI</b></td>
+						<td class=textpadding><b>SUPPLIER NAME</b></td>
+						<td class=textpadding><b>INVOICE NO</b></td>
+					</tr>`
+						$.each(response, function (index, value) {
+							grn_ContentHtml += `<tr id='voucherList' data-voucher="${value.Voucher_No}" style="padding:5px; border-bottom:1px solid #ccc; font-size: 14px;">
+						<td class=textpadding>${value.Voucher_No}</td>
+						<td class=textpadding>${value.MITI}</td>
+						<td class=textpadding>${value.supplier_edesc}</td>
+						<td class=textpadding>${value.invoice_no}</td>
+						<td><button class="btnClass voucher-item large-button  data-voucher=${value.Voucher_No} " type ="button">Ref</button></td>
+					</tr>`;
+						});
+						grn_ContentHtml += "</table>"; // Closing the table tag
+						popupWindow.content(grn_ContentHtml);
+						popupWindow.center().open();
+						$("#searchInputText").on("keyup", function () {
+							var searchText = $(this).val().toLowerCase();
+							$("#voucherList tbody tr").each(function () {
+								var rowText = $(this).find("td").map(function () {
+									return $(this).text().toLowerCase();
+								}).get().join(" "); // Join all cell values for a full-row search
+								$(this).toggle(rowText.includes(searchText));
+							});
+						});
+					}
+				});
+				function GetSpecificationDetails(response_MatDetails) {
+					var smellValue = response_MatDetails[0].UNPLEASANT_SMELL_ODOUR;
+					function getItemsDropdown(modelName, selectedValue) {
+						return `
+									<select class="${modelName}" ng-model="${modelName}">
+										<option value="" ${selectedValue === "" ? "selected" : ""}></option>
+										<option value="OK" ${selectedValue === "OK" ? "selected" : ""}>OK</option>
+										<option value="Not OK" ${selectedValue === "Not OK" ? "selected" : ""}>Not OK</option>
+									</select>
+								`;
+					}					
+				}
+				$("#voucherList").on("click", "tr", function () {
+
+					var selectedVoucher = $(this).attr("data-voucher");
+					$('#idGRNNo').val(selectedVoucher);
+					$.get("/api/IncomingMaterialAPI/MaterialDetailLists?VoucherNo=" + selectedVoucher, function (response_MatDetails) {
+						$('.0_0').text($('#ddlProductType').val());
+						$('.0_1').text($('#ddlMaterials').val());
+						$('#txtReceiptDate').val(formatDate(response_MatDetails[0].RECEIPT_DATE));
+						/*$('#txtReceiptDate').val(response_MatDetails[0].RECEIPT_DATE);*/
+						$('#txtGrnNo').val(selectedVoucher);
+						$('#txtVendorName').val(response_MatDetails[0].supplier_edesc);
+						$('#txtReferenceNo').val(response_MatDetails[0].REFERENCE_NO);
+						$('#txtBatchNo').val(response_MatDetails[0].BATCH_NO);
+						//$('#txtMFGDate').val(response_MatDetails[0].MFG_DATE);
+						//$('#txtExpiryDate').val(response_MatDetails[0].EXPIRY_DATE);
+						$('#txtMFGDate').val(formatDate(response_MatDetails[0].txtMFGDate));
+						$('#txtExpiryDate').val(formatDate(response_MatDetails[0].txtExpiryDate));
+						$('.4_1').text(response_MatDetails[0].SIZE_WIDTH); //sample size
+						$('.6_0').text(response_MatDetails[0].QC_NO); //qc name
+						$('.6_1').text(response_MatDetails[0].invoice_no); //Date / Signature
+						$('#txtReceivedQty').text(response_MatDetails[0].quantity);
+						GetSpecificationDetails(response_MatDetails);
+					});
+					var inputSelector = `.ccustomer_${key}`;
+					$(inputSelector).val(selectedVoucher).trigger("input"); // Trigger input event for Angular binding
+					popupWindow.close(); // Close popup after selection
+				});
+				$(document).on("click", ".btnClass", function () {
+					var classes = this.classList;
+					var selectedVoucher = null;
+
+					// Loop through each token in classList and check for one that starts with "data-voucher="
+					classes.forEach(function (token) {
+						if (token.indexOf("data-voucher=") === 0) {
+							selectedVoucher = token.substring("data-voucher=".length);
+						}
+					});
+					$('#idGRNNo').val(selectedVoucher);
+					$.get("/api/IncomingMaterialAPI/MaterialDetailLists?VoucherNo=" + selectedVoucher, function (response_MatDetails) {
+						$('.0_0').text($('#ddlProductType').val());
+						$('.0_1').text($('#ddlMaterials').val());
+						$('.0_2').text(response_MatDetails[0].RECEIPT_DATE);
+						$('.0_3').text(selectedVoucher);
+						$('.0_4').text(response_MatDetails[0].supplier_edesc);
+						$('.0_5').text(response_MatDetails[0].REFERENCE_NO);
+						$('.0_6').text(response_MatDetails[0].BATCH_NO);
+						$('.0_7').text(response_MatDetails[0].MFG_DATE);
+						$('.0_8').text(response_MatDetails[0].EXPIRY_DATE);
+						$('.4_1').text(response_MatDetails[0].SIZE_WIDTH); //sample size
+						$('.6_0').text(response_MatDetails[0].QC_NO); //qc name
+						$('.6_1').text(response_MatDetails[0].invoice_no); //Date / Signature
+						$('.quantity').text(response_MatDetails[0].quantity);
+						GetSpecificationDetails(response_MatDetails);
+					});
+					var inputSelector = `.ccustomer_${key}`;
+					$(inputSelector).val(selectedVoucher).trigger("input"); // Trigger input event for Angular binding
+					loadItemSpec(selectedVoucher);
+					popupWindow.close(); // Close popup after selection
+				});
+			});
+		}
+
+		var ddlUrl = window.location.protocol + "//" + window.location.host + "/api/IncomingMaterialAPI/MaterialListsByCategory?CategoryCode=RM"
+		var defaultValue = "QC_Master_Setup";
+		var ddlMaterials = $("#ddlMaterials").kendoDropDownList({
+			optionLabel: "-- Select Material--",
+			dataTextField: "ITEM_EDESC", // Field name for the dropdown text
+			dataValueField: "ITEM_CODE", // Field name for the dropdown value
+			autoBind: false, // Prevent auto-binding until we load the data
+			filter: "contains",
+			dataSource: {
+				transport: {
+					read: {
+						url: ddlUrl,
+						dataType: "json",
+						success: function (data) {
+							data.forEach(item => {
+							});
+							ddlMaterials.data("kendoDropDownList").setDataSource(new kendo.data.DataSource({
+								data: data
+							}));
+							ddlMaterials.data("kendoDropDownList").enable(true); // Enable dropdown after loading data
+						},
+						error: function (xhr, status, error) {
+							console.error("Error loading dropdown data:", error);
+						}
+					}
+				}
+			},
+			dataBound: function () {
+				var dropdown = this;
+				var items = dropdown.dataSource.data();
+				var exists = items.some(function (item) {
+					return item.TABLE_NAME === defaultValue;
+				});
+				if (exists) {
+					dropdown.value(defaultValue);  // Set default value
+				}
+			},
+			change: function (e) {
+				var dropdown = e.sender;
+				var selectedValue = dropdown.value();
+				var scope = angular.element($("#ddlMaterials")).scope();
+				scope.$apply(function () {
+					scope.tableName = selectedValue;
+				});
+			}, height: 200
+		}).data("kendoDropDownList");
+		var grid = $("#ItemGrid").data("kendoGrid");
+	});
+</script>
+

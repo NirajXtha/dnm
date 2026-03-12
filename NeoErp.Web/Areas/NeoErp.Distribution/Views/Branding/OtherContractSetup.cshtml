@@ -1,0 +1,552 @@
+﻿<style>
+   
+    #GroupsForm h4 {
+        margin-top: 0px !important;
+    }
+
+    #GroupSetup .k-auto-scrollable {
+        overflow: hidden !important;
+    }
+
+    .form-control {
+        width: 100% !important;
+    }
+
+    .custom-panel-body .caption {
+        font-size: 12px !important;
+        padding: 5px 0 6px 0 !important;
+    }
+
+    .custom-panel-body .portlet-title {
+        min-height:auto !important;
+    }
+
+    .control-label {
+        font-size: 12px !important;
+    }
+
+    .tblresponsive {
+        border: 1px solid #e1e1e1 !important;
+    }
+
+    .table thead tr th {
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    input#ImageCode {
+        font-size: 12px;
+    }
+
+    input#ImageName {
+        font-size: 12px;
+    }
+
+    #GroupSetup .k-grid-header {
+        padding-right: 0px !important;
+    }
+
+    tr .ng-scope.k-state-selected
+ {
+        background-color: hsl(109, 56%, 41%)
+    }
+
+    #contractCategorySetup .k-grid-header {
+        padding-right: 0px !important;
+    }
+
+    #createContractForm .k-multiselect-wrap ul li {
+        font-size: 10px !important;
+    }
+
+   #createContractForm .k-multiselect-wrap .k-input
+ {
+      color: hsl(0, 0%, 80%);
+    }
+
+    multiselect-wrap.k-floatwrap {
+        max-height: 101px;
+        overflow-y: auto;
+    }
+
+
+
+
+
+</style>
+<link rel="stylesheet" href="/resources/demos/style.css">
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+<div ng-controller="contractSetupCtrl">
+    <div class="content">
+        <div class="page-bar">
+            <ul class="page-breadcrumb">
+            </ul>
+            <div class="page-toolbar">
+                <div class="btn-group pull-right">
+
+                    <div class="actions">
+                        <div class="btn-group">
+                            <a target="_self" class="pull-right btn btn-circle btn-icon-only btn-default" href="~/Pictures/Distribution/Format/CONTRACT_SAMPLE.xlsx" data-toggle="tooltip" title="Download Excel Format.." download>
+                                <i class='fa fa-file-excel-o excelfile fontgreen' />
+                            </a>
+                        </div>
+                        <div class="btn-group">
+                            <a href="javascript:void(0)" id="uploadExcel" class="pull-right btn btn-circle btn-icon-only btn-default">
+                                <i class="fa fa-upload"></i>
+                            </a>
+                        </div>
+                        <div class="btn-group">
+                            @Html.Partial("~/Views/Shared/Controls/_SetupConfig.cshtml", "ContractSetup")
+                        </div>
+                        <div class="btn-group">
+                            <div class="pull-right btn btn-circle btn-icon-only btn-default" title="Add Contract" id="saveClosingStockCreate" name="saveClosingStockCreate" ng-click="AddClickEvent()" ng-hide="createPanel">
+                                <i class="fa fa-plus"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="btn-group" style="margin-right:7px !important;">
+                    <div class="btn-group" style="margin-top:10px;">
+                        <input id="avatar" type="file" name="avatar" style="width:185px;" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <form id="createContractForm" name="createContractForm" novalidate ng-show="createPanel">
+        <div class=" custom-panel-body clearfix">
+            <div class="portlet light bordered main">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="{{brdIcon}} font-green-haze"></i>
+                        <span class="caption-subject font-green-haze bold uppercase">
+                            {{formTitle}}
+                        </span>
+                    </div>
+
+                    <div class="actions pull-right">
+                        @*<button type="button" id="deleteImage" name="deleteImage" ng-click="deleteContract(createContractForm.$valid)" ng-disabled="createContractForm.contractName.$invalid|| createContractForm.supplierMultiSelect.$invalid|| createContractForm.customerMultiSelect.$invalid||createContractForm.startDatePicker.$invalid ||createContractForm.endDatePicker.$invalid||createContractForm.areaMultiSelect.$invalid||createContractForm.contractType.$invalid||createContractForm.amountType.$invalid||createContractForm.panNo.$invalid||createContractForm.vatNo.$invalid" class="btn btn-circle btn btn-danger btn-sm"><i class="fa fa-trash-o"></i> Delete</button>*@
+                        <button type="button" id="SaveImage" name="SaveImage" ng-click="SaveContract(createContractForm.$valid,'O')" class="btn btn-circle btn btn-green btn-sm"><i class="{{SaveNUpdateIcon}}"></i> {{saveAction}}</button>
+                        <button type="button" id="cancelImage" name="cancelImage" ng-click="ClearForm()" class="btn btn-circle btn default btn-sm"><i class="fa fa-eraser"></i> Clear</button>
+                        <button type="button" id="cancelImage" name="cancelImage" ng-click="cancelForm()" class="btn btn-circle btn default btn-sm"><i class="fa fa-times"></i> Cancel</button>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-sm-3 col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">
+                                Contract Name<span style="color:red" ng-show="createContractForm.contractName.$invalid">
+                                    <span ng-show="createContractForm.contractName.$error.required">*</span>
+                                </span>
+                            </label>
+                            <input class="form-control" type="text" name="contractName" ng-model="contractCategory.contractName" id="contractName" placeholder="Contract Name ..." required>
+                            <input class="form-control" type="text" name="ContractId" ng-model="contractCategory.ID" id="contractName" style="display:none">
+                        </div>
+                    </div>
+
+                    <div class="col-sm-3 col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">
+                                Supplier
+                            </label>
+                            <select id="supplierMultiSelect" name="supplierMultiSelect" kendo-multi-select k-options="supplierMultiSelect" slim-scroll ng-model="contractCategory.supplierMultiSelect" style="width:100%;"></select>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-3 col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">
+                                Area<span style="color:red" ng-show="createContractForm.areaMultiSelect.$invalid">
+                                    <span ng-show="createContractForm.areaMultiSelect.$error.required">*</span>
+                                </span>
+                            </label>
+                            <select id="areaMultiSelect" name="areaMultiSelect" kendo-multi-select k-options="areaMultiSelect" slim-scroll ng-model="contractCategory.areaMultiSelect" style="width:100%;" required></select>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-3 col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">
+                                Customer
+                            </label>
+                            <select id="customerMultiSelect" name="customerMultiSelect" kendo-multi-select k-options="customerMultiSelect" slim-scroll ng-model="contractCategory.customerMultiSelect" style="width:100%;"></select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-sm-3 col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">
+                                Reseller
+                            </label>
+                            <select id="brdReseller" name="brdReseller" kendo-multi-select k-options="brdReseller" slim-scroll ng-model="contractCategory.brdReseller" style="width:100%;"></select>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-3 col-md-3">
+                        <div class="row">
+                            <div class="col-md-6 col-sm-6">
+                                <div class="form-group">
+                                    <label class="control-label">
+                                        Start Date<span style="color:red" ng-show="createContractForm.startDatePicker.$invalid">
+                                            <span ng-show="createContractForm.startDatePicker.$error.required">*</span>
+                                        </span>
+                                    </label>
+                                    <input class="form-control" type="text" name="startDatePicker" ng-model="contractCategory.startDatePicker" id="startDatePicker" placeholder="Select Date..." required>
+
+                                </div>
+                            </div>
+
+                            <div class="col-sm-6 col-md-6">
+                                <div class="form-group">
+                                    <label class="control-label">
+                                        End Date<span style="color:red" ng-show="createContractForm.endDatePicker.$invalid">
+                                            <span ng-show="createContractForm.endDatePicker.$error.required">*</span>
+                                        </span>
+                                    </label>
+                                    <input class="form-control" type="text" name="endDatePicker" ng-model="contractCategory.endDatePicker" id="endDatePicker" placeholder="Select Date..." required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-3 col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">
+                                Activity Type
+                            </label>
+                            <select id="BrandType" name="BrandType" kendo-multi-select k-options="BrandType" ng-model="contractCategory.BrandType" style="width:100%;"></select>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-3 col-md-3">
+                        <div class="form-group">
+                            <label class="control-label" for="distBrandSelect">
+                                Brands
+                            </label>
+                            <select id="distBrandSelect" name="distBrandSelect" kendo-multi-select k-options="distBrandSelectOptions" k- ng-model="contractCategory.selectedBrands"></select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-sm-3 col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">
+                                Item<span style="color:red" ng-show="createContractForm.brdItems.$invalid">
+                                    <span ng-show="createContractForm.brdItems.$error.required">*</span>
+                                </span>
+                            </label>
+                            <select id="brdItems" name="brdItems" kendo-multi-select k-options="brdItems" ng-model="contractCategory.brdItems" style="width:100%;" required></select>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-3 col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">
+                                Amt Type
+                            </label>
+                            <select name="amountType" id="amountType" ng-model="contractCategory.amountType" multiple="multiple" class="multiselect-drop">
+                                <option value="MONEY">Money</option>
+                                <option value="PRODUCT">Product</option>
+                                @*<option value="SCHEME_ITEM">Scheme Item</option>*@
+                            </select>
+                            <select name="contractType" id="contractType" ng-model="contractCategory.contractType" multiple="multiple" class="multiselect-drop" ng-hide="true">
+                                <option value="VISIT">Visit</option>
+                                <option value="NON-VISIT">Not Visit</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-3 col-md-3">
+                        <div class="row">
+                            <div class="col-sm-6 col-md-6">
+                                <div class="form-group">
+                                    <label class="control-label">
+                                        Amount
+                                    </label>
+                                    <input class="form-control" type="number" name="Amount" ng-model="contractCategory.Amount" id="Amount" placeholder="Rs: 00">
+
+                                </div>
+                            </div>
+
+                            <div class="col-sm-6 col-md-6">
+                                <div class="form-group">
+                                    <label class="control-label">
+                                        Payment Date
+                                    </label>
+                                    <input class="form-control" type="text" name="paymentDate" ng-model="contractCategory.paymentDate" id="paymentDate" placeholder="Select Date...">
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6 col-md-3">
+                        <div class="row">
+                            <div class="col-sm-6 col-md-6">
+                                <div class="form-group">
+                                    <label class="control-label">
+                                        Advance Amount
+                                    </label>
+                                    <input class="form-control" type="number" name="advanceAmt" ng-model="contractCategory.advanceAmt" id="advanceAmt" placeholder="Rs.00">
+
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-6">
+                                <div class="form-group">
+                                    <label class="control-label">
+                                        Contractor  Name
+                                    </label>
+                                    <input class="form-control" type="text" name="contractorName" ng-model="contractCategory.contractorName" id="contractorName" placeholder="Name...">
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-sm-6 col-md-3">
+                        <div class="row">
+                            <div class="col-sm-6 col-md-6">
+                                <div class="form-group">
+                                    <label class="control-label">
+                                        Ctr Address
+                                    </label>
+                                    <input class="form-control" type="text" name="ContractorAddress" ng-model="contractCategory.ContractorAddress" id="ContractorAddress" placeholder="Address">
+
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-6">
+                                <div class="form-group">
+                                    <label class="control-label">
+                                        Owner Name
+                                    </label>
+                                    <input class="form-control" type="text" name="ownerName" ng-model="contractCategory.ownerName" id="ownerName" placeholder="Name...">
+
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="col-sm-3 col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">
+                                Owner Company Name
+                            </label>
+                            <input class="form-control" type="text" ng-click="AutoScrolling()" name="ownerCompany" ng-model="contractCategory.ownerCompany" id="ownerCompany" placeholder="Company Name...">
+                        </div>
+                    </div>
+
+                    <div class="col-sm-3 col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">
+                                Address of Owner
+                            </label>
+                            <input class="form-control" type="text" name="ownerAddress" ng-model="contractCategory.ownerAddress" id="ownerAddress" placeholder="Address...">
+                        </div>
+                    </div>
+
+                    <div class=" col-sm-3 col-md-3">
+                        <div class="form-group">
+                            <label class="control-label" for="Email">
+                                Email <span style="color:red" ng-show="createContractForm.Email.$invalid">
+                                    <span ng-show="createContractForm.Email.$error.email">*</span>
+                                </span>
+                            </label>
+                            <input id="Email" type="email" name="Email" ng-model="contractCategory.email" class="form-control  ng-pristine ng-empty ng-invalid ng-invalid-required ng-touched" placeholder="Yourname@yahoo.com" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-sm-6 col-md-3">
+                        <div class="row">
+                            <div class="col-sm-6 col-md-6">
+                                <div class="form-group">
+                                    <label class="control-label"> Contact No.<span style="color:red" ng-show="createContractForm.mobile_number.$error.pattern">*</span></label>
+                                    <input type="number" class="form-control" ng-model="contractCategory.contact" name="mobile_number" placeholder="Contact no..." ng-pattern="/^[7-9][0-9]{9}$/">
+                                </div>
+                            </div>
+
+                            <div class="col-sm-6 col-md-6">
+                                <div class="form-group">
+                                    <label class="control-label">
+                                        Designation
+                                    </label>
+                                    <input class="form-control" type="text" name="designation" ng-model="contractCategory.designation" id="designation" placeholder="Designation">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-3 col-md-3">
+                        <div class="row">
+                            <div class="col-sm-6 col-md-6">
+                                <div class="form-group">
+                                    <label class="control-label">
+                                        Pan No
+                                    </label>
+                                    <input class="form-control" type="text" name="panNo" ng-model="contractCategory.panNo" id="panNo" placeholder="Pan No...">
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-6">
+                                <div class="form-group">
+                                    <label class="control-label">
+                                        Vat No
+                                    </label>
+                                    <input class="form-control" type="text" name="vatNo" ng-model="contractCategory.vatNo" id="vatNo" placeholder="Vat No...">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-3 col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">
+                                Qst Type
+                            </label>
+                            <select id="QstType" name="QstType" kendo-multi-select k-options="QstType" slim-scroll ng-model="contractCategory.QstType" style="width:100%;"></select>
+
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6 col-md-6">
+                        <div class="form-group">
+                            <label class="control-label">
+                                Discription
+                            </label>
+                            <textarea id="Discription" rows="2" class="form-control" cols="50" placeholder="Write Something..." ng-model="contractCategory.Discription"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th class="col-md-1">S.N.</th>
+                                    <th class="col-md-5">Items</th>
+                                    <th class="col-md-5">Quantity</th>
+                                    <th class="col-md-1">
+                                        <button class="btn btn-green btn-xs" ng-click="AddProductItem()"><i class="fa fa-plus"></i> Add</button>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="item in contractCategory.PRODUCT_ITEMS">
+                                    <td>{{$index+1}}.</td>
+                                    <td>
+                                        <select id="productItem_{{$index}}" name="Item"
+                                                kendo-multi-select k-options="ProductItems"
+                                                slim-scroll k-ng-model="item.ITEM_CODE"
+                                                k-on-select="ItemChange(kendoEvent,$index)"
+                                                style="width:100%;"></select>
+                                    </td>
+                                    <td>
+                                        <input type="number" ng-model="item.QUANTITY" class="form-control" placeholder="Enter Qty..." />
+                                    </td>
+                                    <td class="add_btn">
+                                        <button class="btn btn-xs btn-danger" ng-click="RemoveProductItem($index)"><i class="fa fa-trash delete_icon"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    <div class="">
+        <div id="contractCategorySetup">
+            <kendo-grid options="gridOther" id="grid"></kendo-grid>
+        </div>
+    </div>
+
+</div>
+<script>
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+</script>
+<script>
+
+    $('.tblresponsive').slimScroll({
+        height: '150px',
+    });
+    $(function () {
+        $("#startDatePicker, #endDatePicker, #paymentDate").datepicker({
+            changeMonth: true,
+            changeYear: true,
+        });
+
+    });
+    $('.slimScroll').slimScroll({
+        'height': '255px',
+        'scroll': 'scroll',
+        position: 'right',
+    });
+    setTimeout(function () {
+        $('.k-grid-content').slimScroll({
+            'height': '370px',
+            'scroll': 'scroll',
+        });
+    }, 500)
+</script>
+<script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js?V2")"></script>
+
+<script>
+
+    $('#uploadExcel').click(function () {
+        if (window.FormData !== undefined) {
+            //showloader();
+            var file_data = $("#avatar").prop("files")[0];   // Getting the properties of file from file field
+            if (!file_data) {
+                displayPopupNotification("Please select a file", "error");
+                setTimeout(function () {
+                    $("#avatar").trigger("click");
+                }, 500);
+                return;
+            }
+            var format = file_data.name.substr(file_data.name.lastIndexOf('.'), file_data.name.length)
+            if (![".xls", ".xlsx"].includes(format)) {
+                displayPopupNotification("Invalid file format", "error");
+                return;
+            }
+            var form_data = new FormData();                  // Creating object of FormData class
+            form_data.append("file", file_data);            
+
+            $.ajax({
+                url: '/Branding/ImportBrdActivity',
+                type: "POST",
+                contentType: false,
+                processData: false,
+                data: form_data,
+                success: function (result) {
+                    displayPopupNotification(result.MESSAGE, result.TYPE);
+                    if (result.TYPE == "success") {
+                        $('#avatar').val("");
+                        $('#treelist').data("kendoTreeList").dataSource.read();
+                    }
+                },
+                error: function (err) {
+                    displayPopupNotification(err.statusText, "error");
+                }
+            });
+        } else {
+            alert("FormData is not supported.");
+        }
+    });
+
+</script>

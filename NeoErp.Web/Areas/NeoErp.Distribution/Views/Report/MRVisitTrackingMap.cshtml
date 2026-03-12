@@ -1,0 +1,732 @@
+﻿
+@using NeoErp.Core.Models;
+@using NeoErp.Core;EmployeeFilter
+@using NeoErp.Core.Infrastructure;
+@using NeoErp.Core.Models.CustomModels
+@{
+    Layout = null;
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+<style>
+    #map-canvas {
+        height: 100%;
+        width: 100%;
+        background: #fff;
+    }
+
+    #map-panel {
+        width: 100%;
+        height: 450px;
+        margin: 0 auto;
+        border: solid;
+        padding: 10px;
+    }
+
+    .small-box {
+        border: 1px solid;
+        padding: 0px 6px;
+        margin-right: 3px;
+    }
+
+    .k-widget.k-multiselect.k-header {
+        position: absolute;
+        top: 55px;
+        left: 25%;
+        margin: auto 0;
+        width: 45%;
+        z-index: 1;
+    }
+
+    #dateFilterPanel {
+        position: absolute;
+        top: 122px;
+        left: 4%;
+        margin: auto 0;
+        width: 18%;
+        z-index: 1;
+    }
+
+    .ui-datepicker-trigger {
+        height: 21px;
+    }
+
+    #dateFilter {
+        height: 21px;
+        padding-top: 5px;
+        font-size: 11px !important;
+        width: 70px;
+        text-align: center;
+    }
+
+    #mapSymbols {
+        position: absolute;
+        top: 55px;
+        right: 4%;
+        z-index: 1;
+    }
+
+        #mapSymbols ul {
+            list-style: none;
+            padding-left: 0px;
+        }
+
+            #mapSymbols ul li {
+                margin: 4px;
+                color: #000;
+            }
+
+    .indicators-box {
+        background-color: rgba(255, 255, 255, 0.6);
+    }
+
+    .ajax-busy {
+        position: absolute;
+        top: 11px;
+        right: 78px;
+        z-index: 999999;
+    }
+</style>
+
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb"></ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+                <div class="actions">
+                    <div class="ajax-busy">
+                        <div class="">
+                            <i class="fa fa-refresh fa-spin fa-2x fa-fw ajax-loading text-success" aria-hidden="true" style="display:none"></i>
+                        </div>
+                    </div>
+
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DatePicker.cshtml", new DatePickerModel() { IsPopUp = true })
+                    </div>
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                        <i class="icon-control-play"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div class="row">
+                            <div class="col-md-12 col-sm-12">
+                                <span class="small-box progress-bar-info"></span> Target: <span id="target">0</span>
+                                <span class="small-box" style="background-color:#00e64d"></span> Visited: <span id="visited">0</span>
+                                <span class="small-box" style="background-color:#ff9900"></span> Not Visited: <span id="notVisited">0</span>
+                                <span class="small-box progress-bar-danger"></span> Effective Call: <span id="effectiveCall">0</span>
+                                <span class="small-box" style="background-color:#00BFFF"></span> Outlet Added: <span id="outletAdded">0</span>
+                                <span class="small-box" style="background-color:#ff00bf"></span> PJP Productive: <span id="pjpQuantity">0</span>
+                                <span class="small-box" style="background-color:#8000ff"></span> NPJP Productive: <span id="npjpQuantity">0</span>
+                                <span class="small-box" style="background-color:#ea95f0"></span> PJP Amt: <span id="pjpAmount">0</span>
+                                <span class="small-box" style="background-color:#00BFFF"></span> NPJP Amt: <span id="npjpAmount">0</span>
+
+                            </div>
+                        </div>
+                        <div class="br"></div>
+                        <div class="row" id="mapSymbols" style="display:none">
+                            <div class="col-md-12 col-sm-12 indicators-box">
+                                <ul>
+                                    <li><span class="small-box" style="background-color:#00e64d"></span> Visited (<strong id="visitCount">0</strong>)</li>
+                                    <li><span class="small-box" style="background-color:#ff9900"></span> Not Visited (<strong id="notVisitCount">0</strong>)</li>
+                                    <li><span class="small-box" style="background-color:#8e67fd"></span> Extra Visited (<strong id="extraVisitCount">0</strong>)</li>
+                                    <li><span class="small-box " style="background-color:#8E388E"></span>Get Order From PJP (<strong id="getOrderFromVisitCount">0</strong>)</li>
+                                    <li><span class="small-box " style="background-color:#fdf669"></span>Get Order From NPJP (<strong id="getOrderFromExtraVisitCount">0</strong>)</li>
+                                    <li><span class="small-box" style="background-color:#1e733b"></span> Attendance </li>
+                                    <li><span class="small-box" style="background-color:#6991fd"></span> Tracks</li>
+                                    <li><span class="small-box" style="background-color:#aff2b0"></span> Eod </li>
+
+                                </ul>
+                            </div>
+                        </div>
+                        <div id="mrMultiSelect"></div>
+                        <div id="dateFilterPanel" style="display:none;">
+                            <div id="reportvisit-map-mr-detail-report" style="padding:5px; background:#fff;">View Detailed Path</div>
+                            <div id="reportvisit-map-mr-detail-filter-date" style="margin-top:5px;padding:5px; background:#fff;">
+                                <span>Filter By Date </span>
+                                <input id="dateFilter" type="text" placeholder="" readonly />
+                            </div>
+                        </div>
+                        <div id="map-panel">
+                            <div id="map-canvas"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END PAGE CONTENT-->
+    </div>
+</div>
+<script src="@Scripts.Url("~/JS/reportFilter.js")"></script>
+
+<script src="@Scripts.Url("~/JS/DateFilter.js")" type="text/javascript"></script>
+
+<script>
+    var myMap = function () {
+        var markers = [], map, marker;
+        var baseUrl = window.location.protocol + "//" + window.location.host + "/Areas/NeoERP.Distribution";
+        var readUrl = window.location.protocol + "//" + window.location.host + "/api/Distribution/GetMrVistitedPlain";
+        _oldSaved = {};
+        var myLatlng = new google.maps.LatLng(27.70320076199206, 85.31524620117193);
+        var bounds = new google.maps.LatLngBounds();
+        var path = new google.maps.MVCArray();
+        var mapOptions = {
+            zoom: 10,
+            center: myLatlng,
+            mapTypeId: google.maps.MapTypeId.ROADMAP,
+            fullscreenControl: true,
+            fullscreenControlOptions: {
+                position: google.maps.ControlPosition.RIGHT_BOTTOM
+            },
+
+        };
+        var infowindow;
+
+        var timeout;
+
+        function init() {
+            if (google == undefined) {
+                location.reload();
+                return;
+            }
+            $('.ajax-loading').show();
+            map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+            var data = ReportFilter.filterAdditionalData();
+            var date = new Date(data.ReportFilters.FromDate);
+            $('#dateFilter').datepicker('destroy');
+            $('#dateFilter').datepicker({
+                dateFormat: 'dd-mm-yy',
+                // minDate: '-3D',
+                maxDate: 0,
+                //minDate: new Date(date.setDate(date.getDate() - 3)),
+                showOn: "button",
+                showButtonPanel: true,
+                onSelect: function (d, i) {
+                    if (d !== i.lastVal) {
+                        $('.ajax-loading').show();
+                        var readUrl = window.location.protocol + "//" + window.location.host + '/api/Distribution/GetMrVistitedPlainDateWise?date=' + $(this).val() + '&spCode=' + _oldSaved.entitySalectedData.SP_CODE;
+                        getMRData(readUrl, false);
+                    }
+                }
+            });
+            $("#map-panel").css({ "height": window.innerHeight - 150 });
+            $("#dateFilter").val("");
+            window.clearInterval(_oldSaved.interval);
+            clearMarker();
+            if (_oldSaved.polyline != undefined)
+                _oldSaved.polyline.setMap(null);
+            addMarkerParent(_oldSaved.entityAllData);
+            $('#dateFilterPanel').hide();
+            $("#mapSymbols").hide();
+            // Define default readUrl for initial API call
+            timeout = setTimeout(function () {
+                getMRData(readUrl, true);
+            }, 2000);
+
+            getMRData(readUrl, true);
+        }
+        function clearMarker() {
+            // Hide the previous markers
+            if (markers.length) {
+                $.each(markers, function (k, marker) {
+                    marker.setMap(null);
+                });
+                markers = [];
+            }
+        }
+        function addMarkerParent(response) {
+            bounds = new google.maps.LatLngBounds();
+            $.each(response, function (i, entity) {
+                debugger;
+                var position;
+                var eod = isNaN(Date.parse(entity.EOD_DATE)) ? 0 : Date.parse(entity.EOD_DATE);
+                var atn = isNaN(Date.parse(entity.ATN_DATE)) ? 0 : Date.parse(entity.ATN_DATE);
+                var cur = isNaN(Date.parse(entity.CUR_DATE)) ? 0 : Date.parse(entity.CUR_DATE);
+                if (eod >= cur && eod >= atn && eod > 0) {
+                    position = new google.maps.LatLng(entity.EOD_LATITUDE, entity.EOD_LONGITUDE);
+                    entity.Track_type = "EOD";
+                    entity.CUR_POS_DATE = entity.EOD_DATE;
+                }
+                else if (cur >= eod && cur >= atn && cur > 0) {
+                    position = new google.maps.LatLng(entity.CUR_LATITUDE, entity.CUR_LONGITUDE);
+                    entity.Track_type = "TRK";
+                    entity.CUR_POS_DATE = entity.CUR_DATE;
+                }
+                else if (atn >= eod && atn >= cur && atn > 0) {
+                    position = new google.maps.LatLng(entity.ATN_LATITUDE, entity.ATN_LONGITUDE);
+                    entity.Track_type = "ATN";
+                    entity.CUR_POS_DATE = entity.ATN_DATE;
+                }
+                else {
+                    position = new google.maps.LatLng(0, 0);
+                }
+                //for icon
+                var icon = {
+                    url: baseUrl + "/Content/img/thumbtackRed.png",
+                    scaledSize: new google.maps.Size(55, 55), // scaled size
+                    origin: new google.maps.Point(0, 0), // origin
+                    anchor: new google.maps.Point(0, 0), // anchor,
+                    labelOrigin: new google.maps.Point(28, 28)
+                };
+                if (entity.Track_type == "TRK")
+                    var icon = {
+                        url: baseUrl + "/Content/img/thumbtackGreen.png",
+                        scaledSize: new google.maps.Size(55, 55), // scaled size
+                        origin: new google.maps.Point(0, 0), // origin
+                        anchor: new google.maps.Point(0, 0), // anchor,
+                        labelOrigin: new google.maps.Point(28, 28)
+                    };
+                else if (entity.Track_type == "ATN")
+                    var icon = {
+                        url: baseUrl + "/Content/img/thumbtackBlue.png",
+                        scaledSize: new google.maps.Size(55, 55), // scaled size
+                        origin: new google.maps.Point(0, 0), // origin
+                        anchor: new google.maps.Point(0, 0), // anchor,
+                        labelOrigin: new google.maps.Point(28, 28)
+                    };
+
+                var label = "";
+                if (!_.isEmpty(entity.EMPLOYEE_EDESC))
+                    label = entity.EMPLOYEE_EDESC.indexOf("Mr.") > -1 ? entity.EMPLOYEE_EDESC.substring(4, 50).match(/\b(\w)/g).join('') : entity.EMPLOYEE_EDESC.match(/\b(\w)/g).join('');
+
+                //add markers
+                var marker = new google.maps.Marker({
+                    position: position,
+                    map: map,
+                    icon: icon,
+                    animation: google.maps.Animation.DROP,
+                    label: {
+                        text: label,
+                        fontSize: "9px"
+                    }
+                });
+                addMarkerToolTipParent(entity, marker);
+                markers.push(marker);
+
+                // path.push(position);
+                //bounds.extend(position);
+                //map.fitBounds(bounds);
+                map.setCenter(myLatlng);
+                map.setZoom(7);
+                map.panTo(myLatlng);
+            });
+        }
+        function addMarkerDetails(response) {
+            debugger;
+            //add markers
+            $.each(response, function (i, entity) {
+                debugger;
+                entity.LATITUDE = entity.LATITUDE == null ? 0 : entity.LATITUDE;
+                entity.LONGITUDE = entity.LONGITUDE == null ? 0 : entity.LONGITUDE;
+                var position = new google.maps.LatLng(entity.LATITUDE, entity.LONGITUDE);
+                if (entity.TRACK_TYPE == "ATN") {
+                    marker = new google.maps.Marker({
+                        position: position,
+                        map: map,
+                        icon: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=A|' + entity.color,
+                        labelStyle: { opacity: 0.90 }
+                    });
+                }
+                else if (entity.TRACK_TYPE == "EOD") {
+                    marker = new google.maps.Marker({
+                        position: position,
+                        map: map,
+                        icon: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=E|' + entity.color,
+                        labelStyle: { opacity: 0.90 }
+                    });
+                }
+                else if (!entity.ENTITY_CODE) {
+                    marker = new google.maps.Marker({
+                        position: position,
+                        map: map,
+                        icon: 'http://maps.google.com/mapfiles/ms/icons/' + entity.color,
+                        labelStyle: { opacity: 0.90 }
+                    });
+                }
+                else {
+                    marker = new google.maps.Marker({
+                        position: position,
+                        //map: map,
+                        //icon: icon, // Default icon
+                        labelStyle: { opacity: 0.90 }
+                    });
+                }
+
+                addMarkerToolTipDetail(entity, marker)
+                markers.push(marker);
+                if (entity.isPath)
+                    entity.path.push(position);
+                entity.bounds.extend(position);
+                map.fitBounds(entity.bounds);
+                // map.panTo(myLatlng);
+            });
+            var uniqueEnts = _.uniq(response, function (ent) { return ent.ENTITY_CODE; });
+            var markerCount = 1;
+            $.each(uniqueEnts, function (i, entity) {
+                entity.LATITUDE = entity.LATITUDE == null ? 0 : entity.LATITUDE;
+                entity.LONGITUDE = entity.LONGITUDE == null ? 0 : entity.LONGITUDE;
+                var position = new google.maps.LatLng(entity.LATITUDE, entity.LONGITUDE);
+                marker = new google.maps.Marker({
+                    position: position,
+                    map: map,
+                    icon: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=' + (markerCount++).toString() + '|00e64d',
+                    labelStyle: { opacity: 0.90 }
+                });
+            });
+        }
+
+
+        function addMarkerToolTipParent(entity, marker) {
+            //for title
+            var contentString = '<p><b>' + entity.EMPLOYEE_EDESC + '</b>';
+            if (entity.CONTACT_NO && entity.CONTACT_NO.trim())
+                contentString += "<br/>Contact: " + entity.CONTACT_NO.trim();
+            if (entity.REG_OFFICE_ADDRESS && entity.REG_OFFICE_ADDRESS.trim())
+                contentString += "<br/>" + entity.REG_OFFICE_ADDRESS.trim();
+            if (entity.CUR_POS_DATE && entity.CUR_POS_DATE.trim())
+                contentString += "<br/>Last Seen (" + entity.Track_type + "): " + moment(entity.CUR_POS_DATE.trim()).format("DD MMM, YYYY hh:mm a");
+            if (!_.isEmpty(entity.ATN_IMAGE) && entity.Track_type == 'ATN')
+                contentString += "<div class='contain-image-box'> <img src='" + window.location.protocol + "//" + window.location.host + '/Areas/NeoErp.Distribution/Images/AttnImages/' + entity.ATN_IMAGE + "' style='height:150px;width:200px;transform:rotate(-90deg);'></div>";
+
+
+            infowindow = new google.maps.InfoWindow({
+                content: '<p>' + contentString + '</p>'
+            });
+
+            google.maps.event.addListener(marker, 'click', (function (marker, contentString, infowindow) {
+                return function () {
+                    infowindow.setContent('<p>' + contentString + '</p>');
+                    infowindow.open(map, marker);
+                };
+            })(marker, contentString, infowindow));
+        }
+        function addMarkerToolTipDetail(entity, marker) {
+            //for title
+            var contentString = "";
+            var AssignedCondition = entity.status.indexOf("Assigned-NotVisited") !== -1;//entity.status.indexOf("Assigned") !== -1 && entity.status.indexOf("NotAssigned") == -1;
+            if (AssignedCondition)
+                contentString = '<p><b>' + entity.ENTITY_NAME + '</b>';
+            else
+                contentString = '<p><b>' + _oldSaved.entitySalectedData.EMPLOYEE_EDESC + '</b>';
+            if (_oldSaved.entitySalectedData.CONTACT_NO && _oldSaved.entitySalectedData.CONTACT_NO.trim())
+                contentString += "<br/><b><small>Contact: </small></b>" + _oldSaved.entitySalectedData.CONTACT_NO.trim();
+            if (_oldSaved.entitySalectedData.REG_OFFICE_ADDRESS && _oldSaved.entitySalectedData.REG_OFFICE_ADDRESS.trim())
+                contentString += "<br/>" + _oldSaved.entitySalectedData.REG_OFFICE_ADDRESS.trim();
+            if (entity.ACTIVITY_TIME && entity.ACTIVITY_TIME.trim())
+                if (!_.isEmpty(entity.TRACK_TYPE))
+                    contentString += "<br/><b><small>Last Seen (" + entity.TRACK_TYPE + ")" + ": </small></b>" + moment(entity.ACTIVITY_TIME.trim()).format("DD MMM, YYYY hh:mm a");
+                else
+                    contentString += "<br/><b><small>Last Seen: </small></b>" + moment(entity.ACTIVITY_TIME.trim()).format("DD MMM, YYYY hh:mm a");
+            if (entity.LAST_VISIT_STATUS && entity.LAST_VISIT_STATUS == 'Y') {
+                contentString += "<br/><b><small>Last Visit: </small></b>" + entity.LAST_VISIT_DATE.trim();
+            }
+            if (entity.status.indexOf("Assigned-NotVisited") == -1 && !_.isEmpty(entity.ENTITY_NAME))
+                contentString += "<br/><b><small>At: </small></b>" + entity.ENTITY_NAME.trim();
+            var getImageATN = _.filter(_oldSaved.entityAllData, function (x) { return x.SP_CODE == entity.SP_CODE })
+            if (getImageATN.length > 0 && !_.isEmpty(getImageATN[0].ATN_IMAGE) && entity.TRACK_TYPE == 'ATN')
+                contentString += "<div class='contain-image-box'> <img src='" + window.location.protocol + "//" + window.location.host + '/Areas/NeoErp.Distribution/Images/AttnImages/' + getImageATN[0].ATN_IMAGE + "' style='height:150px;width:200px;transform:rotate(-90deg);'></div>";
+
+
+            infowindow = new google.maps.InfoWindow({
+                content: '<p>' + contentString + '</p>'
+            });
+
+            google.maps.event.addListener(marker, 'click', (function (marker, contentString, infowindow) {
+                return function () {
+                    infowindow.setContent('<p>' + contentString + '</p>');
+                    infowindow.open(map, marker);
+                };
+            })(marker, contentString, infowindow));
+        }
+
+        function drawRoutePolyline() {
+            if (_oldSaved.polyline != undefined)
+                _oldSaved.polyline.setMap(null);
+            _oldSaved.polyline = new google.maps.Polyline({
+                map: map,
+                path: path,
+                strokeWeight: 3,
+                strokeColor: '#F75850',
+                strokeOpacity: 1,
+                zIndex: 10,
+                icons: [{
+                    icon: {
+                        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                        scale: 4,
+                        strokeColor: '#393',
+                        offset: '100%',
+                    }
+                }],
+                isVisible: true
+            });
+            var count = 0;
+            window.clearInterval(_oldSaved.interval);
+            _oldSaved.interval = window.setInterval(function () {
+                count = (count + 1) % 200;
+                var icons = _oldSaved.polyline.get('icons');
+                icons[0].offset = (count / 2) + '%';
+                _oldSaved.polyline.set('icons', icons);
+            }, 200);
+        }
+        function initDropdown(responseData) {
+            try {
+                $('#mrMultiSelect').data('kendoMultiSelect').destroy();
+                $('#mrMultiSelect').unwrap('.k-multiselect').show().empty();
+                $(".k-multiselect-wrap").remove();
+            }
+            catch (exception) { }
+            $("#mrMultiSelect").kendoMultiSelect({
+                dataTextField: "EMPLOYEE_EDESC",
+                dataValueField: "SP_CODE",
+                height: 600,
+                //valuePrimitive: true,
+                maxSelectedItems: 1,
+                headerTemplate: '<div class="col-md-offset-3"><strong>...Select Sales Person..</strong></div>',
+                placeholder: "Choose Sales Person...",
+                autoClose: true,
+                filter: "contains",
+                dataBound: function (e) {
+                    // var current = this.value();
+                    // this._savedOld = current.slice(0);
+                    $("#" + e.sender.element[0].id + "_listbox").slimScroll({ 'height': '179px', 'scroll': 'scroll' });
+                },
+                dataSource: {
+                    data: _(responseData).sortBy(function (x) { return x.EMPLOYEE_EDESC; }),
+                },
+                change: mrMultiSelectChange
+            });
+        }
+        function mrMultiSelectChange(evt) {
+            debugger;
+            var SP_CODE = evt.sender.value()[0];
+            if (SP_CODE != undefined) {
+                var itemData = evt.sender.dataItem();
+                _oldSaved.entitySalectedData = itemData;
+                //update box value
+                $("#target").text(itemData.TARGET);
+                $("#visited").text(itemData.VISITED);
+                $("#notVisited").text(itemData.NOT_VISITED);
+                $("#effectiveCall").text(itemData.PERCENT_EFFECTIVE_CALLS.toFixed(2) + " %");
+                $("#pjpQuantity").text(kendo.toString(itemData.PJP_PRODUCTIVE, "n0"));
+                $("#npjpQuantity").text(kendo.toString(itemData.PJP_NON_PRODUCTIVE, "n0"));
+                $("#pjpAmount").text(kendo.toString(itemData.PJP_TOTAL_AMOUNT, "n"));
+                $("#npjpAmount").text(kendo.toString(itemData.NPJP_TOTAL_AMOUNT, "n"));
+
+
+                //enable date filter
+                if ($('#dateFilterPanel').is(":visible") && $("#dateFilter").val() != "") {
+                    var readUrl = window.location.protocol + "//" + window.location.host + '/api/Distribution/GetMrVistitedPlainDateWise?date=' + $("#dateFilter").val() + '&spCode=' + _oldSaved.entitySalectedData.SP_CODE;
+                    getMRData(readUrl, false);
+                }
+                else {
+                    clearMarker();
+                    addMarkerParent(_.filter(_oldSaved.entityAllData, function (x) {
+                        return x.SP_CODE == SP_CODE;
+                    }));
+                    //update map position
+                    var position = new google.maps.LatLng(itemData.CUR_LATITUDE, itemData.CUR_LONGITUDE);
+                    map.setCenter(position);
+                    map.setZoom(12);
+                }
+                $('#dateFilterPanel').show();
+
+            }
+            else {
+                //update box value
+                updateBoxValue(_oldSaved.entityAllData)
+
+
+                $("#dateFilter").val("");
+                window.clearInterval(_oldSaved.interval);
+                clearMarker();
+                if (_oldSaved.polyline != undefined)
+                    _oldSaved.polyline.setMap(null);
+                addMarkerParent(_oldSaved.entityAllData);
+                $('#dateFilterPanel').hide();
+                $("#mapSymbols").hide();
+            }
+
+        }
+        function updateBoxValue(entity) {
+            //update box value
+            $("#target").text(_.sum(entity, "TARGET"));
+            $("#visited").text(_.sum(entity, "VISITED"));
+            $("#notVisited").text(_.sum(entity, "NOT_VISITED"));
+            $("#effectiveCall").text(_.avg(entity, "PERCENT_EFFECTIVE_CALLS").toFixed(2) + " %");
+            $("#pjpQuantity").text(kendo.toString(_.sum(entity, "PJP_PRODUCTIVE"), "n0"));
+            $("#npjpQuantity").text(kendo.toString(_.sum(entity, "PJP_NON_PRODUCTIVE"), "n0"));
+            $("#pjpAmount").text(kendo.toString(_.sum(entity, "PJP_TOTAL_AMOUNT"), "n"));
+            $("#npjpAmount").text(kendo.toString(_.sum(entity, "NPJP_TOTAL_AMOUNT"), "n"));
+            $("#outletAdded").text(_.sum(entity, "OUTLET_ADDED"));
+        }
+        function getMRData(readUrl, parent) {
+            var data = ReportFilter.filterAdditionalData();
+            data.ReportFilters.FromDate = moment($("#datePickerAd").val()).format('DD-MMM-YYYY');
+            data.ReportFilters.ToDate = moment($("#datePickerAd").val()).format('DD-MMM-YYYY');
+            $.ajax({
+                url: readUrl,
+                data: JSON.stringify(data),
+                dataType: 'json',
+                contentType: 'application/json; charset=UTF-8',
+                type: 'POST',
+                complete: function (response, status) {
+                    response = response.responseJSON;
+                    //debugger;
+                    if ("undefined" != typeof response && "object" == typeof response) {
+                        //first clear all marker
+                        clearMarker();
+
+                        if (parent) {
+                            window.clearInterval(timeout);
+                            _oldSaved.entityAllData = response;
+                            ////update box value
+                            updateBoxValue(_oldSaved.entityAllData);
+                            addMarkerParent(response);
+                            initDropdown(response);
+                        }
+                        else {
+                            //update box value
+                            updateBoxValue(response.VisitEffectiveCalls);
+                            ArrangeVisitDetailData(response);
+                            drawRoutePolyline();
+
+                        }
+                    }
+                    $('.ajax-loading').hide();
+                }
+            });
+        }
+
+
+        function ArrangeVisitDetailData(data) {
+            path = new google.maps.MVCArray();
+            bounds = new google.maps.LatLngBounds();
+            var newDetailData = [];
+            //get entity code of assign and visited route list
+            var entityCodeListVisited = _.uniq(_.compact(_.pluck(data.VisitActivityList, "ENTITY_CODE")));
+            var entityCodeListAssigned = _.uniq(_.compact(_.pluck(data.AssignRouteList, "ENTITY_CODE")));
+            //1) Get Assigned Visited And Visited With order List
+            var matchedRoute = _.filter(data.VisitActivityList, function (x) {
+                return _.contains(entityCodeListAssigned, x.ENTITY_CODE);
+            });
+            if (matchedRoute.length > 0) {
+                _.each(matchedRoute, function (x) {
+                    var getOrder = _.filter(data.AssignRouteList, function (j) { return j.ENTITY_CODE == x.ENTITY_CODE; })[0].GET_ORDER;
+                    x.path = path;
+                    x.bounds = bounds;
+                    x.color = (getOrder != undefined && getOrder == 'Y') ? 'purple-dot.png' : 'green-dot.png';
+                    x.isPath = true;
+                    x.status = (getOrder != undefined && getOrder == 'Y') ? 'Assigned-Visited-Ordered' : 'Assigned-Visited';
+                    newDetailData.push(x);
+                });
+
+            }
+
+            //2) Get Assigned But not Visited
+            var unmatchedAssignRoute = _.filter(data.AssignRouteList, function (x) {
+                return !_.contains(entityCodeListVisited, x.ENTITY_CODE);
+            });
+            if (unmatchedAssignRoute.length > 0) {
+                _.each(unmatchedAssignRoute, function (x) {
+                    x.path = path;
+                    x.bounds = bounds;
+                    x.color = 'orange-dot.png';
+                    x.isPath = false;
+                    x.status = "Assigned-NotVisited"
+                    newDetailData.push(x);
+                });
+            }
+
+            //3) Get Not Assigned But Visited and  Not NotAssigned but Visited with get order
+            var unmatchedVisitRoute = _.filter(data.VisitActivityList, function (x) {
+                return !_.contains(entityCodeListAssigned, x.ENTITY_CODE);
+            });
+            if (unmatchedVisitRoute.length > 0) {
+                _.each(unmatchedVisitRoute, function (x) {
+                    if (x.GET_ORDER == 'Y') {
+                        x.path = path;
+                        x.bounds = bounds;
+                        x.color = 'yellow-dot.png';
+                        x.isPath = true;
+                        x.status = "NotAssigned-Visited-Ordered";
+                        newDetailData.push(x);
+                    }
+                    else if (x.TRACK_TYPE != null && x.TRACK_TYPE == "TRK") {
+                        x.path = path;
+                        x.bounds = bounds;
+                        //x.color = 'blue-dot.png';
+                        x.isPath = true;
+                        x.status = "Track";
+                        newDetailData.push(x);
+                    }
+                    else {
+                        x.path = path;
+                        x.bounds = bounds;
+                        //x.color = 'purple-dot.png';
+                        x.isPath = true;
+                        x.status = "NotAssigned-Visited";
+                        newDetailData.push(x);
+                    }
+                });
+            }
+
+            //update for atn
+            _.each(_.filter(newDetailData, function (a) {
+                return a.TRACK_TYPE == 'ATN';
+            }), function (x) {
+                x.color = "1e733b";
+            });
+            //update for eod
+            _.each(_.filter(newDetailData, function (a) {
+                return a.TRACK_TYPE == 'EOD';
+            }), function (x) {
+                x.color = "aff2b0";
+            });
+
+            //update box value
+            debugger;
+            $("#notVisitCount").text(unmatchedAssignRoute.length);
+            //$("#extraVisitCount").text(_.filter(unmatchedVisitRoute, function (x) { return x.status == "NotAssigned-Visited"; }).length);
+            $("#extraVisitCount").text(_.filter(unmatchedVisitRoute, function (x) { return (x.status == "NotAssigned-Visited" && x.VISITED == "Y"); }).length);
+            //$("#getOrderFromExtraVisitCount").text(_.filter(unmatchedVisitRoute, function (x) { return x.status == "NotAssigned-Visited-Ordered"; }).length);
+            $("#getOrderFromExtraVisitCount").text(_.filter(unmatchedVisitRoute, function (x) { return x.status == "NotAssigned-Visited-Ordered"; }).length);
+            //$("#visitCount").text(_.filter(matchedRoute, function (x) { return x.status == "Assigned-Visited"; }).length);
+            $("#visitCount").text(_.uniq(matchedRoute, function (person) { return person.ENTITY_CODE; }).length);
+            $("#getOrderFromVisitCount").text(_.filter(matchedRoute, function (x) { return x.status == "Assigned-Visited-Ordered"; }).length);
+
+            addMarkerDetails(_(newDetailData).sort(function (a, b) {
+                return new Date(a.ACTIVITY_TIME) - new Date(b.ACTIVITY_TIME);
+            }));
+            $("#mapSymbols").show();
+
+
+
+
+        }
+        return {
+            init: init,
+        }
+    }();
+
+
+    $(document).ready(function () {
+        DatePicker.init();
+        myMap.init();
+
+        $("#applydp,#RunQuery").click(function (evt) {
+            evt.preventDefault();
+            myMap.init();
+        });
+
+    })
+
+</script>
+<script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js")"></script>

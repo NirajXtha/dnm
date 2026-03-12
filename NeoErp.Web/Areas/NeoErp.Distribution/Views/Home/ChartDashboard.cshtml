@@ -1,0 +1,832 @@
+﻿
+@{
+    ViewBag.Title = "ChartDashboard";
+}
+
+
+@{
+    ViewBag.Title = "ChartDashboard";
+}
+
+@using NeoErp.Core.Models;
+@using NeoErp.Core.Domain;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+
+@{
+    ViewBag.Title = "Dashboard";
+    Layout = "~/Areas/NeoERP.Distribution/Views/Shared/_distributionLayout.cshtml";
+    //IWorkContext _workContext = EngineContext.Current.Resolve<IWorkContext>
+    //();
+    //var workingContent = EngineContext.Current.Resolve<IWorkContext>
+    //    ();
+
+}
+
+@{
+    var myAreaName = string.Empty;
+    object areaObj;
+    if (ViewContext.RouteData.Values.TryGetValue("area", out areaObj))
+    {
+        myAreaName = areaObj.ToString();
+    }
+}
+
+<style>
+    a.k-button.k-button-icontext.k-grid-excel {
+        float: right;
+    }
+
+    a.k-button.k-button-icontext.k-grid-pdf {
+        float: right;
+    }
+
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    [data-toggle=buttons] > .btn .radio {
+        display: none;
+    }
+
+    .AmountFigureType {
+        position: absolute;
+        bottom: 103px;
+        right: 32px;
+        font-weight: 600;
+        font-family: sans-serif;
+        font-size: 12px;
+    }
+
+    .DisplayFilterContent {
+        position: absolute;
+        bottom: 105px !important;
+        right: 32px;
+        font-weight: 400;
+        font-family: sans-serif;
+        font-size: 11px;
+    }
+
+    .column {
+        margin-bottom: -68px;
+    }
+
+    /*.portlet.portlet-sortable {
+        min-height: 460px;
+    }*/
+
+    .overlay {
+        position: static !important;
+    }
+
+        .overlay div {
+            /*position: relative;
+    font-size: 34px;
+    margin-top: -17px;
+    top: 50%;*/
+            position: absolute !important;
+            font-size: 28px !important;
+            top: 213px !important;
+            left: 21% !important;
+        }
+
+    .overlay {
+        display: none;
+    }
+
+
+    ul.dropdown-menu.custom {
+        margin-top: 8px !important;
+        border: none;
+        box-shadow: none !important;
+    }
+
+    .dropdown-menu.custom:before {
+        left: 58px !important;
+    }
+
+    .download-btn {
+        margin: 0px !important;
+        padding-top: -2px !important;
+        padding-left: 0px;
+        padding-right: 0px;
+        margin-top: -5px !important;
+        margin-left: 5px !important;
+    }
+
+    .dropdown-menu.custom {
+        left: -27px !important;
+        top: 20px !important;
+    }
+
+    .dropdown > .dropdown-menu:before, .dropdown-toggle > .dropdown-menu:before, .btn-group > .dropdown-menu:before {
+        position: absolute;
+        top: -8px;
+        left: 30px;
+        right: auto;
+        display: inline-block !important;
+        border-right: 8px solid transparent;
+        border-bottom: 8px solid #e0e0e0;
+        border-left: 8px solid transparent;
+        content: '';
+    }
+
+    i.icon-arrow-down {
+        color: #acacac;
+    }
+
+    .btn-group-custom button.btn {
+        padding: 7px 7px !important;
+        float: left;
+    }
+
+    .dropdown-menu.custom {
+        left: -55px !important;
+    }
+
+    a.btnGrid {
+        color: #acacac !important;
+    }
+
+    /*.fav-inputtext {
+        height: 27px;
+    }*/
+
+    .input-group-addon {
+        padding: 0px;
+    }
+
+    /*.fav-color, .fav-icon {
+        margin-left: -30px;
+    }*/
+</style>
+
+
+<link href="@Styles.Url("~/Content/MainTheme/fontawesome-iconpicker-1.0.0/dist/css/fontawesome-iconpicker.css")" rel="stylesheet" />
+<link href="@Styles.Url("~/Areas/"+myAreaName+"/Content/menuiconresponsive.css")" rel="stylesheet" />
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCq9nUajYojq8Oh26iGvdomzsm97C7y2aI&amp;sensor=false&amp;&libraries=places,visualization,geometry"></script>
+@*<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBE0Yegor3f8CZ1ZEEhFAwgI3M0RCh2-T4&amp;sensor=false&amp;&libraries=places,visualization,geometry"></script>*@
+
+<div ng-app="distributionModule">
+
+    <div class="page-sidebar-wrapper">
+        <!-- DOC: Set data-auto-scroll="false" to disable the sidebar from auto scrolling/focusing -->
+        <!-- DOC: Change data-auto-speed="200" to adjust the sub menu slide up/down speed -->
+        @Html.Partial("_distributionMenus")
+    </div>
+    <div class="modal fade" id="favModal" tabindex="-1" role="dialog" aria-labelledby="favModalLabel">
+        <div class="modal-dialog modal-custom">
+            <div class="modal-content">
+                <form id="favform" action="" name="favform">
+                    <div class="modal-header">
+                        <button type="button" class="close right-dismis" data-dismiss="modal" aria-hidden="true"></button>
+                        <h4 class="modal-title" id="favModalLabel"><span class="fa fa-star favouriteone"></span> Add to favourite</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-horizontal">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label class="control-label col-sm-1 col-md-1" for="">Title</label>
+                                        <div class="col-sm-11 col-md-11">
+                                            <input type="text" class="form-control fav-inputtext" name="title" id="favTitle" onkeyup="favTitleChange()" placeholder="Enter Favourite Name to save" required />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <div class="col-md-12 col-sm-12">
+                                            <label class="control-label" for="">Icon</label>
+                                            <div class="">
+                                                <div class="input-group iconpicker-container">
+                                                    <input data-placement="bottomRight" id="favIcon" onchange='$("#favIconClass").removeAttr("class").addClass("fa " + value);' class="fav-inputtext form-control icp icp-auto iconpicker-element iconpicker-input" value="fa-amazon" type="text" required>
+                                                    <span class="input-group-addon"><i id="favIconClass" class="fa fa-amazon"></i></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <div class="col-sm-12 col-md-12">
+                                            <div class="">
+                                                <label class="control-label">Color</label>
+                                                <div class="row">
+                                                    <div class="colorpicker col-xs-8 col-sm-8 col-md-8">
+                                                        <input type="text" class="form-control fav-inputtext" name="favColor" id="favColor" onchange="$('#color').val(value)" placeholder="Color" />
+                                                    </div>
+                                                    <div class="pickerbox col-xs-4 col-sm-4 col-md-4">
+                                                        <input type="color" class="form-control fav-inputtext fav-color" value="#808080" onchange="$('#favColor').val(value)" name="color" id="color" placeholder="Color" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+
+                                    <div class="form-group">
+                                        <div class="col-md-12 col-sm-12">
+                                            <label class="control-label" for="">Where to Save</label>
+                                            <div class="">
+                                                <input id="parentMenu" style="width: 100%;" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <div class="col-md-12 col-sm-12">
+                                            <label class="control-label" for="">Description</label>
+                                            <div class="">
+                                                <input type="text" class="form-control fav-inputtext" name="iconText" id="favDescription" placeholder="Description" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-12">
+
+                                    <div class="form-group">
+                                        <div class="col-md-6 col-sm-6">
+                                            <label class="control-label" for="">Hide Filter Option</label>
+                                            <div class="">
+                                                <input type="checkbox" name="Hidefilter" value="Hide" id="facHideOption" checked>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button type="submit" id="favSave" class="btn btn-green" onclick="saveFavouriteMenu()">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="page-content-wrapper" id="operationContent">
+        @if (ViewContext.RouteData.Values["id"] != null)
+        {
+
+            @Html.Partial("~/Areas/NeoErp.Distribution/Views/Dashboard/_dashboardCharts.cshtml")
+        }
+        else
+        {
+
+            @Html.Partial("~/Areas/NeoErp.Distribution/Views/Dashboard/_dashboardMenu.cshtml")
+        }
+
+        @*@Html.Partial("Dashboard/_dashboardCharts")*@
+    </div>
+    <input type="hidden" id="pagenumberHidden" value="0" />
+
+</div>
+@section Scripts{
+    <script src="@Scripts.Url("~/Sales/Scripts/knockout-2.2.0.js")"></script>
+    <script src="@Scripts.Url("~/Content/MainTheme/Protle.dragger.js")" type="text/javascript"></script>
+    <script src="@Scripts.Url("~/Content/Gridster/gridstack.js")"></script>
+    @*<script src='@Scripts.Url("~/Areas/"+myAreaName+"/Scripts/sammy-admin-sales.js?v=982035")'></script>*@
+    <script src="@Scripts.Url("~/Content/Kendo/jszip.min.js")"></script>
+    <script src="@Scripts.Url("~/JS/kendoHelpers.js")"></script>
+    <script src="@Scripts.Url("~/JS/reportFilter.js?v12")"></script>
+
+    @*
+        <script src="@Url.Content(" ~/JS/DashboardChartFilter/reportFilter.js")"></script>*@
+    <script src="@Scripts.Url("~/Content/jquery.singleclick.js")"></script>
+    <script src="@Scripts.Url("~/Areas/"+myAreaName+"/js/KendoChart.js")"></script>
+    <script src="@Scripts.Url("~/Areas/"+myAreaName+"/js/KendoBranchChart.js")"></script>
+
+
+    <script src="~/JS/DashboardChartFilter/ChartFilter.js"></script>
+
+    <script src="@Styles.Url("~/Content/MainTheme/fontawesome-iconpicker-1.0.0/dist/js/fontawesome-iconpicker.js")"></script>
+
+
+    <script>
+          var baseUrl = window.location.protocol + "//" + window.location.host + "/Areas/" + "@myAreaName/Content/img";
+    var baseUrl1 = window.location.protocol + "//" + window.location.host + "/Areas/" + "@myAreaName/";
+    $.getScript(baseUrl1 + "js/google-loader.js");
+    $.getScript(baseUrl1 + "js/google-jsapi.js");
+    </script>
+    <!-- angular scripts for Distribution-->
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/module/distributionModule.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Service/DistributorService.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Service/DistSetupService.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Service/ResellerService.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Service/QuestionService.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Service/OpeningStockService.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Service/BrandingService.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/DistributorCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/RouteCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/RouteCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/ResellerCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/FarmCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/DealerCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/AreaCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/QuestionCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/CollectionCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/AreaCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/OutletCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/ImageCategoryCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/OtherEntitySetupCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/CompItemCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/CompItemMapCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/Scheme.js")"></script>
+
+    @*<script src="@Scripts.Url("~/JS/reportFilter.js")"></script>*@
+    <script src="@Scripts.Url("~/JS/DashboardChartFilter/reportFilter.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/DashboardCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/GroupCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/PerformanceCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/sumOutletCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/OutletSummaryCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/TopEffectiveCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/LessEffectiveCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/MasterDateFilter.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/SalesPersonCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/ItemCumulativeCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/UserSetupTreeCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/ClosingStockCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/OpeningStockCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/VisitImageGallery.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/Controller/NotificationCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/Controller/BrandingJs/BrandingActivityCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/Controller/BrandingJs/ContractCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/Controller/BrandingJs/ContractSummaryCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/Controller/BrandingJs/SchemeReportCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Content/MainTheme/Protle.dragger.js")"></script>
+
+
+
+
+    <script src='@Scripts.Url("~/Areas/NeoERP.Distribution/js/markerclusterer.js")'></script>
+    <script src='@Scripts.Url("~/Areas/NeoERP.Distribution/js/marker.label.min.js")'></script>
+    <script src="@Styles.Url("~/Content/MainTheme/fontawesome-iconpicker-1.0.0/dist/js/fontawesome-iconpicker.js")"></script>
+    <script src="@Scripts.Url("~/Scripts/knockout-2.2.0.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/DistQueryBuilder.js?V4")"></script>
+    <script src="@Styles.Url("~/Content/MainTheme/fontawesome-iconpicker-1.0.0/dist/js/fontawesome-iconpicker.js")"></script>
+    <script src="@Scripts.Url("~/Content/MainTheme/assets/global/plugins/jquery-minicolors/jquery.minicolors.min.js")"></script>
+
+    <script src="@Scripts.Url("~/Content/MainTheme/assets/global/plugins/bootstrap-daterangepicker/moment.min.js")"></script>
+    <script src="@Scripts.Url("~/Content/MainTheme/assets/global/plugins/bootstrap-wizard/jquery.bootstrap.wizard.min.js")"></script>
+    <script src='@Scripts.Url("~/Scripts/form-wizard.min.js")'></script>
+
+
+    <script src="@Scripts.Url("~/Content/MainTheme/assets/global/plugins/jquery-easypiechart/jquery.easypiechart.min.js")"></script>
+
+
+
+    <script>
+            var amountFigureType = "";
+            var branchCodes = '';
+            var companyCodes = '';
+            var checkboxItem = '';
+            var moduleCode = '10';
+            var isFirstLoad = {
+                fav: false,
+                favCount:0,
+                favGroup: false,
+                favGroupCount:0
+            };
+            var loadCount = 0;
+
+            //document.ParentData;
+            //document.globalFavourite;
+
+            //console.log(document.ParentData);
+            //console.log(document.globalFavourite);
+            //$(document).ready(function () {
+            //    PortletDraggable.init("Sales");
+            //    ReportFilter.init();
+            //    consolidate.init();
+
+            //    $.ajax({
+            //        type: 'POST',
+            //        url: '@*@Url.Content("~/sales/SalesHome/DashBoardWidgets")*@',
+            //        success: function (data) {
+            //            $('#dashboardWidget').html(data);
+            //        }
+            //    });
+
+            //    $("#amount-roundUp-range").val("0");
+            //    var slider = $("#amount-roundUp-range").data("ionRangeSlider");
+            //    slider.update({
+            //        from: 0,
+            //        disable: true,
+            //    });
+            //    $('[data-toggle="tooltip"]').tooltip({ html: true });
+            //});
+    </script>
+
+    <script>
+        $(document.body).on('click', '.export-pdf', function () {
+            var chartid = $(this).data("id");
+            var chart = $("#" + chartid).getKendoChart();
+            var filename = $(this).closest(".portlet-title").find(".custom-modal").html();
+            chart.exportPDF({ paperSize: "auto", margin: { left: "1cm", top: "1cm", right: "1cm", bottom: "1cm" } }).done(function (data) {
+                kendo.saveAs({
+
+                    dataURI: data,
+                    fileName: filename + ".pdf",
+                    proxyURL: "//demos.telerik.com/kendo-ui/service/export"
+                });
+            });
+        });
+
+        $(document.body).on('click', '.export-img', function () {
+            var chartid = $(this).data("id");
+            var chart = $("#" + chartid).getKendoChart();
+            var filename = $(this).closest(".portlet-title").find(".custom-modal").html();
+            chart.exportImage().done(function (data) {
+                kendo.saveAs({
+                    dataURI: data,
+                    fileName: filename + ".png",
+                    proxyURL: "//demos.telerik.com/kendo-ui/service/export",
+
+                });
+            });
+        });
+
+        $(document.body).on('click', '.export-svg', function () {
+            var chartid = $(this).data("id");
+            var chart = $("#" + chartid).getKendoChart();
+            var filename = $(this).closest(".portlet-title").find(".custom-modal").html();
+            chart.exportSVG().done(function (data) {
+                kendo.saveAs({
+                    dataURI: data,
+                    fileName: filename + ".svg",
+                    proxyURL: "//demos.telerik.com/kendo-ui/service/export"
+                });
+            });
+        });
+        $('.modal').on('shown.bs.modal', function () {
+            $('.modal-backdrop').css('zIndex', 10030);
+        })
+
+        function chart_grid_option_change(btnClass, method) {
+            $this = $("." + btnClass);
+            $this.data("type", "Chart");
+            if (jQuery.isFunction(method))
+                method();
+            else
+                window[method]();
+            $this.find('i').removeClass('icon-bar-chart');
+            $this.attr('data-original-title', 'Grid');
+        }
+
+
+
+        $("#applyFilters_ChartDashboard").bind('click', function () {
+            //hide modal if not hide auto
+            $('#reportFilterShow__ChartDashboard').closest('.modal').modal('hide')
+            //update amount figure
+            if (ReportFilter.filterAdditionalData().ReportFilters.AmountFigureFilter != "Actual")
+                amountFigureType = "IN " + ReportFilter.filterAdditionalData().ReportFilters.AmountFigureFilter.toUpperCase();
+            else
+                amountFigureType = "";
+            reportFilter.ReportFilters.AmountFigureFilter = ReportFilter.filterAdditionalData().ReportFilters.AmountFigureFilter;
+
+            //
+            var applyToChartOption = $("input[name=ApplyOnChartOption]:checked").val();
+
+            var kendoData = $("#consolidateTreeView").data("kendoTreeView");
+            var items = getCheckedItems(kendoData);
+            var branchCodeArray = [];
+            if (items.length != 0) {
+                var j = 0;
+                for (var i = 0; i < items.length; i++) {
+                    if (items[i].branch_Code.indexOf('.') != -1) {
+                        branchCodeArray[j] = items[i].branch_Code;
+                        j++;
+                    }
+                }
+            }
+            branchCodes = branchCodeArray.join(',');
+
+            //var companyCode = "01";
+            //$.each(branchCodeArray, function (i, val) {
+            //    if (val.indexOf('.') == -1) {
+            //        companyCode = val;
+            //        return false;
+            //    } else {
+            //        companyCode = val.substring(0, val.indexOf('.'));
+            //        return false;
+            //    }
+            //});
+            //$.post(window.location.protocol + "//" + window.location.host + "/Home/UpdateCompanyCode?companyCode=" + companyCode);
+
+            refreshAllChart();
+        });
+
+
+        function refreshAllChart(urlData) {
+            urlData = (urlData == undefined) ? "?customerCode=&itemCode=&categoryCode=&companyCode=&branchCode=" + branchCodes + "&partyTypeCode=&formCode=" : urlData;
+            var employeeUrlData = ""; accoundUrlData = "";
+            if (urlData != '') {
+                employeeUrlData = urlData + "&employeeCode=";
+                accoundUrlData = urlData + "&accountCode=";
+            }
+            reportFilter = undefined;
+            try { createMonthlySalesCollectionChart(urlData); } catch (e) { }
+            try { kendoCharts.createChart(urlData); } catch (e) { }
+
+            try { loadDataSource(); } catch (e) { }
+
+            //refreshmonthly();
+            try { CreateMonthlyBranchSalesChart(); } catch (e) { }
+
+            //refreshBranch();
+            try { createbranchwiseSalesCollectionChart(''); } catch (e) { }
+
+            //refreshBranchWiseSalesCollectionChart();
+            try { createWeeklyCollectionChart(urlData); } catch (e) { }
+
+            //refreshWeeklyCollectionChart();
+            try { CreateExpensesTrendChart(accoundUrlData); } catch (e) { }
+
+            //RefreshExpensesTrendChart();
+            try { createCategoryChart(urlData); } catch (e) { }
+
+            //refreshCategoryChart();
+            try { createDivisionwiseSalesChart(urlData); } catch (e) { }
+            //refreshDivisionSalesChart();
+            try { CreateEmployeeWiseSalesChart(employeeUrlData); } catch (e) { }
+
+            //RefreshEmployeeWiseSalesChart();
+            try { createbranchwiseSalesTargetChart(); } catch (e) { }
+
+            try { createbranchwiseTargetCollectionChart(); } catch (e) { }
+
+            try { createMonthlyTargetCollectionChart(); } catch (e) { }
+
+            try { createMonthlySalesTargetChart(); } catch (e) { }
+
+        }
+        function FormatLabels(value) {
+            return kendo.format("{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString() + "}", value);
+        }
+
+
+
+
+
+
+        $(function () {
+            $('.k-list.k-reset').slimScroll({
+                //height: '100px',
+                railVisible: true,
+                alwaysVisible: true
+
+            });
+            $('.k-multiselect-wrap.k-floatwrap').slimScroll({
+                opacity: '0.4',
+                railVisible: true,
+            });
+
+
+            //var parameter = $(window.location.pathname.split('/')).last()[0];
+            //if (parameter == "Dashboard") {
+            //    var pageNumber = 1;
+
+            //}
+        });
+
+
+
+    </script>
+
+    <script type="text/javascript">
+
+
+        $("#downloadPDF").on("click", function () {
+
+
+            replaceSVGwithCanvas();
+            //var specialElementHandlers = {
+            //    '#editor': function (element, renderer) {
+            //        return true;
+            //    }
+            //};
+            //var pdf = new jsPDF('p', 'pt', 'a4');
+
+            //$('.bypassPrint').hide();
+            //pdf.addHTML($('.main-view-port')[0], 5, 5, {
+            //    'elementHandlers': specialElementHandlers,
+            //    'pagesplit': true,
+            //}, function (dispose) {
+            //    pdf.save('Dashboard.pdf');
+            //    $('.bypassPrint').show();
+            //});
+
+        });
+
+
+
+
+    </script>
+    <!--Expand collapse script-->
+    <script type="text/javascript">
+        function loadFavouriteMenu() {
+            //load parentMenu
+            $("#parentMenu").kendoDropDownList({
+                index: 0,
+                dataTextField: "MENU_EDESC",
+                dataValueField: "MENU_EDESC",
+                dataSource: {
+                    transport: {
+                        read: {
+                            url: "/api/SalesHome/GetDynamicMenu?ModuleCode=" + moduleCode,
+                        }
+                    },
+                    requestEnd: function (e) {
+                        e.response.unshift({ MENU_EDESC: "Favourite", GROUP_SKU_FLAG: "G", ICON_PATH: "", MENU_NO: "01", MODULE_CODE: "01" });
+
+                    }
+                }
+            });
+            var fav = Arg("fav");
+
+            if (fav != undefined && reportConfig != undefined && fav == reportConfig.reportName) {
+                //reportConfig
+                $("#favTitle").val(reportConfig.reportName);
+                $('#color').val(reportConfig.color);
+                $('#favColor').val(reportConfig.color);
+                try { $("#favIcon").val(reportConfig.icon.replace('fa ', '')); } catch (e) { }
+                $("#favIconClass").removeAttr("class").addClass(reportConfig.icon);
+                $("#favDescription").val(reportConfig.description);
+                $("#favSave").text("Update");
+                $("#parentMenu").data("kendoDropDownList").value(reportConfig.parentMenu);
+            }
+            else {
+                if ($("#favTitle").val().length > 0) {
+                    $("#favform")[0].reset();
+                    $("#favSave").text("Save");
+                    setTimeout(function () { $("#parentMenu").data("kendoDropDownList").select(0); }, 2000)
+                }
+
+
+            }
+
+
+            $('.iconpicker-container').iconpicker();
+
+            //init validator
+            $("#favform").validate({
+                rules: {
+                    favTitle: "required"
+                },
+                messages: {
+                    favTitle: "Please specify your name"
+
+                }
+            });
+            $("#favModal").modal("show");
+        }
+        function saveFavouriteMenu() {
+
+            var valid = $("#favform").valid();
+            if (!valid) {
+                displayPopupNotification("Invalid Field", "warning");
+                return;
+            }
+
+
+            var title = $("#favTitle").val();
+            var param = location.hash.indexOf('?') != -1 ? location.hash.substring(0, location.hash.indexOf('?')) : location.hash;
+
+            SaveReportConfigSetting({
+                gridName: "grid",
+                reportName: title,
+                parentReportName: "",
+                isFavroite: true,
+                virtualPath: param,
+                icon: "fa " + $("#favIcon").val(),
+                color: $("#favColor").val() == "" ? $('#color').val() : $("#favColor").val(),
+                parentMenu: $("#parentMenu").data("kendoDropDownList").value(),
+                description: $("#favDescription").val(),
+                defaultPageSize: $("#defaultPageSize").val() == "" ? 100 : $("#defaultPageSize").val(),
+                itemPerPage: $("#itemsPerPage").val(),
+                moduleCode: "10",
+                HideOption: $("#facHideOption").prop("checked") == true ? "Hide" : "show",
+                dateFormat: $("#dateFormat option:selected").val()
+            });
+        }
+        function favTitleChange() {
+            if (Arg("fav") != undefined && Arg("fav").trim() == $("#favTitle").val().trim())
+                $('#favSave').text('Update');
+            else
+                $('#favSave').text('Save');
+        }
+        function CollapseAll() {
+
+            var elementsA = document.querySelectorAll("#grid a.k-icon.k-minus");
+            if (elementsA.length > 0) {
+
+                for (var i = 0; i < elementsA.length; i++) {
+                    $(elementsA[i]).trigger("click");
+                }
+                return;
+            }
+            var elementsB = document.querySelectorAll("#grid a.k-icon.k-i-collapse");
+            for (var i = 0; i < elementsB.length; i++) {
+                $(elementsB[i]).trigger("click");
+            }
+        }
+        function ExpandAll() {
+            var elementsB = document.querySelectorAll("#grid a.k-icon.k-i-expand");
+            if (elementsB.length > 0) {
+
+                for (var i = 0; i < elementsB.length; i++) {
+                    $(elementsB[i]).trigger("click");
+                }
+                return;
+            }
+            var elementsA = document.querySelectorAll("#grid a.k-icon.k-plus");
+            for (var i = 0; i < elementsA.length; i++) {
+                $(elementsA[i]).trigger("click");
+            }
+        }
+        function GridSearch() {
+            debugger;
+            if ($.trim($('.grid-search').val()) != '') {
+                $('.search input').css('margin-left', '-9px !important')
+            }
+            else {
+                $('.search input').css('margin-left', '0px')
+            }
+
+            var grid = $("#grid").data("kendoGrid");
+            var tempServerFilter = grid.dataSource.options.serverFiltering;
+            grid.dataSource.options.serverFiltering = false;
+            var filter = [];
+            $.each(grid.columns, function (i, v) {
+                if (v.field != undefined) {
+                    var searchText = $.trim($('.grid-search').val());
+                    var model = grid.dataSource.options.schema.model.fields[v.field];
+                    var type = "string";
+                    if (model != undefined)
+                        type = model.type;
+                    if (type === "string")
+                        filter.push({ field: v.field, operator: "contains", value: searchText });
+                    else if (type === "number")
+                        filter.push({ field: v.field, operator: "eq", value: searchText });
+                    else if (type === "date") {
+                        var dateValue = new Date(searchText);
+                        searchText = dateValue == "Invalid Date" ? searchText : dateValue;
+                        filter.push({ field: v.field, operator: "eq", value: searchText });
+                    }
+                }
+
+            });
+            var filter = {
+                logic: "or",
+                filters: filter,
+            }
+
+            grid.dataSource.filter(filter);
+            if ($(".grid-search").val().length == 0)
+                grid.dataSource.filter([]);
+            grid.bind("dataBound", function () {
+                grid.dataSource.options.serverFiltering = tempServerFilter;
+            });
+
+
+        }
+    </script>
+}
+
+

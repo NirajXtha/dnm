@@ -1,0 +1,547 @@
+﻿@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>
+    ();
+    ViewBag.Title = "UserSetupTree";
+    Layout = null;
+}
+
+
+<style>
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+        // width: 183px !important;
+    }
+
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .modal-open {
+        overflow: hidden !important;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+              font-size:11px;
+         }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    a.k-button.k-button-icontext.k-grid-excel {
+        float: right;
+    }
+
+    .Reseller-map-fullscreen {
+        display: none;
+        background-color: #fff;
+        height: 35px;
+        width: 24px;
+        cursor: pointer;
+        background: url() -52px -86px no-repeat;
+        background-image: url('../../Content/map/asset/img/sv5.png');
+        margin-top: 12px;
+        margin-left: 20px;
+    }
+
+    #map-canvas {
+        height: 100%;
+        width: 100%;
+        background: #fff;
+    }
+
+    #Reseller-map-panel {
+        width: 100%;
+        height: 430px;
+        margin: 0 auto;
+        border: solid;
+        padding: 10px;
+    }
+
+    .number {
+        text-align: right;
+    }
+
+    .text {
+        text-align: left;
+    }
+
+    .date {
+        text-align: center;
+    }
+
+    .custom-combobox {
+        position: relative;
+        display: inline-block;
+    }
+
+    .custom-combobox-toggle {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        margin-left: -1px;
+        padding: 0;
+    }
+
+    .custom-combobox-input {
+        margin: 0;
+        padding: 5px 10px;
+        width: 200px;
+    }
+
+    #DistAdd {
+        display: none;
+    }
+
+    .controls {
+        margin-top: 10px;
+        border: 1px solid transparent;
+        border-radius: 2px 0 0 2px;
+        box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        height: 32px;
+        outline: none;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    #mapSearchBox {
+        background-color: #fff;
+        font-family: Roboto;
+        font-size: 15px;
+        font-weight: 300;
+        margin-left: 12px;
+        padding: 0 11px 0 13px;
+        text-overflow: ellipsis;
+        width: 300px;
+    }
+
+        #mapSearchBox:focus {
+            border-color: #4d90fe;
+        }
+
+    /*.k-list-container
+           {
+               max-height:150px !important;
+               overflow-y:auto !important;
+           }*/
+
+
+
+
+    .material-switch > input[type="checkbox"] {
+        display: none;
+    }
+
+    .material-switch > label {
+        cursor: pointer;
+        height: 0px;
+        position: relative;
+        width: 40px;
+    }
+
+        .material-switch > label::before {
+            background: rgb(0, 0, 0);
+            box-shadow: inset 0px 0px 10px rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            content: '';
+            height: 16px;
+            margin-top: -8px;
+            position: absolute;
+            opacity: 0.3;
+            transition: all 0.4s ease-in-out;
+            width: 31px;
+        }
+
+    .material-switch {
+        margin-top: 1px !important;
+    }
+
+        .material-switch > label::after {
+            background: rgb(255, 255, 255);
+            border-radius: 16px;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.3);
+            content: '';
+            height: 19px;
+            left: -4px;
+            margin-top: -8px;
+            position: absolute;
+            top: -1.5px;
+            transition: all 0.3s ease-in-out;
+            width: 19px;
+        }
+
+        .material-switch > input[type="checkbox"]:checked + label::before {
+            background: inherit;
+            opacity: 0.5;
+        }
+
+        .material-switch > input[type="checkbox"]:checked + label::after {
+            background: inherit;
+            left: 12px;
+        }
+
+    /*#UserSetupCreateForm .k-multiselect-wrap li {
+        font-size: 10px !important;
+        margin: 3px 2px 1px 4px !important;
+    }*/
+
+    #UserSetupCreateForm input#AreaName {
+        height: 25px !important;
+        font-size: 11px !important;
+    }
+
+    select#vdcAreaMultiSelect {
+        height: 25px;
+        border: 1px solid #e5e5e5 !important;
+    }
+
+    select#zoneAreaMultiSelect {
+        height: 25px;
+    }
+
+    select#regionAreaMultiSelect {
+        height: 25px;
+    }
+
+    select#distCustomerMultiSelect {
+        height: 25px;
+        border: 1px solid #e5e5e5 !important;
+    }
+
+    #UserSetupCreateForm .k-multiselect-wrap.k-floatwrap {
+        height: auto !important;
+    }
+
+
+    .padding-20 {
+        padding-top: 20px;
+      
+    }
+    .toogle_buttonone {
+        width:20%;
+    }
+    .toogle_buttontwo {
+        width:29%;
+    }
+
+        .toogle_buttonone > .form-group > label.control-label, .toogle_buttontwo .form-group > label.control-label {
+            font-size: 12px;
+        }
+
+    .tree_search {
+        position: absolute;
+        right: 8px;
+        top: 9px;
+        color: #ccc;
+    }
+    .treegroup_search input.form-control {
+        height: 28px !important;
+        margin-top: 4px;
+        margin-left: -3px;
+        font-size: 11px !important;
+        padding: 0px 6px;
+        border:solid #ddd 1px !important;
+    }
+    .treegroup_search 
+    {
+        position: relative;
+        margin-top:2px;
+    }
+
+</style>
+<div ng-app="myApp" class="content">
+    <div ng-controller="UserSetupCtrl">
+        <div class="page-bar">
+            <ul class="page-breadcrumb"></ul>
+            <div class="page-toolbar">
+                <div class="btn-group pull-right">
+
+                    <div class="actions">
+                    
+                        <div class="btn-group">
+                            @Html.Partial("~/Views/Shared/Controls/_SetupConfig.cshtml", "UserSetUpTree")
+                        </div>
+                    </div>
+                </div>
+                <div class="treegroup_search search pull-right">
+                    <input type="text" class="form-control  grid-search" maxlength="64" placeholder="Search..." onkeyup="TreelistSearch()" />
+                    <i class=" fa fa-search tree_search"></i>
+                </div>
+            </div>
+          
+        </div>
+
+        <div id="userSetupTreeCreateModal" class="modal fade" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">                            
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                            <h4 class="modal-title">
+                                <span class="fa fa-user"></span>
+                                {{pageName }}
+                            </h4>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-12 col-sm-12">
+                                    <form id="UserSetupCreateForm" name="UserSetupCreateForm" novalidate>
+                                        <div class="row">
+                                            <div class="col-sm-4 col-md-4">
+                                                <div class="form-group">
+                                                    <label class="control-label">
+                                                        Role <span style="color:red" ng-show="UserSetupCreateForm.RoleMultiSelect.$invalid">
+                                                            <span ng-show="UserSetupCreateForm.RoleMultiSelect.$error.required">*</span>
+                                                        </span>
+                                                    </label>
+                                                    <select id="RoleMultiSelect" name="RoleMultiSelect" kendo-multi-select k-options="RoleMultiSelect" ng-model="userSetupTree.RoleMultiSelect" style="width:100%;" required></select>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-sm-4 col-md-4">
+                                                <div class="form-group">
+                                                    <label class="control-label">
+                                                        {{EmployeeMultiSelectName}} <span style="color:red" ng-show="UserSetupCreateForm.EmployeeMultiSelect.$invalid">
+                                                            <span ng-show="UserSetupCreateForm.EmployeeMultiSelect.$error.required">*</span>
+                                                        </span>
+                                                    </label>
+                                                    <select id="EmployeeMultiSelect" name="EmployeeMultiSelect" kendo-multi-select k-options="EmployeeMultiSelect" ng-model="userSetupTree.EmployeeMultiSelect" style="width:100%;" required></select>
+                                                </div>
+                                            </div>
+
+                                            
+                                            @*<div class="col-sm-4 col-md-4">
+                                                <div class="form-group">
+                                                    <label class="control-label">
+                                                        Employee <span style="color:red" ng-show="UserSetupCreateForm.EmployeeMultiSelect.$invalid">
+                                                            <span ng-show="UserSetupCreateForm.EmployeeMultiSelect.$error.required">*</span>
+                                                        </span>
+                                                    </label>
+                                                    <select id="NancyMultiSelect" name="NancyMultiSelect" kendo-drop-down-list k-options="NancyMultiSelect" ng-model="userSetupTree.EmployeeMultiSelect" style="width:100%;" required></select>
+                                                </div>
+                                            </div>*@
+
+
+                                            <div class="col-md-4 col-sm-4 ">
+                                                <div class="form-group">
+                                                    <label class="">
+                                                        Email <span style="color:red" ng-show="UserSetupCreateForm.EMAIL.$invalid">
+                                                            <span ng-show="UserSetupCreateForm.EMAIL.$error.email">*</span>
+                                                        </span>
+                                                    </label>
+                                                    <input id="EMAIL" type="email" ng-model="userSetupTree.EMAIL" name="EMAIL" class="form-control input-sm" placeholder="EMAIL" />
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-4 col-sm-4">
+                                                <div class="form-group">
+                                                    <label class="control-label">Full Name </label>
+                                                    <input id="FullName" ng-model="userSetupTree.FullName" name="FullName" class="form-control input-sm" placeholder="Full Name" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-sm-4 col-md-4">
+                                                <div class="form-group Custom_District">
+                                                    <label class="control-label">
+                                                        User Name <span style="color:red" ng-show="UserSetupCreateForm.NAME.$invalid">
+                                                            <span ng-show="UserSetupCreateForm.NAME.$error.required">*</span>
+                                                        </span>
+                                                    </label>
+                                                    <input id="UserName" ng-model="userSetupTree.NAME" name="NAME" class="form-control input-sm" placeholder="UserName" required />
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-4 col-md-4">
+                                                <div class="form-group">
+                                                    <label class="control-label">
+                                                        Password<span style="color:red" ng-show="UserSetupCreateForm.Password.$invalid">
+                                                            <span ng-show="UserSetupCreateForm.Password.$error.required">*</span>
+                                                        </span>
+                                                    </label>
+                                                    <input id="Password" type="{{userSetupTree.passwordVisible?'text':'password'}}" ng-model="userSetupTree.Password" name="Password" class="form-control input-sm" placeholder="********" required />
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-4 col-md-4">
+                                                <div class="form-group" style="display:inline-block">
+                                                    <label class="control-label">
+                                                        Show Password
+                                                    </label>
+                                                    <input type="checkbox" class="form-control" ng-model="userSetupTree.passwordVisible" name="showPassword" id="showPassword" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-4 col-sm-4">
+                                                <div class="form-group">
+                                                    <label class="control-label">Contact No. </label>
+                                                    <input id="Contact" ng-model="userSetupTree.CONTACT_NO" name="CONTACT_NO" class="form-control input-sm" placeholder="Contact No." />
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3 col-sm-3 padding-20 toogle_buttonone">
+                                                <div class="form-group">
+                                                    <label class="control-label" for="attendanceCheckbox">Attn</label>
+                                                    <div class="material-switch pull-right">
+                                                        <input id="attendanceCheckbox" name="attendanceCheckbox" ng-model="userSetupTree.attendanceCheckbox" type="checkbox" checked="checked" />
+                                                        <label for="attendanceCheckbox" class="label-success"></label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3 col-sm-3 padding-20 toogle_buttonone">
+                                                <div class="form-group">
+                                                    <label class="control-label" for="mobileCheckbox">Mobile?</label>
+                                                    <div class="material-switch pull-right">
+                                                        <input id="mobileCheckbox" name="mobileCheckbox" ng-model="userSetupTree.mobileCheckbox" type="checkbox" checked="checked" />
+                                                        <label for="mobileCheckbox" class="label-success"></label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3 col-sm-3 padding-20 toogle_buttonone">
+                                                <div class="form-group">
+                                                    <label class="control-label" for="activeCheckbox">Active</label>
+                                                    <div class="material-switch pull-right">
+                                                        <input id="activeCheckbox" name="activeCheckbox" ng-model="userSetupTree.activeCheckbox" type="checkbox" checked="checked" />
+                                                        <label for="activeCheckbox" class="label-success"></label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-sm-4 col-md-4">
+                                                <div class="form-group">
+                                                    <label class="control-label">Area </label>
+                                                    <select id="AreaMultiSelect" name="AreaMultiSelect" kendo-multi-select k-options="AreaMultiSelect" ng-model="userSetupTree.AreaMultiSelect" style="width:100%;"></select>
+                                                    @*<select id="AreaMultiSelect" name="AreaMultiSelect" style="width:100%;"></select>*@
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 col-sm-4 padding-20 toogle_buttontwo">
+                                                <div class="form-group">
+                                                    <label class="control-label" for="brandingCheckbox">Branding User?</label>
+                                                    <div class="material-switch pull-right">
+                                                        <input id="brandingCheckbox" name="brandingCheckbox" ng-model="userSetupTree.brandingCheckbox" type="checkbox" checked="checked" />
+                                                        <label for="brandingCheckbox" class="label-success"></label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 col-sm-4 padding-20 toogle_buttontwo">
+                                                <div class="form-group">
+                                                    <label class="control-label" for="allVisitPlan">Show All Visit Plan?</label>
+                                                    <div class="material-switch pull-right">
+                                                        <input id="allVisitPlan" name="allVisitPlan" ng-model="userSetupTree.allVisitPlan" type="checkbox" checked="checked" />
+                                                        <label for="allVisitPlan" class="label-success"></label>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-4 col-sm-4 padding-20 toogle_buttontwo">
+                                                <div class="form-group">
+                                                    <label class="control-label" for="superCheckbox">Super User?</label>
+                                                    <div class="material-switch pull-right">
+                                                        <input id="superCheckbox" name="superCheckbox" ng-model="userSetupTree.superCheckbox" type="checkbox" checked="checked" />
+                                                        <label for="superCheckbox" class="label-success"></label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 col-sm-4 padding-20 toogle_buttontwo">
+                                                <div class="form-group">
+                                                    <label class="control-label" for="managerCheckbox">Manager User?</label>
+                                                    <div class="material-switch pull-right">
+                                                        <input id="managerCheckbox" name="managerCheckbox" ng-model="userSetupTree.managerCheckbox" type="checkbox" checked="checked" />
+                                                        <label for="managerCheckbox" class="label-success"></label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-sm-4 col-md-4">
+                                                <div class="form-group">
+                                                    <label class="control-label" for="distCustomerSelect">
+                                                        Customer
+                                                    </label>
+                                                    <select id="distCustomerSelect" name="distCustomerSelect" kendo-multi-select k-options="distCustomerSelectOptions" ng-model="userSetupTree.CustomerMultiSelect" ></select>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-4 col-md-4">
+                                                <div class="form-group">
+                                                    <label class="control-label" for="distBrandSelect">
+                                                        Brands
+                                                    </label>
+                                                    <select id="distBrandSelect" name="distBrandSelect" kendo-multi-select k-options="distBrandSelectOptions" ng-model="userSetupTree.BrandMultiSelect" ></select>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-4 col-md-4">
+                                                <div class="form-group">
+                                                    <label class="control-label" for="distItemsSelect">
+                                                        Items
+                                                    </label>
+                                                    <select id="distItemsSelect" name="distItemsSelect" kendo-multi-select k-options="distItemsSelectOptions" ng-model="userSetupTree.ItemCodeMultiSelect" ></select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-green" ng-click="saveUser(UserSetupCreateForm.$valid)">{{saveButtonText}}</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <div class="row collapse in" id="demo">
+            <div class="col-md-12">
+                <div class="portlet light bordered">
+                    <div class="portlet-body form">
+                        <div class="row">
+                            <div id="treelist"></div>
+                            @*@Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")*@
+
+                            <ul id="menu">
+                                <li><span class='k-icon k-add'></span>Add</li>
+                                <li><span class='k-icon k-update'></span>Update</li>                               
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+ 
+<script>
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+</script>
+<script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js?V2")"></script>

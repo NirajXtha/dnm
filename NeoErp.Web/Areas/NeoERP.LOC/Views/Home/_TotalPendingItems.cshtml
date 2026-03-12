@@ -1,0 +1,217 @@
+﻿
+@using NeoErp.Core.Models;
+@{
+    var myAreaName = string.Empty;
+    object areaObj;
+    if (ViewContext.RouteData.Values.TryGetValue("area", out areaObj))
+    {
+        myAreaName = areaObj.ToString();
+    }
+    var actionPageId = "PendingVoucher";
+}
+<style>
+    .slimScrollBar {
+        border-radius: 5px !important;
+        background-color: #333 !important;
+    }
+
+    .slimScrollDiv, #customerMultiSelect {
+        height: auto !important;
+    }
+
+    ul.dropdown-menu.custom {
+        margin-top: 8px !important;
+        border: none;
+        box-shadow: none !important;
+    }
+
+    .dropdown-menu.custom:before {
+        left: 58px !important;
+    }
+
+    .download-btn {
+        margin: 0px !important;
+        padding-top: -2px !important;
+        padding-left: 0px;
+        padding-right: 0px;
+        margin-top: -5px !important;
+        margin-left: 5px !important;
+    }
+
+    .dropdown-menu.custom {
+        left: -27px !important;
+        top: 20px !important;
+    }
+
+    .dropdown > .dropdown-menu:before, .dropdown-toggle > .dropdown-menu:before, .btn-group > .dropdown-menu:before {
+        position: absolute;
+        top: -8px;
+        left: 30px;
+        right: auto;
+        display: inline-block !important;
+        border-right: 8px solid transparent;
+        border-bottom: 8px solid #e0e0e0;
+        border-left: 8px solid transparent;
+        content: '';
+    }
+
+    i.icon-arrow-down {
+        color: #acacac;
+    }
+
+    .btn-group-custom button.btn {
+        padding: 7px 7px !important;
+        float: left;
+    }
+
+    .dropdown-menu.custom {
+        left: -55px !important;
+    }
+</style>
+
+
+<div class="portlet portlet-sortable  light bordered" id="PendingVoucher">
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="icon-bar-chart fontgreen"></i>
+            <span class="caption-subject bold uppercase fontgreen custom-modal">Top 5 Pending Items</span>
+        </div>
+        <div class="tools">
+            <a href="javascript:;" class="collapse">
+            </a>
+            <a href="javascript:;" class="remove">
+            </a>
+        </div>
+    </div>
+    <div class="portlet-body">
+        <div class="k-content wide">
+            <div id="pendingitems"></div>
+
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            BindGrid();
+        });
+        function BindGrid() {
+            var readurl = window.location.protocol + "//" + window.location.host + "/api/ProformaInvoice/PendingItemList";
+            var proformadataSource = new kendo.data.DataSource({
+                type: "json",
+                transport: {
+                    read: {
+                        url: readurl, // <-- Get data from here.
+                        dataType: "json", // <-- The default was "jsonp".
+                        type: "GET",
+
+                    },
+
+                },
+                schema: {
+                    model: {
+                        fields: {
+                           
+                            INVOICE_QUANTITY: { type: "number" },
+                            QUANTITY: { type: "number" },
+                        }
+                    },
+                },
+                error: function (e) {
+                    displayPopupNotification("Sorry error occured while processing data", "error");
+                },
+                serverFiltering: false,
+                serverPaging: false,
+                pageSize: 100,
+            });
+            var grid = $("#pendingitems").kendoGrid({
+                dataSource: proformadataSource,
+                height: 350,
+                sortable: true,
+                reorderable: true,
+                groupable: true,
+                resizable: true,
+                filterable: {
+                    extra: false,
+                    operators: {
+                        number: {
+
+                            eq: "Is equal to",
+                            neq: "Is not equal to",
+                            gte: "is greater than or equal to	",
+                            gt: "is greater than",
+                            lte: "is less than or equal",
+                            lt: "is less than",
+                        },
+                        string: {
+
+                            eq: "Is equal to",
+                            neq: "Is not equal to",
+                            startswith: "Starts with	",
+                            contains: "Contains",
+                            doesnotcontain: "Does not contain",
+                            endswith: "Ends with",
+                        },
+                        date: {
+
+                            eq: "Is equal to",
+                            neq: "Is not equal to",
+                            gte: "Is after or equal to",
+                            gt: "Is after",
+                            lte: "Is before or equal to",
+                            lt: "Is before",
+                        }
+
+                    }
+                },
+                columnMenu: true,
+                //Wordwrapmenu function calling
+                columnMenuInit: function (e) {
+                    wordwrapmenu(e);
+                },
+                pageable: true,
+                //  autoBind: true,
+                scrollable: {
+                    virtual: true
+                },
+
+                columns: [
+                    {
+                        field: "ITEM_EDESC",
+                        title: "Item Name",
+                        width: "220px"
+                    },
+                              {
+                                  field: "MU_CODE",
+                                  title: "MU",
+                                  width: "60px"
+                              },
+                               {
+                                   field: "INVOICE_QUANTITY",
+                                   title: "Recv. Qty.",
+                                   attributes:
+                              {
+                                  style: "text-align:right;"
+                              },
+
+                               },
+                              {
+                                  field: "QUANTITY",
+                                  title: "Tot. Qty.",
+                                  attributes:
+                              {
+                                  style: "text-align:right;"
+                              },
+                              },
+
+
+
+                ]
+
+            });
+        }
+    </script>
+</div>
+
+
+
+

@@ -1,0 +1,441 @@
+@{
+    ViewBag.Title = "Rate Schedule";
+    Layout = null;
+}
+<style>
+
+    .k-splitbar.k-splitbar-horizontal {
+        width: 5px;
+    }
+
+    .k-calendar {
+        width: 210px !important;
+    }
+
+    .k-splitter {
+        height: 490px !important;
+    }
+
+    .portlet-title.mingap {
+        min-height: auto !important;
+    }
+
+    .bottomspance {
+        padding: 2px 15px !important;
+    }
+
+    .portlet-title.mingap {
+        min-height: auto !important;
+    }
+
+    .bottomspance .portlet-body {
+        padding-top: 2px !important;
+    }
+
+    .portlet {
+        margin-top: 0px;
+        margin-bottom: 7px !important;
+    }
+
+
+    .bodyController {
+        margin-top: 4px;
+    }
+
+
+
+    .main .k-widget.k-dropdown.k-header {
+        min-height: 22px !important;
+    }
+
+    .main .k-dropdown-wrap.k-state-default {
+        min-height: 24px !important;
+        font-size: 11px;
+    }
+
+
+
+    .k-splitter .k-scrollable {
+        overflow-y: hidden !important;
+    }
+
+    .k-scrollable .k-widget.k-treeview {
+        max-height: 444px;
+        overflow: auto !important;
+    }
+
+    .k-i-calendar {
+        margin-top: -10px;
+    }
+
+    span.k-icon.k-i-warning {
+        display: none;
+    }
+
+    .calendar-icon-2 {
+        top: 24px !important;
+    }
+
+    .k-widget.k-datepicker {
+        background-color: transparent !important;
+    }
+
+    .k-grid td .k-checkbox-label {
+        display: none !important;
+    }
+
+    #inwardTransactionModal .modal-dialog {
+        width: 95%; 
+        max-width: 1400px;
+    }
+
+    .well-legend {
+        font-size: 14px;
+        font-weight: bold;
+        border-bottom: 0;
+        width: auto;
+        padding: 0 5px;
+        margin-bottom: 0;
+        display: inline-block;
+    }
+
+    fieldset.well {
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 4px;
+        height: 100%;
+    }
+
+    .bordered-radio-group {
+        border: 1px solid lightgray;
+        border-radius: 5px;
+        padding: 5px 10px;
+        display: inline-block;
+    }
+
+    .stage-status-group {
+        padding-top: 15px;
+        padding-bottom: 15px;
+        border-top: 1px solid #ddd;
+        border-bottom: 1px solid #ddd;
+        margin-bottom: 15px;
+    }
+
+        .stage-status-group .form-group {
+            text-align: center;
+        }
+
+        .stage-status-group .checkbox label {
+            font-weight: bold;
+        }
+
+    #ndp-nepali-box {
+        z-index: 99999 !important;
+    }
+
+    .k-grid {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+        .k-grid .k-grid-content {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .k-grid .k-pager-wrap {
+            border-top: 1px solid #ddd;
+            background: #f9f9f9;
+        }
+
+    .rate-grid-container {
+        min-height: 450px;
+        max-height: 600px;
+        overflow: hidden;
+    }
+
+    .tree-container {
+        min-height: 450px;
+        max-height: 600px;
+        overflow-y: auto;
+    }
+    .selector-btn {
+        width: 44px;
+        text-align: center;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+
+</style>
+<div class="row" ng-controller="RateScheduleCtrl">
+    <div class="col-md-12">
+        <div class="portlet light bordered">
+            <div class="portlet-title">
+                <div class="caption font-dark">
+                    <i class="icon-settings font-dark"></i>
+                    <span class="caption-subject bold uppercase">Rate Schedule</span>
+                </div>
+                <div class="actions">
+                    <div class="btn-group">
+                        <button type="button" class="btn green btn-sm" ng-click="saveRateSchedule()">
+                            <i class="fa fa-save"></i> Save
+                        </button>
+                        @*<button type="button" class="btn blue btn-sm" ng-click="refreshData()">
+                            <i class="fa fa-refresh"></i> Refresh
+                        </button>*@
+                    </div>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div class="row" style="margin-bottom: 15px;">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">Effective Date</label>
+                            <div>
+                                <div class="col-xs-6 col-sm-6 col-md-6 nopadding-left pl-1">
+                                    <input kendo-date-picker k-ng-model="rateSchedule.effectiveDate" k-options="monthSelectorOptionsSingle" data-toggle="tooltip"
+                                           class="form-control" id="effectiveEnglishDate" />
+                                </div>
+                                <div class="col-xs-6 col-sm-6 col-md-6 nopadding-left pl-1" style="display: inline-block; vertical-align: top;">
+                                    <input type="text" id="nepaliDate5" class="nepali-calendar form-control"
+                                           data-checkfor="effectiveEnglishDate" onchange="ConvertNepToEng(this)"
+                                           data-toggle="tooltip" title="Select date" style="width: 100%; height: 25px" />
+                                    <i class="fa fa-calendar form-control-feedback calendar-icon-2" data-toggle="tooltip" title="Select date" style="top:5px !important;" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label class="control-label">Currency</label>
+                            <select class="form-control" ng-model="rateSchedule.currencyCode" ng-options="currency.CURRENCY_CODE as currency.CURRENCY_EDESC for currency in currencyList">
+                                <option value="">Select Currency</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label class="control-label">Exchange Rate</label>
+                            <input type="number" class="form-control" ng-model="rateSchedule.exchangeRate" step="0.01" />
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label class="control-label">Area</label>
+                            <select class="form-control" ng-model="rateSchedule.areaCode" ng-options="area.AREA_CODE as area.AREA_EDESC for area in areaList">
+                                <option value="">Select Area</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">Document Type</label>
+                            <select class="form-control" ng-model="rateSchedule.documentCode" ng-options="doc.FORM_CODE as doc.FORM_EDESC for doc in documentList">
+                                <option value="">Select Document</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row" style="margin-bottom: 15px;">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">Party Type</label>
+                            <div style="margin-top: 8px;">
+                                <label class="radio-inline" style="margin-right: 15px;">
+                                    <input type="radio" ng-model="rateSchedule.partyType" value="customer" ng-change="onPartyTypeChange()" /> Customer
+                                </label>
+                                <label class="radio-inline" style="margin-right: 15px;">
+                                    <input type="radio" ng-model="rateSchedule.partyType" value="dealer" ng-change="onPartyTypeChange()" /> Dealer
+                                </label>
+                                <label class="radio-inline">
+                                    <input type="radio" ng-model="rateSchedule.partyType" value="supplier" ng-change="onPartyTypeChange()" /> Supplier
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">
+                                <span ng-if="rateSchedule.partyType === 'customer'">Customer</span>
+                                <span ng-if="rateSchedule.partyType === 'dealer'">Dealer</span>
+                                <span ng-if="rateSchedule.partyType === 'supplier'">Supplier</span>
+                            </label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" ng-model="rateSchedule.partyName" readonly
+                                       placeholder="Select {{rateSchedule.partyType === 'customer' ? 'Customer' : rateSchedule.partyType === 'dealer' ? 'Dealer' : 'Supplier'}}" />
+                                <span class="input-group-btn">
+                                    <button class="btn blue selector-btn" type="button"
+                                            ng-click="rateSchedule.partyType === 'customer' ? openCustomerModal() : rateSchedule.partyType === 'dealer' ? openDealerModal() : openSupplierModal()"
+                                            title="Select {{rateSchedule.partyType === 'customer' ? 'customers' : rateSchedule.partyType === 'dealer' ? 'dealers' : 'suppliers'}}">
+                                        <i class="fa fa-users"></i>
+                                    </button>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">Items</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="Select Items" ng-model="itemsSummary" readonly />
+                                <span class="input-group-btn">
+                                    <button class="btn blue selector-btn" type="button" ng-click="openItemModal()" title="Select items">
+                                        <i class="fa fa-cubes"></i>
+                                    </button>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    @*<div class="col-md-2">
+                        <div class="form-group">
+                            <label class="control-label">Option</label>
+                            <div style="margin-top: 8px;">
+                                <div class="radio">
+                                    <label style="margin-right: 10px;">
+                                        <input type="radio" ng-model="rateSchedule.optionType" value="percentage" /> As per %
+                                    </label>
+                                    <label>
+                                        <input type="radio" ng-model="rateSchedule.optionType" value="value" /> As per Value
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>*@
+                </div>
+
+
+                <!-- Rate Grid -->
+                <div class="row">
+                    <div class="col-sm-4">
+                        <div class="portlet light bordered">
+                            <div class="portlet-title">
+                                <div class="caption">
+                                    <span class="caption-subject" ng-if="rateSchedule.partyType === 'customer'">Selected Customers</span>
+                                    <span class="caption-subject" ng-if="rateSchedule.partyType === 'dealer'">Selected Dealers</span>
+                                    <span class="caption-subject" ng-if="rateSchedule.partyType === 'supplier'">Selected Suppliers</span>
+                                </div>
+                            </div>
+                            <div class="portlet-body" style="padding:10px;">
+                                <div class="form-group" style="margin-bottom:8px;">
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" class="form-control" placeholder="Search selected tree"
+                                               ng-model="selectedTreeSearch" ng-change="applySelectedTreeSearch()" />
+                                        <span class="input-group-btn">
+                                            <button class="btn btn-default" type="button" title="Select all"
+                                                    ng-click="selectAllSelectedTree()">
+                                                <i class="fa fa-check-square-o"></i>
+                                            </button>
+                                            <button class="btn btn-default" type="button" title="Clear all"
+                                                    ng-click="clearAllSelectedTree()">
+                                                <i class="fa fa-square-o"></i>
+                                            </button>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="tree-container">
+                                    <div ng-if="rateSchedule.partyType === 'customer'" id="selectedCustomersTree"></div>
+                                    <div ng-if="rateSchedule.partyType === 'dealer'" id="selectedDealersTree"></div>
+                                    <div ng-if="rateSchedule.partyType === 'supplier'" id="selectedSuppliersTree"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-8">
+                        <div class="portlet light bordered">
+                            <div class="portlet-title">
+                                <div class="caption"><span class="caption-subject">Rates</span></div>
+                            </div>
+                            <div class="portlet-body" style="padding:10px;">
+                                <div class="form-group" style="margin-bottom:8px;">
+                                    <input type="text" class="form-control input-sm" placeholder="Search rates (code or description)"
+                                           ng-model="rateGridSearch" ng-change="applyRateGridSearch()" />
+                                </div>
+                                <div class="rate-grid-container">
+                                    <div id="rateGrid"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @Html.Partial("~/Areas/NeoERP.DocumentTemplate/Views/Shared/PartialView/_PartyItemSelector.cshtml")
+
+    <script src="~/Areas/NeoERP.DocumentTemplate/js/shared/PartyItemSelector.js"></script>
+    <script src="~/Areas/NeoERP.DocumentTemplate/js/controller/SetupCtrl/RateScheduleCtrl.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            debugger;
+            $(".nepali-calendar").nepaliDatePicker({
+                npdMonth: true,
+                onFocus: true,
+                npdYear: true,
+                npdYearCount: 10,
+                altFormat: "dd-MMM-YYYY",
+                dateFormat: "dd-MMM-YYYY",
+                onChange: function () {
+                    ConvertNepToEng();
+                }
+            });
+
+            try {
+                var dp = $("#effectiveEnglishDate").data("kendoDatePicker");
+                if (!dp && window.kendo && kendo.ui && kendo.ui.DatePicker) {
+                    $("#effectiveEnglishDate").kendoDatePicker({ format: "dd-MMM-yyyy" });
+                }
+            } catch (e) { }
+            
+            setTimeout(function () {
+                debugger;
+                var today = new Date();
+                var formattedEngDate = moment(today).format('DD-MMM-YYYY');
+                
+                $("#effectiveEnglishDate").val(formattedEngDate);
+
+                var formattedEngDateForNep = moment(today).format('YYYY-MM-DD');
+                
+                var datePicker = $("#effectiveEnglishDate").data("kendoDatePicker");
+                if (datePicker) {
+                    datePicker.value(today);
+                }
+                
+                var nepaliDate = AD2BS(formattedEngDateForNep);
+                $("#nepaliDate5").val(nepaliDate);
+                
+                var scope = angular.element($("[ng-controller='RateScheduleCtrl']")).scope();
+                if (scope) {
+                    scope.$apply(function () {
+                        scope.rateSchedule.effectiveDate = today;
+                    });
+                }
+            }, 100);
+        });
+
+        function ConvertNepToEng() {
+            debugger;
+            var nepaliDate = $("#nepaliDate5").val();
+            if (nepaliDate) {
+                var engDate = BS2AD(nepaliDate);
+                var formattedEngDate = moment(engDate).format('DD-MMM-YYYY');
+                $("#effectiveEnglishDate").val(formattedEngDate);
+
+                var datePicker = $("#effectiveEnglishDate").data("kendoDatePicker");
+                if (datePicker) {
+                    datePicker.value(new Date(engDate));
+                }
+
+                var scope = angular.element($("[ng-controller='RateScheduleCtrl']")).scope();
+                if (scope) {
+                    scope.$apply(function () {
+                        scope.rateSchedule.effectiveDate = new Date(engDate);
+                    });
+                }
+            }
+        }
+    </script>

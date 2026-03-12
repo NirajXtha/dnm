@@ -1,0 +1,148 @@
+﻿
+<div class="row form-inline">
+    <div class="form-group col-md-10">
+        <div class="demo-section k-content">
+            <h5>Report Title</h5>
+            <input id="ddlReportList" style="width: 100%" />
+        </div>
+    </div>
+    <div class="form-group col-md-2">
+        <button type="button" class="btn green" data-toggle="modal" id="reportListFilterButton">...</button>
+    </div>
+</div>
+
+<div class="row form-inline">
+    <div class="form-group col-md-10">
+        <div class="demo-section k-content">
+            <h6>First Horizontal Period(Mandatory)</h6>
+            <select id="ddlFirstHP" style="width: 100%;">
+                <option value="">--Select First--</option>
+                <option value="Y">Year</option>
+                <option value="Q">Quarter</option>
+                <option value="M">Month</option>
+                <option value="W">Week</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<div class="row form-inline">
+    <div class="form-group col-md-10">
+        <div class="demo-section k-content">
+            <h6>Second Horizontal Period(Optional)</h6>
+            <select id="ddlSecondHP" style="width: 100%;">
+                <option value="">--Select Second--</option>
+                <option value="Q" class="Qt">Quarter</option>
+                <option value="M" class="Mt">Month</option>
+                <option value="W" class="Wk">Week</option>
+                <option value="D" class="Dy">Day</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<div class="row form-inline">
+    <div class="form-group col-md-10">
+        <div class="demo-section k-content">
+            <h6>As On Date</h6>
+            @Html.Partial("~/Views/Shared/Controls/DatePicker.cshtml")
+        </div>
+    </div>
+</div>
+
+<div class="row form-inline">
+    <div class="form-group col-md-10">
+        <div class="demo-section k-content">
+            <div id="reportListTreeview" style="height:400px; width:330px"></div>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+
+
+    $(document).ready(function () {
+
+        $('#ddlFirstHP').change(function () {
+            switch ($(this).val()) {
+                case 'Q':
+                    $('.Qt').hide();
+                    $('.Mt').show();
+                    $('.Wk').show();
+                    $('.Dy').show();
+                    break;
+
+                case 'Y':
+                    $('.Qt').show();
+                    $('.Mt').show();
+                    $('.Wk').show();
+                    $('.Dy').show();
+                    break;
+
+                case 'M':
+                    $('.Wk').show();
+                    $('.Dy').show();
+                    $('.Qt').hide();
+                    $('.Mt').hide();
+                    break;
+
+                case 'W':
+                    $('.Dy').show();
+                    $('.Qt').hide();
+                    $('.Mt').hide();
+                    $('.Wk').hide();
+                    break;
+            }
+        });
+
+        var reportListTreeURL = window.location.protocol + "//" + window.location.host + "/api/CalendarReport/GetReportTitleNodes";
+        var reportListTreeDataSource = new kendo.data.HierarchicalDataSource({
+            transport: {
+                read: {
+                    url: reportListTreeURL,
+                    dataType: "json"
+                }
+            }
+        });
+
+        $("#reportListTreeview").kendoTreeView({
+            dataSource: reportListTreeDataSource,
+            dataTextField: "ReportName",
+            autoScroll: true,
+            autoBind: false,
+            scrollable: {
+                virtual: true
+            }
+        });
+
+        $("#reportListTreeview").data("kendoTreeView").expand(".treeNode");
+
+        var reportListURL = window.location.protocol + "//" + window.location.host + "/api/CalendarReport/GetReportTitle";
+        var reportListDataSource = new kendo.data.DataSource({
+            transport: {
+                read: {
+                    url: reportListURL,
+                    dataType: "json"
+                }
+            },
+            schema: {
+                model: {
+                    id: "ReportCode",
+                    hasChildren: "hasChildren"
+                }
+            }
+        });
+
+        $("#ddlReportList").kendoDropDownList({
+            dataTextField: "ReportName",
+            dataValueField: "ReportCode",
+            dataSource: reportListDataSource,
+            height: 600,
+            optionLabel: " Select a report.. "
+        });
+
+
+    });
+</script>

@@ -1,0 +1,1201 @@
+﻿@model NeoErp.Distribution.Service.Model.DetailColumnModel
+
+@using NeoErp.Core.Models.CustomModels;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@using NeoErp.Core.Models;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>
+    ();
+}
+
+<style>
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+    }
+
+    .k-footer-template div {
+        border-bottom: none;
+    }
+
+    /*.page-bar {
+            margin-bottom: 0px !important;
+        }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+             font-size:11px;
+        }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid table thead th {
+        font-size: 11px;
+    }
+
+    .k-grid table td {
+        font-size: 10px;
+    }
+    /*.k-grid-content {
+            font-size: 10px;
+        }
+
+        .k-grid-footer {
+            font-size: 10px;
+        }*/
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    /*a.k-button.k-button-icontext.k-grid-excel {
+            float: right;
+        }*/
+
+    .bootbox-form {
+        padding: 3px !important;
+    }
+
+    .bootbox-input.bootbox-input-text.form-control {
+        height: 27px !important;
+    }
+    /*.k-grid-header {
+            font-size: 11px;
+        }
+        .k-grouping-header {
+            font-size: 12px;
+        }*/
+    .k-state-active, .k-state-active:hover, .k-active-filter, .k-tabstrip .k-state-active {
+        border-color: #7c736e !important;
+    }
+</style>
+
+<script>
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+</script>
+
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb"></ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+
+                <div class="actions">
+
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DatePicker.cshtml", new DatePickerModel() { IsPopUp = true })
+                    </div>
+                    @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+                    @*<div class="btn-group">
+                            @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                            {
+                            ShowDistEmployeeFilter = true,
+                           // ShowItemBrandFilter=true,
+                            })
+                        </div>*@
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                        <i class="icon-control-play"></i>
+                    </a>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "EmployeeWisePerformanceDetail")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div id="grid"></div>
+                        <script type="text/x-kendo-template" id="template">
+                            <div class="details" style="width:90%"></div>
+                        </script>
+                        <script type="text/x-kendo-template" id="templatereseller">
+                            <div class="tabstrip">
+                                <ul>
+                                    <li class="k-state-active">Reseller Stock</li>
+                                    <li>Sales Person Detail</li>
+                                    <li>Brand Wise</li>
+                                </ul>
+                                <div>
+                                    <div class="resellerStock"></div>
+                                </div>
+                                <div>
+                                    <div class="PJP-Non-Productive" style="width:80%;"></div>
+                                </div>
+                                @*<div>
+                                    <div class="BrandWise" style="width:50%;"></div>
+                                </div>*@
+                            </div>
+
+                        </script>
+                        @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="@Scripts.Url(" ~/JS/reportFilter.js")"></script>
+<script src="@Scripts.Url(" ~/JS/DateFilter.js")" type="text/javascript"></script>
+<script src="@Scripts.Url(" ~/Areas/NeoErp.Distribution/js/MenuNavigation.js?V2")"></script>
+
+<script>
+
+        getDateFormat = function (date) {
+            var test = new Date(date);
+            if (test.getFullYear() == '1970')
+                return '-';
+            return kendo.format("{0:" + reportConfig.dateFormat + "}", new Date(date));
+        }
+        function getTimeFormat(date) {
+            var test = new Date(date);
+            if (test.getFullYear() == '1970')
+                return '-';
+            return kendo.format("{0:hh:mm tt}", moment(date)._d)
+        }
+        $(".applydp").on("click", function (evt) {
+            evt.preventDefault();
+            $("#RunQuery").trigger("click");
+            $('[data-toggle="tooltip"].date-tooltip').attr("data-original-title", $("#datePickerBs").val() + "(" + $("#datePickerAd").val() + ")");
+            $(this).closest("#applydp").modal('hide');
+        });
+
+        $("#loadAdvancedFilters").on("click", function (evt) {
+            evt.preventDefault();
+            $("#RunQuery").trigger("click");
+        });
+
+        $("#RunQuery").click(function (evt) {
+            evt.preventDefault();
+            KendoGridRefresh();
+        });
+
+        // used to wait for the children to finish async export
+        var detailExportPromises = [];
+
+        //used for serial number
+        var recordCount = 0;
+
+        function BindGrid() {
+            reportConfig = GetReportSetting("EmployeeWisePerformanceDetail");
+            var grid = $("#grid").kendoGrid({
+                dataSource: {
+                    type: "json",
+                    transport: {
+                        read: {
+                            url: window.location.protocol + "//" + window.location.host + "/api/Report/GetZoneWiseStockReport",
+                            dataType: "json",
+                            type: "POST",
+                            contentType: "application/json; charset=utf-8"
+                        },
+                        parameterMap: function (options, type) {
+                            var report = $.extend({}, true, ReportFilter.filterAdditionalData());
+                            report.ReportFilters.FromDate = moment($("#datePickerAd").val()).format('YYYY-MMM-DD');
+                            report.ReportFilters.ToDate = moment($("#datePickerAd").val()).format('YYYY-MMM-DD');
+
+                            var paramMap = JSON.stringify(report);
+                            delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                            delete paramMap.$format; // <-- remove format parameter.
+                            return paramMap;
+                        }
+                    },
+
+                    error: function (e) {
+                        displayPopupNotification("Sorry error occured while processing data", "error");
+                    },
+                    schema: {
+                        parse: function (response) {
+                            var result = [];
+                            var temp = {};
+                            response.forEach(function (item, idx) {
+
+            result.push(item);
+        });
+        return result;
+                        }
+                    },
+                    aggregate: [{ field: "BO", aggregate: "sum" }, { field: "RVG", aggregate: "sum" },
+                        { field: "RV", aggregate: "sum" }, { field: "WB", aggregate: "sum" }, { field: "NB", aggregate: "sum" }
+                        , { field: "RT", aggregate: "sum" }, { field: "RR", aggregate: "sum" }, { field: "RGS", aggregate: "sum" }, { field: "RVU", aggregate: "sum" }, { field: "MI", aggregate: "sum" }
+                        , { field: "RSB", aggregate: "sum" }, { field: "CE", aggregate: "sum" }, { field: "HB", aggregate: "sum" }, { field: "GO", aggregate: "sum" }
+                        , { field: "UG", aggregate: "sum" }, { field: "BD", aggregate: "sum" }, { field: "MS", aggregate: "sum" }, { field: "GMR", aggregate: "sum" }, { field: "HA", aggregate: "sum" }],
+        model: {
+            fields: {
+                GROUP_EDESC: { type: "string" },
+                BO: { type: "number" },
+                RVG: { type: "number" },
+                RV: { type: "number" },
+                WB: { type: "number" },
+                NB: { type: "number" },
+                RT: { type: "number" },
+                RR: { type: "number" },
+                RGS: { type: "number" },
+                RVU: { type: "number" },
+                MI: { type: "number" },
+                RSB: { type: "number" },
+
+                CE: { type: "number" },
+                RSB: { type: "number" },
+
+                HB: { type: "number" },
+                GO: { type: "number" },
+
+                UG: { type: "number" },
+                BD: { type: "number" },
+
+                MS: { type: "number" },
+                GMR: { type: "number" },
+                HA: { type: "number" },
+
+            },
+        },
+        pageSize: reportConfig.defaultPageSize,
+
+                },
+        toolbar: kendo.template($("#toolbar-template").html()),
+            excel: {
+            fileName: "Employee Detail Report",
+                allPages: true,
+                },
+        excelExport: function(e) {
+            e.preventDefault();
+            var grid = $('#grid').data('kendoGrid');
+            if (grid.dataSource.group().length > 0) {
+                grid.dataSource.group([]);
+                grid.saveAsExcel();
+            }
+            else {
+                var workbook = e.workbook;
+                //formatting master rows
+                var sheet = workbook.sheets[0];
+                for (var rowIndex = 2; rowIndex < sheet.rows.length; rowIndex++) {
+                    var row = sheet.rows[rowIndex];
+                    for (var cellIndex = 0; cellIndex < row.cells.length; cellIndex++) {
+                        row.cells[cellIndex].bold = true;
+                    }
+                }
+                //formatting master rows
+                detailExportPromises = [];
+                var masterData = e.data;
+                //var groupedCounter = 0;
+                //if (masterData[0].items) {
+                //    for (var masRowIndex = 0; masRowIndex < masterData.length; masRowIndex++) {
+                //        var childData = masterData[masRowIndex].items;
+                //        for (var rowIndex = 0; rowIndex < childData.length; rowIndex++) {
+                //            exportChildData(childData[rowIndex].SP_CODE, rowIndex + masRowIndex + groupedCounter);
+                //        }
+                //        groupedCounter = groupedCounter + 1;
+                //    }
+                //}
+                //else {
+                //    for (var rowIndex = 0; rowIndex < masterData.length; rowIndex++) {
+                //        exportChildData(masterData[rowIndex].SP_CODE, rowIndex);
+                //    }
+                //}
+
+                for (var rowIndex = 0; rowIndex < masterData.length; rowIndex++) {
+                    debugger;
+                    exportChildData(masterData[rowIndex].GROUPID, rowIndex);
+                }
+
+                $.when.apply(null, detailExportPromises)
+                    .then(function () {
+                        // get the export results
+                        var detailExports = $.makeArray(arguments);
+
+                        // sort by masterRowIndex
+                        detailExports.sort(function (a, b) {
+                            return a.masterRowIndex - b.masterRowIndex;
+                        });
+
+                        // add an empty column
+                        workbook.sheets[0].columns.unshift({
+                            width: 30
+                        });
+
+                        // prepend an empty cell to each row
+                        for (var i = 0; i < workbook.sheets[0].rows.length; i++) {
+                            workbook.sheets[0].rows[i].cells.unshift({});
+                        }
+
+                        // merge the detail export sheet rows with the master sheet rows
+                        // loop backwards so the masterRowIndex doesn't need to be updated
+                        for (var i = detailExports.length - 1; i >= 0; i--) {
+                            var masterRowIndex = detailExports[i].masterRowIndex + 1; // compensate for the header row
+
+                            var sheet = detailExports[i].sheet;
+
+                            // prepend an empty cell to each row
+                            for (var ci = 0; ci < sheet.rows.length; ci++) {
+                                if (sheet.rows[ci].cells[0].value) {
+                                    sheet.rows[ci].cells.unshift({});
+                                }
+                            }
+
+                            // insert the detail sheet rows after the master row
+                            [].splice.apply(workbook.sheets[0].rows, [masterRowIndex + 1, 0].concat(sheet.rows));
+                        }
+                        //Add filter information
+                        var companyName = ('@workingContent.CurrentUserinformation.company_name');
+                        var fromADdate = $("#datePickerAd").val();
+                        var fromBSdate = $("#datePickerBs").val();
+                        var branches = ReportFilter.getBranchs();
+
+                        workbook.sheets[0].rows.unshift({
+                            cells: [{ value: "Employee Detail Report".split('').join(' '), colSpan: 7 }]
+                        });
+
+                        workbook.sheets[0].rows.unshift({
+                            cells: [{ value: "Date :- " + fromADdate + "(" + fromBSdate + ")", colSpan: 7 }]
+                        });
+
+                        for (var companyCount = 0; companyCount < branches.length; companyCount++) {
+                            workbook.sheets[0].rows.unshift({
+                                cells: [{ value: branches[companyCount].Company + " :- " + branches[companyCount].Branches.join(','), colSpan: 7 }]
+                            });
+                        }
+                        // save the workbook
+                        kendo.saveAs({
+                            dataURI: new kendo.ooxml.Workbook(workbook).toDataURL(),
+                            fileName: "Employee Detail Report.xlsx"
+                        });
+                    });
+                KendoGridRefresh();
+            }
+        },
+        height: window.innerHeight - 200,
+            sortable: true,
+                reorderable: true,
+                    groupable: true,
+                        reorderable: false,
+                            resizable: true,
+                                filterable: {
+            extra: false,
+                operators: {
+                number: {
+                    eq: "Is equal to",
+                        neq: "Is not equal to",
+                            gte: "is greater than or equal to	",
+                                gt: "is greater than",
+                                    lte: "is less than or equal",
+                                        lt: "is less than",
+                        },
+                string: {
+
+                    eq: "Is equal to",
+                        neq: "Is not equal to",
+                            startswith: "Starts with	",
+                                contains: "Contains",
+                                    doesnotcontain: "Does not contain",
+                                        endswith: "Ends with",
+                        },
+                date: {
+                    eq: "Is equal to",
+                        neq: "Is not equal to",
+                            gte: "Is after or equal to",
+                                gt: "Is after",
+                                    lte: "Is before or equal to",
+                                        lt: "Is before",
+                        }
+            }
+        },
+        columnMenu: true,
+            columnMenuInit: function (e) {
+                wordwrapmenu(e);
+                checkboxItem = $(e.container).find('input[type="checkbox"]');
+            },
+        columnShow: function (e) {
+            if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                SaveReportSetting('EmployeeWisePerformanceDetail', 'grid');
+        },
+        columnHide: function (e) {
+            if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                SaveReportSetting('EmployeeWisePerformanceDetail', 'grid');
+        },
+        detailTemplate: kendo.template($("#template").html()),
+            detailInit: detailInit,
+                pageable: {
+            refresh: true,
+                pageSizes: reportConfig.itemPerPage,
+                    buttonCount: 5
+        },
+        dataBound: function (o) {
+            detailExportPromises = [];
+            var grid = o.sender;
+            if (grid.dataSource.total() == 0) {
+                var colCount = 20;
+                $(o.sender.wrapper)
+                    .find('tbody')
+                    .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                displayPopupNotification("No Data Found Given Date Filter.", "info");
+            }
+            else {
+                var g = $("#grid").data("kendoGrid");
+                for (var i = 0; i < g.columns.length; i++) {
+                    g.showColumn(i);
+                }
+                $("div.k-group-indicator").each(function (i, v) {
+                    g.hideColumn($(v).data("field"));
+                });
+            }
+
+            UpdateReportUsingSetting("EmployeeWisePerformanceDetail", "grid");
+            $('div').removeClass('.k-header k-grid-toolbar');
+        },
+        columns: [
+            {
+                field: "GROUP_EDESC",
+                title: "Group",
+                width: "100px",
+
+            }, {
+                title: "Brand Stock",
+                columns: [
+                    {
+                        field: "BO",
+                        title: "BO",
+                        width: "150px",
+                        aggregates: ["sum"],
+                        footerTemplate: "<div style='text-align:right;'>#=kendo.toString(sum, 'n2')#</div>"
+
+                    }, {
+                        field: "RVG",
+                        title: "RVG",
+                        width: "150px",
+                        aggregates: ["sum"],
+                        footerTemplate: "<div style='text-align:right;'>#=kendo.toString(sum, 'n2')#</div>"
+
+                    }, {
+                        field: "RV",
+                        title: "RV",
+                        width: "100px",
+                        aggregates: ["sum"],
+                        footerTemplate: "<div style='text-align:right;'>#=kendo.toString(sum, 'n2')#</div>"
+
+                    }, {
+                        field: "WB",
+                        title: "WB",
+                        width: "100px",
+                        aggregates: ["sum"],
+                        footerTemplate: "<div style='text-align:right;'>#=kendo.toString(sum, 'n2')#</div>"
+
+                    }, {
+                        field: "NB",
+                        title: "NB",
+                        width: "100px",
+                        aggregates: ["sum"],
+                        footerTemplate: "<div style='text-align:right;'>#=kendo.toString(sum, 'n2')#</div>"
+
+                    },{
+                        field: "RT",
+                        title: "RT",
+                        width: "100px",
+                         aggregates: ["sum"],
+                        footerTemplate: "<div style='text-align:right;'>#=kendo.toString(sum, 'n2')#</div>"
+
+                    }, {
+                        field: "RR",
+                        title: "RR",
+                        width: "100px",
+                        aggregates: ["sum"],
+                        footerTemplate: "<div style='text-align:right;'>#=kendo.toString(sum, 'n2')#</div>"
+
+                    }, {
+                        field: "RGS",
+                        title: "RGS",
+                        width: "100px",
+                        aggregates: ["sum"],
+                      footerTemplate: "<div style='text-align:right;'>#=kendo.toString(sum, 'n2')#</div>"
+                    }, {
+                        field: "RVU",
+                        title: "RVU",
+                        width: "100px",
+                        aggregates: ["sum"],
+                        footerTemplate: "<div style='text-align:right;'>#=kendo.toString(sum, 'n2')#</div>"
+
+                    }, {
+                        field: "MI",
+                        title: "MI",
+                        width: "100px",
+                        aggregates: ["sum"],
+                        footerTemplate: "<div style='text-align:right;'>#=kendo.toString(sum, 'n2')#</div>"
+
+                    }, {
+                        field: "RSB",
+                        title: "RSB",
+                        width: "100px",
+                        aggregates: ["sum"],
+                        footerTemplate: "<div style='text-align:right;'>#=kendo.toString(sum, 'n2')#</div>"
+
+                    }, {
+                        field: "CE",
+                        title: "CE",
+                        width: "100px",
+                        aggregates: ["sum"],
+                        footerTemplate: "<div style='text-align:right;'>#=kendo.toString(sum, 'n2')#</div>"
+                    }, {
+                        field: "RSB",
+                        title: "RSB",
+                        width: "100px",
+                        aggregates: ["sum"],
+                        footerTemplate: "<div style='text-align:right;'>#=kendo.toString(sum, 'n2')#</div>"
+
+                    }, {
+                        field: "HB",
+                        title: "HB",
+                        width: "100px",
+                        aggregates: ["sum"],
+                        footerTemplate: "<div style='text-align:right;'>#=kendo.toString(sum, 'n2')#</div>"
+
+                    }, {
+                        field: "GO",
+                        title: "GO",
+                        width: "100px",
+                        aggregates: ["sum"],
+                        footerTemplate: "<div style='text-align:right;'>#=kendo.toString(sum, 'n2')#</div>"
+                    }]
+            }]
+            });
+
+        function exportChildData(spCode, rowIndex) {
+            var deferred = $.Deferred();
+            detailExportPromises.push(deferred);
+            recordCount = 0;
+            console.log(spCode);
+
+            var localDS = new kendo.data.DataSource({
+                type: "json",
+                batch: true,
+                transport: {
+                    read: {
+                        url: window.location.protocol + "//" + window.location.host + "/" + "api/Report/GetAreaWiseStockReport?GroupWise=" + spCode,
+                        dataType: "json", // <-- The default was "jsonp".
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8"
+                    },
+                    parameterMap: function (options, type) {
+                        var report = $.extend({}, true, ReportFilter.filterAdditionalData());
+                        report.ReportFilters.FromDate = moment($("#datePickerAd").val()).format('YYYY-MMM-DD');
+                        report.ReportFilters.ToDate = moment($("#datePickerAd").val()).format('YYYY-MMM-DD');
+
+                        var paramMap = JSON.stringify(report);
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+                    },
+                },
+                error: function (e) {
+                    displayPopupNotification("Sorry error occured while processing data", "error");
+                },
+                schema: {
+                    parse: function (response) {
+                        var result = [];
+                        var temp = {};
+                        response.forEach(function (item, idx) {
+
+                        result.push(item);
+                    });
+            return result;
+        }
+                    },
+                });
+        //localDS.filter({ field: "SP_CODE", operator: "eq", value: OrderNum });
+
+        var exporter = new kendo.ExcelExporter({
+            columns: [
+                {
+                    field: "AREA_NAME",
+                    title: "Area Name",
+                    width: "100px",
+
+                }, {
+                    title: "Brand Stock",
+                    columns: [
+                        {
+                            field: "BO",
+                            title: "BO",
+                            width: "75px",
+
+                        }, {
+                            field: "RVG",
+                            title: "RVG",
+                            width: "75px",
+
+                        }, {
+                            field: "RV",
+                            title: "RV",
+                            width: "75px",
+
+                        }, {
+                            field: "WB",
+                            title: "WB",
+                            width: "75px",
+
+
+                        }, {
+                            field: "NB",
+                            title: "NB",
+                            width: "75px",
+
+                        }, {
+                            field: "RR",
+                            title: "RR",
+                            width: "75px",
+
+                        }, {
+                            field: "RGS",
+                            title: "RGS",
+                            width: "75px",
+
+                        }, {
+                            field: "RVU",
+                            title: "RVU",
+                            width: "75px",
+
+                        }, {
+                            field: "MI",
+                            title: "MI",
+                            width: "75px",
+
+                        }, {
+                            field: "RSB",
+                            title: "RSB",
+                            width: "75px",
+
+                        }, {
+                            field: "CE",
+                            title: "CE",
+                            width: "75px",
+
+                        }, {
+                            field: "RSB",
+                            title: "RSB",
+                            width: "75px",
+
+                        }, {
+                            field: "HB",
+                            title: "HB",
+                            width: "75px",
+
+                        }, {
+                            field: "GO",
+                            title: "GO",
+                            width: "75px",
+
+                        }]
+                }],
+        dataSource: localDS
+                });
+
+        exporter.workbook().then(function (book, data) {
+            deferred.resolve({
+                masterRowIndex: rowIndex + 1,
+                sheet: book.sheets[0]
+            });
+        });
+            }
+        };
+
+        function KendoGridRefresh(readUrl) {
+            $('#grid').data("kendoGrid").destroy();
+            $('#grid').val('');
+            $('#grid').html('');
+            BindGrid(readUrl)
+        }
+
+        function detailInit(e) {
+            var detailRow = e.detailRow;
+            var Rowdata = e.data;
+            recordCount = 0;
+            //detailRow.find(".tabstrip").kendoTabStrip({
+            //    animation: {
+            //        open: { effects: "fadeIn" }
+            //    },
+            //});
+            var dataSource = new kendo.data.DataSource({
+                type: "json",
+                batch: true,
+                transport: {
+                    read: {
+                        url: window.location.protocol + "//" + window.location.host + "/" + "api/Report/GetAreaWiseStockReport?GroupWise=" + Rowdata.GROUPID,
+                        dataType: "json", // <-- The default was "jsonp".
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8"
+                    },
+                    parameterMap: function (options, type) {
+                        var report = $.extend({}, true, ReportFilter.filterAdditionalData());
+                        report.ReportFilters.FromDate = moment($("#datePickerAd").val()).format('YYYY-MMM-DD');
+                        report.ReportFilters.ToDate = moment($("#datePickerAd").val()).format('YYYY-MMM-DD');
+
+                        var paramMap = JSON.stringify(report);
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+                    },
+                },
+                error: function (e) {
+                    displayPopupNotification("Sorry error occured while processing data", "error");
+                },
+                schema: {
+                    parse: function (response) {
+                        var result = [];
+                        var temp = {};
+                        response.forEach(function (item, idx) {
+
+                        result.push(item);
+                    });
+            return result;
+        }
+                },
+        pageSize: 100,
+            pageable: true,
+            });
+        dataSource.fetch(function () {
+            detailRow.find(".details").kendoGrid({
+                //dataSource: new kendo.data.DataSource({
+                //    data: this.data()//_.filter(this.data(), function (x) { return x.ENTITY_TYPE == 'R' })
+                //}),
+                dataSource: dataSource,
+                detailTemplate: kendo.template($("#templatereseller").html()),
+                detailInit: detailInitReseller,
+                sortable: true,
+                pageable: false,
+                sortable: true,
+                reorderable: true,
+                resizable: true,
+                reorderable: false,
+                // height:300,
+                //scrollable: {
+                //    virtual: true
+                //},
+                columns: [
+                    {
+                        field: "AREA_NAME",
+                        title: "Area Name",
+                        width: "100px",
+
+                    },
+                    {
+                        field: "DISTRIBUTOR_NAME",
+                        title: "Distributor",
+                        width: "300px",
+
+                    }, {
+                        title: "Brand Stock",
+                        columns: [
+                            {
+                                field: "BO",
+                                title: "BO",
+                                width: "75px",
+
+                            }, {
+                                field: "RVG",
+                                title: "RVG",
+                                width: "75px",
+
+                            }, {
+                                field: "RV",
+                                title: "RV",
+                                width: "75px",
+
+                            }, {
+                                field: "WB",
+                                title: "WB",
+                                width: "75px",
+
+
+                            }, {
+                                field: "NB",
+                                title: "NB",
+                                width: "75px",
+
+                            }, {
+                                field: "RR",
+                                title: "RR",
+                                width: "75px",
+
+                            }, {
+                                field: "RGS",
+                                title: "RGS",
+                                width: "75px",
+
+                            }, {
+                                field: "RVU",
+                                title: "RVU",
+                                width: "75px",
+
+                            }, {
+                                field: "MI",
+                                title: "MI",
+                                width: "75px",
+
+                            }, {
+                                field: "RSB",
+                                title: "RSB",
+                                width: "75px",
+
+                            }, {
+                                field: "CE",
+                                title: "CE",
+                                width: "75px",
+
+                            }, {
+                                field: "RSB",
+                                title: "RSB",
+                                width: "75px",
+
+                            }, {
+                                field: "HB",
+                                title: "HB",
+                                width: "75px",
+
+                            }, {
+                                field: "GO",
+                                title: "GO",
+                                width: "75px",
+
+                            }]
+                    }],
+        dataBound: function (o) {
+            var grid = o.sender;
+            if (grid.dataSource.data().length <= 0) {
+                var colCount = grid.columns.length + 1;
+                $(o.sender.wrapper)
+                    .find('tbody')
+                    .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+            }
+        },
+        dataBinding: function () {
+            recordCount = 0;
+        }
+                });
+            });
+
+        };
+
+        function detailInitReseller(e) {
+            var detailRow = e.detailRow;
+            var Rowdata = e.data;
+            recordCount = 0;
+            detailRow.find(".tabstrip").kendoTabStrip({
+                animation: {
+                    open: { effects: "fadeIn" }
+                },
+            });
+            var dataSource = new kendo.data.DataSource({
+                type: "json",
+                batch: true,
+                transport: {
+                    read: {
+                        url: window.location.protocol + "//" + window.location.host + "/" + "api/Report/GetResellerStockReport?areawise=" + Rowdata.AREA_CODE,
+                        dataType: "json", // <-- The default was "jsonp".
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8"
+                    },
+                    parameterMap: function (options, type) {
+                        var report = $.extend({}, true, ReportFilter.filterAdditionalData());
+                        report.ReportFilters.FromDate = moment($("#datePickerAd").val()).format('YYYY-MMM-DD');
+                        report.ReportFilters.ToDate = moment($("#datePickerAd").val()).format('YYYY-MMM-DD');
+
+                        var paramMap = JSON.stringify(report);
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+                    },
+                },
+                error: function (e) {
+                    displayPopupNotification("Sorry error occured while processing data", "error");
+                },
+                schema: {
+                    parse: function (response) {
+                        var result = [];
+                        var temp = {};
+                        response.forEach(function (item, idx) {
+
+                            result.push(item);
+                        });
+                        return result;
+                    }
+                },
+                pageSize: 100,
+                pageable: true,
+            });
+            dataSource.fetch(function () {
+                detailRow.find(".resellerStock").kendoGrid({
+                    //dataSource: new kendo.data.DataSource({
+                    //    data: this.data()//_.filter(this.data(), function (x) { return x.ENTITY_TYPE == 'R' })
+                    //}),
+                    dataSource: dataSource,
+
+                    pageable: {
+                        refresh: true,
+                        pageSizes: reportConfig.itemPerPage,
+                        buttonCount: 5
+                    },
+                    sortable: true,
+                    pageable: true,
+                    sortable: true,
+                    reorderable: true,
+                    resizable: true,
+                    reorderable: true,
+                    // height:300,
+                    //scrollable: {
+                    //    virtual: true
+                    //},
+                    columns: [
+                        {
+                            field: "RESELLER_NAME",
+                            title: "Reseller Name",
+                            width: "170px",
+
+                        }, {
+                            title: "Brand Stock",
+                            columns: [
+                                {
+                                    field: "BO",
+                                    title: "BO",
+                                    width: "75px",
+
+                                }, {
+                                    field: "RVG",
+                                    title: "RVG",
+                                    width: "75px",
+
+                                }, {
+                                    field: "RV",
+                                    title: "RV",
+                                    width: "75px",
+
+                                }, {
+                                    field: "WB",
+                                    title: "WB",
+                                    width: "75px",
+
+
+                                }, {
+                                    field: "NB",
+                                    title: "NB",
+                                    width: "75px",
+
+                                }, {
+                                    field: "RR",
+                                    title: "RR",
+                                    width: "75px",
+
+                                }, {
+                                    field: "RGS",
+                                    title: "RGS",
+                                    width: "75px",
+
+                                }, {
+                                    field: "RVU",
+                                    title: "RVU",
+                                    width: "75px",
+
+                                }, {
+                                    field: "MI",
+                                    title: "MI",
+                                    width: "75px",
+
+                                }, {
+                                    field: "RSB",
+                                    title: "RSB",
+                                    width: "75px",
+
+                                }, {
+                                    field: "CE",
+                                    title: "CE",
+                                    width: "75px",
+
+                                }, {
+                                    field: "RSB",
+                                    title: "RSB",
+                                    width: "75px",
+
+                                }, {
+                                    field: "HB",
+                                    title: "HB",
+                                    width: "75px",
+
+                                }, {
+                                    field: "GO",
+                                    title: "GO",
+                                    width: "75px",
+
+                                }]
+                        }],
+                    dataBound: function (o) {
+                        var grid = o.sender;
+                        if (grid.dataSource.data().length <= 0) {
+                            var colCount = grid.columns.length + 1;
+                            $(o.sender.wrapper)
+                                .find('tbody')
+                                .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                        }
+                    },
+                    dataBinding: function () {
+                        recordCount = 0;
+                    }
+                });
+            });
+
+            detailRow.find(".PJP-Non-Productive").kendoGrid({
+                dataSource: new kendo.data.DataSource({
+                    type: "json",
+                    transport: {
+                        read: {
+                            url: window.location.protocol + "//" + window.location.host + "/" + "api/Report/GetResellerStockReportDetail?areawise=" + Rowdata.AREA_CODE,
+                            dataType: "json", // <-- The default was "jsonp".
+                            type: "POST",
+                            contentType: "application/json; charset=utf-8"
+                        },
+                        parameterMap: function (options, type) {
+                            var report = $.extend({}, true, ReportFilter.filterAdditionalData());
+                            report.ReportFilters.FromDate = moment($("#datePickerAd").val()).format('YYYY-MMM-DD');
+                            report.ReportFilters.ToDate = moment($("#datePickerAd").val()).format('YYYY-MMM-DD');
+
+                            var paramMap = JSON.stringify(report);
+                            delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                            delete paramMap.$format; // <-- remove format parameter.
+                            return paramMap;
+                        },
+                    },
+
+                    error: function (e) {
+                        displayPopupNotification("Sorry error occured while processing data", "error");
+                    },
+
+                    pageSize: reportConfig.defaultPageSize,
+                }),
+
+                pageable: {
+                    refresh: true,
+                    pageSizes: reportConfig.itemPerPage,
+                    buttonCount: 5
+                },
+                sortable: true,
+                pageable: true,
+                sortable: true,
+                reorderable: true,
+                resizable: true,
+                reorderable: true,
+                sortable: true,
+                reorderable: true,
+                groupable: true,
+                reorderable: false,
+                resizable: true,
+                toolbar: ["excel"],
+                excel: {
+                    allPages: true
+                },
+                filterable: {
+                    extra: false,
+                    operators: {
+                        number: {
+                            eq: "Is equal to",
+                            neq: "Is not equal to",
+                            gte: "is greater than or equal to	",
+                            gt: "is greater than",
+                            lte: "is less than or equal",
+                            lt: "is less than",
+                        },
+                        string: {
+
+                            eq: "Is equal to",
+                            neq: "Is not equal to",
+                            startswith: "Starts with	",
+                            contains: "Contains",
+                            doesnotcontain: "Does not contain",
+                            endswith: "Ends with",
+                        },
+                        date: {
+                            eq: "Is equal to",
+                            neq: "Is not equal to",
+                            gte: "Is after or equal to",
+                            gt: "Is after",
+                            lte: "Is before or equal to",
+                            lt: "Is before",
+                        }
+                    }
+                },
+                columnMenu: true,
+                scrollable: {
+                    virtual: true
+                },
+                columns: [
+                    {
+                        field: "FULL_NAME",
+                        title: "Sales Person",
+                        width: "170px",
+
+                    }, {
+                        field: "RESELLER_NAME",
+                        title: "Reseller Name",
+                        width: "170px",
+
+                    }, {
+                        field: "BRAND_NAME",
+                        title: "Brand Name",
+                        width: "70px",
+
+                    }, {
+                        field: "ITEM_EDESC",
+                        title: "Item Name",
+                        width: "170px",
+
+                    }, {
+                        field: "CURRENT_STOCK",
+                        title: "Stock",
+                        width: "100px",
+
+                    }, {
+                        field: "MU_CODE",
+                        title: "Unit",
+                        width: "100px",
+
+                    }, {
+                        field: "CREATED_DATE",
+                        title: "Date",
+                        width: "170px",
+
+                    }
+                    ],
+                dataBound: function (o) {
+                    var grid = o.sender;
+                    if (grid.dataSource.data().length <= 0) {
+                        var colCount = grid.columns.length + 1;
+                        $(o.sender.wrapper)
+                            .find('tbody')
+                            .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    }
+                },
+                dataBinding: function () {
+                    recordCount = 0;
+                }
+            });
+        };
+        $(document).ready(function () {
+            DatePicker.init();
+
+            consolidate.init(function () {
+                BindGrid();
+            });
+        });
+</script>

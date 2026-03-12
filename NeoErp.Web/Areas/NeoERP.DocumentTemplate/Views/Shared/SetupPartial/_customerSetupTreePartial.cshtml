@@ -1,0 +1,121 @@
+<style>
+    .btnadd {
+        margin-top: 2px;
+        float: right;
+        margin-right: 5px !important;
+    }
+
+    .addcolor {
+        color: #ffffff;
+    }
+    /* Ensure vertical scrolling for long customer trees */
+    #customertree {
+        max-height: 60vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding-right: 4px; /* avoid scrollbar overlay */
+    }
+</style>
+<div class="portlet box green-box">
+    <customer></customer>
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="icon-pin"></i>
+            <span class="caption-subject bold uppercase">Customer</span>
+        </div>
+        <div class="actions">
+            <a class="btn dark-green btn-sm" id="adddocumentformdata" ng-click="addNewCustomer(event)" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Processing..." href="javascript:;">
+                <i class="fa fa-plus addcolor"></i>
+            </a>
+
+        </div>
+    </div>
+
+    <div class="portlet-body">
+        <div class="row">
+            <div class="col-md-offset-0 col-md-12">
+                <div class="topmaingroupsearch">
+                    <input class="k-textbox txtMainGroupSearchString"
+                           type="text"
+                           ng-model="txtMainGroupSearchString"
+                           ng-change="filterTreeView()"
+                           placeholder="Search Customer Tree"
+                           style="width:100%" />
+                </div>
+            </div>
+        </div>
+        <div id="customertree" class="disableLeftClickOnTree" kendo-tree-view="tree"
+             k-data-source="customertreeData"
+             k-options="customerOptions"
+             k-data-bound="customeronDataBound">
+            <span k-template ng-click="BindGrid(dataItem.masterCustomerCode)">
+                {{dataItem.customerName}}
+            </span>
+        </div>
+        <ul kendo-context-menu
+            k-filter="'.hasTreeCustomMenu'"
+            k-on-open="menuOpen = menuOpen + 1"
+            k-on-close="menuOpen = menuOpen - 1"
+            k-on-select="onContextSelect(kendoEvent)">
+            <li>Add</li>
+            <li>Update</li>
+            <li>Delete</li>
+        </ul>
+        <ul kendo-context-menu k-filter="'.disableLeftClickOnTree'"></ul>
+    </div>
+</div>
+<script>
+    //$(document).ready(function () {
+    //    setTimeout(function () {
+    //        $('.treeviewspliter .k-widget.k-treeview').slimScroll({
+    //            height: '250px'
+    //        });
+    //    }, 10);
+    //});
+
+
+    //Search Customer Name
+    $("#acctxtCustomerSearchString").on("keyup", function () {
+        var searchTerm = $(this).val().toLowerCase().trim();
+        filterCustomerTreeView(searchTerm);
+    });
+
+    function filterCustomerTreeView(searchTerm) {
+        var treeView = $("#customertree").data("kendoTreeView");
+        var dataSource = treeView.dataSource;
+        dataSource.filter({});
+        if (!searchTerm) {
+            treeView.collapse(".k-item");
+            return;
+        }
+        var filter = {
+            field: "customerName",
+            operator: function (value) {
+                return value && value.toLowerCase().indexOf(searchTerm) > -1;
+            }
+        };
+        dataSource.filter(filter);
+        setTimeout(function () {
+            expandFilteredNodes(treeView);
+        }, 100);
+    }
+    function expandFilteredNodes(treeView) {
+        var items = treeView.dataSource.view();
+
+        items.forEach(function (item) {
+            expandMatchingNode(item, treeView);
+        });
+    }
+    function expandMatchingNode(item, treeView) {
+        if (item.hasChildren) {
+            var children = item.children.view();
+
+            children.forEach(function (child) {
+                expandMatchingNode(child, treeView);
+            });
+            if (children.length > 0 || item.customerName.toLowerCase().includes($("#acctxtCustomerSearchString").val().toLowerCase())) {
+                treeView.expand(item);
+            }
+        }
+    }
+</script>

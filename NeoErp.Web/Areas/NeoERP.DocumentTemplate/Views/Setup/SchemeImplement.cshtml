@@ -1,0 +1,262 @@
+﻿@{
+    ViewBag.Title = "Scheme Setup";
+    Layout = null;
+}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/2.4.0/jszip.js"></script>
+<style>
+    .k-splitbar.k-splitbar-horizontal {
+        width: 5px; /*specify the width of the horizontal splitbar*/
+    }
+
+
+    .k-splitter {
+        height: 790px !important;
+    }
+
+    .portlet-title.mingap {
+        min-height: auto !important;
+    }
+
+    .bottomspance {
+        padding: 2px 15px !important;
+    }
+
+    .portlet-title.mingap {
+        min-height: auto !important;
+    }
+
+    .bottomspance .portlet-body {
+        padding-top: 2px !important;
+    }
+
+    .portlet {
+        margin-top: 0px;
+        margin-bottom: 7px !important;
+    }
+
+    /*.portlet > .portlet-title > .caption > i {
+            color: #4da539 !important;
+        }*/
+    .bodyController {
+        margin-top: 4px;
+    }
+
+    .green-box .k-grid-header {
+        display: none;
+    }
+
+    table.k-selectable tbody td {
+        font-size: 11px;
+    }
+
+    .green-box .k-grid {
+        height: 332px !important;
+        border: none !important;
+    }
+
+    .k-splitter .k-scrollable {
+        overflow: hidden !important;
+    }
+
+    .k-grid-content .k-auto-scrollable {
+        height: 455px !important;
+    }
+</style>
+<style>
+    .k-animation-container, .k-widget, .k-widget *, .k-animation-container *, .k-widget ::before, .k-animation-container ::after, .k-block .k-header, .k-list-container {
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
+    }
+
+    /*.k-grid-content .k-auto-scrollable, .k-auto-scrollable {
+        height: auto !important;
+    }
+*/
+    .k-virtual-scrollable-wrap {
+        height: 454px !important;
+    }
+</style>
+@*<div class="content">
+        <div class="page-bar">
+            <ul class="page-breadcrumb"></ul>
+        </div>
+    </div>*@
+<div class="col-md-12">
+    <div id="schemeSetupDetailCtrl">
+        <div id="splitter" ng-controller="schemeSetupDetailCtrl">
+            <form id="SchemeDetailForm" name="SchemeDetailForm" novalidate>
+                <div class="portlet box green-box main">
+                    <div class="portlet-title">
+                        <div class="caption">
+                            <i class="fa fa-plus-square"></i>
+                            <span class="caption-subject bold uppercase">
+                                {{SchemeImpactHeader}}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="portlet-body form-horizontal">
+
+                    <div class="row">
+                        <div class="col-md-6 col-sm-6 col-lg-6">
+                            <div class="form-group">
+                                <label class="control-label col-sm-3 col-md-3 col-lg-3">
+                                    Scheme Name
+                                </label>
+                                <div class="col-sm-6 col-md-6 col-lg-6">
+                                    @*<input class="form-control" type="text" name="SchemeName" ng-model="SchemeDetail.SCHEME_EDESC" id="SchemeName" placeholder="Scheme Name">*@
+                                    <input id="scheme" ng-model="SchemeDetail.SCHEME_CODE" name="scheme" class="acccode accmaster macccode c w-100" kendo-combo-box
+                                           k-placeholder="'Select Scheme'"
+                                           k-data-text-field="'SCHEME_EDESC'"
+                                           k-data-value-field="'SCHEME_CODE'"
+                                           k-filter="'contains'"
+                                           k-auto-bind="true"
+                                           k-suggest="false"
+                                           k-options="shemeOptionsnoti"
+                                           required />
+                                </div>
+                                <div class="col-sm-3 col-md-3 col-lg-3">
+                                    <button type="button" id="gridbindSearch" class="btn btn-sm btn-green pull-right" style="margin-bottom:5px;" ng-click="bindSchemeDetailGridForImpact()" data-toggle="tooltip" title="Search list"><i class="fa fa-search"></i> Show</button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+
+                            @*<button type="button" id="gridbindSearch" class="btn btn-sm btn-green pull-right" style="margin-bottom:5px;" ng-click="bindReferenceGrid(documentRequired.$valid)" data-toggle="tooltip" title="Search list"><i class="fa fa-search"></i> Search</button>*@
+
+
+
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-12 col-md-12 col-lg-12">
+                            <kendo-grid id="kimpactGrid" options="schemeGridOptions" k-rebind="schemeGridOptions">
+                            </kendo-grid>
+                        </div>
+                        <div class="col-sm-12 col-md-12 col-lg-12" ng-if="SchemeDetailCount=='Y'">
+                            <button type="button" id="gridbindSearch" class="btn btn-sm btn-green pull-right" style="margin-bottom:5px;" ng-click="processAllScheme()" data-toggle="tooltip" title="Search list"><i class="fa fa-search"></i>Process</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <div ng-repeat="(key,it) in dynamicSubLedgerModalData">
+                <div class="schemeSubledgerModal_{{$index}} modal fade-out" id="schemeSubledgerModal" data-backdrop="static" tabindex="-1" data-width="700">
+                    <div class="modal-dialog" style="width:830px !important;">
+                        <div class="modal-content">
+
+                            <div class="modal-header">
+                                <div type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</div>
+                                <h4 class="modal-title">
+                                    @*<span class="fa fa-file"></span>*@
+                                   Sub Ledger Entry Module
+                                </h4>
+                            </div>
+
+                            <div class="modal-body mb--8">
+                                <div class="row">
+                                    <div class="col-xs-12 col-sm-4 col-md-4">
+                                        <div class="form-group">
+                                            <label class="control-label">Subledger Amount: @*<i class="fa fa-info-circle font-green" data-toggle="tooltip" title="Subledger Amount"></i>*@</label>
+                                            <input type="number" class="form-control subledgerpopupamountfield textbox" min="0" ng-value="SUBLEDGER_AMOUNT_CALCULATION" ng-model="it.SUBLEDGER_AMOUNT" readonly next-on-tab />
+                                        </div>
+                                    </div>
+
+                                    <div class="col-xs-12 col-sm-4 col-md-4">
+                                        <div class="form-group">
+                                            <label class="control-label">Remaining Amount: @*<i class="fa fa-info-circle font-green" data-toggle="tooltip" title="Remaining Amount"></i>*@</label>
+
+                                            <input type="number" class="form-control remainingamt" ng-value="REMAINING_AMOUNT_CALCULATION" ng-model="it.REMAINING_AMOUNT" readonly next-on-tab />
+
+                                        </div>
+                                    </div>
+                                    <div class="col-xs-12 col-sm-4 col-md-4">
+                                        <div class="form-group">
+
+                                            <label class="control-label">Account: @*<i class="fa fa-info-circle font-green" data-toggle="tooltip" title="Transaction Type"></i>*@</label>
+                                            {{checktransaction}}
+                                        <input id="account" ng-model="it.ACC_CODE" name="account" class="acccode accmaster macccode c w-100" kendo-combo-box
+                                               k-placeholder="'Select Account'"
+                                               k-data-text-field="'ACC_EDESC'"
+                                               k-data-value-field="'ACC_CODE'"
+                                               k-filter="'contains'"
+                                               k-auto-bind="true"
+                                               k-suggest="false"
+                                               k-options="accOptions" />
+                                        </div>
+                                    </div>
+                                    <label style="float:right; color:red;">{{errorshow}} </label>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <table class="document_child_table dynamic-table  table-fixed dynamic_child_table modal-table dynamic_child_table1">
+                                            <thead class="child-table-head">
+                                                <tr>
+                                                    <th width="22%"><label for="element">Code</label></th>
+                                                    <th width="30%"><label for="element">Subledger </label></th>
+                                                    @*<th width="20%"><label for="element">Dealer </label></th>*@
+                                                    <th width="20%"><label for="element">Particulars </label></th>
+                                                    <th width="18%"><label for="element">Amount </label></th>
+                                                    <th width="10%"><label for="element"></label></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="table_body">
+                                                <tr ng-repeat="ref in it.SUBLEDGER track by $index">
+
+                                                    <td width="22%"> @Html.Partial("~/Areas/NeoERP.DocumentTemplate/Views/Shared/PartialView/_subledgerCodePartial.cshtml")</td>
+                                                    <td width="30%"> @Html.Partial("~/Areas/NeoERP.DocumentTemplate/Views/Shared/PartialView/_subledgerPartial.cshtml")</td>
+                                                    @*<td width="20%">
+                                                        <input type="text" id="subcodedealercode_{{key}}_{{$index}}" name="subcodedealercode" ng-model="ref.PARTY_TYPE_CODE" class="partytype party mpartytype" />
+                                                    </td>*@
+                                                    <td width="20%"> <input tye="text" class="form-control" ng-model="ref.PARTICULARS" /></td>
+                                                    <td width="18%">
+                                                        <input type="number" id="subledgeramount" input-value-key="{{key}}" class="form-control SUBLEDGERAMOUNT_{{$index}} subledgeramounts" ng-change="Change(key,$index,ref.AMOUNT)" ng-model="ref.AMOUNT" />
+                                                    </td>
+
+                                                    <td width="10%">
+                                                        <a href="" id="add_child_subledger" name="add_child_subledger" class="buttonadd" ng-click="add_childSubledger_element($index)"><i class="fa fa-plus" data-toggle="tooltip" title="Add"></i></a>
+                                                        <a href="javascript:void(0)" class="buttondelete" style="padding-top:0px !important;">
+                                                            <i class="fa fa-trash text-danger" data-tooltip="Remove item" title="Remove item" ng-click="remove_childSubledger_element(key,$index,childModels[key].AMOUNT)"></i>
+                                                        </a>
+                                                    </td>
+
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                             <div class="modal-footer">
+                                    <span style="color:red;float:left;">{{CodeValidation}}</span>
+                                    <button type="button" class="btn btn-sm btn-green subledgerok" data-dismiss="modal" ng-click="SubLedger_Ok($index,$event)"  data-toggle="tooltip" title="Ok">Ok</button>                               
+                                    <button  type="button" class="btn btn-sm btn-default" data-dismiss="modal" ng-click="SubLedger_Cancel($index,$event)" data-toggle="tooltip" title="Cancel">Cancel</button>
+                             </div>
+                    </div>
+                </div>
+             </div>
+            </div>
+        </div>
+</div>
+
+
+                    @*<script src="@Scripts.Url(" ~/Areas/NeoErp.Distribution/js/MenuNavigation.js?V2")"></script>*@
+                    <script>
+                        //$("#splitter").kendoSplitter()
+                        //var splitter = $("#splitter").data("kendoSplitter");
+                        //splitter.size(".k-pane:first", "29%");
+                        //new
+                        //splitter.max("#pane1", "500px");
+                        //old
+                        // splitter.max("#pane1", "550px");
+                        // splitter.min("#pane1", "200px");
+
+
+                        $('.tblresponsive').slimScroll({
+                            height: '150px',
+                        });
+
+                    </script>
+

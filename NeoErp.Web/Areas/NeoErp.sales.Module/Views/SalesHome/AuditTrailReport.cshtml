@@ -1,0 +1,558 @@
+﻿
+
+@using NeoErp.Core.Models
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    ViewBag.Title = "AuditTrailReport";
+}
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+@*<script src="https://kendo.cdn.telerik.com/2019.2.619/js/pako_deflate.min.js"></script>*@
+<style>
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+         font-size:11px;
+    }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+</style>
+<div class="page-content">
+
+
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+        </ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+                <div class="actions">
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+
+                    </div>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+                    </div>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                   {
+                       //ShowPartyTypeFilter = true,
+                       //ShowCompanyFilter = true,
+                   })
+                    </div>
+                    @Html.Partial("~/Views/Shared/Controls/_reportFilterSettings.cshtml", new ReportFilterSettingsModel()
+               {
+                   ShowAmountFigureFilter = true,
+                   ShowAmountFilter = true,
+                   ShowAmountRoundUpFilter = true,
+                   ShowRangeAmountFilter = true
+               })
+
+                    @Html.Partial("~/Views/Shared/Controls/ComposeMail.cshtml")
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                        <i class="icon-control-play"></i>
+                    </a>
+
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "AuditTrailReport")
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div id="grid"></div>
+                        @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+<script type="text/javascript">
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+
+</script>
+<script>
+    /*
+        This demo renders the grid in "DejaVu Sans" font family, which is
+        declared in kendo.common.css. It also declares the paths to the
+        fonts below using <tt>kendo.pdf.defineFont</tt>, because the
+        stylesheet is hosted on a different domain.
+    */
+    kendo.pdf.defineFont({
+        "DejaVu Sans": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans.ttf",
+        "DejaVu Sans|Bold": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans-Bold.ttf",
+        "DejaVu Sans|Bold|Italic": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans-Oblique.ttf",
+        "DejaVu Sans|Italic": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans-Oblique.ttf",
+        "WebComponentsIcons": "https://kendo.cdn.telerik.com/2017.1.223/styles/fonts/glyphs/WebComponentsIcons.ttf"
+    });
+</script>
+<script src="@Scripts.Url("~/JS/DateFilter.js?V9")" type="text/javascript"></script>
+<script src="@Scripts.Url("~/JS/dynamicReport.js?V2")" type="text/javascript"></script>
+<script type="text/javascript">
+    //var groupNetSalescount, groupDiscountCount,groupTaxableSalesCount,groupVatAmountCount = 0;
+    var urltest = window.location.protocol + "//" + window.location.host + "/api/SalesHome/AuditTrailReport";
+    var reportConfig = {};
+    var ReportnameExcel = "AuditTrailReport";
+    var fileMailSender = new ManualEmailSender({
+            gridName: "grid",
+            gridRefreshTriggerName: "RunQuery",
+            reportName: "AuditTrailReport"
+    });
+    $(".applydp").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    })
+
+    $("#loadAdvancedFilters").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    })
+
+    function ExportToExcel(e) {
+
+        //Report header details
+        var companyName = ('@workingContent.CurrentUserinformation.company_name');
+        var fromADdate = $("#FromDateVoucher").val()
+        var toADdate = $("#ToDateVoucher").val();
+        var fromBSdate = $("#fromInputDateVoucher").val();
+        var toBSdate = $("#toInputDateVoucher").val();
+        var branches = ReportFilter.getBranchs();
+
+        //create a footer row to display totals
+        var footer = [];
+        //footer.push({ value: "Gross Amount", colSpan: 6, textAlign: "center", bold: true, })
+        var footerTemp = e.workbook.sheets[0].rows[e.workbook.sheets[0].rows.length - 1].cells;
+        //for (var i = 0; i < footerTemp.length; i++) {
+        //    if (typeof (footerTemp[i].value) != "undefined" && $(footerTemp[i].value).text() != "Gross Amount")
+        //        footer.push({ value: $(footerTemp[i].value).text(), textAlign: "right", bold: true });
+        //}
+        var SheetRow = [];
+        SheetRow.push({
+            cells: [
+                { value: "Log Id", background: "#A9A7A6", },
+                { value: "Log User", background: "#A9A7A6", },
+                { value: "Log Date", background: "#A9A7A6", },
+                { value: "Log Message", background: "#A9A7A6", },
+            ],
+        });
+        WriteData(e.data);
+
+        //recursive function to write the grouped/ungrouped data
+        function WriteData(array) {
+            array.forEach(function (row, index) {
+                if (typeof (row.items) != "undefined") { //if array contains nested items, write a row with group field and enter recursion
+                    SheetRow.push({
+                        cells: [{
+                            value: row.field + " : " + row.value,
+                            background: "#E1E1E1",
+                            colSpan: 10,//to span the total number of columns
+                            fontSize: 12,
+                        }]
+                    });
+                    WriteData(row.items);
+                }
+                else { //if array contains no nested items write the row to excelsheet
+                    SheetRow.push({
+                        cells: [{
+                            value: row.LOG_ID,
+                        }, {
+                            value: row.LOG_USER,
+                        }, {
+                            value: row.LOG_DATE,
+                        }, {
+                            value: row.LOG_MESSAGE,
+                        }
+                        ]
+                    });
+                }
+            });
+        }
+
+        //push the footer variable containing total values
+        //SheetRow.push({
+        //    cells: footer,
+        //});
+
+        //pushing Report header details
+        SheetRow.unshift({
+            cells: [{ value: "Audit Trail Report".split('').join(' '), colSpan: 10 }]
+        });
+        var filterText = $("#AdvanceFilter").attr('data-original-title');
+        if (filterText.indexOf('|') < 0) {
+            filterText = $((filterText).replace(/<strong>/g, "|")).text().replace('|', '').split('|').reverse();;
+            $.each(filterText, function (k, item) {
+                SheetRow.unshift({
+                    cells: [{ value: item, colSpan: footerTemp.length }]
+                });
+            });
+        }
+        if (filterText.toString().indexOf('Date Range') < 0) {
+            SheetRow.unshift({
+                cells: [{ value: "From :- " + fromADdate + "(" + fromBSdate + ")" + "\t To :- " + toADdate + "(" + toBSdate + ")", colSpan: footerTemp.length }]
+            });
+        }
+        for (var companyCount = 0; companyCount < branches.length; companyCount++) {
+            SheetRow.unshift({
+                cells: [{ value: branches[companyCount].Company + " :- " + branches[companyCount].Branches.join(','), colSpan: footerTemp.length }]
+            });
+        }
+        SheetRow.unshift({
+            cells: [{ value: companyName.split('').join(' '), colSpan: footerTemp.length }]
+        });
+        var Workbook = new kendo.ooxml.Workbook({
+            sheets: [{
+                columns: [
+                    { width: 110 },
+                    @for (int i = 0; i < 8; i++)
+                    {
+                    <text>{ autoWidth: true },</text>
+                        }
+                ],
+                rows: SheetRow
+            }]
+        });
+        var favourite = document.globalFavourite;
+       // var ReportnameExcel="vatRegister"
+        if (favourite.length >= 1) {
+            console.log("AuditTrailReport", favourite)
+            ReportnameExcel = favourite[0].Report.reportName;
+        }
+        //finally saving the excel sheet
+        kendo.saveAs({
+            dataURI: Workbook.toDataURL(),
+            fileName: ReportnameExcel + ".xlsx"
+        });
+    }
+
+    $(document).ready(function () {
+         DateFilter.init(function () {
+                  consolidate.init(function () {
+                      BindGrid(urltest);
+                      var favourite = document.globalFavourite;
+                      if (favourite.length >= 1)
+                      {
+                          debugger;
+                          console.log("AuditTrailReport",favourite)
+                          ReportnameExcel =favourite[0].Report.reportName;
+                      }
+                });
+            });
+
+        //excel function called
+        function myCustomFunction(arrey, header) {
+            var result = $.grep(arrey, function (e) { return e.CHARGE_CODE === header; });
+
+            var value = 0;
+            if (result.length == 0) {
+
+            } else if (result.length == 1) {
+                value = result[0].CHARGE_AMOUNT
+            }
+            return value;
+        }
+
+        var reportConfig = GetReportSetting("AuditTrailReport");
+        function getDateFormat(date) {
+            return kendo.format("{0:" + reportConfig.dateFormat + "}", date);
+        }
+
+        function myCustomFunctionWithTitle(arrey, header) {
+            var result = $.grep(arrey, function (e) { return e.CHARGE_EDESC === header.value; });
+
+            var value = 0;
+            if (result.length == 0) {
+
+            } else if (result.length == 1) {
+                value = result[0].CHARGE_AMOUNT
+            }
+            return value;
+        }
+
+        fileMailSender.init();
+        var formEnglishDate = $("#FromDateVoucher").val();
+        var toEnglishDate = $("#ToDateVoucher").val();
+
+
+        $("#RunQuery").click(function (evt) {
+            evt.preventDefault();
+            //var ddvalue = $("#ddlDateFilterVoucher").val();
+            //var formNepalDate = $("#fromInputDateVoucher").val();
+            //var toNepalDate = $("#toInputDateVoucher").val();
+            //var formEnglishDate = $("#FromDateVoucher").val();
+            //var toEnglishDate = $("#ToDateVoucher").val();
+            urltest = window.location.protocol + "//" + window.location.host + "/api/SalesHome/AuditTrailReport";
+            // BindGrid(urltest);
+            KendoGridRefresh(urltest);
+        });
+
+       // BindGrid(urltest);
+    });
+
+    function BindGrid(readurl) {
+
+        reportConfig = GetReportSetting("AuditTrailReport");
+        var dataSource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: {
+                    url: readurl, // <-- Get data from here.
+                    dataType: "json", // <-- The default was "jsonp".
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8"
+                },
+                parameterMap: function (options, type) {
+                    var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+                    //  paramMap.formDate = $("#FromDateVoucher").val();
+                    delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                    delete paramMap.$format; // <-- remove format parameter.
+                    return paramMap;
+
+                }
+            }, error: function (e) {
+                displayPopupNotification("Sorry error occured while processing data", "error");
+            },
+            serverPaging: true,
+            serverFiltering: true,
+            serverGrouping: false,
+            serverAggregates: true,
+            schema: {
+                data: "auditTrialReportModel", // records are returned in the "data" field of the response
+                total: "total", // total number of records is in the "total" field of the response
+                aggregates:"AggregationResult",
+                model: {
+                    fields: {
+                        LOG_ID: { type: "number" },
+                        LOG_USER: { type: "string" },
+                        LOG_DATE: { type: "string" },
+                        LOG_MESSAGE: { type: "string" }
+
+                    }
+                }
+            },
+            //group: {
+            //    aggregates: [
+            //        { field: "NetSales", aggregate: "sum" },
+            //    ]
+            //},
+            //aggregate: [
+            //    { field: "QUANTITY", aggregate: "sum" ,type:"number"},
+            //    { field: "NetSales", aggregate: "sum",type:"number" },
+            //    { field: "TaxExempSales", aggregate: "sum",type:"number" },
+            //    { field: "Discount", aggregate: "sum",type:"number" },
+            //],
+            pageSize: reportConfig.defaultPageSize,
+        });
+        var grid = $("#grid").kendoGrid({
+            dataSource: dataSource,
+
+            toolbar: kendo.template($("#toolbar-template").html()),
+            excel: {
+                fileName: "Audit Trail Report",
+                //proxyURL: "//demos.telerik.com/kendo-ui/service/export",
+                allPages: true
+            },
+            //pdf: {
+            //    allPages: true,
+            //    avoidLinks: true,
+            //    paperSize: "A4",
+            //    margin: { top: "2cm", left: "1cm", right: "1cm", bottom: "1cm" },
+            //    landscape: true,
+            //    repeatHeaders: true,
+
+            //    scale: 0.8
+            //},
+            excelExport: function (e) {
+
+                ExportToExcel(e);
+                e.preventDefault();
+            },
+
+            pdf: {
+                allPages: true,
+                avoidLinks: true,
+                paperSize: "A4",
+                margin: { top: "2cm", left: "1cm", right: "1cm", bottom: "1cm" },
+                landscape: true,
+                repeatHeaders: true,
+                width: "500px",
+                  fileName: ReportnameExcel+".pdf",
+                scale: 0.8
+            },
+
+            allowCopy: true,
+            height: window.innerHeight - 50,
+            sortable: true,
+            reorderable: true,
+            groupable: true,
+            resizable: true,
+
+
+
+            filterable: {
+                extra: false,
+                operators: {
+                    number: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "is greater than or equal to	",
+                        gt: "is greater than",
+                        lte: "is less than or equal",
+                        lt: "is less than",
+
+                    },
+
+
+
+                    string: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        startswith: "Starts with	",
+                        contains: "Contains",
+                        doesnotcontain: "Does not contain",
+                        endswith: "Ends with",
+                    },
+                    date: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "Is after or equal to",
+                        gt: "Is after",
+                        lte: "Is before or equal to",
+                        lt: "Is before",
+                    }
+
+
+                }
+            },
+            columnMenu: true,
+            columnMenuInit: function (e) {
+                    wordwrapmenu(e);
+                    checkboxItem = $(e.container).find('input[type="checkbox"]');
+                },
+                columnShow: function (e) {
+                    if($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                        SaveReportSetting('AuditTrailReport', 'grid');
+                },
+                columnHide: function (e) {
+                    if($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                        SaveReportSetting('AuditTrailReport', 'grid');
+                },
+
+                pageable: {
+                    refresh: true,
+                    pageSizes: reportConfig.itemPerPage,
+                    buttonCount: 5
+                },
+            scrollable: {
+                virtual: true
+            },
+            dataBound: function (o) {
+                //groupNetSalescount = 0;
+                //groupDiscountCount = 0;
+                //groupTaxableSalesCount = 0;
+                //groupVatAmountCount = 0;
+                var grid = o.sender;
+
+
+                //$(o.sender.wrapper).find('tbody')
+                //       .find('.k-footer-template')
+                //       .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="5" class="no-data">Total Amount(</td></tr>');
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.length;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                }
+                else {
+                    var g = $("#grid").data("kendoGrid");
+                    for (var i = 0; i < g.columns.length; i++) {
+                        g.showColumn(i);
+                    }
+                    $("div.k-group-indicator").each(function (i, v) {
+                        g.hideColumn($(v).data("field"));
+                    });
+                }
+                $('div').removeClass('.k-header k-grid-toolbar');
+                 UpdateReportUsingSetting("AuditTrailReport", "grid");
+
+            },
+            columns: [
+                          {
+                                field: "LOG_ID",
+                                title: "Log Id",
+                            },
+                          {
+                              field: "LOG_USER",
+                              title: "Log User",
+                            },
+                          {
+                              field: "LOG_DATE",
+                              title: "Log Date",
+                          },
+                          {
+                              field: "LOG_MESSAGE ",
+                              title: "Log Message",
+                          },
+
+            ]
+
+        });
+    };
+    var length = 0;
+    function KendoGridRefresh(readUrl) {
+        $('#grid').val('');
+        $('#grid').html('');
+        BindGrid(readUrl)
+    }
+</script>
+
+
+
+
+
+
+

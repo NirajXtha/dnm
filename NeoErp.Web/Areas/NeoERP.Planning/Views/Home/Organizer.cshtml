@@ -1,0 +1,134 @@
+﻿@{
+    Layout = "~/Areas/NeoErp.Planning/Views/Shared/_OrganizerLayoutPage.cshtml";
+}
+<style>
+    .portlet.portlet-sortable {
+        min-height: 0px !important;
+    }
+
+    .page-content {
+        padding: 7px 20px 10px !important;
+    }
+
+    .DistMenuHeight {
+        height: 1400px !important;
+    }
+</style>
+<link href="@Styles.Url("~/Content/MainTheme/fontawesome-iconpicker-1.0.0/dist/css/fontawesome-iconpicker.css")" rel="stylesheet" />
+<link href="@Styles.Url("~/Areas/NeoErp.Planning/Content/MenuStyleSheet.css")" rel="stylesheet" />
+<div>
+    <div class="page-sidebar-wrapper">
+        <div ng-controller="menuCtrl">
+            <div class="page-content DistMenuHeight">
+                <div class="page-bar">
+                    <ul class="page-breadcrumb">
+                        <li>
+                            <i class="fa fa-home"></i>
+                            <a href="/main/GlobalDashboard">Home</a>
+                            <i class="fa fa-angle-right"></i>
+                        </li>
+                        <li>
+                            <a href="/Planning/Home/Organizer">Organiser</a>
+                        </li>
+                    </ul>
+
+                    <div class="row">
+                        <div class="col-md-3 pull-right">
+                            <div class="form-group has-feedback">
+                                <input type="search" placeholder="Search..." ng-model="searchBox" class="search form-control">
+                                <span class="search-icon glyphicon glyphicon-search form-control-feedback"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+                <div class="collapse in" id="demo">
+                    <div class="col-md-12 margin-top-10">
+                        <div class="custom-menu">
+                            <a href="javascript:;"><span class="fa fa-times text-danger"></span></a>
+                        </div>
+                        <div class="row sortable" id="sortable_portlets">
+                            <div class="portlet portlet-sortable favourite-portlet" ng-show="favroiteMenuList.length > 0">
+                                <div class="portlet-title ui-sortable-handle">
+                                    <div class="caption font-red-sunglo">
+                                        <i class="fa fa-bookmark font-red-sunglo"></i>
+                                        <span class="caption-subject bold uppercase"> Favourite</span>
+                                        <span class="caption-helper"></span>
+                                    </div>
+                                    <div class="tools">
+                                        <a href="javascript:;" class="collapse"></a>
+                                    </div>
+                                </div>
+                                <div class="portlet-body erp-iconlist modulebg1 page-sidebar-menu page-sidebar-menu-light">
+                                    <ul class="menu-icon-ui sub-menu">
+                                        <li class="col-md-2" ng-init="randomColor(0,$index)" ng-repeat="item in favroiteMenuList | filter:  { Report:{RName: searchBox} }" ng-repeat-directive>
+                                            <a href="{{ getMenuLink(item.Report.RName,item.Report.virtualPath,item.Report.RName)}}" data-name="{{item.Report.RName}}" data-toggle="tooltip" title="{{item.Report.description}}">
+                                                <div class="circle" style="background-color:{{item.Report.color}}">
+                                                    <i class="{{item.Report.icon}}" aria-hidden="true"></i>
+                                                    <div class="icondescription" style="background-color:{{modelABBRColor)}}">
+                                                        {{item.Report.modelABBR}}
+                                                        <span class="fa fa-times" title="remove"></span>
+                                                    </div>
+                                                </div>
+                                                <h6 class="title ">{{item.Report.RName}}</h6>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <div class="portlet portlet-sortable-empty"></div>
+                            </div>
+                            <div class="clear-both clearfix"></div>
+                            
+                            <div class="portlet portlet-sortable" style="display: block;" stop-digest ng-repeat="menu in menuList|filter:{GROUP_SKU_FLAG:'G'}">
+                                <div class="portlet-title ui-sortable-handle" ng-if="menu.GROUP_SKU_FLAG === 'G'">
+                                    <div class="caption font-red-sunglo">
+                                        <i class="{{menu.ICON_PATH}} font-red-sunglo"></i>
+                                        <span class="caption-subject bold uppercase"> {{menu.MENU_EDESC}}</span>
+                                        <span class="caption-helper"></span>
+                                    </div>
+                                    <div class="tools">
+                                        <a href="javascript:;" class="collapse"></a>
+                                    </div>
+                                </div>
+                                <div class="portlet-body erp-iconlist modulebg1 page-sidebar-menu page-sidebar-menu-light">
+                                    <ul ng-if="menu.GROUP_SKU_FLAG === 'G'" class="menu-icon-ui sub-menu">
+                                        <li class="bordericon" ng-init="randomColor($parent.$index +1,$index,$parent.$last, $last)" ng-repeat="item in menu.Items | filter:  { MENU_EDESC: searchBox }">
+                                            <a ng-href="{{ item.VIRTUAL_PATH }}" data-abbr="{{item.MODULE_ABBR}}">
+                                                <div class="circle" style="background-color:{{item.COLOR}}">
+                                                    <i class="{{item.ICON_PATH}}" aria-hidden="true"></i>
+                                                    <div class="icondescription" style="background-color:{{modelABBRColor(item.MODULE_ABBR)}}">
+                                                        {{item.MODULE_ABBR}}
+                                                        <span class="fa fa-times"></span>
+                                                    </div>
+                                                </div>
+                                                <h6 class="title ">{{item.MENU_EDESC}}</h6>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="portlet portlet-sortable-empty"> </div>
+                                <div class="clear-both clearfix"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="loader" ng-show="isViewLoading">
+        <div id="box"></div>
+        <div id="hill">NEO</div>
+    </div>
+</div>
+
+
+@section scripts{
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/module/planningModule.js")"></script>
+    @*<script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/module/planningModule.js")"></script>
+        <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/Service/DistributorService.js")"></script>
+        <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/Controller/DashboardCtrl.js")"></script>
+        <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/Controller/DynamicMenu.js")"></script>*@
+}

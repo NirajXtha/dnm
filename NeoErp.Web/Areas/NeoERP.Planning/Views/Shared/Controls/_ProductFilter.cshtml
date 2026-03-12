@@ -1,0 +1,269 @@
+﻿<!-- elixir -->
+<div id="productTreeview"></div>
+
+<script>
+   
+    function BindProductTreeView() {
+        var loadAllProductsUrl = window.location.protocol + "//" + window.location.host + "/api/SalesHome/GetAllProductNodes";
+        var loadProductByNodeUrl = window.location.protocol + "//" + window.location.host + "/api/SalesHome/GetAllProductsByProdId";
+
+        var localData;
+        var productTreeDataSource = new kendo.data.HierarchicalDataSource({
+            transport: {
+                read: function (options) {
+                    if (typeof options.data.ItemCode != 'undefined') {
+                        var id = options.data.ItemCode;
+                        var data = getNextLevel(localData, id);
+                        if (data) {
+                            options.success(data);
+                        } else {
+                            var currentnode = get(localData, id);
+                            $.ajax({
+                                url: loadProductByNodeUrl,
+                                data: {
+                                    prodId: currentnode.ItemCode,
+                                    level: currentnode.Level,
+                                    masterCode: currentnode.MasterItemCode
+                                },
+                                type: "GET",
+                                success: function (result) {
+                                    var res = result;
+                                    addToLocalData(localData, res, currentnode.ItemCode);
+                                    options.success(res);
+
+                                },
+                                error: function (result) {
+                                    options.error(result);
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        $.ajax({
+                            url: loadAllProductsUrl,
+                            type: "GET",
+                            success: function (result) {
+                                setTimeout(function () {
+                                    options.success(result);
+                                }, 1000);
+                                localData = result;
+                            },
+                            error: function (result) {
+                                options.error(result);
+                            }
+                        });
+                    }
+                }
+            },
+            schema: {
+                model: {
+                    id: "ItemCode",
+                    hasChildren: "hasProducts",
+                    masterCustCode: "MasterItemCode"
+                }
+            }
+        });
+
+        $("#productTreeview").kendoTreeView({
+            checkboxes: {
+                checkChildren: true
+            },
+            check: onProductCheck,
+            dataSource: productTreeDataSource,
+            dataTextField: "ItemName",
+            height: 600,
+            scrollable: {
+                virtual: true
+            },
+            autoScroll: true,
+            loadOnDemand: false,
+            dataBound: function () {
+                $("#productTreeview").data("kendoTreeView").expand(".treeNode");
+                $('#productTreeview').slimScroll({ height: 600 });
+                
+            }
+        });
+    }
+
+    var checkedNodes = [];
+    function getGroupOfItem() {
+        var arrayTreeList = [];
+        var array = $("#productTreeview").data("kendoTreeView").dataItems();
+        createAllList(array);
+
+        function createAllList(arr) {
+            $.each(arr, function (i, val) {
+                if (arrayTreeList.indexOf(val) == -1) {
+                    arrayTreeList.push(val);
+                    if (val.items != undefined) {
+                        if (val.items.length > 0) {
+                            if (val.items) {
+                                createAllList(val.items)
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        var parentArr = [];
+        var getItem = function (allTreeData, preItemCode, ItemCode) {
+            _.each(arrayTreeList, function (i, e) {
+                if (ItemCode == i.ItemCode) {
+                    _.each(allTreeData, function (it, et) {
+                        if (i.PreItemCode == it.MasterItemCode) {
+                            if (parentArr.indexOf(it.ItemCode + '_X') == -1) {
+                                parentArr.push(it);
+                                if (it.PreItemCode != '00')
+                                    getItem(arrayTreeList, it.PreItemCode, it.ItemCode);
+                            }
+                        }
+                    });
+                }
+            });
+        }
+        //var productMultiselect = $("#productMultiselect").data("kendoMultiSelect");
+        //var multi = productMultiselect.value();
+        //var multi = $('#selectedItemsList').val().split(',');
+        var multi = checkedNodes;
+        _.each(multi, function (i, e) {
+            
+            getItem(arrayTreeList, '00', i.ITEM_CODE.toString());
+        });
+        _.each(parentArr.reverse(), function (i, e) {
+            
+            //checkedNodes.push(i.ItemCode);
+            checkedNodes.push({
+                ITEM_EDESC: i.ItemName,
+                ITEM_CODE: i.ItemCode,
+                MASTER_ITEM_CODE: i.MasterItemCode,
+                PRE_ITEM_CODE: i.PreItemCode,
+                GROUP_SKU_FLAG: '',
+                IS_CHILD_SELECTED: ''
+            });
+        })
+    }
+    // function that gathers IDs of checked nodes
+    function checkedProductNodeIds(nodes, checkedNodes) {
+        var tv = $("#productTreeview").data("kendoTreeView");
+        var tvDatas=tv.dataSource.view();
+        for (var i = 0; i < nodes.length; i++) {
+            if (nodes[i].checked) {
+                
+                //checkedNodes.push(nodes[i].id);
+                checkedNodes.push({
+                    ITEM_EDESC: nodes[i].ItemName,
+                    ITEM_CODE: nodes[i].ItemCode,
+                    MASTER_ITEM_CODE: nodes[i].MasterItemCode,
+                    PRE_ITEM_CODE: nodes[i].PreItemCode,
+                    GROUP_SKU_FLAG: '',
+                    IS_CHILD_SELECTED: ''
+                });
+                //var parentIds = $.grep(tvDatas, function (val, i) {
+                //    return $.contains(tv.MasterItemCode, val.PreItemCode);
+                //})
+                //
+                //var parent = $.grep(nodes, function (v, i) {
+                //    //return v.PreItemCode == nodes[i].MasterItemCode;
+                //    return $.contains(nodes[i].MasterItemCode, v.PreItemCode);
+                //});
+                //parent;
+            }
+
+            if (nodes[i].hasChildren) {
+                checkedProductNodeIds(nodes[i].children.view(), checkedNodes);
+            }
+        }
+    }
+
+    // show checked node IDs on datasource change
+    function onProductCheck() {
+        checkedNodes = [];
+        var treeView = $("#productTreeview").data("kendoTreeView"),
+            message;
+
+        checkedProductNodeIds(treeView.dataSource.view(), checkedNodes);
+        
+        if (checkedNodes.length > 0) {
+            message = checkedNodes.join(",");
+            getGroupOfItem();
+            
+            checkedNodes = _.uniq(checkedNodes, 'ITEM_CODE');
+            checkedNodes.sort(function (a, b) {
+                var a1 = parseInt(a.ITEM_CODE), b1 = parseInt(b.ITEM_CODE);
+                if (a1 == b1) return 0;
+                return a1 > b1 ? 1 : -1;
+            });
+            
+        } else {
+            message = "No nodes checked.";
+        }
+
+        //$("#result").html(message);
+        $('#selectedItemsList').val(checkedNodes);
+    }
+
+    //Checks if nodes are already in the tree and returns it if it does
+    function getNextLevel(data, id) {
+        if (!id) {
+            return data;
+        } else {
+            for (var i = 0; i < data.length; i++) {
+                if (data[i].ItemCode == id) {
+                    return data[i].Items;
+                } else if (data[i].Items) {
+                    var childData = getNextLevel(data[i].Items, id);
+                    if (childData) {
+                        return childData;
+                    }
+                }
+            }
+        }
+    }
+
+    //Get Tree object for a given ItemCode
+    function get(data, id) {
+        if (id) {
+            var grepObject = $.grep(data, function (item, index) {
+                return item.ItemCode == id;
+
+            });
+
+            if (grepObject != null && grepObject != undefined && grepObject.length > 0) {
+                return grepObject[0];
+            }
+            else {
+                for (var i = 0; i < data.length; i++) {
+                    if (data[i].Items) {
+                        var childGrepObject = get(data[i].Items, id);
+                        if (childGrepObject != null && childGrepObject != undefined) {
+                            return childGrepObject;
+                        }
+
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    //Add newly read nodes to cached tree
+    function addToLocalData(localdata, data, id) {
+        if (!id) {
+            return localdata;
+        } else {
+            for (var i = 0; i < localdata.length; i++) {
+                if (localdata[i].ItemCode == id) {
+                    localdata[i].Items = data;
+                    return;
+                } else {
+                    if (localdata[i].Items) {
+                        addToLocalData(localdata[i].Items, data, id)
+                    }
+                }
+            }
+        }
+    }
+    BindProductTreeView();
+
+</script>

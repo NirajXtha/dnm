@@ -1,0 +1,232 @@
+﻿
+@{
+    ViewBag.Title = "GroupSetup";
+    Layout = null;
+}
+<style>
+    #GroupsForm h4 {
+        margin-top: 0px !important;
+    }
+
+    #GroupSetup .k-auto-scrollable {
+        overflow: hidden !important;
+    }
+
+    .k-splitter {
+        min-height: 404px;
+    }
+
+    .form-control {
+        width: 97% !important;
+    }
+
+    .custom-panel-body {
+        /*padding: 7px 30px 0px 10px !important;*/
+        height: 182px;
+    }
+
+
+        .custom-panel-body .caption {
+            font-size: 12px !important;
+            /*padding: 5px 0 6px 0 !important;*/
+        }
+
+        .custom-panel-body .portlet-title {
+            min-height: auto !important;
+        }
+
+    /*.control-label {
+        font-size: 12px !important;
+    }*/
+
+    .tblresponsive {
+        border: 1px solid #e1e1e1 !important;
+    }
+
+    .table thead tr th {
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    /*button#cancelGroup {
+        padding-bottom: 3px !important;
+        margin-right: 12px !important;
+    }*/
+
+    input#GroupCode {
+        font-size: 12px;
+    }
+
+    input#GroupName {
+        font-size: 12px;
+    }
+
+    #GroupSetup .k-grid-header {
+        padding-right: 0px !important;
+    }
+</style>
+
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb"></ul>
+        <div class="pull-right">
+            <div class="btn-group" style="margin-top:5px;">
+                <input id="avatar" type="file" name="avatar" style="width:185px;" />
+            </div>
+            <div class="btn-group">
+                <a target="_self" class="pull-right btn btn-circle btn-icon-only btn-default" href="~/Pictures/Distribution/Format/ZONE_SAMPLE.xlsx" data-toggle="tooltip" title="Download Excel Format.." download>
+                    <i class='fa fa-file-excel-o excelfile fontgreen' />
+                </a>
+            </div>
+            <div class="btn-group">
+                <a href="javascript:void(0)" id="uploadExcel" class="pull-right btn btn-circle btn-icon-only btn-default">
+                    <i class="fa fa-upload"></i>
+                </a>
+            </div>
+            <div class="btn-group">
+                @Html.Partial("~/Views/Shared/Controls/_SetupConfig.cshtml", "GroupSetup")
+            </div>
+        </div>
+    </div>
+</div>
+
+<body>
+
+    <div id="splitter" ng-controller="GroupCtrl">
+        <div id="pane1">
+            <div id="GroupSetup">
+                <kendo-grid options="grid" id="grid"></kendo-grid>
+            </div>
+        </div>
+        <div>
+            <form id="GroupsForm" name="GroupsForm" novalidate>
+                <div class="panel-body custom-panel-body main clearfix">
+                    <div class="portlet box box-green">
+                        <div class="portlet-title">
+                            <div class="caption adduser">
+                                <i class="fa fa-plus-square"></i>{{GroupHeader}}
+                            </div>
+                        </div>
+                        <div class="portlet-body form">
+                        </div>
+                    </div>
+
+
+                    <div class="portlet light bordered main">
+                        <div class="portlet-title">
+                            <div class="caption">
+                                <i class="fa fa-list-alt font-green-haze"></i>
+                                <span class="caption-subject font-green-haze bold uppercase">
+                                    Group
+                                </span>
+                            </div>
+                            <div class="actions pull-right">
+
+                                <button type="button" id="deleteGroup" name="deleteGroup" ng-click="deleteGroup(GroupsForm.$valid)" ng-disabled="GroupsForm.GroupCode.$error.required||GroupsForm.GroupName.$error.required" class="btn btn-danger btn-sm">Delete</button>
+                                <button type="button" id="saveGroup" name="saveGroup" ng-click="SaveGroup(GroupsForm.$valid)" ng-disabled="GroupsForm.GroupCode.$error.required||GroupsForm.GroupName.$error.required" class="btn btn-green btn-sm">{{saveAction}}</button>
+                                <button type="button" id="cancelGroup" name="cancelGroup" ng-click="Cancel()" ng-disabled="GroupsForm.GroupCode.$error.required||GroupsForm.GroupName.$error.required" class="btn btn-default btn-sm">Cancel</button>
+
+                            </div>
+                        </div>
+
+                        <div class="portlet-body form-horizontal">
+                            <div class="row">
+                                <div class="col-md-5 col-sm-5">
+                                    <div class="form-group">
+                                        <label class="control-label col-md-3">
+                                            <input type="hidden" ng-model="Group.GROUPID" id="GroupId" name="GroupId">
+                                            Group Code<span style="color:red" ng-show="GroupsForm.GroupCode.$invalid">
+                                                <span ng-show="GroupsForm.GroupCode.$error.required">*</span>
+                                            </span>
+                                        </label>
+                                        <div class="col-md-6">
+
+                                            <input class="form-control" type="text" name="GroupCode" ng-model="Group.GROUP_CODE" id="GroupCode" placeholder="Group Code" required>
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="col-md-5 col-sm-5">
+                                    <div class="form-group">
+                                        <label class="control-label col-md-3">
+                                            Group Name<span style="color:red" ng-show="GroupsForm.GroupName.$invalid">
+                                                <span ng-show="GroupsForm.GroupName.$error.required">*</span>
+                                            </span>
+                                        </label>
+                                        <div class="col-md-6">
+                                            <input class="form-control" type="text" name="GroupName" ng-model="Group.GROUP_EDESC" id="GroupName" placeholder="Group name" required>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+    <script>
+        var a = location.hash;
+        var b = location.pathname;
+        var url = (b + a);
+        $(".active").removeClass();
+        $("a[href='" + url + "']").parent().addClass("active");
+        $("a[href='" + url + "']").parent().parent().slideDown("slow");
+    </script>
+    <script>
+        $("#splitter").kendoSplitter();
+        var splitter = $("#splitter").data("kendoSplitter");
+        splitter.size(".k-pane:first", "20%");
+        splitter.max("#pane1", "550px");
+        splitter.min("#pane1", "200px");
+
+        $('.tblresponsive').slimScroll({
+            height: '150px',
+        });
+
+    </script>
+    <script src="@Scripts.Url(" ~/Areas/NeoErp.Distribution/js/MenuNavigation.js?V2")"></script>
+<script type="text/javascript">
+
+    $('#uploadExcel').click(function () {
+        if (window.FormData !== undefined) {
+            //showloader();
+            var file_data = $("#avatar").prop("files")[0];   // Getting the properties of file from file field
+            if (!file_data) {
+                displayPopupNotification("Please select a file", "error");
+                setTimeout(function () {
+                    $("#avatar").trigger("click");
+                }, 500);
+                return;
+            }
+            var format = file_data.name.substr(file_data.name.lastIndexOf('.'), file_data.name.length)
+            if (![".xls", ".xlsx"].includes(format)) {
+                displayPopupNotification("Invalid file format", "error");
+                return;
+            }
+            var form_data = new FormData();                  // Creating object of FormData class
+            form_data.append("file", file_data);
+
+            $.ajax({
+                url: '/Distribution/Setup/ZoneImport',
+                type: "POST",
+                contentType: false,
+                processData: false,
+                data: form_data,
+                success: function (result) {
+                    displayPopupNotification(result.MESSAGE, result.TYPE);
+                    if (result.TYPE == "success") {
+                        $('#avatar').val("");
+                        $('#grid').data("kendoGrid").dataSource.read();
+                    }
+                },
+                error: function (err) {
+                    displayPopupNotification(err.statusText, "error");
+                }
+            });
+        } else {
+            alert("FormData is not supported.");
+        }
+    });
+</script>

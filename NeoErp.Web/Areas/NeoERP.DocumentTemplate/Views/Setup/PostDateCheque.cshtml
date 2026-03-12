@@ -1,0 +1,1491 @@
+@{
+    ViewBag.Title = "Post Date Cheque";
+    Layout = null;
+}
+
+<style>
+    .k-splitbar.k-splitbar-horizontal {
+        width: 5px;
+    }
+
+    .k-calendar {
+        width: 210px !important;
+    }
+
+    .k-splitter {
+        height: 490px !important;
+    }
+
+    .portlet-title.mingap {
+        min-height: auto !important;
+    }
+
+    .bottomspance {
+        padding: 2px 15px !important;
+    }
+
+    .portlet-title.mingap {
+        min-height: auto !important;
+    }
+
+    .bottomspance .portlet-body {
+        padding-top: 2px !important;
+    }
+
+    .portlet {
+        margin-top: 0px;
+        margin-bottom: 7px !important;
+    }
+
+    .bodyController {
+        margin-top: 4px;
+    }
+
+    .main .k-widget.k-dropdown.k-header {
+        min-height: 22px !important;
+    }
+
+    .main .k-dropdown-wrap.k-state-default {
+        min-height: 24px !important;
+        font-size: 11px;
+    }
+
+    .k-splitter .k-scrollable {
+        overflow-y: hidden !important;
+    }
+
+    .k-scrollable .k-widget.k-treeview {
+        max-height: 444px;
+        overflow: auto !important;
+    }
+
+    .k-i-calendar {
+        margin-top: 0px;
+    }
+
+    span.k-icon.k-i-warning {
+        display: none;
+    }
+
+    .calendar-icon-2 {
+        top: 24px !important;
+    }
+
+    .k-widget.k-datepicker {
+        background-color: transparent !important;
+    }
+
+    .k-grid td .k-checkbox-label {
+        display: none !important;
+    }
+
+    div#ndp-nepali-box {
+        z-index: 99999 !important;
+    }
+
+    .tab-content {
+        border: 1px solid #ddd;
+        border-top: none;
+        padding: 15px;
+        background-color: #fff;
+    }
+
+    .nav-tabs > li.active > a {
+        background-color: #26C281 !important;
+        color: #fff !important;
+    }
+
+    .nav-tabs {
+        display: flex;
+        flex-wrap: nowrap;
+        white-space: nowrap;
+    }
+
+    .nav-tabs > li {
+        flex-shrink: 0;
+    }
+
+    .nav-tabs > li > a {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+
+    .section-box {
+        border: 1px solid #c8c8c8;
+        padding: 8px 10px;
+        border-radius: 3px;
+        background: #d9edf7;
+        margin-bottom: 10px;
+    }
+
+    .section-title {
+        font-size: 13px;
+        font-weight: bold;
+        margin-bottom: 6px;
+        color: #003366;
+    }
+
+    .form-control-sm,
+    .k-input,
+    input[type=text],
+    input[type=number],
+    select {
+        height: 26px !important;
+        padding: 2px 6px !important;
+    }
+
+    label.small {
+        font-size: 12px !important;
+        margin-bottom: 2px;
+    }
+
+    .no-padding {
+        padding: 0 !important;
+    }
+
+    #createPDCModal .modal-body {
+        max-height: calc(103vh - 150px); /* Adjust 150px if header/footer are taller */
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+        /* Optional: remove extra padding if you want a compact scroll */
+        #createPDCModal .modal-body .section-box {
+            margin-bottom: 10px;
+        }
+    /* Context Menu Container */
+    /* Overall menu */
+    .pdc-context-menu {
+        font-size: 12px;
+        min-width: 170px;
+        padding: 0; /* remove extra outer gap */
+    }
+
+        /* Each menu item */
+        .pdc-context-menu li {
+            padding: 4px 8px; /* reduce top/bottom gap */
+            line-height: 1.2; /* tighter text spacing */
+            display: flex;
+            align-items: center;
+        }
+
+            /* Icons */
+            .pdc-context-menu li i {
+                width: 13px;
+                margin-right: 6px; /* reduce icon gap */
+                font-size: 12px;
+            }
+
+        /* Separator spacing */
+        .pdc-context-menu .k-separator {
+            margin: 2px 0; /* reduce vertical gap */
+            height: 1px;
+        }
+
+        /* Hover */
+        .pdc-context-menu li:hover {
+            background-color: #f2f2f2;
+        }
+
+        /* Delete highlight */
+        .pdc-context-menu li.danger {
+            color: #d9534f;
+        }
+
+            .pdc-context-menu li.danger i {
+                color: #d9534f;
+            }
+
+    /* Force scrollbar visibility in Kendo dropdown */
+    .k-list-container {
+        overflow-y: auto !important;
+        max-height: 350px !important;
+    }
+
+
+</style>
+
+<div class="row" id="PostDateChequeCtrl" ng-controller="PostDateChequeCtrl">
+    <div class="col-md-12">
+        <div class="portlet light form-fit bordered bottomspance" style="width: 100%">
+            <div class="portlet mingap">
+                <div class="portlet-title">
+                    <div class="caption caption-title ng-binding">
+                        <a class="btn-back pull-left" data-toggle="tooltip" data-placement="top" title="Back To Dashboard" href="/DocumentTemplate/Home/Dashboard">
+                            <i class="fa fa-arrow-circle-left"></i>
+                        </a>
+                        <i class="fa fa-money font-green-haze"></i>
+                        <span class="caption-subject font-green-haze bold uppercase">{{FormName}}</span>
+                    </div>
+                    <div class="actions">
+                        <a class="btn dark-green btn-sm addcolor" id="createbtn" ng-click="OpenAddPDCModal(event)">
+                            <i class="fa fa-plus"></i> Add
+                        </a>
+                        <a class="btn dark-green btn-sm addcolor" id="createbtn" ng-click="PrintPDC()">
+                            <i class="fa fa-print"></i> Print
+                        </a>
+
+                        <a class="btn dark-green btn-sm addcolor" id="createbtn" ng-click="LoadData()">
+                                <i class="fa fa-file"></i> Show Report
+                            </a>
+                    </div>
+                </div>
+
+                <div class="portlet-body">
+                    <div class="row">
+                        <div class="col-md-12 col-sm-12">
+                            <!-- Search Options -->
+                            <div class="col-sm-2 col-md-2 col-lg-2">
+                                <div class="form-group">
+                                    <label for="date-range-select">Date Range:</label>
+                                    <select id="date-range-select" onchange="updateDateRange(this.value)" class="form-control">
+                                        <option value="today">Today</option>
+                                        <option value="yesterday">Yesterday</option>
+                                        <option value="month" selected>This Month</option>
+                                        <option value="year">This Year</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-sm-3 col-md-3 col-lg-3">
+                                <div class="form-group">
+                                    <label for="englishdatedocument">From Date:</label>
+                                    <div>
+                                        <input id="englishdatedocument" kendo-date-picker
+                                               ng-model="FROM_DATE"
+                                               k-options="monthSelectorOptionsSingle" data-toggle="tooltip"
+                                               title="Select date" class="form-control fromDate" style="width: calc(50% - 5px); display: inline-block; margin-right: 5px;" />
+
+                                        <div class="col-xs-6 col-sm-6 col-md-6 nopadding-left pl-1" style="display: inline-block; vertical-align: top;">
+                                            <input type="text" id="nepaliDate5"
+                                                   data-checkfor="englishdatedocument" onchange="ConvertNepToEng(this)"
+                                                   data-toggle="tooltip" title="Select date" class="nepali-calendar form-control" style="width: 100%; height: 25px" />
+                                            <i class="fa fa-calendar form-control-feedback calendar-icon-2" data-toggle="tooltip" title="Select date" style="top:5px !important;"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-3 col-lg-3">
+                                <label for="englishdatedocument1">To Date:</label>
+                                <div>
+                                    <input id="englishdatedocument1" kendo-date-picker
+                                           ng-model="TO_DATE"
+                                           k-options="monthSelectorOptionsSingle1" data-toggle="tooltip" title="Select date" style="width: calc(50% - 5px); display: inline-block; margin-right: 5px;" class="form-control toDate" />
+
+                                    <div class="col-xs-6 col-sm-6 col-md-6 nopadding-left pl-1" style="display: inline-block; vertical-align: top;">
+                                        <input type="text" id="nepaliDate51" data-checkfor="englishdatedocument" onchange="ConvertNepToEng(this)" data-toggle="tooltip" title="Select date" class="nepali-calendar form-control" style="width: 100%; height: 25px" />
+                                        <i class="fa fa-calendar form-control-feedback calendar-icon-2" data-toggle="tooltip" title="Select date" style="top:5px !important;"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-sm-2 col-md-2 col-lg-2">
+                                <div class="form-group">
+                                    <label>Cheque Type:</label>
+                                    <select class="form-control" ng-model="CHEQUE_TYPE_FILTER">
+                                        <option value="">All</option>
+                                        <option value="PDC">PDC</option>
+                                        <option value="Current">Current</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-sm-2 col-md-2 col-lg-2" ng-show="showReceiptAddButton">
+                                <div class="form-group">
+                                    <label>PDC Type:</label>
+                                    <select class="form-control" ng-model="PDC_TYPE_FILTER" ng-change="BindPDCGrid()">
+                                        <option value="">All</option>
+                                        <option value="Cheque in Hand">Cheque in Hand</option>
+                                        <option value="In Transit">In Transit</option>
+                                        <option value="Encashed">Encashed</option>
+                                        <option value="Bounced">Bounced</option>
+                                        <option value="Returned">Returned</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-sm-2 col-md-2 col-lg-2" ng-show="showPaymentAddButton">
+                                <div class="form-group">
+                                    <label>PDC Type:</label>
+                                    <select class="form-control" ng-model="PDC_TYPE_FILTER" ng-change="LoadData()">
+                                        <option value="">All</option>
+                                        <option value="Cheque in Hand">Cheque in Hand</option>      
+                                        <option value="Encashed">OutCashed</option>
+                                        <option value="Returned">Returned</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <!-- Tabs -->
+                <ul class="nav nav-tabs" role="tablist">
+                    <li role="presentation" class="active">
+                        <a href="javascript:void(0);" data-target="#receipt" aria-controls="receipt" role="tab" data-toggle="tab" ng-click="setActiveTab('receipt')">
+                            <i class="fa fa-file-text-o"></i> Receipt
+                        </a>
+                    </li>
+                    <li role="presentation">
+                        <a href="javascript:void(0);" data-target="#payments" aria-controls="payments" role="tab" data-toggle="tab" ng-click="setActiveTab('payments')">
+                            <i class="fa fa-money"></i> Payments
+                        </a>
+                    </li>
+                    <li role="presentation">
+                        <a href="javascript:void(0);" data-target="#preferences" aria-controls="preferences" role="tab" data-toggle="tab" ng-click="setActiveTab('preferences')">
+                            <i class="fa fa-cog"></i> Preferences
+                        </a>
+                    </li>
+                        @*<li role="presentation">
+                            <a href="javascript:void(0);" data-target="#report" aria-controls="report" role="tab" data-toggle="tab" ng-click="setActiveTab('report')">
+                                <i class="fa fa-bar-chart"></i> Report
+                            </a>
+                        </li>*@
+                    <li role="presentation">
+                        <a href="javascript:void(0);" data-target="#summaryInfo" aria-controls="summaryInfo" role="tab" data-toggle="tab" ng-click="setActiveTab('summaryInfo')">
+                            <i class="fa fa-info-circle"></i> Summary Info
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content">
+                    <div role="tabpanel" class="tab-pane active" id="receipt">
+                        <div class="row">
+                            <div class="" style="overflow-x: hidden">
+                                @Html.Partial("~/Areas/NeoERP.DocumentTemplate/Views/Shared/PartialView/_GridToolbar.cshtml")
+                                <kendo-grid id="pdcGrid" options="PDCGridOptions" class="kendo_gride_table" style="width:100%;">
+                                </kendo-grid>
+                            </div>
+                            <!-- RIGHT CLICK CONTEXT MENU -->
+                            <ul id="pdcContextMenu" class="pdc-context-menu">
+                                <li data-action="transit">
+                                    <i class="fa fa-random"></i> Cheque in Transit
+                                </li>
+
+                                <li data-action="encash">
+                                    <i class="fa fa-money"></i> Encash
+                                </li>
+
+                                <li data-action="voucher">
+                                    <i class="fa fa-file-text-o"></i> Generate Voucher
+                                </li>
+
+                                <li class="k-separator"></li>
+
+                                <li data-action="direct-bounce">
+                                    <i class="fa fa-ban"></i> Direct Bounce
+                                </li>
+
+                                <li class="k-separator"></li>
+
+                                <li data-action="return">
+                                    <i class="fa fa-undo"></i> Return to Party
+                                </li>
+
+                                <li class="k-separator"></li>
+
+                                <li data-action="delete" class="danger">
+                                    <i class="fa fa-trash"></i> Delete
+                                </li>
+                            </ul>
+
+                        </div>
+                    </div>
+
+                    <div role="tabpanel" class="tab-pane" id="payments">
+                        <div class="row">
+                            <div class="" style="overflow-x: hidden">
+                                @Html.Partial("~/Areas/NeoERP.DocumentTemplate/Views/Shared/PartialView/_GridToolbar.cshtml")
+                                <kendo-grid id="paymentsGrid" options="PaymentsGridOptions" class="kendo_gride_table" style="width:100%;">
+                                </kendo-grid>
+                            </div>
+                            <!-- RIGHT CLICK CONTEXT MENU -->
+                            <ul id="pdcpaymentContextMenu" class="pdc-payment-context-menu">
+                                @*<li data-action="transit">
+                                    <i class="fa fa-random"></i> Cheque in Transit
+                                </li>*@
+
+                                <li data-action="encash">
+                                    <i class="fa fa-money"></i> OutCash
+                                </li>
+
+                                <li data-action="voucher">
+                                    <i class="fa fa-file-text-o"></i> Generate Voucher
+                                </li>
+
+                                <li class="k-separator"></li>
+
+                                @*<li data-action="direct-bounce">
+                                    <i class="fa fa-ban"></i> Direct Bounce
+                                </li>*@
+
+                                <li class="k-separator"></li>
+
+                                <li data-action="return">
+                                    <i class="fa fa-undo"></i> Return from Party
+                                </li>
+
+                                <li class="k-separator"></li>
+
+                                <li data-action="delete" class="danger">
+                                    <i class="fa fa-trash"></i> Delete
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+
+                    <div role="tabpanel" class="tab-pane" id="preferences">
+
+                        <div class="panel panel-default" style="max-width: 550px; margin: 20px auto;">
+                            <div class="panel-heading">
+                                <strong>Document Integration Setup</strong>
+                            </div>
+
+                            <div class="panel-body" style="background-color: #F6F9FE; ">
+
+                                <!-- Receipt Document -->
+                                <div class="form-group">
+                                    <label>Receipt Document</label>
+                                    <select id="customerForPDC" name="customerCode"
+                                            kendo-drop-down-list
+                                            k-options="formDataForReceipt"
+                                            k-on-change="onChangeReceiptDocumentCode(kendoEvent)"
+                                            ng-model="preferencesModel.RECEIPT_FORM_CODE" k-value-primitive="true"
+                                            style="width: 95%; font-size: 12px;" required></select>
+                                </div>
+
+                                <!-- Receipt Account -->
+                                <div class="form-group">
+                                    <label>Receipt Account</label>
+                                    <select id="chartOfAccountsForPreferences"
+                                            kendo-drop-down-list
+                                            k-options="accDataForReceipt"
+                                            k-on-change="onChangeReceiptAccCode(kendoEvent)"
+                                            ng-model="preferencesModel.RECEIPT_ACC_CODE"
+                                            k-value-primitive="true"
+                                            style="width: 95%; font-size: 12px;">
+                                    </select>
+
+                                </div>
+
+                                <!-- Payment Document -->
+                                <div class="form-group">
+                                    <label>Payment Document</label>
+                                    <select id="customerForPDC" name="customerCode"
+                                            kendo-drop-down-list
+                                            k-options="formDataForPayment"
+                                            k-on-change="onChangePaymentDocumentCode(kendoEvent)"
+                                            ng-model="preferencesModel.PAYMENT_FORM_CODE" k-value-primitive="true"
+                                            style="width: 95%; font-size: 12px;" required></select>
+                                </div>
+
+                                <!-- Payment Account -->
+                                <div class="form-group">
+                                    <label>Payment Account</label>
+                                    <select id="chartOfAccountsPayment" name="chartOfAccountsPayment"
+                                            kendo-drop-down-list
+                                            k-options="accDataForPayment"
+                                            k-on-open="loadAccountDataForPayment()"
+                                            ng-model="preferencesModel.PAYMENT_ACC_CODE" k-value-primitive="true"
+                                            style="width: 95%; font-size: 12px;"></select>
+                                </div>
+
+                                <div class="text-center" style="margin-top: 20px;">
+                                    <button class="btn btn-primary" ng-click="savePreference()">Save Preference</button>
+                                </div>
+
+                            </div>
+                        </div>
+
+
+                    </div>
+
+
+                    <div role="tabpanel" class="tab-pane" id="report">
+                        <p>Report tab content will be displayed here.</p>
+                    </div>
+
+                    <div role="tabpanel" class="tab-pane" id="summaryInfo">
+                        <p>Summary Info tab content will be displayed here.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal fade" id="createPDCModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+
+                <!-- HEADER -->
+                <div class="modal-header py-1 bg-primary text-white"
+                     style="display:flex; justify-content:space-between; align-items:center;">
+
+                    <h4 ng-show="!editMode" class="font-weight-bold mb-1 mt-1"
+                        style="color: green; font-weight: bold; margin:0;">
+                        Post Date Cheque Entry / ODC Entry
+                    </h4>
+
+                    <h4 ng-show="editMode" class="font-weight-bold mb-1 mt-1"
+                        style="color: green; font-weight: bold; margin:0;">
+                        Update Post Date Cheque Entry / ODC Entry
+                    </h4>
+
+                    <button type="button" class="close text-white" data-dismiss="modal"
+                            ng-click="resetPdcModel()" style="margin-left:10px;">
+                        <span>&times;</span>
+                    </button>
+                </div>
+
+                <form name="pdcEntryForm" novalidate>
+
+                    <div class="modal-body py-1">
+
+                        <!-- ============================== -->
+                        <!-- PDC ENTRY DETAILS -->
+                        <!-- ============================== -->
+                        <div class="section-box" ng-style="disableOnEdit ? {'pointer-events':'none', 'opacity':'1.5'} : {}">
+                            <div class="section-title">PDC Entry Details...</div>
+
+                            <div class="row">
+
+                                <div class="col-md-2 p-1">
+                                    <label class="small">Receipt No</label>
+                                    <input type="text" ng-model="pdcModel.RECEIPT_NO" name="receiptNo" ng-readonly="true" class="form-control form-control-sm" required>
+                                    <span style="font-style: italic; font-size: 12px;" class="text-danger" ng-show="pdcEntryForm.receiptNo.$touched && pdcEntryForm.receiptNo.$error.required">
+                                        Receipt No is required
+                                    </span>
+                                </div>
+
+                                <div class="col-md-4 p-1">
+                                    <label for="receiptEnglishDate" class="small">Receipt Date | Miti</label>
+                                    <div class="row no-padding">
+                                        <div class="col-xs-6 no-padding">
+                                            <input kendo-date-picker ng-model="pdcModel.RECEIPT_DATE" k-options="monthSelectorOptionsReceiptSingle" data-toggle="tooltip"
+                                                   class="form-control" id="receiptEnglishDate" name="receiptDate" />
+                                        </div>
+                                        <div class="col-xs-6 no-padding">
+                                            <input type="text" id="nepaliDateReceipt" class="nepali-calendar form-control"
+                                                   data-checkfor="receiptEnglishDate"
+                                                   data-toggle="tooltip" title="Select date" style="width: 95%; height: 25px" />
+                                            <i class="fa fa-calendar form-control-feedback calendar-icon-2" data-toggle="tooltip" title="Select date" style="top:5px !important;" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-2 p-1">
+                                    <label class="small">Cheque Type</label>
+
+                                    <select ng-model="pdcModel.CHEQUE_TYPE"
+                                            class="form-control form-control-sm"
+                                            name="chequeType">
+                                        <option value="PDC">PDC</option>
+                                        <option value="ODC">ODC</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-4 p-1">
+                                    <label class="small">Cheque Date | Miti</label>
+                                    <div class="row no-padding">
+                                        <div class="col-xs-6 no-padding">
+                                            <input kendo-date-picker ng-model="pdcModel.CHEQUE_DATE" k-options="monthSelectorOptionsChequeSingle" data-toggle="tooltip"
+                                                   class="form-control" id="chequeEnglishDate" />
+                                        </div>
+                                        <div class="col-xs-6 no-padding">
+                                            <input type="text" id="nepaliDateForCheque" class="nepali-calendar form-control"
+                                                   data-checkfor="chequeEnglishDate" onchange="ConvertNepToEnglishCheque(this)"
+                                                   data-toggle="tooltip" title="Select date" style="width: 95%; height: 25px" />
+                                            <i class="fa fa-calendar form-control-feedback calendar-icon-2" data-toggle="tooltip" title="Select date" style="top:5px !important;" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+
+                        </div>
+
+                        <!-- ============================== -->
+                        <!-- CUSTOMER / PARTY -->
+                        <!-- ============================== -->
+                        <div class="section-box" ng-style="disableOnEdit ? {'pointer-events':'none', 'opacity':'1.5'} : {}">
+                            <div class="section-title">Customer / Party Details</div>
+
+                            <div class="row">
+
+                                <div class="col-md-3 p-1">
+                                    <label class="small">Customer Code</label>
+                                    <select id="customerForPDC" name="customerCode"
+                                            kendo-drop-down-list
+                                            k-options="customerForPDCOptions"
+                                            k-on-change="onChangeCustomerCode(kendoEvent)"
+                                            ng-model="pdcModel.CUSTOMER_CODE" k-value-primitive="true"
+                                            style="width: 95%; font-size: 12px;" required></select>
+                                    <span style="font-style: italic; font-size: 12px;" class="text-danger" ng-show="pdcEntryForm.customerCode.$touched && !pdcModel.CUSTOMER_CODE">
+                                        Customer code is required
+                                    </span>
+                                </div>
+
+                                <div class="col-md-3 p-1">
+                                    <label class="small">Party Type</label>
+                                    <input ng-model="PARTY_TYPE_EDESC" type="text" ng-readonly="true" class="form-control form-control-sm">
+                                </div>
+
+                                <div class="col-md-3 p-1">
+                                    <label class="small">PDC / ODC Amount</label>
+                                    <input type="number" min="0" ng-model="pdcModel.PDC_AMOUNT" name="pdcAmount"
+                                           class="form-control form-control-sm" required />
+                                    <span style="font-style: italic; font-size: 12px;" class="text-danger" ng-show="pdcEntryForm.pdcAmount.$touched && pdcEntryForm.pdcAmount.$error.required">
+                                        Amount is required
+                                    </span>
+                                </div>
+
+                                <div class="col-md-3 p-1">
+                                    <label class="small">PDC / ODC Details</label>
+                                    <input type="text" ng-model="pdcModel.PDC_DETAILS" name="pdcDetails" class="form-control form-control-sm" required />
+                                    <span style="font-style: italic; font-size: 12px;" class="text-danger" ng-show="pdcEntryForm.pdcDetails.$touched && pdcEntryForm.pdcDetails.$error.required">
+                                        Details are required
+                                    </span>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <!-- ============================== -->
+                        <!-- BANKING DETAILS -->
+                        <!-- ============================== -->
+                        <div class="section-box" ng-style="disableOnEdit ? {'pointer-events':'none', 'opacity':'1.5'} : {}">
+                            <div class="section-title">Bank Details</div>
+
+                            <div class="row">
+
+                                <div class="col-md-3 p-1">
+                                    <label class="small">Party Bank Name</label>
+                                    <input type="text" name="partyBankName" ng-model="pdcModel.BANK_NAME" class="form-control form-control-sm" required>
+                                    <span style="font-style: italic; font-size: 12px;" class="text-danger" ng-show="pdcEntryForm.partyBankName.$touched && pdcEntryForm.partyBankName.$error.required">
+                                        Party Bank Name is required
+                                    </span>
+                                </div>
+
+                                <div class="col-md-2 p-1">
+                                    <label class="small">Cheque No.</label>
+                                    <input type="text" name="chequeNo" ng-model="pdcModel.CHEQUE_NO"
+                                           class="form-control form-control-sm"
+                                           ng-blur="checkDuplicateChequeNo()" required>
+
+                                    <!-- Required message -->
+                                    <span style="font-style: italic; font-size: 12px;"class="text-danger" ng-show="pdcEntryForm.chequeNo.$touched && pdcEntryForm.chequeNo.$error.required">
+                                        Cheque No. is required
+                                    </span>
+
+                                    <!-- Duplicate message -->
+                                    <span style="font-style: italic; font-size: 12px;" class="text-danger" ng-show="!pdcEntryForm.chequeNo.$error.required && pdcEntryForm.chequeNo.$error.duplicate">
+                                        This Cheque Number already exists.
+                                    </span>
+                                </div>
+
+
+
+                                <div class="col-md-4 p-1">
+                                    <label class="small">Remarks</label>
+                                    <input type="text" ng-model="pdcModel.REMARKS" class="form-control form-control-sm">
+                                </div>
+
+                                <div class="col-md-3 p-1">
+                                    <label class="small">Cheque Photo</label>
+                                    <input type="file" class="form-control form-control-sm p-0 border-0" onchange="angular.element(this).scope().setChequePhoto(this.files)">
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <!-- ============================== -->
+                        <!-- MONEY RECEIPT -->
+                        <!-- ============================== -->
+                        <div class="section-box" ng-style="disableOnEdit ? {'pointer-events':'none', 'opacity':'1.5'} : {}">
+                            <div class="section-title">Money Receipt</div>
+
+                            <div class="row">
+
+                                <div class="col-md-3 p-1">
+                                    <label class="small">Money receipt Issued By</label>
+                                    <select id="employeeForPDC" name="employeeForPDC"
+                                            kendo-drop-down-list
+                                            k-options="employeesForPDCOptions"
+                                            k-on-change="onChangeEmployeeCode(kendoEvent)"
+                                            ng-model="pdcModel.EMPLOYEE_CODE" k-value-primitive="true"
+                                            style="width: 95%; font-size: 12px;"></select>
+                                </div>
+
+                                <div class="col-md-4 p-1">
+                                    <label class="small">Money Receipt No</label>
+                                    <input type="text" ng-model="pdcModel.MR_NO" class="form-control form-control-sm">
+                                </div>
+
+                                <div class="col-md-4 p-1">
+                                    <label class="small">Remainder Prior Days</label>
+                                    <input type="number" min="0" ng-model="pdcModel.PRIOR_DAYS" class="form-control form-control-sm">
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <!-- ============================== -->
+                        <!-- ENCASH DETAILS -->
+                        <!-- ============================== -->
+                        <div class="section-box" ng-style="disableEncash ? {'pointer-events':'none', 'opacity':'1.5'} : {}">
+                            <div class="section-title">Encash Updates</div>
+
+                            <div class="row">
+
+                                <div class="col-md-4 p-1" style="margin-left:10px;">
+                                    <label class="small">Encash Date | Miti</label>
+                                    <div class="row no-padding">
+                                        <div class="col-xs-6 no-padding">
+                                            <input kendo-date-picker ng-model="pdcModel.ENCASH_DATE" k-options="monthSelectorOptionsEncashSingle" data-toggle="tooltip"
+                                                   class="form-control" id="encashEnglishDate" />
+                                        </div>
+                                        <div class="col-xs-6 no-padding">
+                                            <input type="text" id="encashNepaliDate" class="nepali-calendar form-control"
+                                                   data-checkfor="encashEnglishDate" onchange="ConvertNepToEnglishEncash(this)"
+                                                   data-toggle="tooltip" title="Select date" style="width: 90%; height: 25px" />
+                                            <i class="fa fa-calendar form-control-feedback calendar-icon-2" data-toggle="tooltip" title="Select date" style="top:5px !important;" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-2 p-1">
+                                    <label class="small">Days</label>
+                                    <input type="number" ng-model="enCashDataModel.DAYS" min="0" class="form-control form-control-sm">
+                                </div>
+
+                                <div class="col-md-3 p-1">
+                                    <label class="small">Encash Remarks</label>
+                                    <input type="text" ng-model="enCashDataModel.REMARKS"
+                                           class="form-control form-control-sm">
+                                </div>
+
+                                <div class="col-md-2 p-1">
+                                    <button class="btn btn-primary btn-sm w-100" ng-disabled="ISENCASH" ng-click="UpdateEncash()" style="margin-top:19px">
+                                        Update Encash
+                                    </button>
+                                </div>
+
+                            </div>
+                        </div>
+
+
+                        <div class="section-box">
+                            <div class="row" ng-style="{'pointer-events':'none', 'opacity':'1.5'}">
+                                <div class="col-md-3 p-1">
+                                    <label class="small">Created By</label>
+                                    <input type="text" ng-model="pdcModel.CREATED_BY" name="createdBy" class="form-control form-control-sm" required />
+                                    <span style="font-style: italic; font-size: 12px;"class="text-danger" ng-show="pdcEntryForm.createdBy.$touched && pdcEntryForm.createdBy.$error.required">
+                                        Created By is required
+                                    </span>
+                                </div>
+                                <div class="col-md-4 p-1">
+                                    <label class="small">Created Date | Miti</label>
+                                    <div class="row no-padding">
+                                        <div class="col-xs-6 no-padding">
+                                            <input kendo-date-picker ng-model="pdcModel.CREATED_DATE" k-options="monthSelectorOptionsCreatedSingle" data-toggle="tooltip"
+                                                   class="form-control" id="createdEnglishDate" name="createdDate" />
+                                        </div>
+                                        <div class="col-xs-6 no-padding">
+                                            <input type="text" id="createdNepaliDate" class="nepali-calendar form-control"
+                                                   data-checkfor="createdEnglishDate" onchange="ConvertNepToEnglishCreated(this)"
+                                                   data-toggle="tooltip" title="Select date" style="width: 90%; height: 25px" />
+                                            <i class="fa fa-calendar form-control-feedback calendar-icon-2" data-toggle="tooltip" title="Select date" style="top:5px !important;" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row" ng-style="disableBounce ? {'pointer-events':'none', 'opacity':'1.5'} : {}">
+                                <div class="col-md-3 p-1">
+                                    <label class="small">Bounce By</label>
+                                    <input type="text" ng-model="pdcModel.BOUNCE_BY" class="form-control form-control-sm">
+                                </div>
+                                <div class="col-md-4 p-1">
+                                    <label class="small">Bounce Date | Miti</label>
+                                    <div class="row no-padding">
+                                        <div class="col-xs-6 no-padding">
+                                            <input kendo-date-picker ng-model="pdcModel.BOUNCE_DATE" k-options="monthSelectorOptionsBounceSingle" data-toggle="tooltip"
+                                                   class="form-control" id="bounceEnglishDate" />
+                                        </div>
+                                        <div class="col-xs-6 no-padding">
+                                            <input type="text" id="bounceNepaliDate" class="nepali-calendar form-control"
+                                                   data-checkfor="bounceEnglishDate" onchange="ConvertNepToEnglishaBounce(this)"
+                                                   data-toggle="tooltip" title="Select date" style="width: 90%; height: 25px" />
+                                            <i class="fa fa-calendar form-control-feedback calendar-icon-2" data-toggle="tooltip" title="Select date" style="top:5px !important;" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row" ng-style="disableIntransit ? {'pointer-events':'none', 'opacity':'1.5'} : {}">
+                                <div class="col-md-3 p-1">
+                                    <label class="small">InTransit by</label>
+                                    <input type="text" ng-model="pdcModel.INTRANSIT_BY" class="form-control form-control-sm">
+                                </div>
+                                <div class="col-md-4 p-1">
+                                    <label class="small">Intransit date | Miti</label>
+                                    <div class="row no-padding">
+                                        <div class="col-xs-6 no-padding">
+                                            <input kendo-date-picker ng-model="pdcModel.INTRANSIT_DATE"
+                                                   k-options="monthSelectorOptionsEncashSingle"
+                                                   id="inTransitEnglishDate" class="form-control" />
+                                        </div>
+                                        <div class="col-xs-6 no-padding">
+                                            <input type="text" id="inTransitNepaliDate" class="nepali-calendar form-control"
+                                                   data-checkfor="inTransitEnglishDate" onchange="ConvertNepToEnglishInTransit(this)"
+                                                   data-toggle="tooltip" title="Select date" style="width: 90%; height: 25px" />
+                                            <i class="fa fa-calendar form-control-feedback calendar-icon-2" data-toggle="tooltip" title="Select date" style="top:5px !important;" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ============================== -->
+                        <!-- STATUS -->
+                        <!-- ============================== -->
+                        <div class="section-box">
+                            <div class="section-title">Status</div>
+
+                            <div class="row">
+
+                                <div class="col-md-6 p-1">
+                                    <label class="small" ng-style="{'pointer-events':'none', 'opacity':'1.5'}">
+                                        <input type="checkbox" checked> Cheque In Hand
+                                    </label>
+
+                                    <label class="small ml-2" ng-style="ISINTRANSIT ? {'pointer-events':'none', 'opacity':'1.5'} : {}">
+                                        <input type="checkbox" ng-model="INTRANSIT" ng-change="onTransitChange()">
+                                        Cheque In Transit
+                                    </label>
+
+                                    <!-- Bounce checkbox + Reason in the same row -->
+                                    <div class="d-flex align-items-center mt-2" ng-style="ISBOUNCE ? {'pointer-events':'none', 'opacity':'1.5'} : {}">
+                                        <label class="small mr-2 mb-0">
+                                            <input type="checkbox" ng-model="BOUNCE" ng-change="onBounceChange()">
+                                            Direct Bounce
+                                        </label>
+
+                                        <input ng-disabled="ISBOUNCE" type="text"
+                                               class="form-control form-control-sm ml-2"
+                                               placeholder="Bounce Reason"
+                                               ng-model="bounceModel.BOUNCE_REASON"
+                                               style="max-width: 250px;">
+                                    </div>
+
+                                    <label class="small ml-2 mt-2" ng-style="ISRETURN ? {'pointer-events':'none', 'opacity':'1.5'} : {}">
+                                        <input type="checkbox" ng-model="RETURN" ng-change="onReturnChange()">
+                                        Cheque Return
+                                    </label>
+                                    <div class="d-flex align-items-center mt-2">
+                                        <label class="small">Return Date | Miti</label>
+                                        <div class="no-padding" style="width:80%;" ng-style="ISRETURN ? {'pointer-events':'none', 'opacity':'1.5'} : {}">
+                                            <div class="col-xs-6 no-padding">
+                                                <input kendo-date-picker ng-model="pdcModel.RETURN_DATE" k-options="monthSelectorOptionsBounceSingle" data-toggle="tooltip"
+                                                       class="form-control" id="returnEnglishDate" />
+                                            </div>
+                                            <div class="col-xs-6 no-padding">
+                                                <input type="text" id="returnNepaliDate" class="nepali-calendar form-control"
+                                                       data-checkfor="returnEnglishDate"
+                                                       data-toggle="tooltip" title="Select date" style="width: 90%; height: 25px" />
+                                                <i class="fa fa-calendar form-control-feedback calendar-icon-2" data-toggle="tooltip" title="Select date" style="top:5px !important;" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                                <div class="col-md-6 p-1" ng-style="ACCOUNTDISABLE ? {'pointer-events':'none', 'opacity':'1.5'} : {}">
+                                    <label class="small">Impact Acc Code</label>
+                                    <select id="chartOfAccountsForPDC" name="chartOfAccountsForPDC"
+                                            kendo-drop-down-list
+                                            k-options="chartOfAccountForPDCOptions"
+                                            k-on-change="onChangeAccCode(kendoEvent)"
+                                            ng-model="pdcModel.ACC_CODE" k-value-primitive="true"
+                                            style="width: 95%; font-size: 12px;"></select>
+
+                                    <label class="small ml-3">
+                                        <input type="checkbox" ng-model="ISACCON"> Account Confirm
+                                    </label>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- FOOTER -->
+                    <div class="modal-footer py-2 bg-light">
+                        <button type="button" ng-disabled="DISABLEVOUCHER" class="btn btn-warning btn-sm" ng-click="GeneratePDCReceiptVoucher()">Generate Voucher</button>
+                        <button ng-show="!editMode" type="submit" class="btn btn-success btn-sm" ng-click="saveData()">
+                            <i class="fa fa-floppy-o"></i> Save
+                        </button>
+                        <button type="submit" ng-disabled="ISINTRANSIT" ng-show="editMode" class="btn btn-success btn-sm" ng-click="UpdatePdcToIntransit()">
+                            <i class="fa fa-floppy-o"></i> In Transit
+                        </button>
+                        <button type="submit" ng-disabled="ISBOUNCE" ng-show="editMode" class="btn btn-success btn-sm" ng-click="Bounce()">
+                            <i class="fa fa-floppy-o"></i>Bounce
+                        </button>
+                        <button type="submit" ng-disabled="ISRETURN" ng-show="editMode" class="btn btn-success btn-sm" ng-click="Return()">
+                            <i class="fa fa-floppy-o"></i>Return
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-sm"
+                                data-dismiss="modal" ng-click="resetPdcModel()">
+                            Cancel
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- PDC Payment Entry Modal -->
+    <div class="modal fade" id="pdcPaymentEntryModal" tabindex="-1" role="dialog" aria-labelledby="pdcModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header" style="background-color:#d9edf7;">
+                    <button type="button" class="close" data-dismiss="modal"  ng-click="resetPdcPaymentModel()">&times;</button>
+                    <h4 class="modal-title" id="pdcModalLabel">
+                        Post Date Cheque Entry / ODC Entry(Payment)
+                    </h4>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="modal-body" style="background-color:#8fd3f4;">
+                    <form name="pdcPaymentForm" novalidate>
+
+                        <!-- Row 1 -->
+                        <div class="row" ng-style="PAYMENTEDITMODE ? {'pointer-events':'none', 'opacity':'1.5'} : {}">
+                            <div class="col-md-2">
+                                <label>Payment No</label>
+                                <input type="text" name="paymentNo" class="form-control"
+                                       ng-model="pdcPaymentModel.PAYMENT_NO" readonly required />
+                                <span style="font-style: italic; font-size: 12px;" class="text-danger" ng-show="pdcPaymentForm.paymentNo.$touched && pdcPaymentForm.paymentNo.$error.required">
+                                    PDC Amount is required
+                                </span>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center mt-2">
+                                    <label class="small">Payment Date | Miti</label>
+                                    <div class="no-padding" style="width:95%;">
+                                        <div class="col-xs-6" style="padding-right:10px;">
+                                            <input kendo-date-picker
+                                                   k-options="monthSelectorOptionsPaymentPDCSingle"
+                                                   class="form-control"
+                                                   id="paymentEnglishDate" 
+                                                   ng-model="pdcPaymentModel.PAYMENT_DATE"/>
+                                        </div>
+
+                                        <div class="col-xs-6" style="padding-left:10px;">
+                                            <input type="text"
+                                                   id="paymentNepaliDate"
+                                                   class="nepali-calendar form-control"
+                                                   data-checkfor="paymentEnglishDate"                   
+                                                   title="Select date"
+                                                   style="height:25px;" />
+                                            <i class="fa fa-calendar form-control-feedback calendar-icon-2"
+                                               title="Select date"
+                                               style="top:5px !important;"></i>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <div class="col-md-2">
+                                <label>Cheque Type</label>
+                                <select class="form-control"
+                                        ng-model="pdcPaymentModel.CHEQUE_TYPE">
+                                    <option value="PDC">PDC</option>
+                                    <option value="ODC">ODC</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center mt-2">
+                                    <label class="small">Cheque Date | Miti</label>
+                                    <div class="no-padding" style="width:95%;">
+                                        <div class="col-xs-6" style="padding-right:10px;">
+                                            <input kendo-date-picker
+                                                   k-options="monthSelectorOptionsPaymentPDC"
+                                                   data-toggle="tooltip"
+                                                   class="form-control"
+                                                   id="paymentChequeEnglishDate" 
+                                                   ng-model="pdcPaymentModel.CHEQUE_DATE"/>
+                                        </div>
+
+                                        <div class="col-xs-6" style="padding-left:10px;">
+                                            <input type="text"
+                                                   id="paymentChequeNepaliDate"
+                                                   class="nepali-calendar form-control"
+                                                   data-checkfor="paymentChequeEnglishDate"
+                                                   data-toggle="tooltip"
+                                                   title="Select date"
+                                                   style="height:25px;" />
+                                            <i class="fa fa-calendar form-control-feedback calendar-icon-2"
+                                               data-toggle="tooltip"
+                                               title="Select date"
+                                               style="top:5px !important;"></i>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr />
+
+                        <!-- Row 2 -->
+                        <div class="row" ng-style="PAYMENTEDITMODE ? {'pointer-events':'none', 'opacity':'1.5'} : {}">
+                            <div class="col-md-4">
+                                <label>Supplier Code</label>
+                                <select id="supplierCodeForPaymentPDC" name="supplierCodeForPaymentPDC"
+                                        kendo-drop-down-list
+                                        k-options="supplierForPDCOptions"
+                                        k-on-change="onChangeSupplierCode(kendoEvent)"
+                                        ng-model="pdcPaymentModel.SUPPLIER_CODE" k-value-primitive="true"
+                                        style="width: 95%; font-size: 12px;" required></select>
+
+                                <span style="font-style: italic; font-size: 12px;" class="text-danger" ng-show="pdcPaymentForm.supplierCodeForPaymentPDC.$touched && !pdcPaymentModel.SUPPLIER_CODE">
+                                    Supplier code is required
+                                </span>
+                            </div>
+                            <div class="col-md-3">
+                                <label>Party Type Code </label>
+                                <input readonly type="text" class="form-control"
+                                       ng-model="PARTY_TYPE_EDESC_PAYMENT" />
+                            </div>
+                            <div class="col-md-3">
+                                <label>PDC Amount</label>
+                                <input type="number" min="0" class="form-control" name="pdcAmount"
+                                       ng-model="pdcPaymentModel.PDC_AMOUNT" required/>
+                                <span style="font-style: italic; font-size: 12px;" class="text-danger" ng-show="pdcPaymentForm.pdcAmount.$touched && pdcPaymentForm.pdcAmount.$error.required">
+                                    PDC Amount is required
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Row 3 -->
+                        <div class="row" ng-style="PAYMENTEDITMODE ? {'pointer-events':'none', 'opacity':'1.5'} : {}">
+                            <div class="col-md-6">
+                                <label>PDC Details</label>
+                                <input type="text" class="form-control" name="pdcDetails"
+                                       ng-model="pdcPaymentModel.PDC_DETAILS" required/>
+                                <span style="font-style: italic; font-size: 12px;" class="text-danger" ng-show="pdcPaymentForm.pdcDetails.$touched && pdcPaymentForm.pdcDetails.$error.required">
+                                    PDC details is required
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Row 4 -->
+                        <div class="row" ng-style="PAYMENTEDITMODE ? {'pointer-events':'none', 'opacity':'1.5'} : {}">
+                            <div class="col-md-6">
+                                <label>Party Bank Name</label>
+                                <select id="bankForPDC" name="bankForPDC"
+                                        kendo-drop-down-list
+                                        k-options="chartOfAccountForPDCPaymentOptions"
+                                        k-on-change="onChangeBankName(kendoEvent)"
+                                        ng-model="pdcPaymentModel.BANK_ACC_CODE" k-value-primitive="true"
+                                        style="width: 95%; font-size: 12px;" required></select>
+                                <span style="font-style: italic; font-size: 12px;" class="text-danger" ng-show="pdcPaymentForm.bankForPDC.$touched && !pdcPaymentModel.BANK_ACC_CODE">
+                                    Bank name is required
+                                </span>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label>Cheque No</label>
+                                <input type="text" class="form-control" name="chequeNo"
+                                       ng-model="pdcPaymentModel.CHEQUE_NO" required/>
+                                <span style="font-style: italic; font-size: 12px;" class="text-danger" ng-show="pdcPaymentForm.chequeNo.$touched && pdcPaymentForm.chequeNo.$error.required">
+                                    Cheque No is required
+                                </span>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label>Cheque Photo</label>
+                                <input type="file" class="form-control" onchange="angular.element(this).scope().setPaymentChequePhoto(this.files)"/>
+                            </div>
+                        </div>
+
+                        <!-- Row 5 -->
+                        <div class="row" ng-style="PAYMENTEDITMODE ? {'pointer-events':'none', 'opacity':'1.5'} : {}">
+                            <div class="col-md-6">
+                                <label>Remarks</label>
+                                <input type="text" class="form-control"
+                                       ng-model="pdcPaymentModel.REMARKS" />
+                            </div>
+
+                            <div class="col-md-3">
+                                <label>Reminder Prior Days</label>
+                                <input min="0" type="number" class="form-control"  ng-model="pdcPaymentModel.PRIOR_DAYS"/>
+                            </div>
+
+                            
+                        </div>
+                        <div class="row" ng-style="IsPaymentReturned ? {'pointer-events':'none', 'opacity':'1.5'} : {}">
+                            <div class="col-md-5" style="margin-top:10px;">
+                                <label>
+                                    <input type="checkbox"
+                                           ng-model="RETURNPAYMENT"/>
+                                    Cheque Return
+                                </label>
+                                <div class="d-flex align-items-center mt-2">
+                                    <label class="small">Cheque Return Date | Miti</label>
+                                    <div class="no-padding" style="width:95%;">
+                                        <div class="col-xs-6" style="padding-right:10px;">
+                                            <input kendo-date-picker
+                                                   k-options="monthSelectorOptionsPaymentReturnPDC"
+                                                   data-toggle="tooltip"
+                                                   class="form-control"
+                                                   id="paymentChqueReturnEnglishDate" 
+                                                   ng-model="pdcPaymentModel.RETURN_DATE"/>
+                                        </div>
+
+                                        <div class="col-xs-6" style="padding-left:10px;">
+                                            <input type="text"
+                                                   id="paymentChequeReturnNepaliDate"
+                                                   class="nepali-calendar form-control"
+                                                   data-checkfor="paymentChqueReturnEnglishDate"
+                                                   data-toggle="tooltip"
+                                                   title="Select date"
+                                                   style="height:25px;" />
+                                            <i class="fa fa-calendar form-control-feedback calendar-icon-2"
+                                               data-toggle="tooltip"
+                                               title="Select date"
+                                               style="top:5px !important;"></i>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                            <hr />
+
+                            <!-- Row 6 -->
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <label>Created By</label>
+                                    <input type="text" class="form-control"
+                                           ng-model="pdcPaymentModel.CREATED_BY" readonly />
+                                </div>
+
+                                <div class="col-md-5">
+                                    <div class="d-flex align-items-center mt-2"  ng-style="{'pointer-events':'none', 'opacity':'1.5'}">
+                                        <label class="small">Created Date | Miti</label>
+                                        <div class="no-padding" style="width:95%;">
+                                            <div class="col-xs-6" style="padding-right:10px;">
+                                                <input kendo-date-picker
+                                                       k-options="monthSelectorOptionsBounceSingle"
+                                                       data-toggle="tooltip"
+                                                       class="form-control"
+                                                       id="paymentCreatedChequeEnglishDate" 
+                                                       ng-model="pdcPaymentModel.CREATED_DATE"/>
+                                            </div>
+
+                                            <div class="col-xs-6" style="padding-left:10px;">
+                                                <input type="text"
+                                                       id="paymentChequeCreatedNepaliDate"
+                                                       class="nepali-calendar form-control"
+                                                       data-checkfor="paymentCreatedChequeEnglishDate"
+                                                       data-toggle="tooltip"
+                                                       title="Select date"
+                                                       style="height:25px;" />
+                                                <i class="fa fa-calendar form-control-feedback calendar-icon-2"
+                                                   data-toggle="tooltip"
+                                                   title="Select date"
+                                                   style="top:5px !important;"></i>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                                <div class="col-md-5" ng-style="IsPaymentEncashed ? {'pointer-events':'none', 'opacity':'1.5'} : {}">
+                                    <div class="d-flex align-items-center mt-2">
+                                        <label class="small">OutCash Date | Miti</label>
+                                        <div class="no-padding" style="width:95%;">
+                                            <div class="col-xs-6" style="padding-right:10px;">
+                                                <input kendo-date-picker
+                                                      k-options="monthSelectorOptionsPaymentEncashPDC"
+                                                       data-toggle="tooltip"
+                                                       class="form-control"
+                                                       id="paymentEncashChequeEnglishDate" 
+                                                       ng-model="pdcPaymentModel.ENCASH_DATE"/>
+                                            </div>
+
+                                            <div class="col-xs-6" style="padding-left:10px;">
+                                                <input type="text"
+                                                       id="paymentChequeEncashNepaliDate"
+                                                       class="nepali-calendar form-control"
+                                                       data-checkfor="paymentEncashChequeEnglishDate"
+                                                       data-toggle="tooltip"
+                                                       title="Select date"
+                                                       style="height:25px;" />
+                                                <i class="fa fa-calendar form-control-feedback calendar-icon-2"
+                                                   data-toggle="tooltip"
+                                                   title="Select date"
+                                                   style="top:5px !important;"></i>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr />
+
+                            <!-- Footer Section -->
+                            <div class="row" style="background:#f0ad4e; padding:10px;">
+                                <div class="col-md-6">
+                                    <label>Impact Acc Code</label>
+                                    <select id="chartOfAccountsForPDCPayment"
+                                            kendo-drop-down-list
+                                            k-options="coaForPDCPaymentOptions"
+                                            k-on-change="onChangeAccCodeForPayment(kendoEvent)"
+                                            ng-model="pdcPaymentModel.ACC_CODE" k-value-primitive="true"
+                                            style="width: 95%; font-size: 12px;"></select>
+                                    <label>
+                                        <input type="checkbox"ng-style="ConfirmACC ? {'pointer-events':'none', 'opacity':'1.5'} : {}" ng-model="ConfirmACC"/>
+                                        Account Confirm
+                                    </label>
+                                </div>
+                            </div>
+
+                  </form>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="modal-footer">
+                    <div class="col-md-1 text-right">
+                        <button type="button"
+                                class="btn btn-warning"
+                                ng-click="GeneratePDCPaymentVoucher(pdcPaymentModel.PAYMENT_NO)" ng-disabled="showPaymentVoucherButton" ng-show="PAYMENTEDITMODE">
+                            Generate Voucher
+                        </button>
+                    </div>
+                    <button type="button"
+                            class="btn btn-primary"
+                            ng-click="savePaymentPDC()" ng-show="!PAYMENTEDITMODE">
+                       Save
+                    </button>
+                    <button type="button"
+                            class="btn btn-primary"
+                            ng-click="EncashPaymentPDC(pdcPaymentModel.PAYMENT_NO)" ng-disabled="IsPaymentEncashed" ng-show="PAYMENTEDITMODE">
+                       OutCash
+                    </button>
+                    <button type="button"
+                            class="btn btn-primary"
+                            ng-click="ReturnPaymentPDC(pdcPaymentModel.PAYMENT_NO)" ng-disabled="IsPaymentReturned" ng-show="PAYMENTEDITMODE">
+                       Return
+                    </button>
+                    <button type="button"
+                            class="btn btn-default"
+                            data-dismiss="modal" ng-click="resetPdcPaymentModel()">
+                        Cancel
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $('a').tooltip();
+    });
+
+    function ConvertNepToEng(e) {
+        var date = BS2AD($("#nepaliDate5").val());
+        var date1 = BS2AD($("#nepaliDate51").val());
+        var FormattedEngDate = moment(date).format('DD-MMM-YYYY');
+        var FormattedEngDate1 = moment(date1).format('DD-MMM-YYYY');
+        $("#englishdatedocument").val(FormattedEngDate);
+        $("#englishdatedocument1").val(FormattedEngDate1);
+    }
+
+    function ConvertEngDateToNep(eng) {
+        if (eng === undefined)
+            return;
+        var engmonthreq = "";
+        var arr = eng.split('-');
+        var day = (arr[0]);
+        var month = (arr[1]);
+        var year = (arr[2]);
+        if (month == "Jan") { engmonthreq = "01" }
+        else if (month == "Feb") { engmonthreq = "02" }
+        else if (month == "Mar") { engmonthreq = "03" }
+        else if (month == "Apr") { engmonthreq = "04" }
+        else if (month == "May") { engmonthreq = "05" }
+        else if (month == "Jun") { engmonthreq = "06" }
+        else if (month == "Jul") { engmonthreq = "07" }
+        else if (month == "Aug") { engmonthreq = "08" }
+        else if (month == "Sep") { engmonthreq = "09" }
+        else if (month == "Oct") { engmonthreq = "10" }
+        else if (month == "Nov") { engmonthreq = "11" }
+        else if (month == "Dec") { engmonthreq = "12" }
+        engdatereq = year + '-' + engmonthreq + '-' + day;
+        return convertednepdate = AD2BS(engdatereq);
+    }
+
+    function updateDateRange(selectedRange) {
+        let startDate, endDate;
+        let today = moment();
+        endDate = today.toDate();
+
+        switch (selectedRange) {
+            case 'today':
+                startDate = moment().toDate();
+                break;
+            case 'yesterday':
+                startDate = moment().subtract(1, 'days').toDate();
+                break;
+            case 'month':
+                let todayNepaliDateForMonth = ConvertEngDateToNep(moment().format('DD-MMM-YYYY'));
+                let firstDayOfMonthNepali = todayNepaliDateForMonth.substring(0, 7) + '-01';
+                startDate = BS2AD(firstDayOfMonthNepali);
+                break;
+            case 'year':
+                let todayNepaliDateForYear = ConvertEngDateToNep(moment().format('DD-MMM-YYYY'));
+                let firstDayOfYearNepali = todayNepaliDateForYear.substring(0, 4) + '-01-01';
+                startDate = BS2AD(firstDayOfYearNepali);
+                break;
+            default:
+                return;
+        }
+
+        $("#englishdatedocument").data("kendoDatePicker").value(startDate);
+        $("#englishdatedocument1").data("kendoDatePicker").value(endDate);
+
+        let englishFromDate = $("#englishdatedocument").data("kendoDatePicker").value();
+        let englishToDate = $("#englishdatedocument1").data("kendoDatePicker").value();
+
+        let nepaliFromDate = ConvertEngDateToNep(moment(englishFromDate).format('DD-MMM-YYYY'));
+        let nepaliToDate = ConvertEngDateToNep(moment(englishToDate).format('DD-MMM-YYYY'));
+
+        $("#nepaliDate5").val(nepaliFromDate);
+        $("#nepaliDate51").val(nepaliToDate);
+    }
+
+    function GridSearch() {
+        if ($.trim($('.grid-search').val()) != '') {
+            $('.search input').css('margin-left', '-9px !important')
+        }
+        else {
+            $('.search input').css('margin-left', '0px')
+        }
+
+        var grid = $("#pdcGrid").data("kendoGrid");
+        var tempServerFilter = grid.dataSource.options.serverFiltering;
+        grid.dataSource.options.serverFiltering = false;
+        var filter = [];
+        $.each(grid.columns, function (i, v) {
+            if (v.field != undefined) {
+                var searchText = $.trim($('.grid-search').val());
+                var model = grid.dataSource.options.schema.model.fields[v.field];
+                var type = "string";
+                if (model != undefined)
+                    type = model.type;
+                if (type === "string")
+                    filter.push({ field: v.field, operator: "contains", value: searchText });
+                else if (type === "number")
+                    filter.push({ field: v.field, operator: "eq", value: searchText });
+                else if (type === "date") {
+                    var dateValue = new Date(searchText);
+                    searchText = dateValue == "Invalid Date" ? searchText : dateValue;
+                    filter.push({ field: v.field, operator: "eq", value: searchText });
+                }
+            }
+        });
+        var filter = {
+            logic: "or",
+            filters: filter,
+        }
+
+        grid.dataSource.filter(filter);
+        if ($(".grid-search").val().length == 0)
+            grid.dataSource.filter([]);
+        grid.bind("dataBound", function () {
+            grid.dataSource.options.serverFiltering = tempServerFilter;
+        });
+    }
+
+    $(".nepali-calendar").nepaliDatePicker({
+        npdMonth: true,
+        onFocus: true,
+        npdYear: true,
+        npdYearCount: 10,
+        altFormat: "dd-MMM-YYYY",
+        dateFormat: "dd-MMM-YYYY",
+        onChange: function (evt) {
+            var nepalidate = $("#nepaliDate5").val();
+            var nepalidate1 = $("#nepaliDate51").val();
+            var nepaliDateForReceipt = $("#nepaliDateReceipt").val();
+            var nepaliDateForCheque = $("#nepaliDateForCheque").val();
+            var nepaliDateForEncash = $("#encashNepaliDate").val();
+            var nepaliDateForInTransit = $("#inTransitNepaliDate").val();
+            var nepaliDateForCreated = $("#createdNepaliDate").val();
+            var nepaliDateForBounce = $("#bounceNepaliDate").val();
+            var nepaliDateForReturn = $("#returnNepaliDate").val();
+            var nepaliDateForPayment = $("#paymentNepaliDate").val();
+            var nepaliDateForPaymentCheque = $("#paymentChequeNepaliDate").val();
+            var paymentChequeReturnNepaliDate = $("#paymentChequeReturnNepaliDate").val();
+            var paymentCreatedNepaliDate = $("#paymentChequeCreatedNepaliDate").val();
+            var paymentChequeEncashNepaliDate = $("#paymentChequeEncashNepaliDate").val();
+            var Engdate = BS2AD(nepalidate);
+            var Engdate1 = BS2AD(nepalidate1);
+            var EngReceipt = BS2AD(nepaliDateForReceipt);
+            var EngCheque = BS2AD(nepaliDateForCheque)
+            var EngEncash = BS2AD(nepaliDateForEncash)
+            var EngInTransit = BS2AD(nepaliDateForInTransit)
+            var EngCreated = BS2AD(nepaliDateForCreated)
+            var EngBounce = BS2AD(nepaliDateForBounce)
+            var EngReturn = BS2AD(nepaliDateForReturn)
+            var EngPayment = BS2AD(nepaliDateForPayment)
+            var EngPaymentCheque = BS2AD(nepaliDateForPaymentCheque)
+            var EngPaymentReturnDate = BS2AD(paymentChequeReturnNepaliDate)
+            var EngPaymentCreatedDate = BS2AD(paymentCreatedNepaliDate)
+            var EngPaymentEncashDate = BS2AD(paymentChequeEncashNepaliDate)
+            var FormattedEngDate = moment(Engdate).format('DD-MMM-YYYY');
+            var FormattedEngDate1 = moment(Engdate1).format('DD-MMM-YYYY');
+            var FormattedReceiptEngDate = moment(EngReceipt).format('DD-MMM-YYYY');
+            var FormattedChequeEngDate = moment(EngCheque).format('DD-MMM-YYYY');
+            var FormattedEncashEngDate = moment(EngEncash).format('DD-MMM-YYYY');
+            var FormattedIntransitEngDate = moment(EngInTransit).format('DD-MMM-YYYY');
+            var FormattedCreatedEngDate = moment(EngCreated).format('DD-MMM-YYYY');
+            var FormattedBounceEngDate = moment(EngBounce).format('DD-MMM-YYYY');
+            var FormattedReturnEngDate = moment(EngReturn).format('DD-MMM-YYYY');
+            var FormattedPaymentEngDate = moment(EngPayment).format('DD-MMM-YYYY');
+            var FormattedPaymentReturnEngDate = moment(EngPaymentReturnDate).format('DD-MMM-YYYY');
+            var FormattedPaymentCreatedEngDate = moment(EngPaymentCreatedDate).format('DD-MMM-YYYY');
+            var FormattedPaymentEncashEngDate = moment(EngPaymentEncashDate).format('DD-MMM-YYYY');
+            var FormattedPaymentChequeEngDate = moment(EngPaymentCheque).format('DD-MMM-YYYY');
+            $("#englishdatedocument").val(FormattedEngDate);
+            $("#englishdatedocument1").val(FormattedEngDate1);
+            $("#receiptEnglishDate").val(FormattedReceiptEngDate);
+            $("#chequeEnglishDate").val(FormattedChequeEngDate);
+            $("#encashEnglishDate").val(FormattedEncashEngDate);
+            $("#inTransitEnglishDate").val(FormattedIntransitEngDate);
+            $("#createdEnglishDate").val(FormattedCreatedEngDate);
+            $("#bounceEnglishDate").val(FormattedBounceEngDate);
+            $("#returnEnglishDate").val(FormattedReturnEngDate);
+            $("#paymentEnglishDate").val(FormattedPaymentEngDate);
+            $("#paymentChqueReturnEnglishDate").val(FormattedPaymentReturnEngDate);
+            $("#paymentCreatedChequeEnglishDate").val(FormattedPaymentCreatedEngDate);
+            $("#paymentEncashChequeEnglishDate").val(FormattedPaymentEncashEngDate);
+            $("#paymentChequeEnglishDate").val(FormattedPaymentChequeEngDate);
+        }
+    });   
+</script>

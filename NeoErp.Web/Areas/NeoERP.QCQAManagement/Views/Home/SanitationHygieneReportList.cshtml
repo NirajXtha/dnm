@@ -1,0 +1,436 @@
+﻿@{
+	Layout = null;
+
+}
+<style>
+	/* ====== GLOBAL RESET ====== */
+	html, body {
+		/*overflow-x: hidden !important;*/
+		max-width: 100%;
+	}
+
+	/* sensible default so widths include padding/border */
+	*, *::before, *::after {
+		box-sizing: border-box;
+	}
+
+	/* override bootstrap .table-responsive which adds overflow auto */
+	/*.table-responsive {
+		overflow-x: hidden !important;*/ /* hide scrollbars on the wrapper */
+	/*}*/
+
+	/* ====== MAIN TABLE STYLING ====== */
+	.dynamic_child_table6 {
+		table-layout: fixed;
+		width: 100%;
+		min-width: 0; /* lets table shrink inside parent */
+		border-collapse: collapse;
+		/*overflow-x: hidden;*/
+	}
+
+		/* allow cells to wrap instead of expanding table */
+		.dynamic_child_table6 th,
+		.dynamic_child_table6 td {
+			white-space: normal !important;
+			word-break: break-word;
+			overflow-wrap: anywhere;
+		}
+
+		/* inputs/widgets inside table: allow them to shrink */
+		.dynamic_child_table6 .form-control,
+		.dynamic_child_table6 input,
+		.dynamic_child_table6 select,
+		.dynamic_child_table6 textarea,
+		.dynamic_child_table6 .input-group,
+		.dynamic_child_table6 .k-widget, /* kendo widgets */
+		.dynamic_child_table6 .k-combobox,
+		.dynamic_child_table6 .clsParametersValue {
+			max-width: 100% !important;
+			min-width: 0 !important; /* critical for flexbox children */
+			box-sizing: border-box;
+		}
+
+	/* fix flex children that cause overflow */
+	.input-group, .btn-action, .addon-iconbox {
+		min-width: 0 !important;
+	}
+
+	/* images/svg/iframes shouldn't blow out container */
+	img, svg, iframe {
+		max-width: 100%;
+		height: auto;
+	}
+
+	/* fallback: if anything still uses 100vw (common cause), force it to 100% */
+	*[style*="100vw"], *[style*="width:100vw"] {
+		width: 100% !important;
+		max-width: 100% !important;
+	}
+
+	/* ====== COLUMN-SPECIFIC WIDTHS ====== */
+	.material-font {
+		font-size: 11px;
+		width: 200px;
+	}
+
+	.SNo {
+		width: 36px;
+	}
+
+	.SNo_div {
+		width: 36px;
+	}
+
+	.Department {
+		width: 170px;
+	}
+
+	/*.Standard,
+	.Actual,
+	.GAP {
+		width: 31px;
+	}*/
+	.Actual {
+		width: 50px;
+	}
+	.Standard {
+		width: 64px;
+	}
+
+	.Gap {
+		width: 34px;
+	}
+
+	.Day {
+		width: 148px !important;
+	}
+
+	.material-align {
+		margin-left: 50px;
+	}
+
+	/* ====== ALIGNMENT FIX (MOST IMPORTANT PART) ====== */
+	.dynamic_child_table6 {
+		border-collapse: collapse;
+	}
+
+		/* Make header and data cells behave identically */
+		.dynamic_child_table6 th,
+		.dynamic_child_table6 td {
+			vertical-align: middle !important;
+			padding: 2px 6px !important;
+			text-align: left;
+			font-weight: normal !important;
+			height: 30px;
+			box-sizing: border-box;
+		}
+
+			/* Ensure flex inside <td> doesn't add offset */
+			.dynamic_child_table6 td > div {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				height: 100%;
+			}
+
+		/* Compact the input box to align visually with header text */
+		.dynamic_child_table6 input.form-control,
+		.dynamic_child_table6 .textbox {
+			height: 24px !important;
+			line-height: 1.2 !important;
+			padding: 2px 4px !important;
+			text-align: left;
+			margin: 0 !important;
+			border-radius: 2px;
+		}
+
+		/* Match column widths between th and td */
+		.dynamic_child_table6 th.SNo,
+		.dynamic_child_table6 td.SNo_div {
+			width: 36px;
+		}
+
+		.dynamic_child_table6 th.Department,
+		.dynamic_child_table6 td.Department {
+			width: 170px;
+		}
+
+		.dynamic_child_table6 th.Standard,
+		.dynamic_child_table6 td.Standard {
+			width: 64px;
+		}
+
+		.dynamic_child_table6 th.Actual,
+		.dynamic_child_table6 td.Actual {
+			width: 50px;
+		}
+
+		.dynamic_child_table6 th.Day,
+		.dynamic_child_table6 td.Day {
+			width: 148px !important;
+		}
+
+		.dynamic_child_table6 th.GAP,
+		.dynamic_child_table6 td.GAP {
+			width: 34px;
+		}
+
+		.dynamic_child_table6 th.btn-action,
+		.dynamic_child_table6 td.btn-action {
+			width: 8%;
+		}
+
+	.day-cell {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		3 equal columns inside 1 td gap: 4px;
+	}
+
+		.day-cell .day-subcol .textbox {
+			width: 100%;
+			text-align: center;
+			font-size: 12px;
+			height: 25px;
+		}
+</style>
+@*<script src="@Scripts.Url("~/JS/DateFilter.js?V9")" type="text/javascript"></script>*@
+<script src="@Scripts.Url("~/Areas/NeoERP.QCQAManagement/js/controller/DateFilter.js?V9")"></script>
+<link href="@Styles.Url("~/Areas/NeoERP.QCQAManagement/Content/QCQASetup.css")" rel="stylesheet" />
+@*<script src="@Scripts.Url("~Sales/Content/nepali.datepicker.v2.js")" type="text/javascript"></script>
+	<script src="@Scripts.Url("~Sales/Content/nepali.datepicker.v2.min.js")" type="text/javascript"></script>*@
+@*<script src="@Scripts.Url("~/Areas/NeoERP.QCQAManagement/js/controller/nepali.datepicker.v2.js")"></script>
+<script src="@Scripts.Url("~/Areas/NeoERP.QCQAManagement/js/controller/nepali.datepicker.v2.min.js")"></script>*@
+
+<div class="col-md-12 bodyController" ng-controller="SanitationHygieneReportList">
+	@*<input type="hidden" ng-model="FORM_CODE" id="idFormCode" value="@Model.FORM_CODE" />
+		<input type="hidden" ng-model="TRANSACTION_NO" id="idTransactionNo" value="@Model.TRANSACTION_NO" />*@
+	<div class="portlet light form-fit bordered bottomspance">
+		<div class="portlet box green-box main">
+			<div class="portlet-title">
+				<div class="caption">
+					<a class="btn-back pull-left" data-toggle="tooltip" data-placement="top" title="Back To Dashboard" href="/QuotationManagement/Home/Dashboard">
+						<i class="fa fa-arrow-circle-left"></i>
+					</a>
+					<i class="fa fa-gift font-white-haze"></i>
+					<span class="caption-subject font-white-haze bold uppercase">Sanitation Hygiene</span>
+				</div>
+			</div>
+			<div class="portlet-body light bg-inverse">
+				<div id="ItemGrid">
+					<div class="row" style="margin-bottom: 10px; margin-top: 10px;">
+						<form id="registeredVehicle" name="registeredVehicle">
+
+							<div class="col-md-12 col-sm-12 form-group nopadding-right dynamicform">
+								<div class="row">
+									<div class="btn-group" style="margin-left:21px;">
+										@Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+									</div>
+								</div>
+							</div>
+						</form>
+					</div>
+					<div class="tab-content d-tab-content">
+
+						<div class="tab-pane active" id="tab_15_1">
+							<div class="table-responsive">
+								<table class="document_child_table dynamic-table table-fixed dynamic_child_table dynamic_child_table6">
+									<thead class="child-table-head">
+										<!-- top row: S/No, Department, Day (colspan = days * 3) -->
+										<tr>
+											<th rowspan="3" class="text-center SNo">S/No</th>
+											<th rowspan="3" class="text-center Department">Department Name</th>
+											<th class="text-center" ng-attr-colspan="{{ DaysInMonth.length * 3 }}">Day</th>
+										</tr>
+
+										<!-- second row: day numbers (each spans 3 columns) -->
+										<tr>
+											<th rowspan="2" class="text-center SNo"></th>
+											<th rowspan="2" class="text-center Department"></th>
+											<th class="text-center Day" ng-repeat="day in DaysInMonth" ng-attr-colspan="3">{{ day }}</th>
+										</tr>
+
+										<!-- third row: Standard / Actual / GAP for each day (grouped using ng-repeat-start / ng-repeat-end) -->
+										<tr>
+											<th rowspan="2" class="text-center SNo"></th>
+											<th rowspan="2" class="text-center Department"></th>
+											<th class="text-center standard" ng-repeat-start="day in DaysInMonth">STANDARD</th>
+											<th class="text-center Actual">ACTUAL</th>
+											<th class="text-center Gap" ng-repeat-end>GAP</th>
+										</tr>
+									</thead>
+									<tbody class="table_body" style="overflow-y: visible;">
+										<tr ng-repeat="(key, row) in SanitationHygieneData">
+											<!-- Serial Number -->
+											<td class="SNo_div text-center">{{ key + 1 }}</td>
+
+											<!-- Department Name -->
+											<td class="Department">
+												<input type="text"
+													   class="form-control textbox"
+													   ng-model="childModels[key]['DEPARTMENT_EDESC']"
+													   placeholder="Enter Department"
+													   disabled />
+											</td>
+											<td class="Day" ng-repeat="day in DaysInMonth">
+												<div class="day-cell">
+													<div class="day-subcol">
+														<input type="text"
+															   class="form-control textbox"
+															   placeholder=""
+															   ng-model="row.Days[day].STANDARD" />
+													</div>
+													<div class="day-subcol">
+														<input type="text"
+															   class="form-control textbox"
+															   placeholder=""
+															   ng-model="row.Days[day].ACTUAL" />
+													</div>
+													<div class="day-subcol">
+														<input type="text"
+															   class="form-control textbox"
+															   placeholder=""
+															   ng-model="row.Days[day].GAP" />
+													</div>
+												</div>
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</div>
+
+				</div>
+			</div>
+
+		</div>
+		<div class="modal-footer">
+			<button type="button" class="btn btn-sm btn-green" ng-hide="panelMode === 'view'" id="savedocumentformdata" ng-click="saveSanitationHygiene()" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Processing..." href="javascript:;">
+				<i class="fa fa-floppy-o"></i> Save
+			</button>
+			<button type="button" class="btn btn-sm btn-danger" ng-click="ItemCancel()" data-dismiss="modal">
+				<i class="fa-solid fa-xmark"></i> Cancel
+			</button>
+		</div>
+	</div>
+</div>
+@*<script src="@Scripts.Url("~/JS/DateFilter.js?V9")" type="text/javascript"></script>*@
+<script src="@Scripts.Url("~/Areas/NeoERP.QCQAManagement/js/controller/DateFilter.js?V9")"></script>
+@*<script src="@Scripts.Url("~/Areas/NeoERP.QCQAManagement/js/controller/nepali.datepicker.v2.js")"></script>
+<script src="@Scripts.Url("~/Areas/NeoERP.QCQAManagement/js/controller/nepali.datepicker.v2.min.js")"></script>*@
+
+
+<!--<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>-->
+
+<!-- Bootstrap CSS -->
+<!--<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" rel="stylesheet">-->
+
+<!-- Bootstrap Datepicker CSS -->
+<!--<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.10.0/css/bootstrap-datepicker.min.css" rel="stylesheet">-->
+
+<!-- Bootstrap JS -->
+<!--<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>-->
+
+<!-- Bootstrap Datepicker JS -->
+<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.10.0/js/bootstrap-datepicker.min.js"></script>-->
+<script>
+	var a = location.hash;
+	var b = location.pathname;
+	var url = (b + a);
+	$(".active").removeClass();
+	$("a[href='" + url + "']").parent().addClass("active");
+	$("a[href='" + url + "']").parent().parent().slideDown("slow");
+</script>
+<script>
+	$(document).ready(function () {
+		$(".tooltips-date,.config").click(function () {
+			$('.dateFilterSelect  option[value="Today"],[value="Forth Quarter"],[value="Third Quarter"],[value="First Quarter"],[value="Last Week"],[value="This Week"],[value="Last Month"],[value="This Year"],[value="Second Quarter"]').remove();
+
+		})
+	});
+	
+	function dateSet(date) {
+		var month = date.getMonth() + 1;
+		var day = date.getDate();
+		date = date.getFullYear() + '/' +
+			(('' + month).length < 2 ? '0' : '') + month + '/' +
+			(('' + day).length < 2 ? '0' : '') + day;
+		return date;
+	}
+
+	function setNepaliDateFromEnglish() {
+		var engDate = $("#englishdatedocument").val();
+		var formattedDate = moment(engDate, 'M/D/YYYY').format('DD-MMM-YYYY');
+		$("#englishdatedocument").val(formattedDate);
+		var formattedEngDate = moment(engDate, 'M/D/YYYY').format('YYYY-MM-DD');
+		var nepaliDate = AD2BS(formattedEngDate);
+		$("#issueNep").val(nepaliDate);
+	}
+
+	function NepaliDateFromEnglish() {
+		var engDate = $("#validDt").val();
+		var formattedDate = moment(engDate, 'M/D/YYYY').format('DD-MMM-YYYY');
+		$("#validDt").val(formattedDate);
+
+		var formattedEngDate = moment(engDate, 'M/D/YYYY').format('YYYY-MM-DD');
+		var nepaliDate = AD2BS(formattedEngDate);
+		$("#nepaliDate").val(nepaliDate);
+
+		var issueDt = moment($("#englishdatedocument").val(), 'DD-MMM-YYYY');
+		var validUntilDt = moment(engDate, 'M/D/YYYY');
+
+		if (validUntilDt.isBefore(issueDt)) {
+			displayPopupNotification("To be Deliver Date cannot be greater than Date/Miti date.", "error");
+		}
+	}
+
+	function ConvertNepToEng(e) {
+		var date = BS2AD($("#issueNep").val());
+		var FormattedEngDate = moment(date).format('DD-MMM-YYYY');
+		$("#englishdatedocument").val(FormattedEngDate);
+	}
+
+	$(".nepali-calendar").nepaliDatePicker({
+		//  ndpEnglishInput: 'englishdatedocument',
+		npdMonth: true,
+		onFocus: true,
+		npdYear: true,
+		npdYearCount: 10,
+		altFormat: "dd-MMM-YYYY",
+		dateFormat: "dd-MMM-YYYY",
+		onChange: function (evt) {
+			var nepaliDate = $("#issueNep").val(); // Get the Nepali date value
+			var engDate = BS2AD(nepaliDate); // Convert Nepali date to English date
+			var formattedEngDate = moment(engDate).format('DD-MMM-YYYY'); // Format the English date
+			$("#englishdatedocument").val(formattedEngDate); // Update the English date input field
+		}
+	});
+
+	function NepToEng(e) {
+		var date = BS2AD($("#nepaliDate").val());
+		var FormattedEngDate = moment(date).format('DD-MMM-YYYY');
+		$("#validDt").val(FormattedEngDate);
+	}
+
+	$(".nepali-calendar").nepaliDatePicker({
+		npdMonth: true,
+		onFocus: true,
+		npdYear: true,
+		npdYearCount: 10,
+		altFormat: "dd-MMM-YYYY",
+		dateFormat: "dd-MMM-YYYY",
+		onChange: function (evt) {
+			var nepalidate = $("#nepaliDate5").val();
+			var Engdate = BS2AD(nepalidate);
+			var cmpEngDate = moment(Engdate).format('YYYY/MM/DD');
+			var FormattedEngDate = moment(Engdate).format('DD-MMM-YYYY');
+			var date = new Date();
+			var formBackDays = $('#hdnformBackDays').val();
+			date.setDate(date.getDate() - formBackDays);
+			var minDate = dateSet(date);
+			var maxDate = dateSet(new Date());
+			$("#englishdatedocument").val(FormattedEngDate);
+		}
+	});
+</script>
+

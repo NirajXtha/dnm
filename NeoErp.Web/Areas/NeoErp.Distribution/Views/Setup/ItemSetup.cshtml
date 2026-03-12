@@ -1,0 +1,208 @@
+﻿<style>
+        div.k-grid-header th.k-header, tr.k-filter-row > th {
+            text-align: center;
+        }
+
+        .k-grid table {
+            table-layout: fixed;
+        }
+
+        .no-data {
+            background-color: red;
+        }
+
+        .k-grid td {
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .k-grid-content {
+            font-size: 10px;
+        }
+
+        .k-grid-footer {
+            font-size: 10px;
+        }
+
+        .floatright {
+            float: right;
+            margin-top: 2px !important;
+        }
+
+        a.k-button.k-button-icontext.k-grid-excel {
+            float: right;
+        }
+
+        .number {
+            text-align: right;
+        }
+
+        .text {
+            text-align: left;
+        }
+
+        .date {
+            text-align: center;
+        }
+
+        .custom-combobox {
+            position: relative;
+            display: inline-block;
+        }
+
+        .custom-combobox-toggle {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            margin-left: -1px;
+            padding: 0;
+        }
+
+        .custom-combobox-input {
+            margin: 0;
+            padding: 5px 10px;
+            width: 200px;
+        }
+
+        .controls {
+            margin-top: 10px;
+            border: 1px solid transparent;
+            border-radius: 2px 0 0 2px;
+            box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            height: 32px;
+            outline: none;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+</style>
+
+<div ng-controller="ItemSetupCtrl" class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb"></ul>
+        <div class="actions pull-right actionbutton">
+            <div class="btn-group">
+                <a class="btn btn-circle btn-icon-only btn-default" ng-click="AddClickEvent()">
+                    <i class="fa fa-plus"></i>
+                </a>
+            </div>
+            <div class="btn-group">
+                @Html.Partial("~/Views/Shared/Controls/_SetupConfig.cshtml", "ItemSetup")
+            </div>
+        </div>
+    </div>
+    <div class="portlet light bordered main" ng-show="showForm">
+        <div class="portlet-title">
+            <div class="caption">
+                <i class="fa fa-list-alt font-green-haze"></i>
+                <span class="caption-subject font-green-haze bold uppercase">
+                    Item Setup
+                </span>
+            </div>
+            <span class="actions pull-right">
+                <button type="button" id="cancelTarget" name="cancelTarget" class="btn btn-default btn-sm" ng-click="Cancel();">Cancel</button>
+                <button type="submit" id="CreateItem" name="CreateItem" ng-click="CreateItem()" class="btn btn-green btn-sm">Save</button>
+            </span>
+        </div><!-- /portlet-title-->
+        <div class="portlet-body">
+            <div class="row">
+                <form id="ItemForm" name="ItemForm" novalidate>
+                    <div class="col-sm-4 col-md-4">
+                        <div class="form-group ">
+                            <label class="control-label">
+                                Item Name<span style="color:red" ng-show="ItemForm.ItemName.$invalid">
+                                    <span ng-show="ItemForm.ItemName.$error.required">*</span>
+                                </span>
+                            </label>
+                            <input type="text" id="ItemName" name="ItemName" ng-model="Item.ITEM_EDESC" class="form-control" placeholder="Item name" style="width:100%;" required />
+                        </div>
+                    </div>
+                    <div class="col-sm-4 col-md-4">
+                        <div class="form-group ">
+                            <label class="control-label">
+                                Category Code<span style="color:red" ng-show="ItemForm.ItemCategory.$invalid">
+                                    <span ng-show="ItemForm.ItemCategory.$error.required">*</span>
+                                </span>
+                            </label>
+                            @*<input type="text" id="ItemCategory" name="ItemCategory" ng-model="Item.CATEGORY_CODE" ng-maxlength="1" class="form-control" placeholder="Category code" style="width:100%;" required />*@
+                            <select id="ItemCategory" name="ItemCategory" kendo-multi-select k-options="CatOptions" slim-scroll ng-model="Item.CATEGORY_CODE" style="width:100%;" required></select>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-sm-4">
+                        <div class="form-group">
+                            <label class="control-label">
+                                MU <span style="color:red" ng-show="ItemForm.itemMu.$invalid">
+                                    <span ng-show="ItemForm.itemMu.$error.required">*</span>
+                                </span>
+                            </label>
+                            <select id="itemMu" name="itemMu" kendo-multi-select k-options="MuOptions" slim-scroll ng-model="Item.MU_CODE" style="width:100%;" required></select>
+                        </div>
+                    </div>
+                    <div class="col-sm-4 col-md-4">
+                        <div class="form-group ">
+                            <label class="control-label">
+                                Brand Name<span style="color:red" ng-show="ItemForm.BrandName.$invalid">
+                                    <span ng-show="ItemForm.BrandName.$error.required">*</span>
+                                </span>
+                            </label>
+                            <input type="text" id="BrandName" name="BrandName" ng-model="Item.BRAND_NAME" class="form-control" placeholder="Brand Name" style="width:100%;" required />
+                        </div>
+                    </div>
+                    <div class="col-sm-4 col-md-4">
+                        <div class="form-group ">
+                            <label class="control-label">
+                                Rate<span style="color:red" ng-show="ItemForm.ItemPrice.$invalid">
+                                    <span ng-show="ItemForm.ItemPrice.$error.required">*</span>
+                                </span>
+                            </label>
+                            <input type="number" id="ItemPrice" name="ItemPrice" ng-model="Item.SALES_RATE" class="form-control" placeholder="Rate" style="width:100%;" required />
+                        </div>
+                    </div>
+                    <div class="col-sm-4 col-md-4">
+                        <div class="form-group">
+                            <label class="control-label">Upload Image</label>
+                            <input type="file" id="ItemImage" name="ItemImage" onchange="angular.element(this).scope().configureImageForUpload(this.files)" class="form-control" />
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-body form">
+                    <div class="row">
+                        <kendo-grid options="grid" id="grid"></kendo-grid>
+                        @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+
+    //$("#category").kendoAutoComplete({
+    //    dataSource: {
+    //        type: "json",
+    //        transport: {
+    //            read: {
+    //                url: window.location.protocol + "//" + window.location.host + "/api/Setup/GetCompCategories",
+    //                dataType: "json",
+    //                contentType: "application/json; charset=utf-8"
+    //            },
+    //        },
+    //    },
+    //    filter: "contains",
+    //});
+</script>
+
+<script src="@Scripts.Url("~/JS/reportFilter.js")"></script>
+<script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js")"></script>

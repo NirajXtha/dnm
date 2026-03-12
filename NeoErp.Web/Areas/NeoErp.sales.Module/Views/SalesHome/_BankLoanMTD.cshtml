@@ -1,0 +1,557 @@
+﻿@using NeoErp.Core.Models;
+@{
+    var actionPageId = "BankLoanMTD";
+    var chartTitle = "Bank Loan MTD";
+}
+
+<style>
+    .BankLoanMTDTable {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        cursor:pointer;
+    }
+    .BankLoanMTDTable, .BankLoanMTDTable > thead > tr > th {
+        font-size: 9px !important;
+
+    }
+    .amountRight{
+        text-align:right;
+    }
+    .margin-0 {
+        margin-top: -15px;
+        margin-bottom: -15px;
+        overflow-x: hidden;
+    }
+
+    .k-chart.small-chart {
+        display: inline-block;
+        width: 230px;
+    }
+
+
+</style>
+
+<div class="modal fade" id="Model_@actionPageId" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog custom-chart">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                <h4 class="modal-title"><span class="fa fa-pie-chart"></span> @chartTitle</h4>
+            </div>
+            <div class="modal-body bottom-gappingtwo">
+                <div class="row">
+                    <div class="clearfix">
+                        <div class="btn-group options_@actionPageId responsivegap margin_bottom col-sm-12 col-md-12 margin_bottom" data-toggle="buttons">
+
+                            <button type="button" class="btn btn-sm default purple-stripe active">
+                                <i class="fa fa-pie-chart"></i>
+                                <input id="typeLine" name="seriesType_@actionPageId"
+                                       type="radio" value="pie" checked="checked" autocomplete="off" />Pie
+                            </button>
+
+                        </div>
+
+                        <div class="col-md-6">
+                            
+                            <div>
+                                <!-- show labels & inStack option-->
+                                <div class="input-group">
+                                    <div class="icheck-inline">
+                                        <label>
+                                            <input id="showLabel_@actionPageId" type="checkbox" checked="checked" autocomplete="off" /> Show Labels
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                 
+            
+                        <div class="filter_title">
+                            <label class="filter-label">Advance Filter</label>
+                        </div>
+
+                        @Html.Partial("~/Views/Shared/Controls/DashboardChartFilter/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                   {
+                       ShowCustomerFilter = false,
+                       ShowProductFilter = false,
+                       ShowPartyTypeFilter = false,
+                       ShowCategoryFilter = false,
+                       ShowLocationFilter = false,
+                       ShowDocumentFilter = false,
+                       ShowCompanyFilter = false,
+                       ShowFiscalYearFilter = false,
+                       ShowEmployeeFilter = false,
+                       ShowAgentFilter = false,
+                       ShowBranchFilter = true,
+                       ShowDivisionFilter = false,
+                       IsPopUp = false,
+                       ActionPageId = actionPageId
+                   })
+               
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-green applydp" data-dismiss="modal" id="apply_@actionPageId">Apply</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="portlet portlet-sortable light bordered" id="@actionPageId">
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="icon-bar-chart font-green-haze"></i>
+            <span class="caption-subject bold uppercase font-green-haze custom-modal">@chartTitle</span>
+        </div>
+        <div class="tools">
+            <a href="javascript:;" class="collapse"></a>
+            <div class="btn-group">
+                <a class="btn dropdown-toggle download-btn" data-title="Download" data-toggle="dropdown" href="#">
+                    <i class="icon-arrow-down Thirdcustom"></i>
+                </a>
+                <ul class="dropdown-menu custom">
+                    <div class="btn-group-custom">
+                        <button type="button" data-id="BankLoanMTDChart" class="export-pdf btn default red-stripe"><i class="fa fa-file-pdf-o"></i>PDF</button>
+                        <button type="button" data-id="BankLoanMTDChart" class="export-img btn default blue-stripe"><i class="fa fa-image-o"></i>Image</button>
+                        <button type="button" data-id="BankLoanMTDChart" class="export-svg btn default green-stripe">SVG</button>
+                    </div>
+                </ul>
+            </div>
+            <a href="#Model_@actionPageId" data-toggle="modal" class="config"></a>
+            <a href="javascript:;" class="reload"></a>
+            <a href="javascript:;" class="fullscreen"></a>
+            <a href="javascript:;" class="remove"></a>
+        </div>
+    </div>
+    <div class="portlet-body">
+        <div class="margin-0">
+            <table class="BankLoanMTDTable table table-hover table-responsive table-bordered">
+                <thead>
+                    <tr>
+                        <td rowspan="2">Bank Name</td>
+                        <td colspan="3" class="text-center">Percentage</td>
+                        <td colspan="3" class="text-center">Amount</td>
+                    </tr>
+                    <tr>
+                        <td>Utilized&nbsp;%</td>
+                        <td>Unutilized&nbsp;%</td>
+                        <td>Limit&nbsp;%</td>
+                        <td>Utilized</td>
+                        <td>Unutilized</td>
+                        <td>Limit</td>
+                    </tr>
+
+                </thead>
+                <tbody>
+                    <tr></tr>
+                </tbody>
+            </table>
+        </div>
+        <script type="text/x-kendo-template" id="toolbar-template">
+            <div class="k-header k-grid-toolbar pull-right">
+
+                <a class="k-button k-button-icontext k-grid-excel" href="javascript:">
+                    <i class="fa fa-file-excel-o"></i>
+                </a>
+        </script>
+        <div class="k-content wide">
+            <div id="BankLoanMTDChart"></div>
+            <div class="overlay"><div>No data available</div></div>
+            <div class="AmountFigureType"></div>
+            <div class="DisplayFilterContent"><a href="javascript:;" data-toggle="tooltip" title=""></a></div>
+        </div>
+    </div>
+
+    <script>
+        var pageId_BankLoanMTD = '@actionPageId';
+        var clicked = false, base = 0;
+        var BankLoanMTD = (function () {
+            //initialize variables
+
+            var config = {
+                url: window.location.protocol + "//" + window.location.host + "/api/SalesDashboard/GetLoanBalanceDetailReport",
+                series: [{
+                    field: "Percentage",
+                    categoryField: "COLUMN",
+                }],
+                color: ["#0000FF", "#7FFF00", "#006400", "#9932CC", "#C71585", "#FF0000", "#FFFF00"],
+
+                isStack: false,
+                fieldValue: $("input[name=fieldType_BankLoanMTD]:checked").val(),
+                showLabel: $("#showLabel_BankLoanMTD").prop("checked"),
+                seriesType: $("input[name=seriesType_BankLoanMTD]:checked").val(),
+
+                _oldData: {
+                    dateFormat: $("input[name=DateFormat_BankLoanMTD]:checked").val(),
+                    fieldValue: $("input[name=fieldType_BankLoanMTD]:checked").val()
+                },
+
+            };
+            var _oldConfig = JSON.stringify(config);
+
+            function loadDataSource() {
+                reportFilter = reportFilter == undefined ? ReportFilter.filterAdditionalData() : reportFilter;
+                var filter = $.extend(true, {}, reportFilter);
+                config.dateFormat = $("input[name=DateFormat_BankLoanMTD]:checked").val();
+               // config.url = window.location.protocol + "//" + window.location.host + "/api/SalesDashboard/GetSalesMonthlyFiscalYearReport?DateFormat=" + $("input[name=DateFormat_BankLoanMTD]:checked").val();
+                config.showLabel = $("#showLabel_BankLoanMTD").prop("checked");
+                var dataSource = new kendo.data.DataSource({
+                    transport: {
+                        read: {
+                            url: Arg.url(config.url, { "duration": "This Month" }),
+                            dataType: "json", // <-- The default was "jsonp".
+                            type: "POST",
+                            contentType: "application/json; charset=utf-8"
+                        },
+                        parameterMap: function (options, type) {
+                            var paramMap = JSON.stringify($.extend(options, filter));
+                            delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                            delete paramMap.$format; // <-- remove format parameter.
+                            return paramMap;
+                        }
+                    },
+                    requestStart: function () {
+                        if (IsDataGrid != "Grid") {
+                            kendo.ui.progress($("#BankLoanMTDChart"), true);
+                        }
+                    },
+                    requestEnd: function () {
+                        kendo.ui.progress($("#BankLoanMTDChart"), false);
+                    },
+                    group: config.group,
+                    sort: {
+                        field: config.sortField,
+                        dir: "asc"
+                    }
+
+                });
+
+                $("#BankLoanMTD .DisplayFilterContent a").text("");
+                var IsDataGrid = $('.btnGrid_BankLoanMTD').data("type");
+                if (IsDataGrid == "Grid") {
+                    CreateGrid(dataSource);
+                    return;
+                }
+                fullScreenHandle();
+                dataSource.fetch(function () {
+                    CreateTable(this.data());
+                });
+            }
+            function CreateChart(dataSource) {
+                $('.btnGrid_BankLoanMTD').data("type", "Chart");
+                $("#BankLoanMTDChart").html('');
+                $("#BankLoanMTDChart").removeAttr("style");
+                $("#BankLoanMTDChart").removeAttr("class");
+                $("#BankLoanMTDChart").kendoChart({
+                    chartArea: {
+                        height: ($("#BankLoanMTDChart").hasClass("portlet-fullscreen")) ? 450 : 250,
+                    },
+                    onDrag: function (e) {
+                        var chart = e.sender;
+                        var ds = chart.dataSource;
+                        var options = chart.options;
+
+                        var categoryRange = e.axisRanges.CategoryAxis;
+
+                        if (categoryRange) {
+                            var xMin = categoryRange.min;
+                            var xMax = categoryRange.max;
+
+                            options.categoryAxis.min = xMin;
+                            options.categoryAxis.max = xMax;
+
+                            ds.filter(viewModel.getFilter(xMin, xMax));
+                        }
+                    },
+                    pannable: {
+                        lock: "y"
+                    },
+                    zoomable: {
+                        mousewheel: {
+                            lock: "y"
+                        },
+                        selection: {
+                            lock: "y"
+                        }
+                    },
+                    dataSource: dataSource,
+                    legend: {
+                        position: "bottom"
+                    },
+                    seriesColors: config.color,
+                    seriesDefaults: {
+                        type: config.seriesType,
+                        labels: {
+                            visible: config.showLabel,
+                            template: "#= kendo.format('{0:P}', percentage)#",
+                            //position: "center",
+                            position: "outsideEnd",
+                            visible: true,
+                            background: "transparent"
+
+                        },
+                        style: "smooth",
+                    },
+                    series: config.series,
+                    valueAxis: {
+                        line: {
+                            visible: true
+                        },
+                        labels: {
+                            rotation: 'auto',
+                            template: "#= FormatLabels(value)#"
+                        },
+                        title: { text: amountFigureType }
+                    },
+                    tooltip: {
+                        visible: true,
+                        format: "{0}",
+                        template: "#= category #: \n #= FormatLabels(value)#"
+                    },
+                    dataBound: function (e) {
+                        var maxValue = getMaxValueFromDataSource(e);
+                        var majorunit = Math.max(6, maxValue / 6);
+                        e.sender.options.valueAxis.majorUnit = majorunit;
+                        e.sender.options.valueAxis.max = maxValue + majorunit;
+                        e.sender.options.valueAxis.axisCrossingValue = [0, -(maxValue + majorunit)];
+                        $("#BankLoanMTDChart").next(".overlay").toggle(maxValue <= 0);
+                        e.sender.options.categoryAxis.categories = getCategoryFromDataSource(e);
+
+                       CreateTable(e.sender.dataSource.data());
+                    },
+                    seriesClick: function (e) {
+                    },
+                });
+            }
+            function CreateTable(data)
+            {
+                
+                $("#BankLoanMTDChart").html('');
+                $("#BankLoanMTDChart").removeAttr("style");
+                $("#BankLoanMTDChart").removeAttr("class");
+
+                var bodyRow = "<tr>";
+                $.each(data, function (i, obj) {
+                    var percentage = (obj.Amount / obj.Limit * 100).toFixed(2);
+                    bodyRow += "<td style='white-space: nowrap;'>" + obj.BankName + "</td>";
+                    bodyRow += "<td class='amountRight'>" + percentage + "%</td>";
+                    bodyRow += "<td class='amountRight'>" + (100 - percentage).toFixed(2) + "%</td>";
+                    bodyRow += "<td class='amountRight'>100%</td>";
+
+                    bodyRow += "<td class='amountRight'>" + $.number(obj.Amount, 2) + "</td>";
+                    bodyRow += "<td class='amountRight'>" + $.number(obj.Limit - obj.Amount,2) + "</td>";
+                    bodyRow += "<td class='amountRight'>" + $.number(obj.Limit,2)+"</td>";
+                    bodyRow += "</tr>";
+                });
+                $(".BankLoanMTDTable").find("tbody").html(bodyRow);
+
+                CreateSmallCharts(data)
+            }
+            function CreateSmallCharts(data) {
+                var node = $("#BankLoanMTDChart").parent();
+                node.children().remove();
+                node.prepend('<div id="BankLoanMTDChart"></div>' +
+                    '<div class="overlay"><div>No data available</div></div>' +
+                    '<div class="AmountFigureType"></div>' +
+                    '<div class="DisplayFilterContent"><a href="javascript:;" data-toggle="tooltip" title=""></a></div>');
+                $.each(data, function (i, obj) {
+                    var bankAbbr = obj.BankName.replace(/[ .,()]/g, '_');                       
+                    var node = $("#BankLoanMTDChart").parent();
+                    node.append("<div id='BankLoanMTD_" + bankAbbr + "' class='small-chart'></div>");
+
+                    $("#BankLoanMTD_" + bankAbbr).kendoChart({
+                        chartArea: {
+                            height: ($("#BankLoanMTD_" + bankAbbr).hasClass("portlet-fullscreen")) ? 450 : 250,
+                        },
+                        title: {
+                            text: obj.BankName.substring(0, 10) + "...." + obj.BankName.substring(obj.BankName.length - 10),
+                        },
+                        dataSource: {
+                            data: obj,
+                            schema: {
+                                parse: function (items) {                                   
+                                    var result = [];
+                                    var utilizedPercentage = items.Amount / items.Limit * 100;
+                                    result.push({ Percentage: utilizedPercentage, "COLUMN": "Utilized" });
+                                    result.push({ Percentage: 100 - utilizedPercentage, "COLUMN": "Unutilized" });
+                                    return result;
+                                }
+                            },
+                        },
+                        legend: {
+                            position: "bottom",
+                            //visible: false,
+                        },
+                        seriesColors: config.color,
+                        seriesDefaults: {
+                            type: config.seriesType,
+                            labels: {
+                                visible: config.showLabel,
+                                template: "#= kendo.format('{0:n}', value)# %",
+                                //position: "center",
+                                position: "insideEnd",
+                                visible: true,
+                                // background: "transparent"
+
+                            },
+                            style: "smooth",
+                        },
+                        series: config.series,
+                        valueAxis: {
+                            line: {
+                                visible: true
+                            },
+                            labels: {
+                                rotation: 'auto',
+                                template: "#= FormatLabels(value)#"
+                            },
+                            title: { text: amountFigureType }
+                        },
+                        tooltip: {
+                            visible: true,
+                            format: "{0}",
+                            //template: "#= " + obj.BankName+" \n category #: \n #= FormatLabels(value) %#"
+                            template: function (data)
+                            {
+                                
+                                return obj.BankName + "<br />" + data.category+ " : " + data.dataItem.Percentage + " %"
+                            }
+                        },
+                    });
+                });
+
+
+
+            }
+            function refreshChart(flag) {
+                //check if showlevel and stack changed
+                if (flag != undefined && flag.data == false) {
+                    if ($(".btnGrid_BankLoanMTD").data("type") == "Grid") {
+                        $(".btnGrid_BankLoanMTD").data("type", "Chart");
+                        loadDataSource();
+                        return;
+                    }
+                }
+                //check if series type changed
+                if (flag != undefined && flag.data.options != undefined) {
+                    if ($(".btnGrid_BankLoanMTD").data("type") == "Grid") {
+                        chart_grid_option_change("btnGrid_BankLoanMTD", BankLoanMTD.init);
+                        return;
+                    }
+                }
+                var chart = $("#BankLoanMTDChart").data("kendoChart"),
+                    type = $("input[name=seriesType_BankLoanMTD]:checked").val(),
+                    stack = $("#Stack_BankLoanMTD").prop("checked"),
+                    IsLebelShow = $("#showLabel_BankLoanMTD").prop("checked"),
+                    fieldValue = $("input[name=fieldType_BankLoanMTD]:checked").val();
+
+                for (var i = 0, length = chart.options.series.length; i < length; i++) {
+                    chart.options.series[i].type = type;
+                    chart.options.series[i].labels.visible = IsLebelShow;
+                    if (type == "column") {
+                        chart.options.series[i].labels.rotation = -90;
+                    }
+                    if (type == "bar") {
+                        chart.options.series[i].labels.rotation = 0;
+                    }
+
+
+                };
+                chart.refresh();
+            }
+
+            //event Bind
+            function applyClickEvent() {
+                var checkedDateFormat = $("input[name=DateFormat_BankLoanMTD]:checked").val();
+                var checkedFieldValue = $("input[name=fieldType_BankLoanMTD]:checked").val();
+                var IsChanged = false;
+
+                ChartFilter('BankLoanMTD', BankLoanMTD.init, true);
+            }
+            function reloadClickEvent() {
+                RefreshChartFilterControl('BankLoanMTD');
+                config = JSON.parse(_oldConfig);
+
+
+                reportFilter.ReportFilters.BranchFilter = [];
+                loadDataSource();
+            }
+            function chartGridSwitchEvent() {
+                var datasource = $("#BankLoanMTDChart").data("kendoChart").dataSource;
+                $('.btnGrid_BankLoanMTD').data("type") == "Chart" ? CreateGrid(datasource) : CreateChart(datasource);
+                $("i", this).toggleClass("icon-bar-chart");
+            }
+            //handle full screen
+            function fullScreenHandle() {
+                // handle portlet fullscreen
+                $('body').on('click', '.portlet > .portlet-title .fullscreen', function (e) {
+                    e.preventDefault();
+                    var portlet = $(this).closest(".portlet");
+                    var chart = portlet.find('.portlet-body > .k-content.wide > div').data("kendoChart");
+                    if (portlet.hasClass('portlet-fullscreen')) {
+                        chart.options.chartArea.height = 450;
+                    } else {
+                        chart.options.chartArea.height = 250;
+                    }
+                    //change chart height
+
+                    chart.redraw();
+
+                });
+            }
+
+
+
+            return {
+                init: loadDataSource,
+                refreshChart: refreshChart,
+                applyClick: applyClickEvent,
+                reloadClick: reloadClickEvent,
+
+            };
+        })();
+
+        $(document).ready(function () {
+            BankLoanMTD.init();
+
+            //start Binding
+            $(document).bind("kendo:skinChange", BankLoanMTD.init);
+            $('#BankLoanMTDChart').closest('.portlet').find('.reload').bind("click", BankLoanMTD.reloadClick);
+            $('#apply_BankLoanMTD').bind("click", BankLoanMTD.applyClick);
+            $("#showLabel_BankLoanMTD").bind("change", true, BankLoanMTD.refreshChart);
+            $('#Stack_BankLoanMTD').bind('click', true, BankLoanMTD.refreshChart);
+            $(".options_BankLoanMTD").bind("change", { "options": true }, BankLoanMTD.refreshChart);
+            $('.BankLoanMTDTable').on({
+                mousemove: function (e) {
+                    clicked && function (xAxis) {
+                        var _this = $(this);
+                        if (base > xAxis) {
+                            var diff = (base - xAxis).toString() + "px";
+                            base = xAxis;
+                            _this.css('margin-left', '-='+diff);
+                        }
+                        if (base < xAxis) {
+                            var diff = (xAxis - base).toString() + "px";
+                            base = xAxis;
+                            _this.css('margin-left', '+='+ diff);
+                        }
+                    }.call($(this), e.pageX);
+                },
+                mousedown: function (e) {
+                    clicked = true;
+                    base = e.pageX;
+                },
+                mouseup: function (e) {
+                    clicked = false;
+                    base = 0;
+                }
+            });
+        });
+    </script>
+</div>

@@ -1,0 +1,193 @@
+﻿@using NeoErp.Core.Models;
+@using NeoErp.Sales.Modules.Services.Models
+@{
+    var actionPageId = "TreeWiseKiranShoesSales";
+    var chartTitle = "Sales Summary";
+
+}
+<style>
+    #TreeWiseKiranShoesSales {
+        font-size: 11px;
+    }
+</style>
+
+
+<div class="portlet portlet-sortable light bordered" id="@actionPageId">
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="icon-bar-chart font-green-haze"></i>
+            <span class="caption-subject bold uppercase font-green-haze custom-modal">@chartTitle</span>
+        </div>
+        <div class="page-toolbar" style="display:none;">
+            <div class="btn-group pull-right">
+                <div class="actions">
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+    <div class="portlet-body">
+        <script type="text/x-kendo-template" id="toolbar-template">
+            <div class="k-header k-grid-toolbar pull-right">
+
+                <a class="k-button k-button-icontext k-grid-excel" href="javascript:">
+                    <i class="fa fa-file-excel-o"></i>
+                </a>
+            </div>
+        </script>
+        <div class="k-content wide">
+            <div id="TreeWiseKiranShoesSales"></div>
+            <div class="overlay"><div>No data available</div></div>
+            <div class="AmountFigureType"></div>
+            <div class="DisplayFilterContent"><a href="javascript:;" data-toggle="tooltip" title=""></a></div>
+        </div>
+    </div>
+</div>
+
+<script src="@Scripts.Url("~/JS/DateFilter.js?V9")" type="text/javascript"></script>
+
+<script>
+    var pageId_MonthlySalesChart = '@actionPageId';
+
+
+</script>
+<script>
+
+    $(document).ready(function () {
+        var service = window.location.protocol + "//" + window.location.host + "/api/SalesDashboard/TreewiseCustomerSalesReport";
+        DateFilter.init(function () {
+
+            BindGrid(service);
+
+        });
+
+        $(".applydp").on("click", function (evt) {
+            evt.preventDefault();
+            KendoGridRefresh(service);
+        })
+    });
+    var totalQuantity;
+    var totalTotalSales;
+    function BindGrid(service) {
+
+        var fromADdate = $("#FromDateVoucher").val()
+        var toADdate = $("#ToDateVoucher").val();
+        var fromBSdate = $("#fromInputDateVoucher").val();
+        var toBSdate = $("#toInputDateVoucher").val();
+        var branches = ReportFilter.getBranchs();
+        $("#TreeWiseKiranShoesSales").kendoTreeList({
+
+            dataSource: {
+                transport: {
+                    read: {
+                        url: service,
+                        dataType: "json",
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8",
+                    },
+                    parameterMap: function (options, type) {
+                        var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+                    }
+                },
+                schema: {
+                    model: {
+                        id: "SERIAL_NO",
+                        parentId: "PARENTNO",
+                        fields: {
+                            SERIAL_NO: { field: "SERIAL_NO", type: "number" },
+                            PARENTNO: { field: "PARENTNO", type: "number", defaultValue: "0" },
+                            TD_QUANTITY: { field: "TD_QUANTITY", type: "number" },
+                            TD_TOTAL_VALUE: { field: "TD_TOTAL_VALUE", type: "number" },
+                            MTD_QUANTITY: { field: "MTD_QUANTITY", type: "number" },
+                            MTD_TOTAL_VALUE: { field: "MTD_TOTAL_VALUE", type: "number" },
+                            YTD_QUANTITY: { field: "YTD_QUANTITY", type: "number" },
+                            YTD_TOTAL_VALUE: { field: "YTD_TOTAL_VALUE", type: "number" },
+                        },
+
+                        //expanded: true,
+                    }
+                },
+                aggregate: [
+                    { field: "TD_QUANTITY", aggregate: "sum" },
+                    { field: "YTD_TOTAL_VALUE", aggregate: "sum" }
+                ]
+            },
+            toolbar: ["excel"],
+            excel: {
+                fileName: "CustomerTree.xlsx",
+               
+                filterable: true
+            },
+
+            filterable: true,
+            sortable: true,
+          //  height: 400,
+            columnMenu: {
+                columns: true
+            },
+            columnMenuInit: function (e) {
+                wordwrapmenu(e);
+            },
+            scrollable: {
+                virtual: true
+            },
+            dataBound: function (o) {
+                
+                var grid = o.sender;
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.length + 1;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    displayPopupNotification("No Data Found Given Date Filter.", "info");
+                }
+                else if (o.sender.dataSource._data.length == 1) {
+                    
+                    if (o.sender.dataSource._data[0].TOTAL_SALES == 0) {
+                        var colCount = grid.columns.length;
+                        $(o.sender.wrapper)
+                            .find('tbody')
+                            .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                        displayPopupNotification("No Data Found Given Date Filter.", "info");
+                    }
+                }
+
+                $('div').removeClass('.k-header k-grid-toolbar');
+
+            },
+            resizable: true,
+            selectable: true,
+            columns: [
+                { field: "PRODUCT", title: "Customer Name", width: 300 },
+                { field: "TD_QUANTITY", title: "Today Quantity", attributes: { style: "text-align: right;" }, width: 95, format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter") + "}" },
+                { field: "TD_TOTAL_VALUE", title: "Today Amount", attributes: { style: "text-align: right;" }, width: 95, format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter") + "}" },
+                { field: "MTD_QUANTITY", title: "Mtd Quantity", attributes: { style: "text-align: right;" }, width: 95, format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter") + "}" },
+                { field: "MTD_TOTAL_VALUE", title: "Mtd Amount", attributes: { style: "text-align: right;" }, width: 95, format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter") + "}" },
+                { field: "YTD_QUANTITY", title: "Ytd Qty", attributes: { style: "text-align: right;" }, width: 95, format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter") + "}" },
+                { field: "YTD_TOTAL_VALUE", title: "Ytd Amount", attributes: { style: "text-align: right;" }, width: 95, format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter") + "}" }
+            ]
+        });
+
+
+    }
+
+
+    function KendoGridRefresh(readUrl) {
+
+        $('#TreeWiseKiranShoesSales').val('');
+        $('#TreeWiseKiranShoesSales').html('');
+        var treeList = $("#TreeWiseKiranShoesSales").data("kendoTreeList");
+        treeList.destroy();
+        BindGrid(readUrl);
+    }
+</script>
+
+

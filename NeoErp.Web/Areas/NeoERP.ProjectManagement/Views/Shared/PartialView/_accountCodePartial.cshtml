@@ -1,0 +1,184 @@
+﻿@*<label for="element" >{{element.COLUMN_HEADER}}</label>
+    <input id="item.COLUMN_NAME" kendo-combo-box ng-model="childModels[key][item.COLUMN_NAME]"
+           class="accCodeAutoComplete cacccode"
+           k-options="accountCodeAutocomplete"
+           data-index="{{key}}"
+           k-suggest="false"
+           k-placeholder="'Select Account Code'"/>*@
+
+<style>
+    .search-grid table tr {
+        display: table-row !important;
+    }
+</style>
+<div id="accChildCtrl" ng-controller="accChildCtrl">
+    <div class="input-group" style="width: 100%;">
+        <input id="idaccount_{{key}}" kendo-combo-box ng-model="childModels[key][item.COLUMN_NAME]"
+               class="accCodeAutoComplete cacccode caccount_{{key}}" 
+               k-options="accountCodeAutocomplete"
+               acc-data-index="{{key}}"
+               k-suggest="false"
+               k-min-length="3"
+               k-on-select="show(kendoEvent)"
+               />
+        <span class="input-group-addon addon-iconbox" style="cursor:pointer"
+              ng-click="BrowseTreeListForChildAccountCode(key)">
+            <i class="fa fa-search" data-toggle="tooltip" title="Search Account"></i>
+@*            <i class="fa fa-book"></i>*@
+
+        </span>
+    </div>
+    <div class="modal fade-out" id="AccountModal_{{key}}" data-backdrop="static" tabindex="-1" data-width="760">
+        <div class="modal-dialog  modal-dialog-box w-900">
+            <div class="modal-content ">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true" next-on-tab title="Close"></button>
+                    <h4 class="modal-title">
+                        <span class="fa fa-list-ul"></span>
+                        Chart Of Account
+                    </h4>
+                </div>
+
+                <div class="modal-body modal-dialogbox-body">
+                    <div class="row">
+                        <div class="col-md-5 mingapright customcolumn-one columnbg childPopup">
+                            <input id="SubLedgerfilterText_{{key}}" class="form-control SubLedgerfilterText filterText" name="search" type="text" placeholder="Search categories" />                        
+                            <div id="accounttree_{{key}}" kendo-tree-view="tree"
+                                 k-data-source="childAccounttreeData"
+                                 k-options="subaccountoptions">
+
+                                <span k-template>
+                                    {{dataItem.AccountName}}
+                                </span>
+                            </div>
+
+                        </div>
+                        <div class="col-md-7 customcolumn-two mingapleft">
+                            <div class="expand verticalLine">
+                                <div class="row">
+                                    <div class="col-md-offset-8 col-md-4 search_box">
+                                        <div class="topsearch" style="margin-right: 15px !important;">
+                                            @*<a class="btn-linkicon fa fa-search" ng-click="BindSearchGrid()" title="Search list"></a>*@
+                                            <input class="form-control SubLedgertxtSearchString k-textbox" type="text" id="SubLedgertxtSearchString_{{key}}" ng-model="SubLedgertxtSearchString" name="search" placeholder="enter search text..." />
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <kendo-grid id="accountGrid_{{key}}" options="accountchildGridOptions" k-rebind="accountchildGridOptions" class="search-grid">
+
+                                </kendo-grid>
+                            </div>
+
+                        </div>
+                    </div>
+
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-default"  data-dismiss="modal" ng-click="acccode_Cancel(key)" title="Cancel">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        $('.topsearch').hide();
+    });
+    $(".SubLedgerfilterText").keyup(function (e) {
+       
+        var mi = document.popupindex;
+        var FilterValue = $(this).val();
+        var value = FilterValue.substring(0, 1).toUpperCase() + FilterValue.substring(1);
+
+        if (value !== "") {
+            $(".selectAll").css("visibility", "hidden");
+
+            $("#accounttree_" + mi + " .k-group .k-group .k-in").closest("li").hide();
+            $("#accounttree_" + mi + " .k-group").closest("li").hide();
+            $("#accounttree_" + mi + " .k-group .k-group .k-in:contains(" + value + ")").each(function () {
+                $(this).parents("ul, li").each(function () {
+                    var treeView = $("#accounttree_" + mi).data("kendoTreeView");
+                    treeView.expand($(this).parents("li"));
+                    $(this).show();
+                });
+            });
+            $("#accounttree_" + mi + " .k-group .k-in:contains(" + value + ")").each(function () {
+                $(this).parents("ul, li").each(function () {
+                    $(this).show();
+                });
+            });
+        }
+        else {
+            $("#accounttree_" + mi + " .k-group").find("li").show();
+            var nodes = $("#accounttree > .k-group > li");
+
+            $.each(nodes, function (i, val) {
+                if (nodes[i].getAttribute("data-expanded") == null) {
+                    $(nodes[i]).find("li").hide();
+                }
+            });
+            $(".selectAll").css("visibility", "visible");
+        }
+    });
+
+    $(".SubLedgertxtSearchString").keyup(function () {
+        
+        var mi = document.popupindex;
+        var val = $(this).val();
+        var grid = $("#accountGrid_" + mi + "").data("kendoGrid");
+        if (grid != undefined) {
+            var tempServerFilter = grid.dataSource.options.serverFiltering;
+            grid.dataSource.options.serverFiltering = false;
+            var filter = [];
+            $.each(grid.columns, function (i, v) {
+                if (v.field != undefined) {
+                    var searchText = $.trim($("#SubLedgertxtSearchString_" + mi).val());
+                    var model = grid.dataSource.options.schema.model.fields[v.field];
+                    var type = "string";
+                    if (model != undefined)
+                        type = model.type;
+                    if (type === "string")
+                        filter.push({ field: v.field, operator: "contains", value: searchText });
+                    else if (type === "number")
+                        filter.push({ field: v.field, operator: "eq", value: searchText });
+                    else if (type === "date") {
+                        var dateValue = new Date(searchText);
+                        searchText = dateValue == "Invalid Date" ? searchText : dateValue;
+                        filter.push({ field: v.field, operator: "eq", value: searchText });
+                    }
+                }
+
+            });
+            var filter = {
+                logic: "or",
+                filters: filter,
+            }
+
+            grid.dataSource.filter(filter);
+
+            if ($("#SubLedgertxtSearchString_" + mi).val().length == 0)
+                grid.dataSource.filter([]);
+            grid.bind("dataBound", function () {
+                grid.dataSource.options.serverFiltering = tempServerFilter;
+            });
+        }
+    });
+    //function formatValue(value, text) {
+    //    if (text.indexOf("#") > -1)
+    //        text = text.split("#")[1];
+    //    var textMatcher = new RegExp(text, "ig");
+    //    return value.replace(textMatcher, function (match) {
+    //        return "<u><strong>" + match + "</strong></u>";
+    //    });
+    //}
+    
+    //var viewModel = kendo.observable({
+    //    onClose: function (e) {
+    //        alert('hello');
+
+    //    }
+    //});
+    //kendo.bind($("#accChildCtrl"), viewModel);  
+</script>

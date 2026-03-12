@@ -1,0 +1,544 @@
+﻿
+
+@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@using NeoErp.Core.Models.CustomModels
+@{
+    Layout = null;
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+<link href="~/Areas/NeoErp.Distribution/Content/attendanceCalendarStyle.css" rel="stylesheet" />
+<style>
+
+    table td.nc-box {
+        vertical-align: top !important;
+    }
+</style>
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb"></ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+
+                @*<div class="actions">
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                    </div>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                        {
+                            //ShowCustomerFilter = false,
+                             ShowEmployeeFilter = true
+                        })
+                    </div>
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                        <i class="icon-control-play"></i>
+                    </a>
+                </div>*@
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-body form">
+                    <div class="row" style="padding:1%;">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Employee List
+                                </label>
+                                <input id="empList" style="width: 100%" />
+                            </div>
+                        </div>
+                        <div class="col-sm-3" >
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Year
+                                </label>
+                                <select class="form-control" id="nc-year"></select>
+                            </div>
+                        </div>
+                        <div class="col-sm-3">
+                            <div class="form-group">
+                                <label class="control-label">
+                                    Month
+                                </label>
+                                <select class="form-control" id="nc-month"></select>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="nepaliCalendar" class="nc-container npcalendar">
+                        <table id="nc-content" class="table table-bordered">
+                            <tr>
+                                <td class="nc-box"><div class="nc-header">Sunday</div><div id="nc-sunday"></div></td>
+                                <td class="nc-box"><div class="nc-header">Monday</div><div id="nc-monday"></div></td>
+                                <td class="nc-box"><div class="nc-header">Tuesday</div><div id="nc-tuesday"></div></td>
+                                <td class="nc-box"><div class="nc-header">Wednesday</div><div id="nc-wednesday"></div></td>
+                                <td class="nc-box"><div class="nc-header">Thursday</div><div id="nc-thrusday"></div></td>
+                                <td class="nc-box"><div class="nc-header">Friday</div><div id="nc-friday"></div></td>
+                                <td class="nc-box"><div class="nc-header">Saturday</div><div id="nc-saturday"></div></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="calendar-colorbox">
+                        <ul>
+                            <li>
+                                <div class="color-box colorbox-color1"></div>
+                                <span>Holiday</span>
+                            </li>
+                            <li>
+                                <div class="color-box colorbox-color2"></div>
+                                <span>Leave</span>
+                            </li>
+                            <li>
+                                <div class="color-box colorbox-color3"></div>
+                                <span>Training</span>
+                            </li>
+                            <li>
+                                <div class="color-box colorbox-color4"></div>
+                                <span>Tour</span>
+                            </li>
+                            <li>
+                                <div class="color-box colorbox-color5"></div>
+                                <span>Absent</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+
+
+
+<script src="@Scripts.Url("~/JS/DateFilter.js")" type="text/javascript"></script>
+<script src="@Scripts.Url("~/JS/ReportFilter.js")" type="text/javascript"></script>
+<script>
+
+
+
+
+    window.nepaliCalendar = (function ($) {
+        "use strict";
+        var bsadMap = {
+            "2074":
+            {
+                '01': { from: "2017-04-14", to: "2017-05-14" },
+                '02': { from: "2017-05-15", to: "2017-06-14" },
+                '03': { from: "2017-06-15", to: "2017-07-15" },
+                '04': { from: "2017-07-16", to: "2017-08-16" },
+                '05': { from: "2017-08-17", to: "2017-09-16" },
+                '06': { from: "2017-09-17", to: "2017-10-17" },
+                '07': { from: "2017-10-18", to: "2017-11-16" },
+                '08': { from: "2017-11-17", to: "2017-12-15" },
+                '09': { from: "2017-12-16", to: "2018-01-14" },
+                '10': { from: "2018-01-15", to: "2018-02-12" },
+                '11': { from: "2018-02-13", to: "2018-03-14" },
+                '12': { from: "2018-03-15", to: "2018-04-13" }
+            },
+            "2075":
+            {
+                '01': { from: "2018-04-14", to: "2018-05-14" },
+                '02': { from: "2018-05-15", to: "2018-06-14" },
+                '03': { from: "2018-06-15", to: "2018-07-16" },
+                '04': { from: "2018-07-17", to: "2018-08-16" },
+                '05': { from: "2018-08-17", to: "2018-09-16" },
+                '06': { from: "2018-09-17", to: "2018-10-17" },
+                '07': { from: "2018-10-18", to: "2018-11-16" },
+                '08': { from: "2018-11-17", to: "2018-12-15" },
+                '09': { from: "2018-12-16", to: "2019-01-14" },
+                '10': { from: "2019-01-15", to: "2019-02-12" },
+                '11': { from: "2019-02-13", to: "2019-03-14" },
+                '12': { from: "2019-03-15", to: "2019-04-13" }
+            },
+            "2076":
+            {
+                '01': { from: "2019-04-14", to: "2019-05-14" },
+                '02': { from: "2019-05-15", to: "2019-06-15" },
+                '03': { from: "2019-06-16", to: "2019-07-16" },
+                '04': { from: "2019-07-17", to: "2019-08-17" },
+                '05': { from: "2019-08-18", to: "2019-09-16" },
+                '06': { from: "2019-09-17", to: "2019-10-17" },
+                '07': { from: "2019-10-18", to: "2019-11-16" },
+                '08': { from: "2019-11-17", to: "2019-12-15" },
+                '09': { from: "2019-12-16", to: "2020-01-14" },
+                '10': { from: "2020-01-15", to: "2020-02-12" },
+                '11': { from: "2020-02-13", to: "2020-03-14" },
+                '12': { from: "2020-03-15", to: "2020-04-13" }
+            }
+        };
+        var monthName = { 
+                '01':"Baisakh",
+                '02': "Jestha",
+                '03': "Ashadh",
+                '04': "Shrawan",
+                '05': "Bhadra",
+                '06': "Ashoj",
+                '07': "Kartik",
+                '08': "Mangsir",
+                '09': "Poush",
+                '10': "Magh",
+                '11': "Falgun",
+                '12': "Chaitra"
+        };
+        var weekdaytemplate = {
+            1: [],
+            2: [],
+            3: [],
+            4: [],
+            5: [],
+            6: [],
+            7: []
+        };
+
+        var weekday = null;
+        var months = {
+            '01': 'Baishakh',
+            '02': 'Jestha',
+            '03': 'Asar',
+            '04': 'Shrawan',
+            '05': 'Bhadau',
+            '06': 'Aswin',
+            '07': 'Kartik',
+            '08': 'Mansir',
+            '09': 'Poush',
+            '10': 'Magh',
+            '11': 'Falgun',
+            '12': 'Chaitra',
+        }
+        var formatDate = function (date) {
+            var d = new Date(date),
+                month = '' + (d.getMonth() + 1),
+                day = '' + d.getDate(),
+                year = d.getFullYear();
+            if (month.length < 2)
+                month = '0' + month;
+            if (day.length < 2)
+                day = '0' + day;
+            return [year, month, day].join('-');
+        }
+
+        var getYears = function () {
+            return Object.keys(bsadMap);
+        };
+        var getMonths = function () {
+            return months;
+        };
+
+        var getCalendar = function (year, month) {
+            var weekday = $.extend(true, {}, weekdaytemplate);
+            var monthData = bsadMap[year][month];
+            var fromDate = new Date(monthData['from']);
+            var toDate = new Date(monthData['to']);
+            var timeDiff = Math.abs(toDate.getTime() - fromDate.getTime()) + 3600;
+            var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
+            var f = false;
+            var j = 0;
+            var loopDate = new Date();
+            for (var i = 0; i < 50; i++) {
+                var index = i % 7;
+                if (!f) {
+                    if (index === fromDate.getDay()) {
+                        f = true;
+                    } else {
+                        weekday[index + 1].push({});
+                    }
+                }
+
+                if (f) {
+                    if (j == diffDays) {
+                        break;
+                    }
+                    loopDate.setTime(fromDate.getTime() + j * 86400000);
+                    weekday[index + 1].push({ date: formatDate(loopDate), day: j + 1 });
+                    j++;
+                }
+
+            }
+            return weekday;
+        };
+        return {
+            getCalendar: getCalendar,
+            bsadMap: bsadMap,
+            getYears: getYears,
+            getMonths: getMonths,
+            monthName: monthName
+        };
+    })(window.jQuery);
+    (function ($, app, nc) {
+        'use strict';
+        $(document).ready(function () {
+
+            var $nepaliCalendar = $('#nepaliCalendar');
+            var $content = $('#nc-content');
+            var $sunday = $content.find('#nc-sunday');
+            var $monday = $content.find('#nc-monday');
+            var $tuesday = $content.find('#nc-tuesday');
+            var $wednesday = $content.find('#nc-wednesday');
+            var $thrusday = $content.find('#nc-thrusday');
+            var $friday = $content.find('#nc-friday');
+            var $saturday = $content.find('#nc-saturday');
+
+            var template = `
+        <div class='nc-date'>
+            <table class="table table-condensed" style="inherit">
+                <tr>
+                    <td colspan="2" class="day" style="font-size:10px;">
+                    <td>
+                </tr>
+                <tr>
+                    <td colspan="2" class="status" style="font-size:0.6em;">
+                    <td>
+                </tr>
+                <tr>
+                    <td class="in-time" style="font-size:10px;"></td>
+                    <td class="out-time" style="font-size:10px;"></td>
+                </tr>
+            </table>
+        </div>`;
+
+            //$(".applydp").on("click", function (evt) {
+            //    evt.preventDefault();
+            //    $("#RunQuery").trigger("click");
+            //    $(this).closest("#applydp").modal('hide');
+            //});
+
+            //$("#loadAdvancedFilters").on("click", function (evt) {
+            //    evt.preventDefault();
+            //    $("#RunQuery").trigger("click");
+            //});
+
+            //$("#RunQuery").click(function (evt) {
+            //    evt.preventDefault();
+            //    var currentDate = $("#fromInputDateVoucher").val();
+            //    var currentYear = currentDate.split('-')[0];
+            //    var currentMonth = currentDate.split('-')[1];
+            //    loadCalendar(currentYear, currentMonth);
+            //});
+
+            var $year = $('#nc-year');
+            var $month = $('#nc-month');
+
+            var years = nc.getYears();
+            var months = nc.getMonths();
+
+            $month.on('change', function () {
+                loadCalendar($year.val(), $month.val());
+            });
+
+            var ddlUrl = window.location.protocol + "//" + window.location.host + "/api/Report/GetEmployees"
+
+            $("#empList").kendoDropDownList({
+                optionLabel: "-- Select Employee --",
+                dataTextField: "EMPLOYEE_EDESC",
+                dataValueField: "EMPLOYEE_CODE",
+                autoBind: false,
+                filter: "contains",
+                dataSource: {
+                    type: "json",
+                    serverFiltering: false,
+                    transport: {
+                        read: {
+                            url: ddlUrl,
+                        },
+                        parameterMap: function (data, action) {
+                            if (data.filter != undefined) {
+                                if (data.filter.filters[0] != undefined) {
+                                    var newParams = {
+                                        filter: data.filter.filters[0].value,
+                                        empGroup: ""
+                                    };
+                                    return newParams;
+                                }
+                                else {
+                                    var newParams = {
+                                        filter: "",
+                                        empGroup: ""
+                                    };
+                                    return newParams;
+                                }
+                            }
+                            else {
+                                var newParams = {
+                                    filter: "",//planCode,
+                                    empGroup: ""//$("#groups").data("kendoDropDownList").dataItem().GROUPID
+                                };
+                                return newParams;
+                            }
+                        }
+                    }
+                },
+                dataBound: function (e) {
+                    $("#" + e.sender.element[0].id + "_listbox").slimScroll({ 'height': '150px', 'scroll': 'scroll' });
+                },
+                change: function () {
+                    loadCalendar($year.val(), $month.val());
+                }
+            });
+
+
+            var loadCalendar = function (year, month) {
+                var monthData = nc.getCalendar(year, month);
+                $sunday.html('');
+                $monday.html('');
+                $tuesday.html('');
+                $wednesday.html('');
+                $thrusday.html('');
+                $friday.html('');
+                $saturday.html('');
+
+                var sundayData = monthData[1];
+                for (var i = 0; i < sundayData.length; i++) {
+                    var $template = $(template);
+                    $template.attr('date', sundayData[i].date || " - ");
+                    $template.find('.day').append(sundayData[i].day || " - ");
+                    $sunday.append($template);
+                }
+                var mondayData = monthData[2];
+                for (var i = 0; i < mondayData.length; i++) {
+                    var $template = $(template);
+                    $template.attr('date', mondayData[i].date || " - ");
+                    $template.find('.day').append(mondayData[i].day || " - ");
+                    $monday.append($template);
+                }
+                var tuesdayData = monthData[3];
+                for (var i = 0; i < tuesdayData.length; i++) {
+                    var $template = $(template);
+                    $template.attr('date', tuesdayData[i].date || " - ");
+                    $template.find('.day').append(tuesdayData[i].day || " - ");
+                    $tuesday.append($template);
+                }
+                var wednesdayData = monthData[4];
+                for (var i = 0; i < wednesdayData.length; i++) {
+                    var $template = $(template);
+                    $template.attr('date', wednesdayData[i].date || " - ");
+                    $template.find('.day').append(wednesdayData[i].day || " - ");
+                    $wednesday.append($template);
+                }
+                var thrusdayData = monthData[5];
+                for (var i = 0; i < thrusdayData.length; i++) {
+                    var $template = $(template);
+                    $template.attr('date', thrusdayData[i].date || " - ");
+                    $template.find('.day').append(thrusdayData[i].day || " - ");
+                    $thrusday.append($template);
+                }
+                var fridayData = monthData[6];
+                for (var i = 0; i < fridayData.length; i++) {
+                    var $template = $(template);
+                    $template.attr('date', fridayData[i].date || " - ");
+                    $template.find('.day').append(fridayData[i].day || " - ");
+                    $friday.append($template);
+                }
+                var saturdayData = monthData[7];
+                for (var i = 0; i < saturdayData.length; i++) {
+                    var $template = $(template);
+                    $template.attr('date', saturdayData[i].date || " - ");
+                    $template.find('.day').append(saturdayData[i].day || " - ");
+                    $saturday.append($template);
+                }
+                var m = nc.bsadMap[year][month];
+                var url = window.location.protocol + "//" + window.location.host + "/api/Report/GetAttendanceForCalendar";
+
+                var filter = ReportFilter.filterAdditionalData();
+                filter.ReportFilters.FromDate = m.from;
+                filter.ReportFilters.ToDate = m.to;
+                var emplyee = $("#empList").data("kendoDropDownList").value();
+                filter.ReportFilters.EmployeeFilter = emplyee;
+
+                $.ajax({
+                    url: url,
+                    data: filter,
+                    type: "POST"
+                }).done(function (response) {
+                    $.each(response, function (key, value) {
+                        var $date = $nepaliCalendar.find('[date=' + value.ATTENDANCE_DT + ']');
+                        $date.find('.in-time').html(value.IN_TIME);
+                        $date.find('.out-time').html(value.OUT_TIME);
+                        $date.find('.status').html(value.ATTENDANCE_STATUS);
+                        if (value.OVERALL_STATUS == 'DO') {
+                            $date.css({ "color": "#fff", "background-color": "#4C7112" });
+                            $date.children().css('background-color', '#4C7112');
+                            $date.css('color', '#fff');
+                        } else if (value.OVERALL_STATUS == 'HD' || value.OVERALL_STATUS == 'WD') {
+                            //$date.css('background-color', '#eaea2a');
+                            $date.css({ "color": "#fff", "background-color": "#B1B14B" });
+                            $date.children().css('background-color', '#B1B14B');
+                        } else if (value.OVERALL_STATUS == 'LV' || value.OVERALL_STATUS == 'LP') {
+                            //$date.css('background-color', '#a7aeaf');
+                            $date.css({ "color": "#fff", "background-color": "#727879" });
+                            $date.children().css('background-color', '#727879');
+                        } else if (value.OVERALL_STATUS == 'TN' || value.OVERALL_STATUS == 'TP') {
+                            //$date.css('background-color', '#39c7b8');
+                            $date.css({ "color": "#fff", "background-color": "#39c7b8" });
+                            $date.children().css('background-color', '#39c7b8');
+                        } else if (value.OVERALL_STATUS == 'TV' || value.OVERALL_STATUS == 'VP') {
+                            //$date.css('background-color', '#e89c0a');
+                            $date.css({ "color": "#fff", "background-color": "#e89c0a" });
+                            $date.children().css('background-color', '#e89c0a');
+                        } else if (value.OVERALL_STATUS == 'AB') {
+                            //$date.css('background-color', '#cc0000');
+                            $date.css({ "color": "#fff", "background-color": "#cc0000" });
+                            $date.children().css('background-color', '#cc0000');
+                        }
+                    });
+                });
+            };
+            var initializeDateMonth = function () {
+                var currentDate = AD2BS(moment().format('YYYY-MM-DD'));
+                //var currentDate = $("#fromInputDateVoucher").val();
+                var currentYear = currentDate.split('-')[0];
+                var currentMonth = currentDate.split('-')[1];
+                $year.html('');
+                for (var i in years) {
+                    if (years[i] == currentYear) {
+                        $year.append($("<option selected='selected'></option>").val(years[i]).text(years[i]));
+                    } else {
+                        $year.append($("<option></option>").val(years[i]).text(years[i]));
+                    }
+                }
+                $month.html('');
+                for (var i in months) {
+                    if (i == currentMonth) {
+                        $month.append($("<option selected='selected'></option>").val(i).text(months[i]));
+                    } else {
+                        $month.append($("<option></option>").val(i).text(months[i]));
+                    }
+                }
+                loadCalendar(currentYear, currentMonth);
+            }
+            var bindMonthInDDl = function () {
+                var ddlDateArr = $("#ddlDateFilterVoucher option");
+                nc.monthName["13"] = "This Month";
+                ddlDateArr = ddlDateArr.filter(function (el) {
+                    return Object.values(nc.monthName).includes($(ddlDateArr[el]).html());
+                });
+                $("#ddlDateFilterVoucher").html(ddlDateArr);
+            }
+            var singleEmployeeSelect = function () {
+                $("#employeeMultiSelect").on("change", function (e) {
+                    var $empList = $("#employeeMultiSelect").data("kendoMultiSelect");
+                    var mValue = $empList.value();
+                    if (mValue.length > 1) {
+                        $empList.value([]);
+                        var selectedEmp = mValue[0];
+                        $empList.value([selectedEmp]);
+                    }
+                });
+            }
+
+            //singleEmployeeSelect();
+
+            //DateFilter.init(function () {
+                //bindMonthInDDl();
+                initializeDateMonth();
+            //});
+        });
+    })(window.jQuery, window.app, window.nepaliCalendar);
+</script>

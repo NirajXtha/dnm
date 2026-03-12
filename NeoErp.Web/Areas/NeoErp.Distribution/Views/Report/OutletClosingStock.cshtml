@@ -1,0 +1,530 @@
+﻿@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+
+<style>
+    a#RunQuery {
+        margin-right: 5px;
+    }
+
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+    }
+
+    .page-bar {
+        margin-bottom: 0px !important;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content, .k-grid-header {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    a.k-button.k-button-icontext.k-grid-excel {
+        float: right;
+    }
+
+    tr.k-group-footer {
+        text-align: right !important;
+    }
+</style>
+
+<script src="@Scripts.Url("~/JS/reportFilter.js?v9")"></script>
+<script src="@Scripts.Url("~/JS/DateFilter.js?v5")" type="text/javascript"></script>
+
+<div class="content">
+    <div class="page-bar">
+        @if (workingContent.CurrentUserinformation.LoginType.Trim() == "Distributor")
+        {
+            <ul class="page-breadcrumb">
+                <li>
+                    <i class="fa fa-home"></i>
+                    <a href="/Distribution/Distributor/Index#!Distributor/Dashboard">Home</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>
+                <li><a href="#">Outlet Closing Report</a></li>
+            </ul>
+        }
+        else
+        {
+            <ul class="page-breadcrumb"></ul>
+        }
+
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+                <div class="actions">
+
+                    <!-- DATE FILTER -->
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                    </div>
+                    @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+                    <!-- ADVANCED FILTER -->
+                    @*<div class="btn-group">
+                            @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml",
+                                new AdvancedFilterSettingsModel()
+                                {
+                                    ShowCustomerFilter = true,
+                                    ShowItemBrandFilter = true,
+                                })
+                        </div>*@
+
+                    <!-- UNIT FILTER (ADDED) -->
+                    <div class="btn-group">
+                        <select id="unitFilter" class="form-control" style="width:150px;">
+                            <option value="">All Units</option>
+                        </select>
+                    </div>
+
+                    <!-- RUN QUERY -->
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                        <i class="icon-control-play"></i>
+                    </a>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div id="grid"></div>
+                        @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="detailsModal" class="modal fade" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h4 class="modal-title">Day-wise Stock Detail</h4>
+                </div>
+
+                <div class="modal-body">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Closing Stock</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailsBody"></tbody>
+                    </table>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+<script src="@Scripts.Url("~/JS/reportFilter.js?V1")"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+
+<!-- NAVIGATION -->
+<script type="text/javascript">
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+</script>
+
+<!-- MAIN SCRIPT -->
+<script type="text/javascript">
+    var reportConfig = GetReportSetting("DistPoIndex");
+    /***************************
+     *  UNIT FILTER - NEW
+     ***************************/
+    function loadUnitFilter() {
+        $.ajax({
+            url: window.location.protocol + "//" + window.location.host + "/api/Report/GetAllUnitFilter",
+            type: "GET",
+            success: function (res) {
+
+                $("#unitFilter").empty();
+                $("#unitFilter").append(`<option value="" selected disabled>Select Unit</option>`);
+
+                $.each(res, function (i, v) {
+                    $("#unitFilter").append(`<option value="${v}">${v}</option>`);
+                });
+            },
+            error: function () {
+                console.log("Error loading unit filter");
+            }
+        });
+    }
+
+    /***************************************************
+     * OVERRIDE ADDITIONAL FILTER (inject UNIT)
+     ***************************************************/
+    var originalAdditionalData = ReportFilter.filterAdditionalData;
+
+    ReportFilter.filterAdditionalData = function () {
+        var base = originalAdditionalData ? originalAdditionalData() : {};
+        base.UNIT = $("#unitFilter").val();
+        return base;
+    };
+
+    $(".applydp").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+        $(this).closest("#applydp").modal('hide');
+    });
+
+    $("#loadAdvancedFilters").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    });
+
+    $("#RunQuery").click(function (evt) {
+        evt.preventDefault();
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/Report/GetOutletClosing";
+        KendoGridRefresh(urltest);
+    });
+
+    $("#unitFilter").on("change", function () {
+        var url = window.location.protocol + "//" + window.location.host + "/api/Report/GetOutletClosing";
+        KendoGridRefresh(url);
+    });
+
+    /***************************
+     * BIND GRID
+     ***************************/
+    function BindGrid(readurl) {
+        var unitFilter = $("#unitFilter").val() || "";
+        var dataSource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: {
+                    url: readurl + "?unitFilter=" + unitFilter,
+                    dataType: "json",
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8"
+                },
+                parameterMap: function (options, type) {
+                    var paramMap = JSON.stringify($.extend({}, options, ReportFilter.filterAdditionalData(), {
+                        unitFilter: $("#unitFilter").val() || ""
+                    }));
+                    delete paramMap.$inlinecount;
+                    delete paramMap.$format;
+                    return paramMap;
+                }
+            },
+            error: function (e) {
+                displayPopupNotification("Error while loading data", "error");
+            },
+            model: {
+                fields: {
+                    ITEM_EDESC: { type: "string" },
+                    CUSTOMER_EDESC: { type: "string" },
+                    MU_CODE: { type: "string" },
+                    OPENING_QTY: { type: "number" },
+                    SALES_QTY: { type: "number" },
+                    CLOSING_QTY: { type: "number" },
+                    ORDER_DATE: { type: "date" }
+                }
+            },
+            group: [
+                {
+                    field: "GROUP_EDESC",
+                    dir: "asc",
+                    aggregates: [
+                        { field: "SALES_QTY", aggregate: "sum" },
+                        { field: "CLOSING_QTY", aggregate: "sum" }
+                    ]
+                },
+                {
+                    field: "CUSTOMER_EDESC",
+                    dir: "asc",
+                    aggregates: [
+                        { field: "SALES_QTY", aggregate: "sum" },
+                        { field: "CLOSING_QTY", aggregate: "sum" }
+                    ]
+                },
+                {
+                    field: "RESELLER_EDESC",
+                    dir: "asc",
+                    aggregates: [
+                        { field: "SALES_QTY", aggregate: "sum" },
+                        { field: "CLOSING_QTY", aggregate: "sum" }
+                    ]
+                }
+            ],
+            pageSize: 100,
+        });
+
+        $("#grid").kendoGrid({
+            dataSource: dataSource,
+            toolbar: `<a class="k-button k-button-icontext excel-download" href="javascript:">
+                            <i class="fa fa-file-excel-o"></i>
+                        </a>
+                        <div class="search pull-right">
+                            <input type="text" class="form-control input-sm grid-search" maxlength="64" placeholder="Search..." onkeyup="GridSearch()" />
+                            <button class="btn btn-primary btn-sm search-btn fa fa-search"></button>
+                        </div>`,
+            //excel: { fileName: "OutletClosingReport", allPages: true },
+            height: window.innerHeight - 50,
+            sortable: true,
+            reorderable: true,
+            groupable: true,
+            resizable: true,
+            filterable: { extra: false },
+            columnMenu: true,
+            pageable: { refresh: true, pageSizes: ["50", "100", "500", "1000", "All"], buttonCount: 5 },
+            scrollable: { virtual: true },
+
+            dataBound: function (o) {
+                var grid = o.sender;
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.length;
+                    $(o.sender.wrapper).find('tbody')
+                        .append('<tr class="kendo-data-row"><td colspan="' + colCount + '" class="alert alert-danger">No Data Found</td></tr>');
+                }
+            },
+            columns: [
+                { field: "GROUP_EDESC", title: "Zone", hidden: true },
+                { field: "CUSTOMER_EDESC", title: "Distributor", hidden: true },
+                { field: "RESELLER_EDESC", title: "Reseller", hidden: true },
+                { field: "ITEM_EDESC", title: "Item", width: "50%" },
+                { field: "MU_CODE", title: "Unit", width: "5%" },
+                //{
+                //    field: "OPENING_QTY", title: "Opening Stock", width: "15%",
+                //    attributes: { style: "text-align:right;" },
+                //    aggregate: ["sum"], groupFooterTemplate: "#=kendo.toString(sum,'n')#"
+                //},
+                {
+                    field: "CLOSING_QTY", title: "Closing Stock", width: "25%",
+                    attributes: { style: "text-align:right;" },
+                    aggregate: ["sum"], groupFooterTemplate: "#=kendo.toString(sum,'n')#"
+                },
+                {
+                    field: "DETAILS",
+                    title: "Details",
+                    width: "20%",
+                    template: function (data) {
+                        if (!data.Details || data.Details.length === 0)
+                            return "";
+
+                        const validDetails = data.Details.filter(d => d.DAY && d.DAY.trim() !== "");
+                        if (validDetails.length === 0)
+                            return "";
+
+                        return `<button class='btn btn-sm btn-info view-details'
+                            data-item='${data.ITEM_CODE}'
+                            data-reseller='${data.RESELLER_CODE}'
+                            data-mu='${data.MU_CODE}'
+                            data-itemname='${data.ITEM_EDESC}'>Details</button>`;
+                    }
+                }
+            ]
+        });
+    }
+    // Attach to the existing Excel button
+    $(document).on("click", ".excel-download", async function (e) {
+        e.preventDefault();
+        const grid = $("#grid").data("kendoGrid");
+        const data = grid.dataSource.data(); // all loaded data
+        await downloadCustomExcel(data);
+    });
+
+    async function downloadCustomExcel(rawData) {
+        debugger;
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet("OutletClosingReport");
+
+        let daySet = new Set();
+        rawData.forEach(r => {
+            if (r.Details && r.Details.length > 0) {
+                r.Details.forEach(d => {
+                    if (d.DAY && d.DAY.trim() != "") {
+                        daySet.add(d.DAY.trim());
+                    }
+                });
+            }
+        });
+        const distinctDays = Array.from(daySet).sort();
+        const grouped = {};
+        rawData.forEach(x => {
+            const group = x.GROUP_EDESC || "-";
+            const customer = x.CUSTOMER_EDESC || "-";
+            if (!grouped[group]) grouped[group] = {};
+            if (!grouped[group][customer]) grouped[group][customer] = [];
+            grouped[group][customer].push(x);
+        });
+
+        for (const group in grouped) {
+            worksheet.addRow([`GROUP: ${group}`]).font = { bold: true };
+
+            for (const customer in grouped[group]) {
+                worksheet.addRow([`Distributor: ${customer}`]).font = { italic: true };
+
+                // Header row
+                const header = ["Reseller", "Item", "Unit", "ClosingQty", ...distinctDays];
+                worksheet.addRow(header).font = { bold: true };
+
+                grouped[group][customer].forEach(r => {
+                    const row = [
+                        r.RESELLER_EDESC || "-",
+                        r.ITEM_EDESC || "-",
+                        r.MU_CODE || "-",
+                        r.CLOSING_QTY || 0
+                    ];
+
+                    // Add ClosingQty per DAY
+                    distinctDays.forEach(day => {
+                        const detail = (r.Details || []).find(d => d.DAY === day);
+                        row.push(detail ? detail.CLOSING_QTY : "-");
+                    });
+
+                    worksheet.addRow(row);
+                });
+
+                worksheet.addRow([]);
+            }
+            let groupClosingTotal = 0;
+            const groupDayTotals = {};
+            distinctDays.forEach(d => groupDayTotals[d] = 0);
+
+            Object.values(grouped[group]).forEach(rows => {
+                rows.forEach(r => {
+                    groupClosingTotal += r.CLOSING_QTY || 0;
+
+                    distinctDays.forEach(day => {
+                        const detail = (r.Details || []).find(d => d.DAY === day);
+                        groupDayTotals[day] += detail ? detail.CLOSING_QTY : 0;
+                    });
+                });
+            });
+
+            const groupTotalRow = [
+                "TOTAL",
+                "",
+                "",
+                groupClosingTotal
+            ];
+
+            distinctDays.forEach(day => groupTotalRow.push(groupDayTotals[day]));
+
+            worksheet.addRow(groupTotalRow).font = { bold: true };
+            worksheet.addRow([]);
+        }
+        worksheet.columns.forEach(col => {
+            col.width = col.header ? col.header.length + 5 : 20;
+        });
+
+        // Export file
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: "application/octet-stream" });
+        saveAs(blob, "OutletClosingReport.xlsx");
+    }
+
+    function KendoGridRefresh(readUrl) {
+        $('#grid').html('');
+        BindGrid(readUrl);
+    }
+
+    /***************************
+     * ON PAGE LOAD
+     ***************************/
+    $(document).ready(function () {
+
+        loadUnitFilter();
+
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/Report/GetOutletClosing";
+
+        //DateFilter.init(function () {
+        //    BindGrid(urltest);
+
+        //    //var dateFilterForm = $("#form_modal2 .form-horizontal .form-group");
+        //    //$(dateFilterForm[0]).hide();
+        //    //$(dateFilterForm[1]).find("label").html("BS Date");
+        //    //$(dateFilterForm[2]).find("label").html("AD Date");
+        //    //$(dateFilterForm[1]).find("span").hide();
+        //    //$(dateFilterForm[2]).find("span").hide();
+        //    //$("#toInputDateVoucher").hide();
+        //    //$("#ToDateVoucher").hide();
+        //});
+        DateFilter.init(function () {
+            consolidate.init(function () {
+                BindGrid(urltest);
+            });
+        });
+    });
+    $(document).on("click", ".view-details", function () {
+        let itemCode = $(this).data("item");
+        let reseller = $(this).data("reseller");
+        let mu = $(this).data("mu");
+        let itemName = $(this).data("itemname");
+
+        const grid = $("#grid").data("kendoGrid");
+        const data = grid.dataSource.data();
+
+        const record = data.find(r =>
+            r.ITEM_CODE == itemCode &&
+            r.RESELLER_CODE == reseller &&
+            r.MU_CODE == mu
+        );
+
+        $("#detailsModal .modal-title").html(`StockDetail: ${itemName}`);
+        $("#detailsBody").empty();
+
+        if (!record || !record.Details || record.Details.length === 0) {
+            $("#detailsBody").append("<tr><td colspan='2'>No Data Found</td></tr>");
+            $("#detailsModal").modal("show");
+            return;
+        }
+
+        const details = record.Details;
+
+        details.forEach(d => {
+            $("#detailsBody").append(`
+            <tr>
+                <td>${d.DAY}</td>
+                <td style="text-align:right;padding-right: 5px;">${d.CLOSING_QTY ?? 0}</td>
+            </tr>
+        `);
+        });
+
+        $("#detailsModal").modal("show");
+    });
+</script>
+
+@if (workingContent.CurrentUserinformation.LoginType.Trim() != "Distributor")
+{
+    <script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js")"></script>
+}

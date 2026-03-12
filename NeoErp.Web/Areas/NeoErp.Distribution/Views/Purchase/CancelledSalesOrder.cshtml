@@ -1,0 +1,1629 @@
+﻿
+@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    ViewBag.Title = "Home Page";
+    Layout = null;
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>
+        ();
+}
+
+<style>
+    .k-multiselect-wrap.k-floatwrap {
+        height: auto !important;
+    }
+
+    #mytable {
+        width: 98%;
+        margin: 1%;
+    }
+
+    #POEditWindow-dialog {
+        width: 90%;
+    }
+
+    .btn-group {
+        margin-right: 7px;
+    }
+
+    span.fa.fa-truck {
+        margin-right: 5px;
+    }
+
+    a#RunQuery {
+        margin-right: 5px;
+    }
+
+    #grid {
+        height: 100%;
+    }
+
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+    }
+
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+
+    /*#grid thead{
+                     font-size:11px;
+                }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content, .k-grid-header {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    a.k-button.k-button-icontext.k-grid-excel {
+        float: right;
+    }
+
+
+    /* loader css*/
+    .busy-loader {
+        height: 150%;
+        width: 100%;
+        display: none;
+        position: absolute;
+        background-color: rgba(51, 51, 51, 0.41);
+        z-index: 999;
+    }
+
+    .preloader {
+        position: absolute;
+        top: 20%;
+        left: 40%;
+        background-color: rgba(0,0,0,0.81);
+        width: 23px;
+        height: 23px;
+    }
+
+    .loader {
+        border: 10px solid #f2f2f2;
+        border-radius: 50% !important;
+        border-top: 10px solid #3d807c;
+        width: 50px;
+        height: 50px;
+        -webkit-animation: spin 2s linear infinite;
+        animation: spin 2s linear infinite;
+        position: absolute;
+        top: 25%;
+        left: 50%;
+    }
+
+
+
+    .k-grid tbody .k-button, .k-ie8 .k-grid tbody button.k-button {
+        padding: 0px 4px 0px 4px !important;
+        min-width: 5px;
+    }
+
+    #grid .k-button-icontext {
+        padding-right: 4px;
+    }
+</style>
+
+<div id="POEditWindow" class="modal fade" tabindex="-1" aria-labelledby="POEditWindow" role="dialog">
+    <<div class="modal-dialog" id="POEditWindow-dialog">
+        <div class="modal-content">
+            <form name="POForm" id="POForm" novalidate>
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Edit Purchase Order</h4>
+                </div>
+                <div class="modal-body" id="POModalBody">
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" onclick="UpdatePO()">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script id="POItemTemplate" type="text/x-kendo-template">
+    <div class="portlet-body form">
+        <div class="row">
+            <div class="col-md-12 col-sm-12">
+                <div class="row">
+                    <div class="col-md-3 col-sm-3">
+                        <div class="form-group">
+                            <label class="control-label" for="orderNumber">
+                                Order Number
+                            </label>
+                            <input type="hidden" value="#:data.COMPANY_CODE#" id="ItemCompany" />
+                            <input type="hidden" value="#:data.BRANCH_CODE#" id="ItemBranch" />
+                            <input type="hidden" value="#:data.PO_CONVERSION_FACTOR#" id="POConversionFactor" />
+                            <input type="hidden" value="#:data.PO_CUSTOM_RATE#" id="POCustomRate" />
+                            <input id="orderNumber" name="orderNumber" value="#:data.ORDER_NO#" class="form-control input-sm" placeholder="Order Number" disabled />
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 col-sm-3">
+                        <div class="form-group">
+                            <label class="control-label" for="customerName">
+                                Customer
+                            </label>
+                            <input type="hidden" value="#:data.CUSTOMER_CODE#" id="CustomerCode" />
+                            <input id="customerName" name="customerName" value="#:data.CUSTOMER_EDESC#" class="form-control input-sm" placeholder="Customer" disabled />
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-3">
+                        <div class="form-group">
+                            <label class="control-label" for="salesPerson">
+                                Sales Person
+                            </label>
+                            <input type="hidden" id="spCode" value="#:data.CREATED_BY#" />
+                            <input id="salesPerson" name="salesPerson" value="#:data.EMPLOYEE_EDESC#" class="form-control input-sm" placeholder="Sales Person" disabled />
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-3">
+                        <div class="form-group">
+                            <label class="control-label" for="orderRemarks">
+                                Remarks
+                            </label>
+                            <input id="orderRemarks" name="orderRemarks" value="#:(data.ITEMS[0].REMARKS)?data.ITEMS[0].REMARKS:''#" class="form-control input-sm" placeholder="Remarks" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <table class="table table-bordered table-hover" id="mytable">
+                        <thead class="table-info font-green">
+                            <tr>
+                                <td class="col-md-3">Item</td>
+                                <td class="col-md-1">Req. Unit</td>
+                                <td class="col-md-1">Req. Qty</td>
+                                <td class="col-md-1">Unit Price</td>
+                                # if(data.PO_CONVERSION_FACTOR == "Y") { #
+                                <td class="col-md-1">C. Unit</td>
+                                <td class="col-md-1">C. Qty</td>
+                                # } #
+                                <td class="col-md-1">Total Price</td>
+                                <td class="col-md-1">
+                                    <button class="btn btn-xs btn-success pull-right" onclick="AddPoItem(this)">
+                                        [<i class="fa fa-plus"></i>] Add
+                                    </button>
+                                </td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            # for (var i = 0; i < data.ITEMS.length; i++) { #
+                            <tr>
+                                <td>
+                                    <select id="ItemsMultiselect_#:i+1#" multiple="multiple"></select>
+                                </td>
+                                <td>
+                                    #: data.ITEMS[i].MU_CODE #
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control input-sm" value="#:data.ITEMS[i].QUANTITY#" id="Quantity_#:i+1#" onchange="Calculate(this)" style="width:100%;text-align:right;" />
+                                    @*#: data.ITEMS[i].QUANTITY #*@
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control input-sm" value="#:data.ITEMS[i].UNIT_PRICE#" id="UnitPrice_#:i+1#" disabled style="width:100%;text-align:right;" />
+                                    <input type="hidden" value="#:data.ITEMS[i].CONVERSION_FACTOR#" id="ConversionFactor_#:i+1#" />
+                                </td>
+                                # if(data.PO_CONVERSION_FACTOR == "Y") { #
+                                <td>
+                                    #: data.ITEMS[i].CONVERSION_MU_CODE #
+                                </td>
+                                <td style="text-align:right;">
+                                    #: data.ITEMS[i].QUANTITY * data.ITEMS[i].CONVERSION_FACTOR #
+                                </td>
+                                # } #
+                                <td id="Total_#:i+1#" style="text-align:right;">
+                                    #: data.ITEMS[i].TOTAL_PRICE #
+                                </td>
+                                @*<td>
+                                        #: (data.ITEMS[i].REMARKS)?data.ITEMS[i].REMARKS:'' #
+                                    </td>*@
+                                <td></td>
+                            </tr>
+                            # } #
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</script>
+
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+            @*<li>
+                    <i class="fa fa-home"></i>
+                    <a href="/sales/SalesHome/Dashboard">Home</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>
+                <li>
+                    <a href="#/Sales/FinalSalesReport">Cancelled Purchase Order</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>*@
+
+        </ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+
+                <div class="actions">
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                    </div>
+                    @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                   {
+                       ShowSalesPersonFilter = true,
+                       ShowCustomerFilter = true,
+                   })
+                    </div>
+                    @*@Html.Partial("~/Views/Shared/Controls/_reportFilterSettings.cshtml", new ReportFilterSettingsModel()
+                        {
+                            ShowAmountFigureFilter = false,
+                            ShowAmountFilter = false,
+                            ShowAmountRoundUpFilter = false,
+                            ShowRangeAmountFilter = false,
+                            ShowRangeQuantityFilter = false,
+                            ShowRangeRateFilter = false
+                        })*@
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                        <i class="icon-control-play"></i>
+                    </a>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "DistPoIndexCancelled")
+                    </div>
+
+
+
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <div class="busy-loader">
+        <div id="preloader" class="loader"></div>
+    </div>
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-body form">
+                    <div id="aletmsg">
+                    </div>
+
+                    <div class="row">
+                        <div id="grid"></div>
+                        <script type="text/x-kendo-template" id="template">
+                            <div class="tabstrip">
+
+                                <div>
+                                    <div class="orders"></div>
+                                </div>
+
+                            </div>
+
+                        </script>
+                        @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="creditliimitwindows" class="">
+
+        <div class="form-body">
+            <div class="form-group">
+                <div id="errorforcreditlimit"></div>
+                <label class="">Remarks</label>
+                <div class="">
+
+                    <textarea cols="34" rows="5" placeholder="Please Enter limit Remarks" id="limittextbox"></textarea>
+                    <button id="showcreditremark" class="btn btn-sm btn-success pull-right"> Save </button>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+    <div id="formCodeModal" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Form Code</h4>
+                </div>
+                <div class="modal-body">
+                    <div id="formCodeMultiSelect" style="width:400px"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn green" id="ApplyFormCodeModel" data-dismiss="modal">Apply</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<script id="confirmationTemplate" type="text/x-kendo-template">
+    <div class="popupMessage"></div>
+    </br>
+    <hr />
+    <div class="dialog_buttons">
+        <input type="button" class="confirm_yes k-button" value="Yes" style="width: 70px" />
+        &nbsp;
+        <input type="button" class="confirm_no k-button" value="No" style="width: 70px" />
+    </div>
+</script>
+<script src="@Scripts.Url("~/JS/reportFilter.js?V1")"></script>
+<script src="@Scripts.Url("~/JS/DateFilter.js?v5")" type="text/javascript"></script>
+
+@*<script src="@Scripts.Url("~/JS/DashboardChartFilter/reportFilter.js")" type="text/javascript"></script>*@
+
+<script type="text/javascript">
+
+    //Expanding child as per selected url
+    try {
+        var a = location.hash;
+        var b = location.pathname;
+        var url = (b + a);
+        $(".active").removeClass();
+        $("a[href='" + url + "']").parent().addClass("active");
+        $("a[href='" + url + "']").parent().parent().slideDown("slow");
+    }
+    catch (ex) { }
+
+
+</script>
+<script>
+    var creditlimit = false;
+    var expandedDetailRow = "";
+    function showConfirmationWindow(message) {
+        return showWindow('#confirmationTemplate', message)
+    };
+
+    function showWindow(template, message) {
+
+        var dfd = new jQuery.Deferred();
+        var result = false;
+
+        $("<div id='popupWindow'></div>")
+            .appendTo("body")
+            .kendoWindow({
+                width: "200px",
+                modal: true,
+                title: "",
+                modal: true,
+                visible: false,
+                close: function (e) {
+                    this.destroy();
+                    dfd.resolve(result);
+                }
+            }).data('kendoWindow').content($(template).html()).center().open();
+
+        $('.popupMessage').html(message);
+
+        $('#popupWindow .confirm_yes').val('OK');
+        $('#popupWindow .confirm_no').val('Cancel');
+
+        $('#popupWindow .confirm_no').click(function () {
+            $('#popupWindow').data('kendoWindow').close();
+        });
+
+        $('#popupWindow .confirm_yes').click(function () {
+            result = true;
+            $('#popupWindow').data('kendoWindow').close();
+        });
+
+        return dfd.promise();
+    };
+    $("#showcreditremark").on("click", function () {
+        var creditlimit = $("#limittextbox").val();
+        console.log(creditlimit);
+        if (creditlimit == '') {
+            $("#errorforcreditlimit").html('<div class="alert alert-success"><a class="close" data-dismiss="alert" aria-label="close">&times;</a> <strong>Error!</strong>Your Credit Limit is exceed. Please give Remarks</div>')
+
+        }
+        else {
+            var win = $('#creditliimitwindows').data("kendoWindow");
+            win.close();
+        }
+
+    });
+</script>
+<script>
+    var reportConfig = GetReportSetting("DistPoIndexCancelled");
+    var urltest = window.location.protocol + "//" + window.location.host + "/api/DistributionPurchase/GetDistributionPurchaseOrder?requestStatus=Rejected";
+    var formCode = "0";
+
+    $(".applydp").on("click", function (evt) {
+        evt.preventDefault();
+        KendoGridRefresh(urltest);
+        $(this).closest("#applydp").modal('hide');
+    });
+    //$("#RunQuery").click(function (evt) {
+    //    evt.preventDefault();
+    //    KendoGridRefresh(urltest);
+    //});
+    $("#loadAdvancedFilters").on("click", function (evt) {
+        evt.preventDefault();
+        KendoGridRefresh(urltest);
+    });
+
+
+    //$("#loadAdvancedFilters").on("click", function (evt) {
+    //    evt.preventDefault();
+    //    $("#RunQuery").trigger("click");
+    //});
+
+    $("#grid").on("keyup", "input[name='APPROVEQTY']", function (evt) {
+        evt.preventDefault();
+        CalculateAmount($(this), "input");
+    });
+    $("#grid").on("change", "input[type='checkbox']", function (evt) {
+
+        if ($(this).prop("checked") == false)
+        {
+            var node = $($(this).parents()[10]).prev();
+            var nodeList = $(this).closest("tr").parent().find("tr");
+            $('.alert').hide();
+            node.removeClass("k-alt bg-success bg-danger text-white");
+            node.find(".k-grid-mydelete").removeAttr("disabled");
+            CalcAggregateAfterChange($(this), nodeList, "APPROVEQTY");
+            return false;
+        }
+        else {
+            $(".busy-loader").css("display", "block");
+            var selectedValue = $(this).closest("tr").find(".APPROVEQTY").text();
+            if (selectedValue == null || selectedValue == "")
+                selectedValue = $(this).closest("tr").find("input[name='APPROVEQTY']").val();
+            $(this).val(selectedValue);
+            CalculateAmount($(this), "checkbox");
+        }
+
+    });
+
+
+    function CalculateAmount(thisValue, type) {
+        var grid = thisValue.closest(".orders").data("kendoGrid");
+        var selectedRow = grid.dataItem(thisValue.closest("tr"));
+        var selectedParentRowNode = thisValue.closest("tr").closest(".k-detail-row").prev();
+        var selectedParentRow = $("#grid").data("kendoGrid").dataItem(selectedParentRowNode);
+        var changedValue = parseFloat(thisValue.val());
+        var changedCQuantity = parseFloat(thisValue.closest("tr").find(".CQuantity").text());
+        var totalQty = 0;
+        var totalamount = 0;
+        var creditlimitValue = selectedParentRow.credit_limit;
+        if (creditlimitValue < 1)
+            creditlimitValue = selectedParentRow.balance;
+        var creditlimit = false;
+        var conversionFactor = 0;
+        selectedRow.dirty = true;
+        //check if input qty is greater than Original
+        //if (selectedRow.QUANTITY < changedValue) {
+        //    thisValue.val(selectedRow.QUANTITY);
+        //    changedValue = selectedRow.QUANTITY;
+        //}
+        //calculate from all selected sibling
+        var nodeList = thisValue.closest("tr").parent().find("tr");
+        $.each(nodeList, function (index, node) {
+            var nodeData = grid.dataItem(node);
+            nodeData.APPROVED_FLAGBOOL = $(node).find("input[type='checkbox']").prop('checked');
+            conversionFactor = nodeData.CONVERSION_FACTOR;
+            changedValue = parseFloat($(node).closest("tr").find("input[name='APPROVEQTY']").val());
+            if (isNaN(changedValue))
+                changedValue = 0;
+            $(node).closest("tr").find(".CQuantity").html(changedValue * conversionFactor);
+            if (nodeData.APPROVED_FLAGBOOL == true) {
+                if (nodeData.UNIT_PRICE == null)
+                    nodeData.UNIT_PRICE = 0;
+                if (selectedRow == nodeData)
+                    nodeData.APPROVEQTY = changedValue;
+                totalamount = totalamount + (nodeData.APPROVEQTY * nodeData.UNIT_PRICE);
+                totalQty = totalQty + parseFloat($(node).closest("tr").find(".CQuantity").text());;
+            }
+
+        });
+
+
+        //////check if limit Cross
+        ////if (selectedParentRow.SO_CREDIT_LIMIT_FLAG == 'Y' && creditlimitValue < totalamount) {
+        ////    creditlimit = true;
+        ////    $("#aletmsg").html('<div class="alert alert-warning"><a class="close" data-dismiss="alert" aria-label="close">&times;</a> <strong>Error!</strong> Credit Limit is exceed.</div>');
+        ////}
+        ////else {
+        ////    creditlimit = false;
+        ////    $('.alert').hide();
+        ////}
+        //check if limit Cross
+        if (selectedParentRow.SO_CREDIT_LIMIT_FLAG == 'Y' || selectedParentRow.SO_CREDIT_DAYS_FLAG == 'Y') {
+            $.ajax({
+                url: window.location.protocol + "//" + window.location.host + "/api/DistributionPurchase/GetCreditDaysBalance?companyCode=" + selectedParentRow.COMPANY_CODE + "&subCode=C" + selectedParentRow.CUSTOMER_CODE,
+                type: 'POST',
+                success: function (data) {
+                    var balance = 0;
+                    $.each(data.CreditDaysBalance, function (i, obj) {
+                        if (i === 0)
+                            balance = data.TOTALPAIDAMT - obj.SALES_AMT;
+                        else
+                            balance = balance - obj.SALES_AMT;
+
+                        var creditDaysCondition = selectedParentRow.SO_CREDIT_DAYS_FLAG == 'Y' && balance < 0 && obj.DUEDAYS > data.CREDIT_DAYS;
+                        var creditLimitCondition = selectedParentRow.SO_CREDIT_LIMIT_FLAG == 'Y' && balance < 0 && -(balance) > creditlimitValue;
+                        if (creditDaysCondition) {
+                            creditlimit = true;
+                            $("#aletmsg").html('<div class="alert alert-warning"><a class="close" data-dismiss="alert" aria-label="close">&times;</a> <strong>Error!</strong> Credit Days is exceed.</div>');
+                            selectedParentRowNode.removeClass("k-alt bg-success text-white").addClass("bg-danger text-white");
+                            selectedParentRowNode.find(".k-grid-mydelete").attr("disabled", "disabled");
+                            return false;
+                        }
+                        else if (creditLimitCondition) {
+                            creditlimit = true;
+                            $("#aletmsg").html('<div class="alert alert-warning"><a class="close" data-dismiss="alert" aria-label="close">&times;</a> <strong>Error!</strong> Credit Limit is exceed.</div>');
+                            selectedParentRowNode.removeClass("k-alt bg-success text-white").addClass("bg-danger text-white");
+                            selectedParentRowNode.find(".k-grid-mydelete").attr("disabled", "disabled");
+                            return false;
+                        }
+
+                    });
+                    if (!creditlimit)
+                    {
+                        selectedParentRowNode.removeClass("k-alt bg-danger text-white").addClass("bg-success text-white");
+                        $('.alert').hide();
+                    }
+                    $(".busy-loader").css("display", "none");
+                }
+            });
+        }
+        else {
+            creditlimit = false;
+            selectedParentRowNode.removeClass("k-alt bg-danger text-white").addClass("bg-success text-white");
+            $('.alert').hide();
+        }
+
+
+        var amounttotalwithFormat = totalamount.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,");
+        selectedParentRowNode.find(".approveamountclass").html(amounttotalwithFormat);
+
+
+
+        //update aggregate Value
+        CalcAggregateAfterChange(thisValue,nodeList, "APPROVEQTY")
+       // CalcAggregateAfterChange(thisValue, "CQuantity")
+        selectedParentRowNode.find(".ApproveCQuantity").html(totalQty);
+
+    }
+    function CalcAggregateAfterChange(thisValue,nodeList, field) {
+
+        var footer = thisValue.closest(".orders").find(".k-footer-template");
+        value = 0;
+        $.each(nodeList, function (index, node) {
+            if ($(node).find("input[type='checkbox']").prop("checked"))
+            {
+                nodeValue = $(node).find("input[name='" + field + "']").val();
+                if (nodeValue == undefined)
+                    nodeValue = $(node).find("." + field).text();
+                value = value + parseFloat(nodeValue);
+            }
+        });
+        if (isNaN(value))
+            value = 0;
+        footer.find("." + field + "SUM").text(value);
+    }
+    function CalcAggregate(field, field1) {
+        var $grid = expandedDetailRow;
+        if ($grid == "")
+            $grid = $('.orders');
+        var kendo = $grid.data().kendoGrid;
+        var data = kendo.dataSource.data();
+        var total = 0;
+        if (field1 != undefined) {
+            for (var i = 0; i < data.length; i++) {
+                var fieldValue = parseFloat(data[i][field]);
+                var fieldValue1 = parseFloat(data[i][field1]);
+                if (isNaN(fieldValue) || isNaN(fieldValue1)) {
+                    fieldValue = 0;
+                    fieldValue1 = 0;
+                }
+                total = total + (fieldValue * fieldValue1);
+            }
+        }
+        else {
+            for (var i = 0; i < data.length; i++) {
+                var fieldValue = parseFloat(data[i][field]);
+                if (fieldValue == NaN) {
+                    fieldValue = 0;
+                }
+                total = total + fieldValue;
+            }
+        }
+        return total;
+    }
+
+
+
+    var win = $('#creditliimitwindows').kendoWindow({
+        title: 'Please Update Credit Limit',
+        visible: false,
+        width: "280px",
+        //height: "200px",
+        activate: function () {
+            $('#creditliimitwindowsComment').select();
+        }
+    }).data('kendoWindow');
+    // init function for the data load
+    //BindGrid(urltest);
+    DateFilter.init(function () {
+        consolidate.init(function () {
+            BindGrid(urltest);
+        });
+    });
+    $("#RunQuery").click(function (evt) {
+        evt.preventDefault();
+        expandedDetailRow = "";
+        KendoGridRefresh(urltest);
+    });
+
+
+    var autoCompletedataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: window.location.protocol + "//" + window.location.host + "/api/Distribution/GetFormCode",
+                dataType: "json"
+            }
+        }
+    });
+    $("#formCodeMultiSelect").kendoMultiSelect({
+        dataSource: autoCompletedataSource,
+        dataTextField: "FORM_EDESC",
+        dataValueField: "FORM_CODE",
+        maxSelectedItems: 1,
+        height: 600,
+        headerTemplate: '<div class="col-md-offset-3"><strong>Sales Order...</strong></div>',
+        placeholder: "Select Sales Order...",
+        autoClose: false,
+        dataBound: function () {
+            var current = this.value();
+            this._savedOld = current.slice(0);
+        },
+    });
+
+
+    function BindGrid(readurl) {
+        reportConfig = GetReportSetting("DistPoIndexCancelled");
+        var dataSource = new kendo.data.DataSource({
+            type: "json",
+            batch: true,
+            transport: {
+                read: {
+                    url: readurl, // <-- Get data from here.
+                    dataType: "json", // <-- The default was "jsonp".
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8"
+                },
+                update: {
+                    url: window.location.protocol + "//" + window.location.host + "/api/DistributionPurchase/UpdateDistributionPurchaseOrderDetail",
+                    dataType: "json",
+                    type: "post",
+                    contentType: "application/json; charset=utf-8",
+                    complete: function (e) {
+                        if (e.responseJSON.STATUS_CODE == 404) {
+                            displayPopupNotification("Voucher list is not selected", "error");
+                        }
+                        else if (e.responseJSON.STATUS_CODE == 304) {
+                            displayPopupNotification("Error to Covert Sales Order", "error");
+                        }
+                        else if (e.responseJSON.STATUS_CODE == 200) {
+                            displayPopupNotification("Sales Order Generated Successfully", "success");
+                            $("#grid").data("kendoGrid").dataSource.read();
+                        }
+                    }
+                },
+                destroy: {
+                    url: window.location.protocol + "//" + window.location.host + "/api/DistributionPurchase/DeleteDistributionPurchaseOrderDetail?parent=true",
+                    dataType: "json",
+                    type: "post",
+                    contentType: "application/json; charset=utf-8",
+                    complete: function (e) {
+                        if (e.responseJSON.STATUS_CODE == 404) {
+                            displayPopupNotification("Voucher list is not selected", "error");
+                        }
+                        else if (e.responseJSON.STATUS_CODE == 304) {
+                            displayPopupNotification("Error to Covert Sales Order", "error");
+                        }
+                        else if (e.responseJSON.STATUS_CODE == 500) {
+                            displayPopupNotification("Sales Order No already exist", "error");
+                        }
+                        else if (e.responseJSON.STATUS_CODE == 200) {
+                            displayPopupNotification("PO Cancel Successfully", "success");
+                            $("#grid").data("kendoGrid").dataSource.read();
+                        }
+                    }
+                },
+                parameterMap: function (options, operation) {
+                    if (operation !== "read" && options.models) {
+                        return JSON.stringify(options.models)
+                    }
+                    if (operation == "read") {
+                        var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+                    }
+                }
+            },
+            error: function (e) {
+                displayPopupNotification("Sorry error occured while processing data", "error");
+            },
+            //serverFiltering: false,
+            //serverGrouping: false,
+            //serverAggregates: true,
+            //serverPaging: true,
+            schema: {
+                model: {
+                    id: "ORDER_NO",
+                    fields: {
+                        ORDER_NO: { type: "number", editable: false },
+
+                        RESELLER_NAME: { editable: false },
+                        COMPANY_EDESC: { editable: false },
+                        ORDER_DATE: { editable: false, nullable: true, type: "date" },
+                        MITI:{editable:false,type:"string"},
+                        CUSTOMER_EDESC: { editable: false, nullable: true },
+                        CUSTOMER_CODE: { editable: false, nullable: true },
+                        ITEM_CODE: { editable: false, nullable: true },
+                        ITEM_EDESC: { editable: false, nullable: true },
+                        MU_CODE: { editable: false, nullable: true },
+                        QUANTITY: { editable: false, nullable: true, type: "number" },
+                        GrantTotalAmount: { editable: false, nullable: true, type: "number" },
+                        UNIT_PRICE: { editable: false, nullable: true, type: "number" },
+                        TOTAL_PRICE: { editable: false, nullable: true, type: "number" },
+                        REMARKS: { editable: false, nullable: true },
+                        CREATED_DATE: { editable: false, nullable: true, type: "date" },
+                        BILLING_NAME: { editable: false, nullable: true, type: "date" },
+                        APPROVED_FLAG: { editable: false, validation: { required: false } },
+                        APPROVED_FLAGBOOL: { editable: true, nullable: true, type: "boolean" },
+                        ISEDITED: { editable: true, nullable: true, type: "boolean" },
+                        REJECT_FLAG: { editable: false, validation: { required: false } },
+                        REJECT_FLAGBOOL: { editable: false, nullable: true, type: "boolean", validation: { required: true } },
+                        APPROVEQTY: { type: "number", editable: true, validation: { required: false } },
+                        credit_limit: { editable: false, nullable: true, validation: { required: false }, type: "number" },
+                        CREDITLIMITREMARKS: { editable: false, nullable: true, validation: { required: false } },
+                        PARTY_TYPE_EDESC: { editable: false, nullable: true, validation: { required: false } },
+                        EMPLOYEE_EDESC: { editable: false, nullable: true, validation: { required: false } },
+                        CREDIT_LIMIT: { editable: false, nullable: true, validation: { required: false } },
+                        balance: { editable: false, nullable: true, validation: { required: false }, type: "number" },
+                        REMARKS: { editable: false, nullable: true, validation: { required: false } },
+                        ApprovedAmount: { editable: false, nullable: true, validation: { required: false }, type: "number" },
+                        GRAND_APPROVE_QUENTITY: { editable: false, nullable: true, validation: { required: false }, type: "number" },
+
+                    }
+                }
+            },
+            pageSize: reportConfig.defaultPageSize,
+            pageable: true,
+        });
+
+
+        var grid = $("#grid").kendoGrid({
+            dataSource: dataSource,
+            toolbar: kendo.template($("#toolbar-template").html()),
+            allowCopy: true,
+            height: window.innerHeight - 50,
+            pageSize: reportConfig.defaultPageSize,
+            pageable: {
+                refresh: true,
+                pageSizes: reportConfig.itemPerPage,
+                buttonCount: 5
+            },
+            sortable: true,
+            reorderable: true,
+            groupable: true,
+            resizable: true,
+            filterable: {
+                extra: false,
+                operators: {
+                    number: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "is greater than or equal to	",
+                        gt: "is greater than",
+                        lte: "is less than or equal",
+                        lt: "is less than",
+                    },
+                    string: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        startswith: "Starts with	",
+                        contains: "Contains",
+                        doesnotcontain: "Does not contain",
+                        endswith: "Ends with",
+                    },
+                    date: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "Is after or equal to",
+                        gt: "Is after",
+                        lte: "Is before or equal to",
+                        lt: "Is before",
+                    }
+                }
+            },
+            columnMenu: true,
+            columnMenuInit: function (e) {
+                wordwrapmenu(e);
+                checkboxItem = $(e.container).find('input[type="checkbox"]');
+            },
+            columnShow: function (e) {
+                if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                    SaveReportSetting('POIndex', 'grid');
+            },
+            columnHide: function (e) {
+                if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                    SaveReportSetting('POIndex', 'grid');
+            },
+            detailTemplate: kendo.template($("#template").html()),
+            detailInit: detailInit,
+            detailExpand: function (e) {                
+                expandedDetailRow = e.detailRow.find(".orders");
+            },
+            //scrollable: {
+            //    virtual: true
+            //},
+            dataBound: function (o) {
+                //Dushant //Expanding the selected record.
+                //var a = location.hash;
+                //var b = location.pathname;
+                //var url = (b + a);
+                //$(".active").removeClass();
+                //$("a[href='" + url + "']").parent().addClass("active");
+                //$("a[href='" + url + "']").parent().parent().toggle();
+                var orderNo = location.hash.substr(location.hash.indexOf("?orderNo=") + 9)
+
+                var grid = $("#grid").data("kendoGrid");
+                var dataRows = grid.items();
+                // var data = $(dataRows[index]).find('td')[1].innerText
+                var dataLength = dataRows.length;
+
+                for (var i = 0; i < dataLength; i++) {
+                    var data = $(dataRows[i]).find('td')[1].innerText
+                    // var hehe = data.substr(0, 2);
+                    if (data == orderNo) {
+                        $(dataRows[i]).addClass('').css('background-color', '#00b36b');
+                        return false;
+                    }
+                    else {
+                        continue
+                    }
+                }
+
+                //$.each(dataRows, function (index, value) {
+                //    var id = $(dataRows[index]).find('td')[1].innerText
+                //    if (id == orderNo) {
+                //        $(dataRows[index]).addClass('btn btn-success');
+                //    }
+                //})
+
+
+
+                //  var rowIndex = dataRows.index(grid.select());
+
+
+
+                var grid = o.sender;
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.length + 1;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    displayPopupNotification("No Data Found Given Date Filter.", "info");
+                }
+                else {
+                    if (grid.dataSource.data()[0].PO_CONVERSION_FACTOR == 'Y') {
+                        grid.showColumn("GRAND_APPROVE_QUENTITY");
+                    }
+                    else {
+                        grid.hideColumn("GRAND_APPROVE_QUENTITY");
+                    }
+                    if (grid.dataSource.data()[0].PO_PARTY_TYPE == 'Y')
+                        grid.showColumn("PARTY_TYPE_EDESC");
+                    else
+                        grid.hideColumn("PARTY_TYPE_EDESC");
+                    if (grid.dataSource.data()[0].SO_CREDIT_LIMIT_FLAG == 'Y')
+                        grid.showColumn("credit_limit");
+                    else
+                        grid.hideColumn("credit_limit");
+
+                }
+                UpdateReportUsingSetting("POIndex", "grid");
+                $('div').removeClass('.k-header k-grid-toolbar');
+            },
+            editable: {
+                mode: "incell", // mode can be incell/inline/popup with Q1 '12 Beta Release of Kendo UI
+                confirmation: "Are you sure Want to Cancel This PO?" // the confirmation message for destroy command
+            },
+            columns: [
+                {
+                    field: "ORDER_NO",
+                    title: "Order No",
+                    format: "{0:n0}",
+                    width: "9%",
+                    
+
+                },
+                {
+                    field: "ORDER_DATE",
+                    title: "Date",
+                    format: "{0: " + reportConfig.dateFormat + " hh:mm tt}",
+                    //format: "{0: dd/MM/yyyy HH:mm:ss}",
+                    width: "12%",
+                    hidden:true,
+                },
+                {
+                    field: "MITI",
+                    title: "Miti",
+                    width:"12%",
+                },
+                {
+                    field: "COMPANY_EDESC",
+                    title: "Company",
+                    //format: "{0: " + reportConfig.dateFormat + " hh:mm tt}",
+                    //format: "{0: dd/MM/yyyy HH:mm:ss}",
+                    width: "9%",
+                },
+                {
+                    field: "PARTY_TYPE_EDESC",
+                    title: "Dealer",
+                    width: "10%",
+                    //footerTemplate: '<span style="float:right">Total Amount</span>',
+                },
+                {
+                    field: "CUSTOMER_EDESC",
+                    title: "Customer",
+                    width: "10%",
+
+                },
+                //{
+                //    field: "RESELLER_NAME",
+                //    title: "Retailer",
+                //    width: "10%",
+                //},
+
+                {
+                    field: "EMPLOYEE_EDESC",
+                    title: "ASM",
+                    width: "10%",
+                    // width: "55",
+                    //footerTemplate: '<span style="float:right">Total Amount</span>',
+                },
+                {
+                    field: "GrantTotalAmount",
+                    title: "Tot. Amt.",
+                    width: "9%",
+                    format: "{0:n0}",
+                    template: '<span style="float:right">#= kendo.toString(GrantTotalAmount, "n") #</span>'
+                },
+                //{
+                //    field: "credit_limit",
+                //    title: "Credit Limit",
+                //    width: "8%",
+                //    format: "{0:n0}",
+                //    template: '<span style="float:right">#= kendo.toString(credit_limit, "n") #</span>'
+                //    // width: "55",
+                //    //footerTemplate: '<span style="float:right">Total Amount</span>',
+                //}, {
+                //    field: "balance",
+                //    title: "Balance",
+                //    width: "8%",
+                //    format: "{0:n0}",
+                //    template: '<span style="float:right">#= kendo.toString(balance, "n") #</span>'
+                //    // width: "55",
+                //    //footerTemplate: '<span style="float:right">Total Amount</span>',
+                //},
+                //{
+                //    field: "REMARKS",
+                //    title: "Remarks",
+                //    width: "15%",
+                //    format: "{0:n0}"
+                //    //  balance
+                //    //  ApprovedAmount
+                //    // width: "55",
+                //    //footerTemplate: '<span style="float:right">Total Amount</span>',
+                //},
+                {
+                    field: "ApprovedAmount",
+                    title: "App. Amt.",
+                    width: "10%",
+                    format: "{0:n0}",
+                    template: '<span style="float:right" class="approveamountclass">#= kendo.toString(ApprovedAmount, "n") #</span>'
+                    //  ApprovedAmount
+                    // width: "55",
+                    //footerTemplate: '<span style="float:right">Total Amount</span>',
+                },
+                {
+                    field:"REMARKS",
+                    title: "Remarks",
+                    width:"15%",
+                },
+                //{
+                //    field: "GRAND_APPROVE_QUENTITY",
+                //    title: "Appr. C.Qty",
+                //    width: "11%",
+                //    format: "{0:n0}",
+                //    template: '<span style="float:right" class="ApproveCQuantity"> #= kendo.toString(GRAND_APPROVE_QUENTITY, "n") #</span>'
+                //    //  ApprovedAmount
+                //    // width: "55",
+                //    //footerTemplate: '<span style="float:right">Total Amount</span>',
+                //},
+                {
+                    command: [
+                        {
+                            "name": "mydelete",
+                            "buttonType": "ImageAndText",
+                            "text": "Gen. SO",
+                            "imageClass": "fa-truck",
+                            "className": "my-edit-button",
+                            "iconClass": "fa",
+                            "click": function (e) {
+                                e.preventDefault();
+                                var grid = $(e.currentTarget).closest('tr').next('tr').find('.orders').data("kendoGrid");
+                                var countApprovedRow = $(e.currentTarget).closest('tr').next('tr').find('.orders').find("input:checked").length;
+                                if (countApprovedRow == 0) {
+                                    bootbox.alert("Approve atleast one item first !!");
+                                    return;
+                                }
+                                if ($(e.currentTarget).attr("disabled") == "disabled")
+                                    return;
+
+                                $.when(showConfirmationWindow('Are you sure Want to Generate PO To So?')).then(function (confirmed) {
+                                    if (confirmed) {
+                                        //choose partyType
+
+                                        $("#formCodeMultiSelect").data("kendoMultiSelect").value([]);
+                                        $("#formCodeModal").modal('show');
+                                        $("#ApplyFormCodeModel").on("click", function () {
+                                            var multiselect = $("#formCodeMultiSelect").data("kendoMultiSelect");
+                                            var value = multiselect.value();
+                                            if (value.length == 0) {
+                                                return;
+                                            }
+                                            else {
+                                                var dataSource = grid.dataSource;
+                                                $.each(dataSource.data(), function (index, data) {
+                                                    data.FORM_CODE = value[0];
+                                                });
+                                            }
+
+                                            if (creditlimit) {
+                                                var win = $('#creditliimitwindows').data("kendoWindow");
+                                                $("#limittextbox").val('');
+                                                win.center();
+                                                win.open();
+                                            }
+                                            else {
+                                                var dataSource = grid.dataSource;
+                                                $.each(dataSource.data(), function (index, data) {
+                                                    data.FORM_CODE = value[0];
+                                                });
+                                                grid.dataSource.sync();
+                                            }
+                                        });
+
+
+
+                                        $("#showcreditremark").on("click", function () {
+                                            var creditlimit = $("#limittextbox").val();
+                                            if (creditlimit == '') {
+                                                $("#errorforcreditlimit").html('<div class="alert alert-success"><a class="close" data-dismiss="alert" aria-label="close">&times;</a> <strong>Error!</strong>Your Credit Limit is exceed. Please give Remarks</div>')
+                                            }
+                                            else {
+                                                var dataSource = grid.dataSource;
+                                                $.each(dataSource.data(), function (index, data) {
+                                                    data.CREDITLIMITREMARKS = creditlimit;
+                                                });
+                                                dataSource.sync()
+                                                win.close();
+                                            }
+
+                                        });
+                                    }
+                                });
+                            }
+                        }, 
+                    ],
+                    width: "25%",
+                }
+
+            ]
+        });
+
+    }
+
+
+    function KendoGridRefresh(readUrl) {
+        var grid = $('#grid').data("kendoGrid");
+        grid.destroy();
+        $('#grid').val('');
+        $('#grid').html('');
+        BindGrid(readUrl);
+
+    }
+
+    function detailInit(e) {
+        console.log(e);
+        var detailRow = e.detailRow;
+        expandedDetailRow = e.detailRow.find(".orders");
+        var Rowdata = e.data;
+        var id = Rowdata.ORDER_NO;
+        var ORDER_ENTITY = e.data.ORDER_ENTITY;
+         var companyCode = Rowdata.COMPANY_CODE;
+       // var companyCode = ReportFilter.getCompanyFilter().join("','");
+        var dataSourceITem = new kendo.data.DataSource({
+            type: "json",
+            batch: true,
+            transport: {
+                read: {
+                    async: false,
+                    url: window.location.protocol + "//" + window.location.host + "/" + "api/DistributionPurchase/GetDistributionPurchaseOrderDetail?companyCode=" + companyCode + "&Orderno=" + id + "&requestStatus=Rejected" + "&ORDER_ENTITY=" + ORDER_ENTITY, // <-- Get data from here.
+                    dataType: "json", // <-- The default was "jsonp".
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8"
+                },
+                update: {
+
+                    url: window.location.protocol + "//" + window.location.host + "/api/DistributionPurchase/UpdateDistributionPurchaseOrderDetail",
+                    dataType: "json",
+                    type: "post",
+                    contentType: "application/json; charset=utf-8",
+                    complete: function (e) {
+                        if (e.responseJSON.STATUS_CODE == 404) {
+                            displayPopupNotification("Voucher list is not selected", "error");
+                        }
+                        else if (e.responseJSON.STATUS_CODE == 304) {
+                            displayPopupNotification("Error to Covert Sales Order", "error");
+                        }
+                        else if (e.responseJSON.STATUS_CODE == 500) {
+                            displayPopupNotification("Sales Order No already exist", "error");
+                        }
+                        else if (e.responseJSON.STATUS_CODE == 200) {
+                            displayPopupNotification("Sales Order Generated Successfully", "success");
+                            $("#grid").data("kendoGrid").dataSource.read();
+                        }
+                    }
+                },
+                destroy: {
+                    url: window.location.protocol + "//" + window.location.host + "/api/DistributionPurchase/DeleteDistributionPurchaseOrderDetail",
+                    dataType: "json",
+                    type: "post",
+                    contentType: "application/json; charset=utf-8",
+                    complete: function (e) {
+                        if (e.responseJSON.STATUS_CODE == 404) {
+                            displayPopupNotification("Voucher list is not selected", "error");
+                        }
+                        else if (e.responseJSON.STATUS_CODE == 304) {
+                            //  displayPopupNotification("Error to Covert Sales Order", "error");
+                        }
+                        else if (e.responseJSON.STATUS_CODE == 500) {
+                            //  displayPopupNotification("Sales Order No already exist", "error");
+                        }
+                        else if (e.responseJSON.STATUS_CODE == 200) {
+                            displayPopupNotification("Item Cancel Successfully", "success");
+                            $("#grid").data("kendoGrid").dataSource.read();
+                        }
+                    }
+                },
+                parameterMap: function (options, operation) {
+                    if (operation !== "read" && options.models) {
+                        if (creditlimit) {
+                            var win = $('#creditliimitwindows').data("kendoWindow");
+                            win.center();
+                            win.open();
+
+                            //kendo.prompt("Please, enter a Credit Limit Remarks value:", "any value").then(function (data) {
+                            //    if (data == '')
+                            //        return false;
+                            //}, function () {
+                            //    return false;
+                            //})
+                        }
+                        return JSON.stringify(options.models);
+                    }
+                }
+            },
+            error: function (e) {
+                displayPopupNotification("Sorry error occured while processing data", "error");
+            },
+            //serverFiltering: false,
+            //serverGrouping: false,
+            //serverAggregates: false,
+            //serverPaging: false,
+            schema: {
+                model: {
+                    id: "ORDER_NO",
+                    fields: {
+                        ORDER_DATE: { editable: false, nullable: true, type: "date" },
+                        CUSTOMER_EDESC: { editable: false, nullable: true },
+                        CUSTOMER_CODE: { editable: false, nullable: true },
+                        EMPLOYEE_EDESC: { editable: false, nullable: true },
+                        ITEM_CODE: { editable: false, nullable: true },
+                        ITEM_EDESC: { editable: false, nullable: true },
+                        MU_CODE: { editable: false, nullable: true },
+                        QUANTITY: { editable: false, nullable: true },
+                        UNIT_PRICE: { editable: false, nullable: true },
+                        TOTAL_PRICE: { editable: false, nullable: true },
+                        REMARKS: { editable: true, nullable: true },
+                        CREATED_DATE: { editable: false, nullable: true, type: "date" },
+                        BILLING_NAME: { editable: false, nullable: true, type: "date" },
+                        APPROVED_FLAG: { editable: false, validation: { required: false } },
+                        APPROVED_FLAGBOOL: { editable: true, nullable: true, type: "boolean" },
+                        ISEDITED: { editable: true, nullable: true, type: "boolean" },
+                        CREDITLIMIT: { editable: true, nullable: true, type: "boolean" },
+                        REJECT_FLAG: { editable: false, validation: { required: false } },
+                        REJECT_FLAGBOOL: { editable: true, nullable: true, type: "boolean", validation: { required: true } },
+                        APPROVEQTY: { type: "number", editable: true, validation: { required: true } },
+                        CONVERSION_MU_CODE: { editable: false, nullable: true },
+                        CONVERSION_QUANTITY: { editable: false, nullable: true },
+                    }
+                }
+            },
+            aggregate: [
+                { field: "QUANTITY", aggregate: "sum" },
+                { field: "UNIT_PRICE", aggregate: "sum" },
+                { field: "TOTAL_PRICE", aggregate: "sum" },
+                { field: "CONVERSION_QUANTITY", aggregate: "sum" },
+                { field: "APPROVEQTY", aggregate: "sum" },
+            ],
+            pageSize: reportConfig.pageSize,
+            pageable: true,
+        });
+        detailRow.find(".orders").kendoGrid({
+            dataSource: dataSourceITem,
+            //height: 400,
+            sortable: true,
+            pageable: false,
+            sortable: true,
+            reorderable: true,
+            resizable: true,
+            scrollable: {
+                virtual: true
+            },
+            columns: [
+                {
+                    field: "ITEM_EDESC",
+                    title: "Item Name",
+                    width: "25%",
+                    //footerTemplate: '<span style="float:right">Total Amount</span>',
+                },
+                {
+                    field: "MU_CODE",
+                    title: "Req.Unit",
+                    width: "6%",
+                    // width: "55",
+                    footerTemplate: '<span style="float:right">Total</span>',
+                }, {
+                    field: "QUANTITY",
+                    title: "Req. Qty",
+                    width: "8%",
+                    template: '<span style="float:right">#= kendo.toString(QUANTITY) #</span>',
+                    format: "{0:n}",
+                    footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                }, {
+                    field: "UNIT_PRICE",
+                    title: "Unit Price",
+                    template: '<span style="float:right">#= kendo.toString(UNIT_PRICE,"n") #</span>',
+                    width: "8%",
+                    footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                }, {
+                    field: "TOTAL_PRICE",
+                    title: "Total Price",
+                    width: "10%",
+                    template: '<span style="float:right">#= kendo.toString(TOTAL_PRICE,"n") #</span>',
+                    footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                },
+                //{
+                //    field: "REMARKS",
+                //    title: "Remarks",
+                //    width: "15%",
+                //    format: "{0:n0}"
+                //},
+                {
+                    field: "CONVERSION_MU_CODE",
+                    title: "C.Unit",
+                    width: "5%",
+                },
+
+                {
+                    field: "CONVERSION_QUANTITY",
+                    title: "C. Qty (KG)",
+                    tooltip: "conversion",
+                    width: "8%",
+                    template: '<span class="CQuantity" style="float:right">#= kendo.toString(QUANTITY * CONVERSION_FACTOR) #</span>',
+                    footerTemplate: '<span class="CQuantitySUM" style="float:right">#= CalcAggregate("QUANTITY","CONVERSION_FACTOR")#</span>',
+                },
+                {
+                    field: "APPROVED_FLAG",
+                    title: "Approve",
+                    width: "7%",
+                    template: '<input  type="checkbox" #= APPROVED_FLAG =="Y" ? checked="checked" : "" # ></input>',
+                    attributes:{
+                               style:"text-align:center;"
+                            },
+                    // width: "55",
+                    //footerTemplate: '<span style="float:right">Total Amount</span>'#= APPROVED_FLAGBOOL ? checked="checked" : "" # ,
+                }, {
+                    field: "APPROVEQTY",
+                    title: "App. Qty",
+                    width: "8%",
+
+                    //format: "{0:n0}",
+                    // template: '<span class="APPROVEQTY" style="float:right">#= kendo.toString(APPROVEQTY) #</span>',
+                    footerTemplate: '<span class="APPROVEQTYSUM" style="float:right">#= kendo.toString(sum, "n")#</span>',
+                    template: "<input type='number'min='0' name='APPROVEQTY' class='APPROVEQTYSUM k-formatted-value k-input' tabindex='0' title='' style='display: inline-block;width:97%;text-align:right;padding-right:2px' value='#= kendo.toString(QUANTITY)#' aria-disabled='false' aria-readonly='false'>"
+                }
+            ],
+
+            dataBound: function (o) {
+
+                var grid = o.sender;
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.length + 1;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    displayPopupNotification("No Data Found Given Date Filter.", "info");
+                }
+                else {
+                    if (grid.dataSource.data()[0].PO_CONVERSION_FACTOR == 'Y') {
+                        grid.showColumn("CONVERSION_MU_CODE");
+                        grid.showColumn("CONVERSION_QUANTITY");
+                    }
+                    else {
+                        grid.hideColumn("CONVERSION_MU_CODE");
+                        grid.hideColumn("CONVERSION_QUANTITY");
+                    }
+                    if (grid.dataSource.data()[0].PO_REMARKS == 'Y') {
+                        grid.showColumn("REMARKS");
+
+                    }
+                    else {
+                        grid.hideColumn("REMARKS");
+                    }
+
+                }
+            },
+
+            editable: {
+                mode: "incell", // mode can be incell/inline/popup with Q1 '12 Beta Release of Kendo UI
+                confirmation: "Are you sure Want to Cancel This Item?" // the confirmation message for destroy command
+            },
+            edit: function (e) {
+                var data = $(this).parent(".k-master-row");
+                console.log(data);
+                var parentRow = this.wrapper.closest("tr");
+                console.log(parentRow);
+                //$('#grid').data('kendoGrid').dataSource.read();
+                console.log('edit started ');
+                console.log(e);
+                //e.preventDefault();
+            },
+            cancel: function (e) {
+                e.preventDefault();
+                e.container.data("kendoWindow").close();
+            },
+            update: function (e) {
+                console.log('edit completed');
+                console.log(e);
+            },
+            change: function (e) {
+                console.log('a change happened not datasource one');
+                console.log(e);
+            },
+            saveChanges: function (e) {
+                console.log('a save is about to occurr');
+                console.log(e);
+
+            },
+        });
+    };
+
+</script>
+<script>
+    function AddPoItem(e) {
+        var rowCount = $('#mytable tbody tr').length + 1;
+        var company = $("#ItemCompany").val();
+        var branch = $("#ItemBranch").val();
+        var conversionFactor='', customRate='';
+        customRate = $("#POCustomRate").val() == "Y" ? "" : " disabled ";
+        if ($("#POConversionFactor").val() == "Y") {
+            conversionFactor = '<td></td>\
+                                <td style="text-align:right;"></td>';
+        }
+
+        var newRow = '<tr>\
+                        <td> <select id="ItemsMultiselect_' + rowCount + '" multiple="multiple"> </select> </td>\
+                        <td></td>\
+                        <td> <input type="number" value="0" class="form-control input-sm" id="Quantity_' + rowCount + '" onchange="Calculate(this)" style="width:100%;text-align:right;" /> </td>\
+                        <td> <input type="number" class="form-control input-sm" id="UnitPrice_' + rowCount + '" ' + customRate + ' onchange="Calculate(this)" style="width:100%;text-align:right;" />\
+                            <input type="hidden" id="ConversionFactor_' + rowCount + '" /></td>\
+                        '+ conversionFactor + '\
+                        <td id="Total_' + rowCount + '" style="text-align:right;" ></td>\
+                        <td> <button class="btn btn-xs btn-danger pull-right" onclick="RemovePoItem(this)"> [<i class="fa fa-times"></i>] </button> </td>\
+                    </tr>';
+
+        $("#mytable").append(newRow);
+        CreateItemsMultiSelect(rowCount, company, branch);
+        //var data = $("#POItemTemplate").data("kendoTemplate");
+    }
+
+    function Calculate(e) {
+        var row = $(e).closest('tr')[0];
+        var index = $("tr", $(row).closest("table")).index(row);
+        var qty = $("#Quantity_" + index).val() == '' ? 0 : parseInt($("#Quantity_" + index).val());
+        var unitPrice = $("#UnitPrice_" + index).val() == '' ? 0 : parseInt($("#UnitPrice_" + index).val());
+        if ($("#POConversionFactor").val() == "Y") {
+            var tds = $(row).find('td');
+            var conversionFactor = parseFloat($("#ConversionFactor_" + index).val());
+            $(tds[5]).html(conversionFactor * qty);
+        }
+        var total = qty * unitPrice;
+        $("#Total_" + index).html(total);
+
+    }
+
+    function CreateItemsMultiSelect(index, company, branch) {
+        $("#ItemsMultiselect_" + index).kendoMultiSelect({
+            placeholder: "Select item...",
+            dataTextField: "ITEM_EDESC",
+            dataValueField: "ITEM_CODE",
+            height: 600,
+            headerTemplate: '<div class="col-md-offset-3"><strong>...Items...</strong></div>',
+            autoClose: true,
+            maxSelectedItems: 1,
+            dataBound: function (e) {
+                $(".k-list.k-reset").slimScroll({ 'height': '179px', 'scroll': 'scroll' });
+            },
+            change: function (e) {
+                var row = $(e.sender.element).closest('tr')[0];
+                var index = $("tr", $(row).closest("table")).index(row);
+                var value = this.value();
+                var tds = $(row).find('td');
+
+                if (value.length > 0) {
+                    var DDldataSource = $("#ItemsMultiselect_" + index).data("kendoMultiSelect").dataSource.data();
+                    var itemDetail = _.filter(DDldataSource, function (x) {
+                        return x.ITEM_CODE == value;
+                    });
+                    var UnitPrice = itemDetail[0].SALES_RATE ? parseFloat(itemDetail[0].SALES_RATE) : 0;
+                    var qty = $("#Quantity_" + index).val() == '' ? 0 : parseInt($("#Quantity_" + index).val());
+
+                    $(tds[1]).html(itemDetail[0].UNIT);
+                    $("#UnitPrice_" + index).val(UnitPrice);
+
+                    if ($("#POConversionFactor").val() == "Y") {
+                        $(tds[4]).html(itemDetail[0].CONVERSION_UNIT);
+                        var conversionFactor = parseFloat(itemDetail[0].CONVERSION_FACTOR)
+                        $("#ConversionFactor_" + index).val(conversionFactor);
+                        //$(tds[5]).html(conversionFactor * qty);
+                        $(tds[6]).html(qty * UnitPrice);
+                    }
+                    else {
+                        $(tds[4]).html(qty * UnitPrice);
+                    }
+                }
+                else {
+                    $("#UnitPrice_" + index).val('');
+                    $(tds[1]).html('');
+                    if ($("#POConversionFactor").val() == "Y") {
+                        $(tds[4]).html('');
+                        $("#ConversionFactor_" + index).val('');
+                        //$(tds[5]).html(conversionFactor * qty);
+                        $(tds[6]).html('');
+                    }
+                    else {
+                        $(tds[4]).html('');
+                    }
+                }
+                $("#UnitPrice_" + index).trigger('change');
+            },
+            dataSource: {
+                type: "JSON",
+                transport: {
+                    read: {
+                        url: "/api/DistributionPurchase/GetItems?companyCode=" + company + "&branchCode=" + branch,
+                    },
+                },
+            },
+        });
+    }
+
+    function RemovePoItem(e) {
+        var row = $(e).closest('tr')[0];
+        $(row).remove();
+    }
+
+    function UpdatePO() {
+        var data = {
+            ORDER_NO: $("#orderNumber").val(),
+            ORDER_ENTITY: "P-D",
+            CUSTOMER_CODE: $("#CustomerCode").val(),
+            CUSTOMER_EDESC: $("#customerName").val(),
+            CREATED_BY: $("#spCode").val(),
+            REMARKS: $("#orderRemarks").val(),
+            COMPANY_CODE: $("#ItemCompany").val(),
+            BRANCH_CODE: $("#ItemBranch").val(),
+            ITEMS: [],
+        };
+        var rowCount = $('#mytable tbody tr').length;
+        for (let i = 0; i < rowCount; i++) {
+            var row = $('#mytable tbody tr').eq(i);
+            var tds = $(row).find('td');
+            var newItem = {
+                ITEM_CODE: $("#ItemsMultiselect_" + (i + 1)).data("kendoMultiSelect").value()[0],
+                QUANTITY: $("#Quantity_" + (i + 1)).val(),
+                MU_CODE: $(tds[1]).html().trim(),
+                UNIT_PRICE: $("#UnitPrice_" + (i + 1)).val(),
+            };
+            if (newItem.ITEM_CODE == '' || newItem.QUANTITY <= 0 || newItem.UNIT_PRICE <= 0) {
+                displayPopupNotification("Input fields are not valid", "warning");
+                return;
+            }
+            data.ITEMS.push(newItem);
+        }
+        var url = window.location.protocol + "//" + window.location.host + "/api/DistributionPurchase/UpdatePurchaseOrder";
+        $.ajax({
+            type: "POST",
+            url: url,
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            data: JSON.stringify(data),
+            success: function (response) {
+                displayPopupNotification(response.MESSAGE, response.TYPE);
+                $("#RunQuery").trigger("click");
+                $("#POEditWindow").modal('hide');
+            },
+            error: function (ex) {
+                displayPopupNotification("Something went wrong", "error");
+            }
+        });
+    }
+
+    function validateNumber(event) {
+        var key = window.event ? event.keyCode : event.which;
+
+        if (event.keyCode === 8 || event.keyCode === 127 || event.keyCode === 46) {
+            return true;
+        }
+        else if (key < 48 || key > 57) {
+            return false;
+        }
+        else return true;
+    }
+
+</script>
+<script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js?V2")"></script>

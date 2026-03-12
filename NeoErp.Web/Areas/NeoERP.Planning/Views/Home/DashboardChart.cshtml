@@ -1,0 +1,274 @@
+﻿@using NeoErp.Core.Models;
+@{
+    var pageId = ViewContext.RouteData.Values["id"] != null ? ViewContext.RouteData.Values["id"].ToString() : "Dashboard";
+    Layout = null;
+    Session["oldPagenumber_" + pageId] = null;
+}
+@{
+    ViewBag.Title = "DashboardChart";
+    Layout = "~/Areas/NeoERP.Planning/Views/Shared/_Layout.cshtml";
+}
+
+@if (ViewContext.RouteData.Values["id"] != null)
+{
+    @Html.Partial("Dashboard/_dashboardCharts")
+}
+
+@section scripts{
+    <script src="@Scripts.Url("~/Sales/Scripts/knockout-2.2.0.js")"></script>
+    <script src="@Scripts.Url("~/Content/MainTheme/Protle.dragger.js")" type="text/javascript"></script>
+    <script src="@Scripts.Url("~/Content/Gridster/gridstack.js")"></script>
+    <script src="@Scripts.Url("~/Content/Kendo/jszip.min.js")"></script>
+    <script src="@Scripts.Url("~/JS/kendoHelpers.js")"></script>
+    <script src="@Scripts.Url("~/JS/reportFilter.js")"></script>
+    <script src="@Scripts.Url("~/JS/DashboardChartFilter/ChartFilter.js")"></script>
+    <!-- angular scripts for planning-->
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/module/planningModule.js")"></script>
+
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/editPlanCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/planningCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/planningBudgetCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/budgetPlanSetupCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/planSetupCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/subPlanCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/planningCopyCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/frequencySetupCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/setupCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/BrandingPlanCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/BrandingPlanSetupCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/ProcurementPlanCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/ProcurementPlanSetupCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/BrandingPlanCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/BrandingPlanSetupCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/LedgerBudgetCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/ledgerBudgetPlanSetupCtrl.js")"></script>
+
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/ProductionPlanCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/controller/ProductionPlanSetupCtrl.js")"></script>
+
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/services/PlanServices.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/services/PlanSetupService.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/services/PlanSubPlanService.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Planning/js/services/FrequencySetupService.js")"></script>
+    <script src="@Scripts.Url("~/Content/MainTheme/keymaster.js")"></script>
+
+    <script>
+        var amountFigureType = "";
+        var branchCodes = '';
+        var companyCodes = '';
+        var checkboxItem = '';
+        var moduleCode = '01';
+        var isFirstLoad = {
+            fav: false,
+            favCount: 0,
+            favGroup: false,
+            favGroupCount: 0
+        };
+        var loadCount = 0;
+        $(document.body).on('click', '.export-pdf', function () {
+            var chartid = $(this).data("id");
+            var chart = $("#" + chartid).getKendoChart();
+            var filename = $(this).closest(".portlet-title").find(".custom-modal").html();
+            chart.exportPDF({ paperSize: "auto", margin: { left: "1cm", top: "1cm", right: "1cm", bottom: "1cm" } }).done(function (data) {
+                kendo.saveAs({
+
+                    dataURI: data,
+                    fileName: filename + ".pdf",
+                    proxyURL: "//demos.telerik.com/kendo-ui/service/export"
+                });
+            });
+        });
+
+        $(document.body).on('click', '.export-img', function () {
+            var chartid = $(this).data("id");
+            var chart = $("#" + chartid).getKendoChart();
+            var filename = $(this).closest(".portlet-title").find(".custom-modal").html();
+            chart.exportImage().done(function (data) {
+                kendo.saveAs({
+                    dataURI: data,
+                    fileName: filename + ".png",
+                    proxyURL: "//demos.telerik.com/kendo-ui/service/export",
+
+                });
+            });
+        });
+
+        $(document.body).on('click', '.export-svg', function () {
+            var chartid = $(this).data("id");
+            var chart = $("#" + chartid).getKendoChart();
+            var filename = $(this).closest(".portlet-title").find(".custom-modal").html();
+            chart.exportSVG().done(function (data) {
+                kendo.saveAs({
+                    dataURI: data,
+                    fileName: filename + ".svg",
+                    proxyURL: "//demos.telerik.com/kendo-ui/service/export"
+                });
+            });
+        });
+        $('.modal').on('shown.bs.modal', function () {
+            $('.modal-backdrop').css('zIndex', 10030);
+        })
+
+        function chart_grid_option_change(btnClass, method) {
+            $this = $("." + btnClass);
+            $this.data("type", "Chart");
+            if (jQuery.isFunction(method))
+                method();
+            else
+                window[method]();
+            $this.find('i').removeClass('icon-bar-chart');
+            $this.attr('data-original-title', 'Grid');
+        }
+
+
+
+        $("#applyFilters_ChartDashboard").bind('click', function () {
+            //hide modal if not hide auto
+            $('#reportFilterShow__ChartDashboard').closest('.modal').modal('hide')
+            //update amount figure
+            if (ReportFilter.filterAdditionalData().ReportFilters.AmountFigureFilter != "Actual")
+                amountFigureType = "IN " + ReportFilter.filterAdditionalData().ReportFilters.AmountFigureFilter.toUpperCase();
+            else
+                amountFigureType = "";
+            reportFilter.ReportFilters.AmountFigureFilter = ReportFilter.filterAdditionalData().ReportFilters.AmountFigureFilter;
+
+            //
+            var applyToChartOption = $("input[name=ApplyOnChartOption]:checked").val();
+
+            var kendoData = $("#consolidateTreeView").data("kendoTreeView");
+            var items = getCheckedItems(kendoData);
+            var branchCodeArray = [];
+            if (items.length != 0) {
+                var j = 0;
+                for (var i = 0; i < items.length; i++) {
+                    if (items[i].branch_Code.indexOf('.') != -1) {
+                        branchCodeArray[j] = items[i].branch_Code;
+                        j++;
+                    }
+                }
+            }
+            branchCodes = branchCodeArray.join(',');
+            refreshAllChart();
+        });
+
+
+        function refreshAllChart(urlData) {
+            urlData = (urlData == undefined) ? "?customerCode=&itemCode=&categoryCode=&companyCode=&branchCode=" + branchCodes + "&partyTypeCode=&formCode=" : urlData;
+            var employeeUrlData = ""; accoundUrlData = "";
+            if (urlData != '') {
+                employeeUrlData = urlData + "&employeeCode=";
+                accoundUrlData = urlData + "&accountCode=";
+            }
+            reportFilter = undefined;
+            try { createMonthlySalesCollectionChart(urlData); } catch (e) { }
+            try { kendoCharts.createChart(urlData); } catch (e) { }
+
+            //refreshmonthly();
+            try { CreateMonthlyBranchSalesChart(); } catch (e) { }
+
+            //refreshBranch();
+            try { createbranchwiseSalesCollectionChart(''); } catch (e) { }
+
+            //refreshBranchWiseSalesCollectionChart();
+            try { createWeeklyCollectionChart(urlData); } catch (e) { }
+
+            //refreshWeeklyCollectionChart();
+            try { CreateExpensesTrendChart(accoundUrlData); } catch (e) { }
+
+            //RefreshExpensesTrendChart();
+            try { createCategoryChart(urlData); } catch (e) { }
+
+            //refreshCategoryChart();
+            try { createDivisionwiseSalesChart(urlData); } catch (e) { }
+            //refreshDivisionSalesChart();
+            try { CreateEmployeeWiseSalesChart(employeeUrlData); } catch (e) { }
+
+            //RefreshEmployeeWiseSalesChart();
+            try { createbranchwiseSalesTargetChart(); } catch (e) { }
+
+            try { createbranchwiseTargetCollectionChart(); } catch (e) { }
+
+            try { createMonthlyTargetCollectionChart(); } catch (e) { }
+
+            try { createMonthlySalesTargetChart(); } catch (e) { }
+
+        }
+        function FormatLabels(value) {
+            return kendo.format("{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString() + "}", value);
+        }
+    </script>
+    <script>
+        var listlength = 0;
+        var progresswidth = 0;
+        var each_percent = 0;
+        $(document).ready(function () {
+            listlenght = $(".form-wizard").find('li').length;
+            each_percent = (100 / listlenght)
+            progresswidth = (each_percent * 1);
+            $('.progress-bar').width(progresswidth + '%');
+
+            key('ctrl+h', function () { $('.setting').hide(); return false });
+            key('ctrl+v', function () { $('.setting').show(); return false });
+
+            $(".nav-tabs a").on('click', function (e) {
+                e.preventDefault();
+            });
+        })
+
+        $(".step").click(function () {
+            showloader();
+            $this = $(this);
+            $(".form-wizard").find('li').removeClass('active');
+            $this.closest('li').addClass('active');
+            var activeindex = $('.form-wizard').find('li.active').index();
+            progresswidth = (each_percent * (activeindex + 1));
+            $('.progress-bar').width(progresswidth + '%');
+            hideloader();
+        })
+
+        function update_wizard(activeindex) {
+            showloader();
+            $(".form-wizard").find('li').removeClass('active');
+            $(".form-wizard li:eq(" + activeindex + ")").addClass('active');
+            progresswidth = (each_percent * (activeindex + 1));
+            $('.progress-bar').width(progresswidth + '%');
+            hideloader();
+        }
+        function CollapseAll() {
+            var elementsA = document.querySelectorAll("#grid a.k-icon.k-minus");
+            if (elementsA.length > 0) {
+
+                for (var i = 0; i < elementsA.length; i++) {
+                    $(elementsA[i]).trigger("click");
+                }
+                return;
+            }
+            var elementsB = document.querySelectorAll("#grid a.k-icon.k-i-collapse");
+            for (var i = 0; i < elementsB.length; i++) {
+                $(elementsB[i]).trigger("click");
+            }
+        }
+
+        function ExpandAll() {
+            var elementsB = document.querySelectorAll("#grid a.k-icon.k-i-expand");
+            if (elementsB.length > 0) {
+
+                for (var i = 0; i < elementsB.length; i++) {
+                    $(elementsB[i]).trigger("click");
+                }
+                return;
+            }
+            var elementsA = document.querySelectorAll("#grid a.k-icon.k-plus");
+            for (var i = 0; i < elementsA.length; i++) {
+                $(elementsA[i]).trigger("click");
+            }
+        }
+    </script>
+}
+
+
+
+
+
+
+

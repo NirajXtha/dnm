@@ -1,0 +1,173 @@
+﻿@model List<NeoErp.Sales.Modules.Services.Models.Voucher.CUSTOMTEMPLATEFORPL>
+    <style>
+        .customfont tr td {
+            font-size: 12px !important;
+        }
+        /*[data-toggle="toggle"] {
+            display: none;
+        }*/
+    </style>
+<div class="">
+    <label for="form_control_1"> Profit and Loss(p&Lambda;L) Statement <span class="text-danger"> @ViewBag.accountname</span> </label>
+</div>
+@if (Model.Count() > 0)
+            {
+
+
+    <div class="row">
+        <div class="col-md-8">
+            <table class="table table-hover customfont" >
+                <thead>
+                    <tr><td></td><td >Current Year</td><td>Previous year</td></tr>
+                </thead>
+                <tbody>
+                    @foreach (var ledgers in Model.OrderBy(x=>x.SEGMENT_CODE).GroupBy(x => x.SEGMENT_NAME))
+                    {
+                        double TotalAmount = 0;
+                        <tr><td colspan="3" style="background-color:darkblue;color:white;"><center>@ledgers.Key</center> </td></tr>
+                        foreach (var d in Model.Where(x => x.SEGMENT_NAME == ledgers.Key).OrderBy(x => x.INDEXING))
+                        {
+                            if (d.END_SEGMENT == "Y")
+                            {
+                                continue;
+                            }
+
+                            if (d.OPERATE_TYPE == "+")
+                            {
+                                TotalAmount = TotalAmount + d.Balance ?? 0;
+                            }
+                            else if (d.OPERATE_TYPE == "-")
+                            {
+                                TotalAmount = TotalAmount - d.Balance ?? 0;
+                            }
+
+                            <tr>
+                                <td class="showhidetrigger">
+                                    <label for="accounting">@d.PL_EDESC</label>
+                                    @*<input type="checkbox" name="@d.PL_EDESC" id="@d.PL_EDESC" data-toggle="toggle">*@
+                                </td>
+                                <td>
+                                   
+                                        @{
+                                            var displayContainSeg = "0";
+                                            var dataSeg = Math.Round(d.Balance??0,2);
+                                            if (dataSeg < 0)
+                                            {
+                                                displayContainSeg = $"({dataSeg})";
+                                            }
+                                            else if (d.OPERATE_TYPE == "-")
+                                            {
+                                                displayContainSeg = $"({Math.Abs(dataSeg)})";
+                                            }
+                                            else
+                                            {
+                                                displayContainSeg = $"{dataSeg}";
+                                            }
+                                        }
+                                    @if (d.TEXT_FORMAT == "Italic")
+                                    {
+                                    <span id="widthspanNumber" style="font-style:italic;color:@d.TEXT_COLOR;">
+                                        @displayContainSeg
+                                    </span>
+                                    }
+                                    else if (d.TEXT_FORMAT == "Bold")
+                                    {
+                                        <span id="widthspanNumber" style="font-weight:bold; color:@d.TEXT_COLOR;">
+                                            @displayContainSeg
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span id="widthspanNumber" style="color:@d.TEXT_COLOR;">
+                                            @displayContainSeg
+                                        </span>
+                                    }
+
+                                </td>
+                                <td></td>
+                            </tr>
+                                                foreach (var abc in d.ChildSummary) {
+                                                    <tr style="color:blue;" class="hide">
+                                                        <td>@abc.ACC_EDESC</td>
+                                                        <td>@abc.Balance</td>
+                                                    </tr>
+                                                }
+                                            }
+                                            <tr>
+                                                <td>
+                                                    @{
+                                                        var endsegment = Model.Where(x => x.END_SEGMENT == "Y" && x.SEGMENT_NAME == ledgers.Key).FirstOrDefault();
+
+                                                    }
+                                                    @if (endsegment != null)
+                                                    {
+                                                        <text>@endsegment.PL_EDESC</text>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (endsegment != null)
+                                                    {
+                                                    if (endsegment.TEXT_FORMAT == "Italic")
+                                                    {
+                                                        <span id="widthspanNumber" style="font-style:italic;color:@endsegment.TEXT_COLOR;">
+                                                           @TotalAmount
+                                                        </span>
+                                                    }
+                                                    else if (endsegment.TEXT_FORMAT == "Bold")
+                                                    {
+                                                        <span id="widthspanNumber" style="font-weight:bold; color:@endsegment.TEXT_COLOR;">
+                                                           @TotalAmount
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span id="widthspanNumber" style="color:@endsegment.TEXT_COLOR;">
+                                                          @TotalAmount
+                                                        </span>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        <span id="widthspanNumber" >
+                                                            @TotalAmount
+                                                        </span>
+                                                    }
+                                                </td>
+                                                <td></td>
+                                            </tr>
+                                            <tr><td></td><td></td><td></td></tr>
+
+                                                        }
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+   
+        
+        }
+<script src="@Scripts.Url("~/Content/MainTheme/assets/admin/pages/scripts/ui-tree.js")"></script>
+        <script>
+            $(function () {
+                $('.k-list.k-reset').slimScroll({
+                    alwaysVisible: true
+                });
+                $('#tree_1').jstree(); 
+            });
+            $(document).ready(function () {
+                $('.showhidetrigger').click(function () {
+                
+                    if ($(this).closest('tr').next('.hide').length > 0)
+                    {
+                        $(this).closest('tr').next('.hide').removeClass("hide").addClass("Showcus");
+                    }
+
+                    //else {
+                    //    $(this).closest('tr').next('.Showcus').removeClass("Showcus").addClass("hide");
+                    //}
+                    //$(this).closest('tr').next('.hide').toggle();
+                    //$(this).parents().next('.hide').toggle();
+                });
+            });
+            $("#subaccountdiv").slimScroll({ height: '470px' });
+        </script>

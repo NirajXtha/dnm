@@ -1,0 +1,837 @@
+﻿
+@{
+    ViewBag.Title = "OrderDispatch";
+    Layout = null;
+}
+
+<style>
+
+    /* .not-active {
+        pointer-events: none;
+        cursor: default;
+        text-decoration: none;
+        color: black;
+    }*/
+
+    .k-splitbar.k-splitbar-horizontal {
+        width: 5px;
+    }
+
+
+    .k-splitter {
+        height: 490px !important;
+    }
+
+    .portlet-title.mingap {
+        min-height: auto !important;
+    }
+
+    .bottomspance {
+        padding: 2px 15px !important;
+    }
+
+    .portlet-title.mingap {
+        min-height: auto !important;
+    }
+
+    .bottomspance .portlet-body {
+        padding-top: 2px !important;
+    }
+
+    .portlet {
+        margin-top: 0px;
+        margin-bottom: 7px !important;
+    }
+
+
+    .bodyController {
+        margin-top: 4px;
+    }
+
+
+
+    .main .k-widget.k-dropdown.k-header {
+        min-height: 22px !important;
+    }
+
+    .main .k-dropdown-wrap.k-state-default {
+        min-height: 24px !important;
+        font-size: 11px;
+    }
+
+
+
+    .k-splitter .k-scrollable {
+        overflow-y: hidden !important;
+    }
+
+    .k-scrollable .k-widget.k-treeview {
+        max-height: 444px;
+        overflow: auto !important;
+    }
+
+    .k-i-calendar {
+        margin-top: -10px;
+    }
+
+    span.k-icon.k-i-warning {
+        display: none;
+    }
+
+    .calendar-icon-2 {
+        top: 24px !important;
+    }
+
+    .k-widget.k-datepicker {
+        background-color: transparent !important;
+    }
+
+    .k-grid td .k-checkbox-label {
+        display: none !important;
+    }
+</style>
+
+<div class="row" id="OrderDispatchCtrl" ng-controller="OrderDispatchCtrl">
+
+    <div class="col-md-12">
+
+        <div class="portlet light form-fit bordered bottomspance" style="width: 100%">
+            <div class="portlet mingap">
+
+                <div class="portlet-title">
+
+                    <div class="caption caption-title ng-binding">
+                        <a class="btn-back pull-left" data-toggle="tooltip" data-placement="top" title="Back To Dashboard" href="/DocumentTemplate/Home/Dashboard">
+                            <i class="fa fa-arrow-circle-left"></i>
+                        </a>
+                        <i class="fa fa-gift font-green-haze"></i>
+                        <span class="caption-subject font-green-haze bold uppercase">{{FormName}}</span>
+                    </div>
+
+                    <div class="actions">
+
+                        <a id="PrintDispatch" data-toggle="tooltip" title="(Alt + P)" ng-click="printDispatch()" href="javascript:;">
+                            <div class="btn btn-circle btn-icon-only btn-default" data-placement="left" data-html="true" data-container="body" data-toggle="tooltip" title="Print Dispatch">
+                                <i class="fa fa-print"></i>
+                            </div>
+                        </a>
+
+
+                        @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+
+                        @*<a class="btn btn-success" data-toggle="tooltip" data-placement="top" title="(Alt + P)" ng-click="findOrderDispatchForDocument([])" href="javascript:;">
+                    <i class="fa fa-search-plus"></i> Dispatch Planning
+                </a>
+                <a class="btn btn-success" data-toggle="tooltip" data-placement="top" title="(Alt + P)" ng-click="viewPlannedReport()" href="javascript:;">
+                    <i class="fa fa-file-excel-o"></i> Planned Summary Report
+                </a>*@
+
+                    </div>
+
+                </div>
+
+                <div class="portlet-body">
+
+                    <div class="row">
+                        <div class="col-md-12 col-sm-12">
+                            <div class="col-sm-2 col-md-2 col-lg-2">
+                                <div class="form-group">
+                                    <label>Dispatch Log No.</label>
+                                    <div>
+                                        <input type="text" id="dispatchlog" name="dispatchlog" ng-model="Dispatch_no" disabled class="form-control" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-2 col-md-2 col-lg-2">
+                                <div class="form-group">
+                                    <label for="date-range-select">Date Range:</label>
+                                    <select id="date-range-select" onchange="updateDateRange(this.value)" class="form-control">
+                                        <option value="today">Today</option>
+                                        <option value="yesterday">Yesterday</option>
+                                        <option value="month">This Month</option>
+                                        <option value="year">This Year</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-sm-4 col-md-4 col-lg-4">
+                                <div class="form-group">
+                                    <label for="englishdatedocument">From Date:</label>
+                                    <div>
+                                        <input id="englishdatedocument" kendo-date-picker
+                                               ng-model="Dispatch_From"
+                                               k-options="monthSelectorOptionsSingle" data-toggle="tooltip"
+                                               title="Select date" class="form-control" style="width: calc(50% - 5px); display: inline-block; margin-right: 5px;" />
+
+                                        <div class="col-xs-6 col-sm-6 col-md-6 nopadding-left pl-1" style="display: inline-block; vertical-align: top;">
+                                            <input type="text" id="nepaliDate5" ng-model="Dispatch_To"
+                                                   data-checkfor="englishdatedocument" onchange="ConvertNepToEng(this)"
+                                                   data-toggle="tooltip" title="Select date" class="nepali-calendar form-control" style="width: 100%; height: 25px" />
+                                            <i class="fa fa-calendar form-control-feedback calendar-icon-2" data-toggle="tooltip" title="Select date" style="top:5px !important;"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 col-sm-4 col-lg-4">
+                                <label for="englishdatedocument1">Planning as on Date:</label>
+                                <div>
+                                    <input id="englishdatedocument1" kendo-date-picker
+                                           ng-model="PlanningDate"
+                                           k-options="monthSelectorOptionsSingle1" data-toggle="tooltip" title="Select date" style="width: calc(50% - 5px); display: inline-block; margin-right: 5px;" class="form-control" />
+
+                                    <div class="col-xs-6 col-sm-6 col-md-6 nopadding-left pl-1" style="display: inline-block; vertical-align: top;">
+                                        <input type="text" id="nepaliDate51" ng-model="PlanningTo" data-checkfor="englishdatedocument" onchange="ConvertNepToEng(this)" data-toggle="tooltip" title="Select date" class="nepali-calendar form-control" style="width: 100%; height: 25px" />
+                                        <i class="fa fa-calendar form-control-feedback calendar-icon-2" data-toggle="tooltip" title="Select date" style="top:5px !important;"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12 col-md-12 col-lg-12">
+                        <div class="col-sm-2 col-md-2 col-lg-2">
+                            <div class="form-group">
+                                <label for="element">Document:</label>
+                                <select ng-model="selectedDocument" name="document" id="document"
+                                        ng-options="dl.FORM_EDESC for dl in DocumentList" style="width: 100%; height: 30px">
+                                    <option value="">Select Document</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-2 col-md-2 col-lg-2">
+                            <div class="form-group">
+                                <label for="element">Dealer/Party:</label>
+                                <select ng-model="selectedDealer" name="dealer" id="dealer"
+                                        ng-options="id.PARTY_TYPE_EDESC for id in AllPartyType" style="width: 100%; height: 30px">
+                                    <option value="">Select Dealer</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-2 col-md-2 col-lg-2">
+                            <div class="form-group">
+                                <label for="element">Dispatch From:</label>
+                                <div>
+                                    <input type="text" id="dispatchfrom" name="dispatchfrom" ng-model="Dispatcher" class="form-control" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-6 col-lg-6">
+                            <div class="col-sm-12 col-md-12 col-lg-12">
+                                <div class="tabbable">
+                                    <a class="btn btn-success" id="dispatchPlanningBtn" data-toggle="tooltip" data-placement="top" title="(Alt + P)" href="javascript:;" style="float:right;">
+                                        <i class="fa fa-search-plus"></i> Dispatch Planning
+                                    </a>
+                                    <a class="btn btn-success" id="plannedReportBtn" data-toggle="tooltip" data-placement="top" title="(Alt + P)" href="javascript:;" style="float:right;margin-right:17px;">
+                                        <i class="fa fa-file-excel-o"></i> Planned Summary Report
+                                    </a>
+                                    <a class="btn btn-success not-active dispatch" style="background-color: darkorange; display: none; float:right;margin-right:17px;" data-toggle="tooltip" data-placement="top" title="(Alt + D)" ng-click="dispatchOrder()" href="javascript:;">
+                                        <i class="fa fa-pencil"></i> Plan
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="divider"></div>
+                <div class="row">
+                    <div class="" style="overflow-x: hidden">
+                        @Html.Partial("~/Areas/NeoERP.DocumentTemplate/Views/Shared/PartialView/_GridToolbar.cshtml")
+                        <kendo-grid id="dispatchGrid" options="dispatchGridOptions" k-rebind="dispatchGridOptions" class="kendo_gride_table" style="width:100%;">
+                        </kendo-grid>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade-out" id="dispatchTagModal" data-backdrop="static" tabindex="-1" data-width="500">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <div type="button" class="close" data-dismiss="modal" aria-hidden="true" ng-click="close()" next-on-tab>&times;</div>
+                            <h4 class="modal-title">
+                                <span class="fa fa-file"></span>
+                                Select all Company and Branches
+                            </h4>
+                        </div>
+                        <div class="modal-body mb--8">
+
+                            <div class="row">
+                                <div id="companyBranchTreeView" style="max-height:400px;"></div>
+
+                            </div>
+
+                        </div>
+
+                        <div class="modal-footer">
+
+                            <div class="form-group col-md-12">
+                                <button class="btn btn-green-light" id="btnConfirmToTag">Ok</button>
+                                <button class="btn btn-green-light" id="btnConfirmToTag" ng-click="close()" data-dismiss="modal">Cancel</button>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+</div>
+
+<script>
+
+    function showloader() {
+        $(".busy-loader").css("display", "block");
+    }
+    function hideloader() {
+        $(".busy-loader").css("display", "none");
+    }
+
+    function toogleDispatch(event) {
+        debugger
+        row = event.closest("tr"),
+            grid = $("#dispatchGrid").data("kendoGrid"),
+            dataItem = grid.dataItem(row);
+
+
+        // $("#txtPlanning_" + dataItem.DISPATCH_NO).show();
+
+        // document.getElementById("txtPlanning_" + dataItem.DISPATCH_NO).value = dataItem.QUANTITY;
+        // $('#txtPlanning_' + dataItem.DISPATCH_NO).focus();
+        var qty = dataItem.PendingToPlanning;
+        var qty2ND = dataItem.PendingToPlanning2ND;
+        $("#txtPlanning_" + dataItem.DISPATCH_NO).val(qty);
+        $("#txtPlanning2ND_" + dataItem.DISPATCH_NO).val(qty2ND);
+        $("#txtPlanning_" + dataItem.DISPATCH_NO).show();
+        $("#txtPlanning2ND_" + dataItem.DISPATCH_NO).show();
+        var checkBox = document.getElementById("isDispatch_" + dataItem.DISPATCH_NO);
+        if (checkBox.checked == true) {
+            $(".dispatch").removeClass("not-active");
+            toggleDispatchButtonDisplay();
+        } else {
+            $(".dispatch").addClass("not-active");
+            toggleDispatchButtonDisplay();
+            $("#txtPlanning_" + dataItem.DISPATCH_NO).hide();
+            $("#txtPlanning2ND_" + dataItem.DISPATCH_NO).hide();
+            $("#txtPendingToDispatch_" + dataItem.DISPATCH_NO).hide();
+            $("#txtPendingToDispatch2ND_" + dataItem.DISPATCH_NO).hide();
+            $("#txtPlanningAmount_" + dataItem.DISPATCH_NO).hide();
+        }
+    }
+
+    function toggleDispatchButtonDisplay() {
+        debugger
+        let flag = false;
+        $(".chkDispatch").each(function () {
+            if ($(this).prop("checked")) {
+                if (flag === false) {
+                    flag = true;
+                }
+            }
+        })
+        if (flag) {
+            $(".dispatch").show();
+        }
+        else {
+            $(".dispatch").hide();
+        }
+    }
+
+    function debounce(func, delay) {
+        let timeout;
+        return function (...args) {
+            const context = this;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(context, args), delay);
+        };
+    }
+
+    function validateDispatch(event) {
+        const row = event.closest("tr");
+        const grid = $("#dispatchGrid").data("kendoGrid");
+        const dataItem = grid.dataItem(row);
+
+        const inputElement = event;
+        const rawInputValue = inputElement.value.trim();
+
+        if (rawInputValue === '') {
+            resetDispatchFieldsOnEmptyInput(dataItem);
+            return;
+        }
+
+        const inputValue = parseFloat(rawInputValue);
+
+        if (isNaN(inputValue) || inputValue < 0) {
+            displayPopupNotification("Please enter a valid positive number for quantity.", "error");
+            resetDispatchFields(dataItem);
+            return;
+        }
+
+        let currentIdentifier = event.id;
+        let isSecondUnit = currentIdentifier.includes("2ND");
+        let isValid = true;
+        let errorMessage = "";
+
+        if (isSecondUnit) {
+            if (dataItem.PendingToPlanning2ND < inputValue) {
+                errorMessage = `Planning 2ND QTY (${inputValue}) is greater than Pending Planning 2ND QTY (${dataItem.PendingToPlanning2ND})`;
+                isValid = false;
+            } else {
+                const primaryQty = reverseGetSecondUnitQuantity(dataItem.FRACTION, dataItem.CONVERSION_FACTOR, inputValue);
+                $(`#txtPlanning_${dataItem.DISPATCH_NO}`).val(primaryQty.toFixed(6));
+            }
+        } else {
+            if (dataItem.PendingToPlanning < inputValue) {
+                errorMessage = `Planning QTY (${inputValue}) is greater than Pending Planning QTY (${dataItem.PendingToPlanning})`;
+                isValid = false;
+            } else {
+                const secondQty = getSecondUnitQuantity(dataItem.FRACTION, dataItem.CONVERSION_FACTOR, inputValue);
+                $(`#txtPlanning2ND_${dataItem.DISPATCH_NO}`).val(secondQty.toFixed(6));
+            }
+        }
+
+        if (!isValid) {
+            console.log(`Validation failed for ${currentIdentifier}: input value = ${inputValue}, DueQTY/PendingToPlanning2ND = ${isSecondUnit ? dataItem.PendingToPlanning2ND : dataItem.PendingToPlanning}`);
+            displayPopupNotification(errorMessage, "error");
+            resetDispatchFields(dataItem);
+        } else {
+            updateDispatchFields(dataItem, inputValue);
+        }
+    }
+
+    function resetDispatchFieldsOnEmptyInput(dataItem) {
+        $(`#txtPlanning_${dataItem.DISPATCH_NO}`).val('');
+        $(`#txtPlanning2ND_${dataItem.DISPATCH_NO}`).val('');
+
+        $(`#txtPendingToDispatch2ND_${dataItem.DISPATCH_NO}`).hide();
+        $(`#txtPendingToDispatch_${dataItem.DISPATCH_NO}`).hide();
+        $(`#txtPlanningAmount_${dataItem.DISPATCH_NO}`).hide();
+
+        $(`#txtPlanning2ND_${dataItem.DISPATCH_NO}`).show();
+        $(`#txtPlanning_${dataItem.DISPATCH_NO}`).show();
+
+        document.getElementById(`isDispatch_${dataItem.DISPATCH_NO}`).checked = false;
+
+        $(".dispatch").addClass("not-active");
+        toggleDispatchButtonDisplay();
+    }
+
+
+    function resetDispatchFields(dataItem) {
+        $(`#txtPlanning2ND_${dataItem.DISPATCH_NO}`).hide();
+        $(`#txtPlanning_${dataItem.DISPATCH_NO}`).hide();
+        $(`#txtPendingToDispatch2ND_${dataItem.DISPATCH_NO}`).hide();
+        $(`#txtPendingToDispatch_${dataItem.DISPATCH_NO}`).hide();
+        $(`#txtPlanningAmount_${dataItem.DISPATCH_NO}`).hide();
+        document.getElementById(`isDispatch_${dataItem.DISPATCH_NO}`).checked = false;
+        $(".dispatch").addClass("not-active");
+        toggleDispatchButtonDisplay();
+    }
+
+    function updateDispatchFields(dataItem, currentInputValue) {
+        const planningQuantity = parseFloat($(`#txtPlanning_${dataItem.DISPATCH_NO}`).val() || 0);
+        const planningQuantity2ND = parseFloat($(`#txtPlanning2ND_${dataItem.DISPATCH_NO}`).val() || 0);
+
+        const planningAmount = planningQuantity * (parseFloat(dataItem.UNIT_PRICE) || 0);
+        const pendingToDispatch = (dataItem.PendingToPlanning - planningQuantity);
+        const pendingToDispatch2ND = (dataItem.PendingToPlanning2ND - planningQuantity2ND);
+
+        $(`#txtPendingToDispatch2ND_${dataItem.DISPATCH_NO}`).val(pendingToDispatch2ND.toFixed(6)).show();
+        $(`#txtPendingToDispatch_${dataItem.DISPATCH_NO}`).val(pendingToDispatch.toFixed(6)).show();
+        $(`#txtPlanningAmount_${dataItem.DISPATCH_NO}`).val(planningAmount.toFixed(2)).show();
+
+        $(`#txtPlanning2ND_${dataItem.DISPATCH_NO}`).show();
+        $(`#txtPlanning_${dataItem.DISPATCH_NO}`).show();
+        $(".dispatch").removeClass("not-active");
+        toggleDispatchButtonDisplay();
+    }
+
+    const getSecondUnitQuantity = (fraction, conversionFactor, value) => {
+        if (conversionFactor != null && fraction != null && fraction !== 0 && value != null) {
+            const result = value * (conversionFactor / fraction);
+            return Number(Math.round(result + 'e' + 10) + 'e-' + 10);
+        }
+        return 0;
+    };
+
+    const reverseGetSecondUnitQuantity = (fraction, conversionFactor, value) => {
+        if (conversionFactor != null && fraction != null && fraction !== 0 && value != null) {
+            const result = value * (fraction / conversionFactor);
+            return Number(Math.round(result + 'e' + 10) + 'e-' + 10);
+        }
+        return 0;
+    };
+
+    $(".nepali-calendar").nepaliDatePicker({
+        npdMonth: true,
+        onFocus: true,
+        npdYear: true,
+        npdYearCount: 10,
+        altFormat: "dd-MMM-YYYY",
+        dateFormat: "dd-MMM-YYYY",
+        onChange: function (evt) {
+            var nepalidate = $("#nepaliDate5").val();
+            var nepalidate1 = $("#nepaliDate51").val();
+            var Engdate = BS2AD(nepalidate);
+            var Engdate1 = BS2AD(nepalidate1);
+            var FormattedEngDate = moment(Engdate).format('DD-MMM-YYYY');
+            var FormattedEngDate1 = moment(Engdate1).format('DD-MMM-YYYY');
+            $("#englishdatedocument").val(FormattedEngDate);
+            $("#englishdatedocument1").val(FormattedEngDate1);
+        }
+    });
+
+    function ConvertNepToEng(e) {
+        var date = BS2AD($("#nepaliDate5").val());
+        var date1 = BS2AD($("#nepaliDate51").val());
+        var FormattedEngDate = moment(date).format('DD-MMM-YYYY');
+        var FormattedEngDate1 = moment(date1).format('DD-MMM-YYYY');
+        $("#englishdatedocument").val(FormattedEngDate);
+        $("#englishdatedocument1").val(FormattedEngDate1);
+    }
+
+    $('a').tooltip();
+
+    function ConvertEngDateToNep(eng) {
+
+        if (eng === undefined)
+            return;
+        var engmonthreq = "";
+        var arr = eng.split('-');
+        var day = (arr[0]);
+        var month = (arr[1]);
+        var year = (arr[2]);
+        if (month == "Jan") { engmonthreq = "01" }
+        else if (month == "Feb") { engmonthreq = "02" }
+        else if (month == "Mar") { engmonthreq = "03" }
+        else if (month == "Apr") { engmonthreq = "04" }
+        else if (month == "May") { engmonthreq = "05" }
+        else if (month == "Jun") { engmonthreq = "06" }
+        else if (month == "Jul") { engmonthreq = "07" }
+        else if (month == "Aug") { engmonthreq = "08" }
+        else if (month == "Sep") { engmonthreq = "09" }
+        else if (month == "Oct") { engmonthreq = "10" }
+        else if (month == "Nov") { engmonthreq = "11" }
+        else if (month == "Dec") { engmonthreq = "12" }
+        engdatereq = year + '-' + engmonthreq + '-' + day;
+        return convertednepdate = AD2BS(engdatereq);
+    }
+
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+        consolidate.init();
+        window.scrollTo(0, 0);
+    })
+</script>
+
+<script type="text/javascript">
+    function loadFavouriteMenu() {
+        //load parentMenu
+        $("#parentMenu").kendoDropDownList({
+            index: 0,
+            dataTextField: "MENU_EDESC",
+            dataValueField: "MENU_EDESC",
+            dataSource: {
+                transport: {
+                    read: {
+                        url: "/api/SalesHome/GetDynamicMenu?ModuleCode=" + moduleCode,
+                    }
+                },
+                requestEnd: function (e) {
+                    e.response.unshift({ MENU_EDESC: "Favourite", GROUP_SKU_FLAG: "G", ICON_PATH: "", MENU_NO: "01", MODULE_CODE: "01" });
+
+                }
+            }
+        });
+        var fav = Arg("fav");
+
+        if (fav != undefined && reportConfig != undefined && fav == reportConfig.reportName) {
+            //reportConfig
+            $("#favTitle").val(reportConfig.reportName);
+            $('#color').val(reportConfig.color);
+            $('#favColor').val(reportConfig.color);
+            try { $("#favIcon").val(reportConfig.icon.replace('fa ', '')); } catch (e) { }
+            $("#favIconClass").removeAttr("class").addClass(reportConfig.icon);
+            $("#favDescription").val(reportConfig.description);
+            $("#favSave").text("Update");
+            $("#parentMenu").data("kendoDropDownList").value(reportConfig.parentMenu);
+        }
+        else {
+            if ($("#favTitle").val().length > 0) {
+                $("#favform")[0].reset();
+                $("#favSave").text("Save");
+                setTimeout(function () { $("#parentMenu").data("kendoDropDownList").select(0); }, 2000)
+            }
+
+
+        }
+
+
+        $('.iconpicker-container').iconpicker();
+
+        //init validator
+        $("#favform").validate({
+            rules: {
+                favTitle: "required"
+            },
+            messages: {
+                favTitle: "Please specify your name"
+
+            }
+        });
+        $("#favModal").modal("show");
+    }
+    function saveFavouriteMenu() {
+
+        var valid = $("#favform").valid();
+        if (!valid) {
+            displayPopupNotification("Invalid Field", "warning");
+            return;
+        }
+
+
+        var title = $("#favTitle").val();
+        var param = location.hash.indexOf('?') != -1 ? location.hash.substring(0, location.hash.indexOf('?')) : location.hash;
+
+        SaveReportConfigSetting({
+            gridName: "grid",
+            reportName: title,
+            parentReportName: "",
+            isFavroite: true,
+            virtualPath: param,
+            icon: "fa " + $("#favIcon").val(),
+            color: $("#favColor").val() == "" ? $('#color').val() : $("#favColor").val(),
+            parentMenu: $("#parentMenu").data("kendoDropDownList").value(),
+            description: $("#favDescription").val(),
+            defaultPageSize: $("#defaultPageSize").val() == "" ? 100 : $("#defaultPageSize").val(),
+            itemPerPage: $("#itemsPerPage").val(),
+            moduleCode: "01",
+            HideOption: $("#facHideOption").prop("checked") == true ? "Hide" : "show",
+            dateFormat: $("#dateFormat option:selected").val()
+        });
+    }
+    function favTitleChange() {
+        if (Arg("fav") != undefined && Arg("fav").trim() == $("#favTitle").val().trim())
+            $('#favSave').text('Update');
+        else
+            $('#favSave').text('Save');
+    }
+    function CollapseAll() {
+
+        var elementsA = document.querySelectorAll("#grid a.k-icon.k-minus");
+        if (elementsA.length > 0) {
+
+            for (var i = 0; i < elementsA.length; i++) {
+                $(elementsA[i]).trigger("click");
+            }
+            return;
+        }
+        var elementsB = document.querySelectorAll("#grid a.k-icon.k-i-collapse");
+        for (var i = 0; i < elementsB.length; i++) {
+            $(elementsB[i]).trigger("click");
+        }
+    }
+    function ExpandAll() {
+        var elementsB = document.querySelectorAll("#grid a.k-icon.k-i-expand");
+        if (elementsB.length > 0) {
+
+            for (var i = 0; i < elementsB.length; i++) {
+                $(elementsB[i]).trigger("click");
+            }
+            return;
+        }
+        var elementsA = document.querySelectorAll("#grid a.k-icon.k-plus");
+        for (var i = 0; i < elementsA.length; i++) {
+            $(elementsA[i]).trigger("click");
+        }
+    }
+    function GridSearch() {
+        if ($.trim($('.grid-search').val()) != '') {
+            $('.search input').css('margin-left', '-9px !important')
+        }
+        else {
+            $('.search input').css('margin-left', '0px')
+        }
+
+        var grid = $("#dispatchGrid").data("kendoGrid");
+        var tempServerFilter = grid.dataSource.options.serverFiltering;
+        grid.dataSource.options.serverFiltering = false;
+        var filter = [];
+        $.each(grid.columns, function (i, v) {
+            if (v.field != undefined) {
+                var searchText = $.trim($('.grid-search').val());
+                var model = grid.dataSource.options.schema.model.fields[v.field];
+                var type = "string";
+                if (model != undefined)
+                    type = model.type;
+                if (type === "string")
+                    filter.push({ field: v.field, operator: "contains", value: searchText });
+                else if (type === "number")
+                    filter.push({ field: v.field, operator: "eq", value: searchText });
+                else if (type === "date") {
+                    var dateValue = new Date(searchText);
+                    searchText = dateValue == "Invalid Date" ? searchText : dateValue;
+                    filter.push({ field: v.field, operator: "eq", value: searchText });
+                }
+            }
+
+        });
+        var filter = {
+            logic: "or",
+            filters: filter,
+        }
+
+        grid.dataSource.filter(filter);
+        if ($(".grid-search").val().length == 0)
+            grid.dataSource.filter([]);
+        grid.bind("dataBound", function () {
+            grid.dataSource.options.serverFiltering = tempServerFilter;
+        });55553
+
+
+    }
+
+    function getCheckedBranches(treeview) {
+        var checkedBranchCodes = [];
+
+        function traverseAndCollectChecked(nodes) {
+            for (var i = 0; i < nodes.length; i++) {
+                var node = nodes[i];
+
+                if (node.checked) {
+                    checkedBranchCodes.push(node.branch_Code);
+                }
+
+                if (node.hasChildren) {
+
+                    traverseAndCollectChecked(node.children.view());
+                }
+            }
+        }
+
+        traverseAndCollectChecked(treeview.dataSource.view());
+
+        return checkedBranchCodes;
+    }
+
+    $("#dispatchPlanningBtn").click(getDispatchList);
+
+    function getDispatchList() {
+        var treeview = $("#consolidateTreeView").data("kendoTreeView");
+        var checkedBranchCodes = getCheckedBranches(treeview);
+
+        var checkedBranchCodesString = checkedBranchCodes.join(',');
+
+        var doc = $("#document").val();
+        if (doc == "") {
+            alert("Please selected document");
+        } else {
+            var selCom = $("#consolidateTreeView").data("kendoTreeView");
+            var items = getCheckedItems(selCom);
+            console.log("SelCom=========================>>>" + JSON.stringify(items));
+
+            angular.element(document.getElementById('OrderDispatchCtrl')).scope().findOrderDispatchForDocument(items, checkedBranchCodesString);
+        }
+    }
+
+    $("#plannedReportBtn").click(function () {
+        var treeview = $("#consolidateTreeView").data("kendoTreeView");
+        var checkedBranchCodes = getCheckedBranches(treeview);
+
+        var checkedBranchCodesString = checkedBranchCodes.join(',');
+
+        var doc = $("#document").val();
+        if (doc == "") {
+            alert("Please selected document");
+        } else {
+            var selCom = $("#consolidateTreeView").data("kendoTreeView");
+            var items = getCheckedItems(selCom);
+            console.log("SelCom=========================>>>" + JSON.stringify(items));
+
+            angular.element(document.getElementById('OrderDispatchCtrl')).scope().viewPlannedReport(checkedBranchCodesString);
+        }
+    })
+    function getCheckedItems(treeview) {
+        var nodes = treeview.dataSource.view();
+        return getCheckedNodes(nodes);
+    }
+
+
+    function getCheckedNodes(nodes) {
+        var node, childCheckedNodes;
+        var checkedNodes = [];
+
+        for (var i = 0; i < nodes.length; i++) {
+            node = nodes[i];
+            if (node.checked) {
+                checkedNodes.push(node);
+            }
+
+            // to understand recursion, first
+            // you must understand recursion
+            if (node.hasChildren) {
+                childCheckedNodes = getCheckedNodes_consolidate(node.children.view());
+                if (childCheckedNodes.length > 0) {
+                    checkedNodes = checkedNodes.concat(childCheckedNodes);
+                }
+            }
+
+        }
+
+        return checkedNodes;
+    }
+
+    function updateDateRange(selectedRange) {
+        debugger
+
+        let startDate, endDate;
+        let today = moment();
+
+        endDate = today.toDate();
+
+        switch (selectedRange) {
+            case 'today':
+                startDate = moment().toDate();
+                break;
+            case 'yesterday':
+                startDate = moment().subtract(1, 'days').toDate();
+                break;
+            case 'month':
+                let todayNepaliDateForMonth = ConvertEngDateToNep(moment().format('DD-MMM-YYYY'));
+                let firstDayOfMonthNepali = todayNepaliDateForMonth.substring(0, 7) + '-01';
+                startDate = BS2AD(firstDayOfMonthNepali);
+                break;
+            case 'year':
+                let todayNepaliDateForYear = ConvertEngDateToNep(moment().format('DD-MMM-YYYY'));
+                let firstDayOfYearNepali = todayNepaliDateForYear.substring(0, 4) + '-01-01';
+                startDate = BS2AD(firstDayOfYearNepali);
+                break;
+            default:
+                return;
+        }
+
+        $("#englishdatedocument").data("kendoDatePicker").value(startDate);
+        $("#englishdatedocument1").data("kendoDatePicker").value(endDate);
+
+        let englishFromDate = $("#englishdatedocument").data("kendoDatePicker").value();
+        let englishToDate = $("#englishdatedocument1").data("kendoDatePicker").value();
+
+        let nepaliFromDate = ConvertEngDateToNep(moment(englishFromDate).format('DD-MMM-YYYY'));
+        let nepaliToDate = ConvertEngDateToNep(moment(englishToDate).format('DD-MMM-YYYY'));
+
+        $("#nepaliDate5").val(nepaliFromDate);
+        $("#nepaliDate51").val(nepaliToDate);
+    }
+
+    setTimeout(function () {
+        let startDate, endDate;
+        let today = moment();
+        endDate = today.toDate();
+        startDate = moment().subtract(1, 'days').toDate();
+        $("#englishdatedocument").data("kendoDatePicker").value(startDate);
+        $("#englishdatedocument1").data("kendoDatePicker").value(endDate);
+    }, 500)
+</script>

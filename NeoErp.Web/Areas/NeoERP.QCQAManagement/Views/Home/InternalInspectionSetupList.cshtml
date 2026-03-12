@@ -1,0 +1,143 @@
+﻿@{
+	Layout = null;
+}
+<link href="@Styles.Url("~/Areas/NeoERP.QCQAManagement/Content/QCQASetup.css")" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/css/bootstrap-select.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/js/bootstrap-select.min.js"></script>
+<div class="col-md-12 bodyController" ng-controller="InternalInspectionSetupList">
+	<div class="portlet light form-fit bordered bottomspance">
+		<div class="portlet box green-box main">
+			<div class="portlet-title">
+				<div class="caption">
+					<a class="btn-back pull-left" data-toggle="tooltip" data-placement="top" title="Back To Dashboard" href="/QuotationManagement/Home/Dashboard">
+						<i class="fa fa-arrow-circle-left"></i>
+					</a>
+					<i class="fa fa-gift font-white-haze"></i>
+					<span class="caption-subject font-white-haze bold uppercase">Internal Inspection Setup</span>
+				</div>
+			</div>
+			<div class="portlet-body light bg-inverse">
+				<div class="row" style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; margin-bottom: 0.3rem;">
+					<div class="col-md-3" style="flex: 1;">
+						<div class="topsearch" style="display: block;">
+							<input class="k-textbox txtSearchString" type="text" id="itemtxtSearchString" ng-model="txtSearchString" name="search" placeholder="Search...." style="width: 35%;" />
+						</div>
+					</div>
+					<div class="col-md-4" style="flex: none;">
+						<div class="actions text-right">
+							<a class="btn dark-green btn-sm addcolor" id="createbtn" ng-disabled="treenodeselected" ng-click="AddQCQAInternalInspectionModal()" data-loading-text="<i class='fa fa-spinner fa-spin'></i> Processing..." href="javascript:;" style="margin-left: 0;">
+								<i class="fa fa-plus"></i> NEW
+							</a>
+						</div>
+					</div>
+				</div>
+				<div id="InternalInspectionSetupGrid"></div>
+			</div>
+			<div class="modal fade-out" ng-controller="InternalInspectionSetupList" id="QCQAInternalInspectionModal" data-backdrop="static" tabindex="-1" data-width="760">
+				<div class="modal-dialog modal-dialog-centered">
+					<div class="modal-content" style="height: 500px;">
+						<div class="modal-header">
+							<button type="button" class="close" data-dismiss="modal" aria-hidden="true" next-on-tab>&times;</button>
+							<h4 class="modal-title">
+								<span class="fa fa-file"></span>
+								Internal Inspection Setup
+							</h4>
+
+						</div>
+						<label style="width: 100% !important;" type="text" ng-model="PARAM_CODE" class="form-control paramCode" ng-hide="true"></label>
+						<div class="modal-body" style="height: 410px;">
+							<form name="projectForm" class="form" method="post" ng-submit="submitQCSetup()" enctype="multipart/form-data" id="projectForm" novalidate>
+								<div class="form-group row">
+									<label for="projectName" class="col-sm-3 col-form-label">Product</label>
+									<div class="row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
+										<div class="col-md-3" style="flex: 1; margin-bottom: 5px;">
+											<div class="topsearch" style="display: block;">
+												<input class="k-textbox" type="text" id="txtProduct" name="search" autocomplete="off" placeholder="Name" />
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="form-group row ">
+									<label for="startDate" class="col-sm-3 col-form-label">Details</label>
+									<div class="col-sm-9 ">
+										<fieldset class="fieldset-box">
+											<div class="row dynamicform">
+												<div class="col-sm-12 col-md-12 col-lg-12 clsProductList">
+													<select id="productList"
+															style="width: 100%; height: auto;"
+															multiple="multiple"
+															k-ng-model="productMapping">
+													</select>
+												</div>
+											</div>
+										</fieldset>
+									</div>
+								</div>
+								<div class="form-group row" style="margin-left: 0px; height: 265px; overflow-y: auto;">
+									<table class="table table-bordered" style="table-layout: fixed;">
+										<thead>
+											<tr>
+												<th style="width: 15% !important;">S/No</th>
+												<th style="width: 70% !important;">Parameters</th>
+												<th style="width: 50% !important;">Specification</th>
+												<th style="width: 30% !important;">Unit</th>
+												<th style="width: 40% !important;">Target</th>
+												<th style="width: 30% !important;">Tolerence</th>
+												<th style="width: 25% !important;"></th>
+											</tr>
+										</thead>
+										<tbody>
+											<tr ng-repeat="(key,row) in ParameterItems1" id="InternalInspectionSetupGridData">
+												<td class="SNo_child" style="background-color: #eeeeee;">
+													<span>{{key + 1}}</span>
+													@*<div>
+														<input type="text" style="width: 100% !important; text-align: right;" value="{{key + 1}}" class="form-control SNo_child" disabled />
+													</div>*@
+												</td>
+												<td hidden><input style="width: 100% !important;" type="text" ng-model="childParameterItemModels[key]['PARAM_CODE']" class="form-control paramCode_{{key}}"></td>
+												<td class="clsItemEdesc">
+													<input style="width: 100% !important;" type="text" ng-model="childParameterItemModels[key]['PARAMETERS']" class="form-control parameter_{{key}}" ng-readonly="panelMode === 'view'">
+												</td>
+												<td class="clsSpecification">
+													<input style="width: 100% !important;" type="text" ng-model="childParameterItemModels[key]['SPECIFICATION']" class="form-control specification_{{key}}" ng-readonly="panelMode === 'view'">
+												</td>
+												<td class="clsUnit">
+													<input style="width: 100% !important;" type="text" ng-model="childParameterItemModels[key]['UNIT']" class="form-control unit_{{key}}" ng-readonly="panelMode === 'view'">
+												</td>
+												<td><input style="width: 100% !important;" type="text" ng-model="childParameterItemModels[key]['TARGET']" class="form-control target_{{key}}" ng-readonly="panelMode === 'view'"></td>
+												<td><input style="width: 100% !important;" type="text" ng-model="childParameterItemModels[key]['TOLERENCE']" class="form-control tolerence_{{key}}" ng-readonly="panelMode === 'view'"></td>
+												<td class="btn-action">
+													<a href="" id="add_child_element" name="add_child_element" class="buttonadd" ng-click="add_child_element($index)"><i class="fa fa-plus" data-toggle="tooltip" title="Add row"></i></a>
+													<a href="" id="remove_child_element" name="remove_child_element" class="buttondelete" ng-click="remove_child_element($index)"><i class="fa fa-trash" data-toggle="tooltip" title="Delete row"></i></a>
+												</td>
+											</tr>
+										</tbody>
+									</table>
+								</div>
+								<input type="submit" class="hidden" id="btnProject" value="submit">
+							</form>
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-sm btn-green" ng-hide="panelMode === 'view'" id="savedocumentformdata" ng-click="saveInternalInspectionSetup()" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Processing..." href="javascript:;">
+								<i class="fa fa-floppy-o"></i> Save
+							</button>
+							<button type="button" class="btn btn-sm btn-danger" ng-click="ItemCancel()" data-dismiss="modal">
+								<i class="fa-solid fa-xmark"></i> Cancel
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
+
+		</div>
+	</div>
+</div>
+<script>
+	var a = location.hash;
+	var b = location.pathname;
+	var url = (b + a);
+	$(".active").removeClass();
+	$("a[href='" + url + "']").parent().addClass("active");
+	$("a[href='" + url + "']").parent().parent().slideDown("slow");
+</script>
+

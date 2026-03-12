@@ -1,0 +1,356 @@
+﻿@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+    ViewBag.Title = "UserSetup";
+    Layout = null;
+}
+
+
+<style>
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+    }
+
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+              font-size:11px;
+         }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    a.k-button.k-button-icontext.k-grid-excel {
+        float: right;
+    }
+
+    .Reseller-map-fullscreen {
+        display: none;
+        background-color: #fff;
+        text-align: center;
+        height: 35px;
+        width: 24px;
+        cursor: pointer;
+        background: url() -52px -86px no-repeat;
+        background-image: url('../../Content/map/asset/img/sv5.png');
+        margin-top: 12px;
+        margin-left: 20px;
+    }
+
+    #map-canvas {
+        height: 100%;
+        width: 100%;
+        background: #fff;
+    }
+
+    #Reseller-map-panel {
+        width: 100%;
+        height: 430px;
+        margin: 0 auto;
+        border: solid;
+        padding: 10px;
+    }
+
+    .number {
+        text-align: right;
+    }
+
+    .text {
+        text-align: left;
+    }
+
+    .date {
+        text-align: center;
+    }
+
+    .custom-combobox {
+        position: relative;
+        display: inline-block;
+    }
+
+    .custom-combobox-toggle {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        margin-left: -1px;
+        padding: 0;
+    }
+
+    .custom-combobox-input {
+        margin: 0;
+        padding: 5px 10px;
+        width: 200px;
+    }
+
+    #DistAdd {
+        display: none;
+    }
+
+    .controls {
+        margin-top: 10px;
+        border: 1px solid transparent;
+        border-radius: 2px 0 0 2px;
+        box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        height: 32px;
+        outline: none;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    #mapSearchBox {
+        background-color: #fff;
+        font-family: Roboto;
+        font-size: 15px;
+        font-weight: 300;
+        margin-left: 12px;
+        padding: 0 11px 0 13px;
+        text-overflow: ellipsis;
+        width: 300px;
+    }
+
+        #mapSearchBox:focus {
+            border-color: #4d90fe;
+        }
+    /*.k-list-container
+           {
+               max-height:150px !important;
+               overflow-y:auto !important;
+           }*/
+
+
+
+
+    .material-switch > input[type="checkbox"] {
+        display: none;
+    }
+
+    .material-switch > label {
+        cursor: pointer;
+        height: 0px;
+        position: relative;
+        width: 40px;
+    }
+
+        .material-switch > label::before {
+            background: rgb(0, 0, 0);
+            box-shadow: inset 0px 0px 10px rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            content: '';
+            height: 16px;
+            margin-top: -8px;
+            position: absolute;
+            opacity: 0.3;
+            transition: all 0.4s ease-in-out;
+            width: 31px;
+        }
+
+    .material-switch {
+        margin-top: 1px !important;
+    }
+
+        .material-switch > label::after {
+            background: rgb(255, 255, 255);
+            border-radius: 16px;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.3);
+            content: '';
+            height: 19px;
+            left: -4px;
+            margin-top: -8px;
+            position: absolute;
+            top: -1.5px;
+            transition: all 0.3s ease-in-out;
+            width: 19px;
+        }
+
+        .material-switch > input[type="checkbox"]:checked + label::before {
+            background: inherit;
+            opacity: 0.5;
+        }
+
+        .material-switch > input[type="checkbox"]:checked + label::after {
+            background: inherit;
+            left: 12px;
+        }
+
+  
+    /*#AreaCreateForm input#AreaName {
+        height: 25px !important;
+        font-size: 11px !important;
+    }*/
+
+    /*select#vdcAreaMultiSelect {
+        height: 25px;
+        border: 1px solid #e5e5e5 !important;
+    }*/
+
+    /*select#zoneAreaMultiSelect {
+        height: 25px;
+    }*/
+
+    /*select#regionAreaMultiSelect {
+        height: 25px;
+    }*/
+    select#distCustomerMultiSelect{
+          height: 25px;
+        border: 1px solid #e5e5e5 !important;
+    }
+
+
+</style>
+<div ng-app="myApp" class="content">
+    <div ng-controller="CompItemMapCtrl">
+        <div class="page-bar">
+            <ul class="page-breadcrumb">
+            </ul>
+
+            <div class="actions pull-right">
+                <div class="btn-group" style="margin-top:10px;">
+                    <input id="avatar" type="file" name="avatar" style="width:185px;" />
+                </div>
+                <div class="btn-group">
+                    <a href="javascript:void(0)" id="uploadExcel" class="pull-right btn btn-circle btn-icon-only btn-default">
+                        <i class="fa fa-upload"></i>
+                    </a>
+                </div>
+                <div class="btn-group">
+                    <a target="_self" class="pull-right btn btn-circle btn-icon-only btn-default" href="~/Pictures/Distribution/Format/CompetitorMapFormat.xlsx" data-toggle="tooltip" title="Download Excel Format.." download>
+                        <i class='fa fa-file-excel-o excelfile fontgreen' />
+                    </a>
+                </div>
+
+                <button type="button" id="AddNew" name="AddNew" class="btn btn-green btn-sm" ng-click="AddItemMap()">Add</button>
+                <button type="submit" id="saveAreaCreate" name="saveAreaCreate" ng-click="SaveItemMap()" class="btn btn-green btn-sm">Save</button>
+            </div>
+        </div>
+
+        <div class="portlet light bordered main createPanel">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="fa fa-list-alt font-green-haze"></i>
+                    <span class="caption-subject font-green-haze bold uppercase pull-left">
+                      Competitor Items Map
+                    </span>
+                </div>
+            </div><!-- /portlet-title-->
+            <div class="portlet-body">
+                <div class="row">
+                    <div class="col-md-12 col-sm-12">
+                        <form id="ItemMapForm" name="ItemMapForm" novalidate>
+                            <div class="row">
+                                <table class="table table-bordered table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th class="col-md-1 col-sm-1">S.N.</th>
+                                            <th class="col-md-3 col-sm-3">Item</th>
+                                            <th class="col-md-7 col-sm-7">Competitor Item</th>
+                                            <th class="col-md-1 col-sm-1">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr ng-repeat="item in MappedItems">
+                                            <td>{{$index+1}}.</td>
+                                            <td>
+                                                <select id="itemsSelect_{{$index}}" name="itemsSelect_{{$index}}"
+                                                        kendo-multi-select k-options="distItemSelect"
+                                                        slim-scroll ng-model="item.ITEM_CODE"
+                                                        k-ng-model="item.ITEM_CODE"
+                                                        k-value-primitive="true"
+                                                        style="width:100%;" required></select>
+                                            </td>
+                                            <td>
+                                                <select id="compItemsSelect_{{$index}}" name="compItemsSelect_{{$index}}"
+                                                        kendo-multi-select k-options="distCompItemSelect"
+                                                        slim-scroll ng-model="item.COMP_ITEMS"
+                                                        k-ng-model="item.COMP_ITEMS"
+                                                        k-value-primitive="true"
+                                                        style="width:100%;" required></select>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-xs btn-danger" ng-click="RemoveItemMap($index)"><i class="fa fa-trash"></i></button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $('#uploadExcel').click(function () {
+        if (window.FormData !== undefined) {
+            //showloader();
+            var file_data = $("#avatar").prop("files")[0];   // Getting the properties of file from file field
+            if (!file_data) {
+                displayPopupNotification("Please select a file", "error");
+                setTimeout(function () {
+                    $("#avatar").trigger("click");
+                }, 500);
+                return;
+            }
+            var format = file_data.name.substr(file_data.name.lastIndexOf('.'), file_data.name.length)
+            if (![".xls", ".xlsx"].includes(format)) {
+                displayPopupNotification("Invalid file format", "error");
+                return;
+            }
+            var form_data = new FormData();                  // Creating object of FormData class
+            form_data.append("file", file_data);
+
+            $.ajax({
+                url: '/Distribution/Setup/ImportCompetitorMapSetup',
+                type: "POST",
+                contentType: false,
+                processData: false,
+                data: form_data,
+                success: function (result) {
+                    displayPopupNotification(result.MESSAGE, result.TYPE);
+                    if (result.TYPE == "success") {
+                        $('#avatar').val("");
+                        location.reload();
+                    }
+                },
+                error: function (err) {
+                    displayPopupNotification(err.statusText, "error");
+                }
+            });
+        } else {
+            alert("FormData is not supported.");
+        }
+    });
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+</script>
+<script src="@Scripts.Url(" ~/JS/reportFilter.js")"></script>
+<script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js?V2")"></script>

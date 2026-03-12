@@ -1,0 +1,79 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewBag.Title</title>
+
+    @Html.Partial("_LayoutHeader")
+    @RenderSection("headtag", required: false)
+</head>
+
+<body>
+    @{
+        if (ViewBag.id == null) { ViewBag.id = 0; }
+        var dsh = System.Web.HttpContext.Current.Request.RawUrl;
+        bool IsDashboard = dsh.ToLower().Contains("/dashboard");
+
+        
+    }
+
+    <header class="header-cont">
+        @{
+
+            if (IsDashboard == false)
+            {
+                @Html.Partial("_LoginPartial")
+            }
+            else
+            {
+                @Html.Partial("_Header")
+            }
+
+        }
+
+        @{
+            Nimble.Core.Models.ModuleMenuModel menu = (Nimble.Core.Models.ModuleMenuModel)ViewBag.menu;
+            if(menu==null)
+            {                      
+                menu = new Nimble.Core.Models.ModuleMenuModel()
+                {
+                    MenuRootName = "mnuApp",
+                    HomePageLink = "/Main/Dashboard",
+                    HomePageTitle = "Main Dashbaord"
+                };
+            }
+            @Html.Partial("_Menu", menu)
+        }
+
+        
+    </header>
+
+    <section id="main" class="column content">
+        @Html.Partial("_TopMessageDisplay")
+        <div class="sidebar_menu">
+            @{
+                @RenderSection("lefttop", required: false)
+                if (IsDashboard == false && ViewBag.IsLeft != false)
+                {
+
+                    <aside class="sidebar column" style="float:left;width:100%;">
+                        @Html.Partial("_LeftPanel")
+                    </aside>
+
+                }
+
+            }
+        </div>
+        <div class=@(!IsDashboard && ViewBag.IsLeft!=false ? "profile_content":"")>
+            <div style="width:100%; overflow:hidden;float:left">
+                @RenderBody()
+            </div>
+        </div>
+
+    </section>
+
+    @Html.Partial("_LayoutFooter")
+    @RenderSection("scripts", required: false)
+
+</body>
+</html>

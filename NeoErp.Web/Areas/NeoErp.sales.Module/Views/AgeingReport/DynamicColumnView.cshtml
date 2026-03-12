@@ -1,0 +1,431 @@
+﻿@using NeoErp.Sales.Modules.Services.Models.AgeingReport
+@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+
+@model IEnumerable<AgeingColumnRange>
+
+
+
+
+<!-- elixir-->
+<ul id="context-menu-subLedgerDetailStatement" style="display:none;">
+    <li id="subLedgerDetailStatementContextmenu">
+        Sub Ledger Detail -Statement
+    </li>
+</ul><!-- elixir-->
+<!-- BEGIN PAGE CONTENT-->
+<div class="col-md-12">
+    <div class="portlet light bordered">
+        <div class="portlet-body form">
+            <div class="tabbable-line">
+                <ul class="nav nav-tabs dropdownlist" id="ageingtabs">
+                    <li class="active" id="ageingfirsttab"><a data-toggle="tab" href="javascript:void(0)">Ageing
+                            report</a></li>
+                </ul>
+                <div class="tab-content" id="neo">
+                    <div class="tab-pane active" id="ageingtab1">
+                        <div class="row">
+                            <div id="ageing-treelist"></div>
+                        </div>
+                    </div>
+                    <!-- next tab here-->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- END PAGE CONTENT-->
+<input type="hidden" id="subcode" value="0" />
+<input type="hidden" id="parentid" value="0" />
+<input type="hidden" id="uid" value="0" />
+<input type="hidden" id="description" value="" />
+
+<script src="@Scripts.Url("~/JS/DateFilter.js?V5")" type="text/javascript"></script>
+
+<script type="text/javascript">
+
+    function myCustomFunction(arrey, header) {
+
+        var result = $.grep(arrey, function (e) { return e.ColumnRangeName === header; });
+
+        var value = 0;
+        if (result.length == 0) {
+
+        } else if (result.length == 1) {
+            value = result[0].NetAmount
+            if (value < 0) {
+                value = "(" + (-value) + ")";
+            }
+        }
+        return value;
+    }
+
+    $(document).ready(function () {
+
+
+
+
+        var service = window.location.protocol + "//" + window.location.host + "/api/AgeingReport/GetAgeingReport";
+
+        if (agingFirst == true) {
+            consolidate.init(function () {
+                BindGrid(service);
+            });
+            agingFirst = false;
+        } else {
+            BindGrid(service);
+        }
+
+        //DateFilter.init(function () {
+        //          consolidate.init(function () {
+        //            BindGrid(service);
+        //        });
+        //    });
+
+        var activeTab = $("#ageingtabs").on("click", ".close", function () {
+            var link = $(this).parent().attr("href");
+            $('div' + link).remove();
+            $(this).parent().remove();
+            $(".tab-pane").removeClass("active");
+            $("#ageingtab1").addClass('active');
+            $('#ageingtabs a:first').tab('show');
+        });
+
+        // right click on every context menu; id=ledgerSummaryContextmenu
+        $("#subLedgerDetailStatementContextmenu").on("click", function () {
+
+            var formEnglishDate = "2017-07-15";
+            var toEnglishDate = $("#datePickerAd").val();
+            $('#ageingtab1').removeClass("active");
+            var nextTab = $('#ageingtabs li').size() + 1;
+            var description = $("#description").val();
+            //var accountName = $("#parentid").val();
+            var subcode = $("#subcode").val();
+            // create the tab
+            $('<li><a href="#ageingtab' + nextTab + '" data-toggle="tab">' + description + '<span class="close">×</span> <div class="clearfix"></div></a></li>').appendTo('#ageingtabs');
+            // create the tab content
+            //var title = "<label>" + description + "</label></br>";
+            var accountNo = $("#parentid").val();
+            // alert(accountNo);
+            $.ajax({
+                url: '@Url.Action("PopUpSubLedgerDetails", "Ledger")',
+                data: { formDate: formEnglishDate, toDate: toEnglishDate, AccountCode: accountNo, SubCode: subcode, totalTab: nextTab },
+                cache: false,
+                type: "POST",
+                dataType: "html",
+                success: function (data, textStatus, XMLHttpRequest) {
+                    $('<div class="tab-pane" id="ageingtab' + nextTab + '">' + data + '</div>').appendTo('#neo');
+                    $('#tabs a:last').tab('show');
+                    $("#ageingtab" + nextTab).addClass('active');
+                    //$(window).resize();
+                    $.ajax({
+                        url: '@Url.Action("BreadCrumbs", "Ledger")',
+                        data: { AccountCode: accountNo },
+                        cache: false,
+                        type: "POST",
+                        dataType: "html",
+                        success: function (data, textStatus, XMLHttpRequest) {
+                            var breadCrumbId = "#breadCrumbDiv" + nextTab;
+                            $(breadCrumbId).html(data);
+                            //  $("#accountledger").html(data);
+                        }
+                    });
+                }
+            });
+            // make the new tab active
+            $('#ageingtabs a:last').tab('show');
+            $(".tab-pane").removeClass("active");
+            $('div#ageingtab' + nextTab).addClass('active');
+        });
+
+        $("#ageingfirsttab").on("click", function () {
+            $(".tab-pane").removeClass("active");
+            $("#ageingtab1").addClass('active');
+            $('#ageingtabs a:first').tab('show');
+        });
+
+
+        $('.nav-pills, .nav-tabs').tabdrop()
+
+    });
+
+    function BindGrid(serviceUrl) {
+
+
+        var dataSource = new kendo.data.TreeListDataSource({
+            transport: {
+                read: {
+                    url: serviceUrl,
+                    dataType: "json",
+                    type: "POST",
+                    data: function (paramData) {
+                        var treeList = $("#ageing-treelist").data("kendoTreeList");
+                        var dataSource = treeList.dataSource;
+
+                        if (paramData.id) {
+
+                            var parentNode = dataSource.get(paramData.id);
+                            return $.extend(ageing.filters(), paramData.id, ReportFilter.filterAdditionalData());
+                        }
+                        return $.extend(ageing.filters(), ReportFilter.filterAdditionalData());
+                    }
+                },
+                schema: {
+                    model: {
+                        id: "MasterId",
+                        fields: {
+                            parentId: { field: "parentId", nullable: true },
+                            MasterId: { field: "id", nullable: false },
+
+                        },
+                        //expanded: true // remove this code for server side parent and child collection
+                    }
+                }
+            }
+        });
+
+
+        var headerTitle = $("input[name='ageing-type-filter']:checked").attr("data-label");
+        $("#ageing-treelist").kendoTreeList({
+            dataSource: dataSource,
+            dataBound: onDataBoundtest,
+
+            // "indexing missmatch while exporting to the excel, kindly uncomment below code and check , code written by Dushant"
+
+            toolbar: kendo.template($("#toolbar-template").html()),
+            excel: {
+                fileName: "ageing report",
+                filterable: true
+            },
+
+
+            excelExport: function (e) {
+                var sheet = e.workbook.sheets[0];
+                var datasource = $("#ageing-treelist").data("kendoTreeList");
+                var data = e.data;
+                var heardervalue = [];
+
+                heardervalue = sheet.rows[0].cells;
+                for (var i = 0; i < sheet.rows.length; i++) {
+                    var rindex = 2;
+                    for (var ci = 0; ci < sheet.rows[i].cells.length; ci++) {
+                        if (ci == 0)
+                            continue;
+                        if (typeof (sheet.rows[i].cells[ci].value) == "undefined") {
+                            var index = i - 1;
+
+                            var headername = heardervalue[ci];
+
+                            if (typeof (data[index].RangeColumnData[rindex]) != "undefined") {
+                                var charges = data[index].RangeColumnData[rindex].NetAmount;
+                                //var test = myCustomFunction(charges, headername);
+                                //sheet.rows[i].cells[ci].value = test;
+                                sheet.rows[i].cells[ci].value = charges
+                                rindex--;
+                            }
+
+                        }
+
+                        //commented because this removed  the value of all columns of last row. (Animesh)
+                        //if (i == sheet.rows.length - 1) {
+
+                        //    sheet.rows[i].cells[ci].value = $(sheet.rows[i].cells[ci].value).text();
+                        //}
+
+                    }
+                }
+
+            },
+            columns: [
+                {
+                    field: "Description",
+                    title: headerTitle,
+                    width: 280,
+                },
+
+
+    @foreach (var item in Model)
+    {
+        <text>
+                        {
+
+                            field: '@item',
+                        title: '@item.ColumnRange',
+                        format: "{0:n}",
+                        //template:$.proxy(kendo.template($("#column-range-template").html()))
+                        template: " #= kendo.format('{0:n}', myCustomFunction(RangeColumnData,'@item.ColumnRange') )#",
+                        attributes: {
+                            style: "text-align: right;"
+                                    }
+                                },
+
+        </text>
+    }
+                {
+                    field: "Total",
+                    title: "Total",
+                    format: "{0:n}",
+                    attributes: {
+                        style: "text-align: right;"
+                    },
+                    template: " #= kendo.format('{0:n}',Total<0?'('+(-Total)+')':Total)#"
+                }
+            ],
+            columnMenu: {
+                columns: true
+            },
+            columnMenuInit: function (e) {
+                wordwrapmenu(e);
+            },
+            resizable: true,
+            selectable: true,
+            change: function () {
+
+                var text = "";
+                var grid = this;
+                grid.select().each(function () {
+                    var dataItem = grid.dataItem($(this));
+                    $("#subcode").val(dataItem.SubCode);
+                    $("#parentid").val(dataItem.AccCode);
+                    $("#uid").val(dataItem.uid);
+                    $("#description").val(dataItem.Description);
+                });
+            },
+        });
+        var companyName = @Html.Raw(Json.Encode(workingContent.CurrentUserinformation.company_name));
+        var branchName = @Html.Raw(Json.Encode(workingContent.CurrentUserinformation.branch_name));
+        UniversalGridPrint.init({
+            gridSelector: '#ageing-treelist', // Specific selector for this report
+            reportName: "Ageing Report Dealer",
+            companyName: companyName,
+            branchName: branchName
+        });
+
+        // Wire the Excel export toolbar button to the correct TreeList widget.
+        // The .k-grid-excel button in the custom toolbar template is NOT auto-wired
+        // for TreeList (unlike Kendo Grid), so we must call saveAsExcel() manually.
+        var treeListWidget = $("#ageing-treelist").data("kendoTreeList");
+        var $toolbar = $("#ageing-treelist").closest(".k-grid").find(".k-grid-toolbar");
+        $toolbar.find(".k-grid-excel").off("click.ageingExcel").on("click.ageingExcel", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var $btn = $(this);
+            if ($btn.data("exporting")) return;
+            $btn.data("exporting", true).prop("disabled", true).addClass("k-state-disabled");
+            setTimeout(function () {
+                try {
+                    treeListWidget.saveAsExcel();
+                } finally {
+                    $btn.data("exporting", false).prop("disabled", false).removeClass("k-state-disabled");
+                }
+            }, 0);
+        });
+    }
+
+
+
+    function onDataBoundtest(arg) {
+
+        var myElem = document.getElementById('trParentHeader');
+        if (myElem == null) {
+            $("#ageing-treelist").find("th.k-header").parent().before("<tr id='trParentHeader'><th></th><th colspan='2' class='k-header'><strong>Opening Balance</strong></th>  <th colspan='2' class='k-header'><strong>Trasaction Balance</strong></th>  <th scope='col' colspan='2' class='k-header'><strong>Closing Balance</strong></th></tr>");
+        }
+        // this.pager.element.hide();
+        var grid = this;
+        AddClassRightColumnClass(grid);
+
+        $("#context-menu-subLedgerDetailStatement").css({ "top": event.pageY + "px", "right": event.pageX + "px" })
+        $("#context-menu-subLedgerDetailStatement").kendoContextMenu({
+            filter: '.rightColumnClass',
+            target: "#ageing-treelist",
+            orientation: "vertical",
+            alignToAnchor: true
+        });
+
+        $(".k-i-expand").on("click", function () {
+            var grid = $("#ageing-treelist").data("kendoTreeList");
+            AddClassRightColumnClass(grid);
+
+        });
+    };
+
+    function AddClassRightColumnClass(grid) {
+        grid.tbody.find('>tr').each(function () {
+
+            var dataItem = grid.dataItem(this);
+            //var childnumbher = dataItem.CHILD_REC;
+            var childnumbher = dataItem.hasChildren;
+
+            if ($("#showsubledger").prop('checked') == true) {
+
+                var subchildnumbher = dataItem.sub_count;
+
+                if (childnumbher) {
+                    $(this).find("td:first-child").find('span').removeClass("k-i-expand").addClass("k-i-none");
+                }
+            }
+            else {
+                if (!childnumbher) {
+
+                    $(this).addClass("rightColumnClass");
+                    $(this).find("td:first-child").find('span').removeClass("k-i-expand").addClass("k-i-none");
+                }
+            }
+
+        });
+    }
+
+</script>
+
+<script>
+    function GetVoucher() {
+        //$("body").on('click','#voucherDetailContextmenu', function () {
+        var formEnglishDate = $("#FromDateVoucher").val();
+        var toEnglishDate = $("#ToDateVoucher").val();
+        $('#ageingtab1').removeClass("active");
+        var nextTab = $('#ageingtabs li').size() + 1;
+
+        var accountNo = $("#uid").val();
+        var voucherNo = $("#voucherNo").val();
+        // create the tab
+        $('<li><a href="#ageingtab' + nextTab + '" data-toggle="tab"> Voucher ' + voucherNo + '<span class="close">×</span> <div class="clearfix"></div></a></li>').appendTo('#ageingtabs');
+        //create tab content
+        $.ajax({
+            url: '@Url.Action("AgeingVoucherView", "AgeingReport")',
+            data: { uid: accountNo, voucherNo: voucherNo },
+            //url: urlGetVoucherDetail,
+            cache: false,
+            type: "POST",
+            dataType: "html",
+            success: function (data, textStatus, XMLHttpRequest) {
+                $('<div class="tab-pane" id="ageingtab' + nextTab + '">' + data + '</div>').appendTo('#neo');
+                $('#tabs a:last').tab('show');
+                $("#ageingtab" + nextTab).addClass('active');
+                $(window).resize();
+                $.ajax({
+                    url: '@Url.Action("BreadCrumbs", "Ledger")',
+                    data: { AccountCode: accountNo },
+                    cache: false,
+                    type: "POST",
+                    dataType: "html",
+                    success: function (data, textStatus, XMLHttpRequest) {
+                        var breadCrumbId = "#breadCrumbDiv" + nextTab;
+                        $(breadCrumbId).html(data);
+                        //  $("#accountledger").html(data);
+                    }
+                });
+            }
+        });
+
+        // make the new tab active
+        $('#ageingtabs a:last').tab('show');
+        $(".tab-pane").removeClass("active");
+        $('div#ageingtab' + nextTab).addClass('active');
+        //});
+    }
+</script>

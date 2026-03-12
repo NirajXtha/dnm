@@ -1,0 +1,458 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style type="text/css">
+    #cover {
+        position: fixed;
+        top: 0;
+        left: 0;
+        background: rgba(0,0,0,0.6);
+        z-index: 5;
+        width: 100%;
+        height: 100%;
+        display: none;
+    }
+
+    #SubGroupScreen {
+        height: 443px;
+        width: 695px;
+        margin-top: 70px;
+        margin-left: 85px;
+        position: fixed;
+        z-index: 10;
+        display: none;
+        background: url(login.png) no-repeat;
+        border: 5px solid #cccccc;
+        border-radius: 10px;
+        top: 0px;
+        background: rgb(245,245,245);
+    }
+
+    #LedgerScreen {
+        height: 443px;
+        width: 695px;
+        margin-top: 100px;
+        margin-left: 170px;
+        position: fixed;
+        z-index: 10;
+        display: none;
+        background: url(login.png) no-repeat;
+        border: 5px solid #cccccc;
+        border-radius: 10px;
+        top: 0px;
+        background: rgb(245,245,245);
+    }
+
+    #DetailScreen {
+        height: 443px;
+        width: 695px;
+        margin-top: 130px;
+        margin-left: 255px;
+        position: fixed;
+        z-index: 10;
+        display: none;
+        background: url(login.png) no-repeat;
+        border: 5px solid #cccccc;
+        border-radius: 10px;
+        top: 0px;
+        background: rgb(245,245,245);
+    }
+
+    #VoucherScreen {
+        height: 443px;
+        width: 695px;
+        margin-top: 160px;
+        margin-left: 340px;
+        position: fixed;
+        z-index: 10;
+        display: none;
+        background: url(login.png) no-repeat;
+        border: 5px solid #cccccc;
+        border-radius: 10px;
+        top: 0px;
+        background: rgb(245,245,245);
+    }
+
+    .cancel {
+        display: block;
+        position: absolute;
+        top: 3px;
+        right: 2px;
+        background: rgb(245,245,245);
+        color: black;
+        height: 30px;
+        width: 35px;
+        font-size: 30px;
+        text-decoration: none;
+        text-align: center;
+        font-weight: bold;
+        cursor: pointer;
+    }
+</style>
+<div class="row">
+    <div class="col-lg-12" style="background-color: #f5f5f5; height:38px;">
+        <div style="float:left">
+            <ol class="breadcrumb">
+                <li class="active">
+                    <i class="fa fa-home"></i>
+                    <a href="@Url.Action("Index","Home")">Home </a> <i class="fa fa-angle-double-right"></i>
+                    <a href="@Url.Action("Index", "TrialBalance")">TrailBalance </a> <i class="fa fa-angle-double-right"></i>
+                    General Report
+                </li>
+            </ol>
+        </div>
+        <div class="btn-group" role="group" style="float: right; padding-top:6px;">
+            @Html.Partial("~/Views/TrialBalance/Search.cshtml")
+        </div>
+        <div style="clear:both"></div>
+    </div>
+    <!-- /.col-lg-12 -->
+</div>
+<div class="row">
+    @Html.Partial("~/Views/TrialBalance/SearchContent.cshtml")
+    <table id="JQGridGroupBy"></table>
+    <div id="JQGridGroupBy_pager"></div>
+    <div class="clear-both small-vertical-spacing"></div>
+    <div class="page-content-offset"></div>
+    <div id="SubGroupScreen">
+        <div onclick="document.getElementById('SubGroupScreen').style.display = 'none';" class="cancel">&times;</div>
+        <div id="divJQGridSubGroup" class="page-content" style="display: block; width: 663px; margin-top:40px; margin-left:11px;">
+            <table id="JQGridSubGroup" style="width: 663px"></table>
+            <div id="JQGridSubGroup_pager"></div>
+        </div>
+    </div>
+    <div id="LedgerScreen">
+        <div onclick="document.getElementById('LedgerScreen').style.display = 'none';" class="cancel">&times;</div>
+        <div id="divJQGridLedger" class="page-content" style="display: block; width: 663px; margin-top:40px; margin-left:11px;">
+            <table id="JQGridLedger" style="width: 663px"></table>
+            <div id="JQGridLedger_pager"></div>
+        </div>
+    </div>
+    <div id="DetailScreen">
+        <div onclick="document.getElementById('DetailScreen').style.display = 'none';" class="cancel">&times;</div>
+        <div id="divJQGridDetails" class="page-content" style="display: block; width: 663px; margin-top: 40px; margin-left: 11px; ">
+            <table id="JQGridDetails" style="width: 663px; "></table>
+            <div id="JQGridDetails_pager"></div>
+        </div>
+    </div>
+    <div id="cover">
+    </div>
+    <div id="VoucherScreen">
+        <div onclick="document.getElementById('VoucherScreen').style.display = 'none';" class="cancel">&times;</div>
+        <div id="divJQGridVoucher" class="page-content" style="display: block; width: 663px; margin-top: 40px; margin-left: 11px;">
+            <table id="JQGridVoucher" style="width: 663px"></table>
+            <div id="JQGridVoucher_pager"></div>
+        </div>
+    </div>
+    <script>
+        var lastID = null;
+        $("#JQGridGroupBy").jqGrid({
+            url: "/TrialBalance/OnTrialBalanceGroupByRequested",
+            mtype: "GET",
+            datatype: "json",
+            page: 1,
+            jsonReader: { id: "ACC_EDESC" },
+            prmNames: { id: "ACC_EDESC" },
+            colNames: ["Account Code", "Account Head", "Debit", "Credit"],
+            colModel: [
+                { key: true, width: 140, name: "ACC_CODE", index: 'ACC_CODE', sortable: false, resizable: true, hidden: false, searchoptions: { sopt: ['eq', 'ne', 'cn'] } },
+                { width: 480, name: "ACC_EDESC", index: 'ACC_EDESC', resizable: true, sorttype: "string", searchoptions: { sopt: ['eq', 'ne', 'cn'] } },
+                { width: 200, name: "DR_AMOUNT", index: 'DR_AMOUNT', formatter: "number", sorttype: "number", align: "right", resizable: true },
+                { width: 200, name: "CR_AMOUNT", index: 'CR_AMOUNT', formatter: "number", sorttype: "number", align: "right", resizable: true },
+            ],
+            loadtext: 'Loading trial balance...',
+            pager: "#JQGridGroupBy_pager",
+            multipleSearch: true,
+            loadonce: true,
+            footerrow: true,
+            loadComplete: function () {
+                var $self = $(this),
+                    localData = $self.jqGrid("getGridParam", "data"),
+                    itemCount = localData.length,
+                    totalCredit = 0,
+                    totalDebit = 0,
+                    i,
+                    item;
+
+                for (i = 0; i < itemCount; i++) {
+                    item = localData[i];
+                    totalCredit += parseFloat(item.CR_AMOUNT);
+                    totalDebit += parseFloat(item.DR_AMOUNT);
+                }
+
+
+                $self.jqGrid("footerData", "set", {
+                    ACC_EDESC: "Total:",
+                    DR_AMOUNT: totalDebit,
+                    CR_AMOUNT: totalCredit
+                });
+            },
+            onSelectRow: function (id) {
+                document.getElementById('SubGroupScreen').style.display = 'block';
+                $("#divJQGridSubGroup").show();
+                if (lastID != null) {
+                    var lastRowData = jQuery(this).getRowData(lastID);
+                    if (lastRowData["HasOrders"] == "-") {
+                        $("#JQGridGroupBy").jqGrid("setCell", lastID, "HasOrders", "+");
+                    }
+                }
+                var rowData = jQuery(this).getRowData(id);
+                var hasOrders = rowData["HasOrders"];
+                var company = rowData["CompanyName"];
+                if (hasOrders == "+") $("#JQGridGroupBy").jqGrid("setCell", id, "HasOrders", "-");
+                jQuery("#JQGridSubGroup")
+                    .setGridParam({ url: "/TrialBalance/OnTrialBalanceSubGroupByRequested?id=" + id.replace("&", "__"), page: 1 })
+                    .setCaption("<b>Details of Account Code : " + id + "</b>")
+                    .trigger('reloadGrid');
+                lastID = id;
+            },
+            gridComplete: function () {
+                var JQGridSubGroupcount = jQuery("#JQGridSubGroup").jqGrid('getGridParam', 'records');
+                if (JQGridSubGroupcount > 0) $("#divJQGridSubGroup").show();
+                else {
+                    $("#divJQGridSubGroup").show();
+                };
+            },
+            // Customizations
+            height: "100%",
+            scroll: false,
+            width: null,
+            shrinkToFit: false,
+            rowList: [10, 20, 50, 100, 200, 500],
+            recordtext: "{2} Records", // overrides default set in grid.locale-en.js
+            viewrecords: true, // controls visibility of recordtext
+            rowNum: 20, // effectively unlimited page size
+            sortname: 'ACC_CODE',
+            sortorder: 'desc',
+            loadError: JQGridDemo.jqGrid_aspnet_loadErrorHandler,
+        }).navGrid('#JQGridGroupBy_pager', { view: false, del: false, add: false, edit: false }, {}, {}, {}, { closeOnEscape: true, multipleSearch: true, closeAfterSearch: true }, {});
+        $("#JQGridGroupBy_pager_center").show(); // Hides the central paging control
+        jQuery('#JQGridGroupBy').bindKeys(); // binds the up/down arrow keys:
+        jQuery("#JQGridGroupBy").jqGrid('filterToolbar', { searchOnEnter: true, defaultSearch: "cn" });
+        var paramsJQGridSubGroup = {};
+        paramsJQGridSubGroup.originalColumnWidths = [];
+        paramsJQGridSubGroup.originalGridWidth = 0;
+        paramsJQGridSubGroup.initialized = false;
+        $("#JQGridSubGroup").jqGrid({
+            url: "/TrialBalance/OnTrialBalanceSubGroupByRequested",
+            mtype: "GET",
+            datatype: "json",
+            page: 1,
+            jsonReader: { id: "ACC_EDESC" },
+            prmNames: { id: "ACC_EDESC" },
+            colNames: ["Account Code", "Account Head", "Debit", "Credit"],
+            colModel: [
+                { key: true, width: 100, name: "ACC_CODE", sortable: false, hidden: false },
+                { width: 260, name: "ACC_EDESC" },
+                { width: 150, name: "DR_AMOUNT", formatter: "number", sorttype: "number", align: "right", sortable: false, resizable: true, search: false },
+                { width: 150, name: "CR_AMOUNT", formatter: "number", sorttype: "number", align: "right", sortable: false, resizable: true, search: false },
+            ],
+            caption: "Detail",
+            pager: "#JQGridSubGroup_pager",
+            onSelectRow: function (id) {
+                document.getElementById('LedgerScreen').style.display = 'block';
+                $("#divJQGridLedger").show();
+                if (lastID != null) {
+                    var lastRowData = jQuery(this).getRowData(lastID);
+                    if (lastRowData["HasOrders"] == "-") {
+                        $("#JQGridSubGroupBy").jqGrid("setCell", lastID, "HasOrders", "+");
+                    }
+                }
+                var rowData = jQuery(this).getRowData(id);
+                var hasOrders = rowData["HasOrders"];
+                var company = rowData["CompanyName"];
+                if (hasOrders == "+") $("#JQGridSubGroupBy").jqGrid("setCell", id, "HasOrders", "-");
+                jQuery("#JQGridLedger")
+                    .setGridParam({ url: "/TrialBalance/OnTrialBalanceLedgerRequested?id=" + id.replace("&", "__"), page: 1 })
+                    .setCaption("<b>Details of Account Code : " + id + "</b>")
+                    .trigger('reloadGrid');
+                lastID = id;
+            },
+            gridComplete: function () {
+                var JQGridSubGroupcount = jQuery("#JQGridLedger").jqGrid('getGridParam', 'records');
+                if (JQGridSubGroupcount > 0) $("#divJQGridLedger").show();
+                else {
+                    $("#divJQGridLedger").show();
+                };
+            },
+            // Customizations
+            height: "282px",
+            scroll: false, // controls visibility of recordtext
+            recordtext: "{2} Records", // overrides default set in grid.locale-en.js
+            viewrecords: true,
+            loadError: JQGridDemo.jqGrid_aspnet_loadErrorHandler,
+        });
+        $("#JQGridSubGroup_pager_center").hide(); // Hides the central paging control
+        jQuery('#JQGridSubGroup').bindKeys(); // binds the up/down arrow keys:
+
+        var paramsJQGridLedger = {};
+        paramsJQGridLedger.originalColumnWidths = [];
+        paramsJQGridLedger.originalGridWidth = 0;
+        paramsJQGridLedger.initialized = false;
+        $("#JQGridLedger").jqGrid({
+            url: "/TrialBalance/OnTrialBalanceLedgerRequested",
+            mtype: "GET",
+            datatype: "json",
+            page: 1,
+            jsonReader: { id: "ACC_CODE" },
+            prmNames: { id: "ACC_CODE" },
+            colNames: ["Account Code", "Account Head", "Debit", "Credit"],
+            colModel: [
+                { key: true, width: 100, name: "ACC_CODE", sortable: false },
+                { width: 260, name: "ACC_EDESC" },
+                { width: 150, name: "DR_AMOUNT", formatter: "number", sorttype: "number", align: "right", sortable: false, resizable: true, search: false },
+                { width: 150, name: "CR_AMOUNT", formatter: "number", sorttype: "number", align: "right", sortable: false, resizable: true, search: false },
+            ],
+            caption: "Detail",
+            pager: "#JQGridLedger_pager",
+            onSelectRow: function (id) {
+                document.getElementById('DetailScreen').style.display = 'block';
+                $("#divJQGridDetails").show();
+                if (lastID != null) {
+                    var lastRowData = jQuery(this).getRowData(lastID);
+                    if (lastRowData["HasOrders"] == "-") {
+                        $("#JQGridLedger").jqGrid("setCell", lastID, "HasOrders", "+");
+                    }
+                }
+                var rowData = jQuery(this).getRowData(id);
+                var hasOrders = rowData["HasOrders"];
+                var company = rowData["CompanyName"];
+                if (hasOrders == "+") $("#JQGridLedger").jqGrid("setCell", id, "HasOrders", "-");
+                jQuery("#JQGridDetails")
+                    .setGridParam({ url: "/TrialBalance/OnTrialBalanceDetailRequested?id=" + id.replace("&", "__"), page: 1 })
+                    .setCaption("<b>Details of Account Code : " + id + "</b>")
+                    .trigger('reloadGrid');
+                lastID = id;
+            },
+            gridComplete: function () {
+                var JQGridSubGroupcount = jQuery("#JQGridLedger").jqGrid('getGridParam', 'records');
+                if (JQGridSubGroupcount > 0) $("#divJQGridLedger").show();
+                else {
+                    $("#divJQGridLedger").show();
+                };
+            },
+            // Customizations
+            scroll: false, // controls visibility of recordtext
+            height: "282px",
+            recordtext: "{2} Records", // overrides default set in grid.locale-en.js
+            viewrecords: true,
+            loadError: JQGridDemo.jqGrid_aspnet_loadErrorHandler,
+        });
+        $("#JQGridLedger_pager_center").hide(); // Hides the central paging control
+        jQuery('#JQGridLedger').bindKeys(); // binds the up/down arrow keys:
+
+
+        var paramsJQGridDetails = {};
+        paramsJQGridDetails.originalColumnWidths = [];
+        paramsJQGridDetails.originalGridWidth = 0;
+        paramsJQGridDetails.initialized = false;
+        $("#JQGridDetails").jqGrid({
+            url: "/TrialBalance/OnTrialBalanceDetailRequested",
+            mtype: "GET",
+            datatype: "json",
+            page: 1,
+            jsonReader: { id: "ACC_EDESC" },
+            prmNames: { id: "ACC_EDESC" },
+            colNames: ["Account Code", "Account Head", "Debit", "Credit"],
+            colModel: [
+                { key: true, width: 100, name: "ACC_CODE" },
+                { width: 260, name: "ACC_EDESC" },
+                { width: 150, name: "DR_AMOUNT", formatter: "number", sorttype: "number", align: "right", sortable: false, resizable: true, search: false },
+                { width: 150, name: "CR_AMOUNT", formatter: "number", sorttype: "number", align: "right", sortable: false, resizable: true, search: false },
+            ],
+            caption: "Detail",
+            pager: "#JQGridDetails_pager",
+            onSelectRow: function (id) {
+                document.getElementById('VoucherScreen').style.display = 'block';
+                $("#divJQGridVoucher").show();
+                if (lastID != null) {
+                    var lastRowData = jQuery(this).getRowData(lastID);
+                    if (lastRowData["HasOrders"] == "-") {
+                        $("#JQGridDetails").jqGrid("setCell", lastID, "HasOrders", "+");
+                    }
+                }
+                var rowData = jQuery(this).getRowData(id);
+                var hasOrders = rowData["HasOrders"];
+                var company = rowData["CompanyName"];
+                if (hasOrders == "+") $("#JQGridDetails").jqGrid("setCell", id, "HasOrders", "-");
+                jQuery("#JQGridVoucher")
+                    .setGridParam({ url: "/TrialBalance/OnTrialBalanceVoucherRequested?id=" + id.replace("&", "__"), page: 1 })
+                    .setCaption("<b>Details of Account Code : " + id + "</b>")
+                    .trigger('reloadGrid');
+                lastID = id;
+            },
+            gridComplete: function () {
+                $("#gview_JQGridDetails .ui-jqgrid-bdiv").css("height", "");
+                $("#gview_JQGridDetails .ui-jqgrid-bdiv").css("max-height", "270px");
+                var JQGridDetailscount = jQuery("#JQGridDetails").jqGrid('getGridParam', 'records');
+                if (JQGridDetailscount == 0) {
+                    jQuery("#divJQGridDetails").show();
+                }
+                else {
+                    jQuery("#divJQGridDetails").show();
+                }
+            },
+            // Customizations
+            scroll: false, // controls visibility of recordtext
+            width: null,
+            shrinkToFit: false,
+            height: "282px",
+            //recordtext: "{2} Records", // overrides default set in grid.locale-en.js
+            viewrecords: true,
+            loadError: JQGridDemo.jqGrid_aspnet_loadErrorHandler,
+        });
+        $("#JQGridDetails_pager_center").hide(); // Hides the central paging control
+        jQuery('#JQGridDetails').bindKeys(); // binds the up/down arrow keys:
+        
+
+
+        var paramsJQGridVoucher = {};
+        paramsJQGridVoucher.originalColumnWidths = [];
+        paramsJQGridVoucher.originalGridWidth = 0;
+        paramsJQGridVoucher.initialized = false;
+        $("#JQGridVoucher").jqGrid({
+            url: "/TrialBalance/OnTrialBalanceVoucherRequested",
+            mtype: "GET",
+            datatype: "json",
+            page: 1,
+            jsonReader: { id: "ACC_CODE" },
+            prmNames: { id: "ACC_CODE" },
+            colNames: ["Account Code", "Account Head", "Debit", "Credit"],
+            colModel: [
+                { key: true, width: 100, name: "ACC_CODE" },
+                { width: 260, name: "ACC_EDESC" },
+                { width: 150, name: "DR_AMOUNT", formatter: "number", sorttype: "number", align: "right", sortable: false, resizable: true, search: false },
+                { width: 150, name: "CR_AMOUNT", formatter: "number", sorttype: "number", align: "right", sortable: false, resizable: true, search: false },
+            ],
+            caption: "Voucher",
+            pager: "#JQGridVoucher_pager",
+            gridComplete: function () {
+                $("#gview_JQGridVoucher .ui-jqgrid-bdiv").css("height", "");
+                $("#gview_JQGridVoucher .ui-jqgrid-bdiv").css("max-height", "270px");
+                var JQGridVouchercount = jQuery("#JQGridVoucher").jqGrid('getGridParam', 'records');
+                if (JQGridVouchercount == 0) {
+                    jQuery("#divJQGridVoucher").show();
+                }
+                else {
+                    jQuery("#divJQGridVoucher").show();
+                }
+            },
+            // Customizations
+            scroll: false, // controls visibility of recordtext
+            width: null,
+            shrinkToFit: false,
+            height: "282px",
+            //recordtext: "{2} Records", // overrides default set in grid.locale-en.js
+            viewrecords: true,
+            loadError: JQGridDemo.jqGrid_aspnet_loadErrorHandler,
+        });
+        $("#JQGridVoucher_pager_center").hide(); // Hides the central paging control
+        jQuery('#JQGridVoucher').bindKeys(); // binds the up/down arrow keys:
+
+        $(document).ready(function () {
+            $(".nav li a").removeClass("active");//this will remove the active class from previously active menu item 
+            $('#TrialBalance').addClass('active');
+        });
+    </script>
+</div>

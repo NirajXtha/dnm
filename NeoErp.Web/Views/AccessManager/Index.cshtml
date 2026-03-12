@@ -1,0 +1,293 @@
+﻿@{
+    ViewBag.Title = "Access Manager - Index";
+    Layout = "~/Views/Shared/_LayoutNew.cshtml";
+}
+
+<link href="~/Content/css/bootstrap.min.css" rel="stylesheet" />
+<script src="@Scripts.Url("~/Scripts/ngScript/Module.js")"></script>
+<script src="@Scripts.Url("~/Scripts/ngScript/Service.js")"></script>
+<script src="@Scripts.Url("~/Scripts/ngScript/Controller.js")"></script>
+<script src="@Scripts.Url("~/Content/MainTheme/NotifyBar/jquery.notifyBar.js")"></script>
+<script src="~/Scripts/plugins/dataTables/dataTables.bootstrap.js"></script>
+<script src="~/Scripts/ngScript/ui-bootstrap-tpls-2.1.3.min.js"></script>
+<script src="~/Content/Kendo/kendoAllNew.js"></script>
+<script src="~/Scripts/ngScript/angular ui select/select2.js"></script>
+<script src="~/JS/NeoErp.js"></script>
+
+<div class="page-content-wrapper" id="operationContent">
+    <div class="page-content full-width" style="min-height:310px">
+        <div ng-app="erpApp">
+            <div ng-controller="accessManagerController" id="accessManagerController">
+
+                <div class="page-bar bargap">
+                    <ul class="page-breadcrumb">
+                        <li>
+
+                            <div class="form-group col-md-12 col-sm-12">
+                                <i class="fa fa-pencil-square-o"></i>
+                                <a href="~/AccessManager/Index">Access Manager</a>
+                                <i class="fa fa-angle-right"></i>
+                            </div>
+
+                        </li>
+                        <li>
+                            <div class="form-group col-md-12 col-sm-12">
+                                @*<button class="btn btn-success" ng-click="SaveAccess()">Goto Add User</button>*@
+                                <label for="element">User:</label>
+                                <div class="btn-group menuDropdown">
+                                    <div class="btn-group">
+                                        <select class="form-control input-small" ng-model="selectedUser" ng-change="SearchAccess()" name="ddlUser" id="ddlUser"
+                                                ng-options="ddu.LOGIN_EDESC for ddu in dropDownUser">
+                                            <option value="">All</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button class="btn btn-success" ng-click="SaveAccess()">{{AccessAction}}</button>
+                                <button class="btn btn-success" ng-click="printGrid()">Print</button>
+                                <a class="btn btn-success" data-toggle="tooltip" data-placement="top" title="Back To Dashboard" href="/DocumentTemplate/Home/Dashboard">
+                                    Cancel
+                                </a>
+                                <button class="btn btn-success" id="clearChecked" disabled ng-click="ClearCheck()">Clear Checked</button>
+                                @*<input type="checkbox" />*@
+                            </div>
+                        </li>
+                        <li>
+                            <div class="form-group col-md-12 col-sm-12">
+                                <label for="element">Control:</label>
+
+                                <div class="btn-group menuDropdown">
+                                    <div class="btn-group">
+                                        <select class="form-control input-medium" ng-model="selectedControl" name="allControls" id="allControls" ng-change="controlChanged()">
+                                            <option value="">All Controls</option>
+                                            @*<option value="CRM">Calendar Report Manager</option>*@
+                                            <option value="CNB">Company & Branch</option>
+                                            <option value="CRMM">Customize Report Manager</option>
+                                            @*<option value="DFU">Data Find & Update</option>*@
+                                            @*<option value="DS">Definition Setup</option>*@
+                                            <option value="DMT">Document Manager(Transaction)</option>
+                                            @*<option value="DPP">Document Print(Printing)</option>*@
+                                            <option value="DBDC">Document Back Days Control</option>
+                                            <option value="MDC">Master and Definition Control</option>
+                                            @*<option value="MSLV">Master Setup List View</option>*@
+                                            <option value="MSLV">Web Menu Management</option>
+                                            <option value="MDL">Module</option>
+                                            <option value="RM">Report Manager</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div ng-show="showModuleDropDown" class="btn-group menuDropdown">
+                                    <div class="btn-group">
+                                        <select class="form-control input-small" ng-model="selectedAppModule" name="appModule" id="appModule" ng-change="dropDownModuleChanged()"
+                                                ng-options="am.MODULE_EDESC for am in AppModule">
+                                            <option value="">All Module</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </li>
+                        <li>
+                            <div class="form-group col-md-12 col-sm-12">
+                                <a href="@Url.Action("AddUser","Main",new { Area = "" })" class="btn btn-success">Goto Add User</a>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="divList">
+                    <div class="row">
+                        <div class="col-md-12">
+                           
+                            <div class="portlet box grey-cascade">
+                                <div class="portlet-title">
+
+                                    <div class="caption menutitle">
+                                        <i class="fa fa-gift font-green-haze" aria-hidden="true"></i>
+                                        Set Up Acccess Control
+                                    </div>
+
+                                    <div class="tools">
+                                        <a href="javascript:;" class="collapse">
+                                        </a>
+                                        <a href="#portlet-config" data-toggle="modal" class="config">
+                                        </a>
+                                        <a href="javascript:;" class="reload" ng-click="ReloadGrid()">
+                                        </a>
+                                        <a href="javascript:;" class="remove">
+                                        </a>
+                                    </div>
+
+                                </div>
+                                <div class="portlet-body menu-controle">
+                                    <div id="splitter" style="height:600px !important;" kendo-splitter
+                                         k-panes="[{ collapsible: true, size: '20%' },{ collapsible: true, size: '80%'}]"
+                                         k-orientation="orientation"
+                                         k-rebind="orientation">
+
+                                        <div class="portlet box green-box tab-box">
+                                            <div class="portlet-title">
+                                                <div class="caption splitterfont">
+                                                    <i class="fa fa-gift"></i>
+                                                    <span class="font-green-haze">{{modulename}}</span>
+                                                </div>
+                                            </div>
+                                            <div class="portlet-body">
+                                                <div class="form-body" id="moduleList">
+                                                    <div id="userTreeView" style="max-height:400px;"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="">
+
+                                            <div class="tabbable-line1 tabbox1" style="margin-top:7px;">
+                                                <div id="example">
+                                                    @*<div class="form-group">
+                                                        <button class="btn btn-success" ng-click="SaveAccess()">{{action}}</button>
+                                                        <button class="btn btn-success">Cancel</button>
+                                                    </div>*@
+                                                    @*<div ng-show="showAll">*@
+                                                     @Html.Partial("~/Areas/NeoERP.DocumentTemplate/Views/Shared/PartialView/_GridToolbar.cshtml")
+                                                     <div id="allControlGrid"></div>
+                                                    @*</div>*@
+                                                    @*<div ng-show="showCompany">
+                                                        @Html.Partial("_companyAndBranchCntrl")
+                                                    </div>
+                                                    <div ng-show="showDManagerTransaction">
+                                                        @Html.Partial("_documentManagerTransactionCntrl")
+                                                    </div>
+                                                    <div ng-show="masterDefinitionControl">
+                                                        @Html.Partial("_masterDefinitionCntrl")
+                                                    </div>*@
+                                                </div>
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                          
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<script>
+
+    $("#splitter").kendoSplitter()
+    var splitter = $("#splitter").data("kendoSplitter");
+    splitter.size(".k-pane:first", "18%");
+
+
+    //$("#clearChecked").click(function () {
+    //    $("#controlGrid").data("kendoTreeList").clearSelection();
+    //});
+
+  
+    function toggleHorizontal(e) {
+        var treelist = $("#controlGrid").data("kendoTreeList");
+    }
+
+
+    function GridSearch() {
+        debugger;
+        if ($.trim($('.grid-search').val()) != '') {
+            $('.search input').css('margin-left', '-9px !important')
+        }
+        else {
+            $('.search input').css('margin-left', '0px')
+        }
+
+        var grid = $("#allControlGrid").data("kendoGrid");
+        var tempServerFilter = grid.dataSource.options.serverFiltering;
+        grid.dataSource.options.serverFiltering = false;
+        var filter = [];
+        $.each(grid.columns, function (i, v) {
+            if (v.field != undefined) {
+                var searchText = $.trim($('.grid-search').val());
+                var model = grid.dataSource.options.schema.model.fields[v.field];
+                var type = "string";
+                if (model != undefined)
+                    type = model.type;
+                if (type === "string")
+                    filter.push({ field: v.field, operator: "contains", value: searchText });
+                else if (type === "number")
+                    filter.push({ field: v.field, operator: "eq", value: searchText });
+                else if (type === "date") {
+                    var dateValue = new Date(searchText);
+                    searchText = dateValue == "Invalid Date" ? searchText : dateValue;
+                    filter.push({ field: v.field, operator: "eq", value: searchText });
+                }
+            }
+
+        });
+        var filter = {
+            logic: "or",
+            filters: filter,
+        }
+
+        grid.dataSource.filter(filter);
+        if ($(".grid-search").val().length == 0)
+            grid.dataSource.filter([]);
+        grid.bind("dataBound", function () {
+            grid.dataSource.options.serverFiltering = tempServerFilter;
+        });
+
+
+    }
+
+    function CollapseAll() {
+
+        var elementsA = document.querySelectorAll("#grid a.k-icon.k-minus");
+        if (elementsA.length > 0) {
+
+            for (var i = 0; i < elementsA.length; i++) {
+                $(elementsA[i]).trigger("click");
+            }
+            return;
+        }
+        var elementsB = document.querySelectorAll("#grid a.k-icon.k-i-collapse");
+        for (var i = 0; i < elementsB.length; i++) {
+            $(elementsB[i]).trigger("click");
+        }
+    }
+
+    function ExpandAll() {
+        debugger;
+        var elementsB = document.querySelectorAll("#grid a.k-icon.k-i-expand");
+        if (elementsB.length > 0) {
+
+            for (var i = 0; i < elementsB.length; i++) {
+                $(elementsB[i]).trigger("click");
+            }
+            return;
+        }
+        var elementsA = document.querySelectorAll("#grid a.k-icon.k-plus");
+        for (var i = 0; i < elementsA.length; i++) {
+            $(elementsA[i]).trigger("click");
+        }
+    }
+
+    function DisplayBarNotificationMessage(message) {
+        $.notifyBar({ html: message, close: true, waitingForClose: true, closeOnClick: true, cssClass: "success" });
+    }
+
+</script>
+
+
+
+<script type="text/x-kendo-template" id="template">
+    <div class="refreshBtnContainer" style="float:left;">
+        <a href="\\#" class="k-pager-refresh k-link k-button k-button-icon" title="Refresh"><span class="" ng-click="SaveAccess()">Cancel</span></a>
+        <a href="\\#" class="k-pager-refresh k-link k-button k-button-icon" title="Refresh"><span class="" ng-click="ClearCheck()">Add</span></a>
+    </div>
+</script>
+

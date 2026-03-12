@@ -1,0 +1,509 @@
+﻿@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>
+    ();
+    }
+    <style>
+        div.k-grid-header th.k-header, tr.k-filter-row > th {
+            text-align: center;
+        }
+
+        /*.page-bar {
+            margin-bottom: 0px !important;
+        }*/
+
+        .k-grid table {
+            table-layout: fixed;
+        }
+
+        .no-data {
+            background-color: red;
+        }
+        /*#grid thead{
+             font-size:11px;
+        }*/
+        .k-grid td {
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .k-grid-content {
+            font-size: 10px;
+        }
+
+        .k-grid-content-locked {
+            font-size: 10px;
+        }
+
+        .k-grid-footer {
+            font-size: 10px;
+        }
+
+        .k-grid-header {
+            font-size: 11px;
+        }
+
+        .floatright {
+            float: right;
+            margin-top: 2px !important;
+        }
+
+        .red {
+            color: green !important;
+        }
+    </style>
+    <div class="page-content">
+        <div class="page-bar">
+            <ul class="page-breadcrumb">
+                @*<li>
+                    <i class="fa fa-home"></i>
+                    <a href="/sales/SalesHome/Dashboard">Home</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>*@
+                @*<li>
+                    <a href="#/Purchase/PurchaseVatRegister">Goods Receipt Notes</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>*@
+                @*<li>
+                    <a href="#/Purchase/PurchaseVatRegister">Goods Receipt Notes</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>*@
+
+            </ul>
+            <div class="page-toolbar">
+                <div class="btn-group pull-right">
+                    <div class="actions">
+                        <a class="btn btn-circle btn-icon-only btn-default" id="liveData" href="#" title="ashok" data-placement="left" data-html="true" data-container="body" data-toggle="tooltip">
+                            <i class="fa fa-circle red" aria-hidden="true"></i>
+                        </a>
+                        <div class="btn-group">
+                            @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                        </div>
+                        <div class="btn-group">
+                            @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+                        </div>
+                        <div class="btn-group">
+                            @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                            {
+                            ShowSupplierFilter = true,
+                            ShowProductFilter = true,
+                            //ShowDocumentFilter = true,
+                            ShowCategoryFilter = true,
+                            //ShowPartyTypeFilter = true,
+                            })
+                        </div>
+
+                        @Html.Partial("~/Views/Shared/Controls/_reportFilterSettings.cshtml", new ReportFilterSettingsModel()
+                        {
+                        ShowAmountFigureFilter = true,
+                        ShowAmountFilter = true,
+                        ShowAmountRoundUpFilter = true,
+                        ShowRangeAmountFilter = true,
+                        })
+
+                        @Html.Partial("~/Views/Shared/Controls/ComposeMail.cshtml")
+                        <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                            <i class="icon-control-play"></i>
+                        </a>
+                        <div class="btn-group">
+                            @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "GoodsReceiptNotes")
+                        </div>
+                    </div>
+
+
+
+                    @*@Html.Partial("~/Views/Shared/Controls/DateField.cshtml",false)*@
+
+                    @*<button type="button" class="btn btn-fit-height grey-salt dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-delay="1000" data-close-others="true">
+                        Actions <i class="fa fa-angle-down"></i>
+                    </button>
+                    <ul class="dropdown-menu pull-right" role="menu">
+                        <li>
+                            <a href="#">Action</a>
+                        </li>
+                        <li>
+                            <a href="#">Another action</a>
+                        </li>
+                        <li>
+                            <a href="#">Something else here</a>
+                        </li>
+                        <li class="divider">
+                        </li>
+                        <li>
+                            <a href="#">Separated link</a>
+                        </li>
+                    </ul>*@
+                </div>
+            </div>
+        </div>
+
+        <!-- END PAGE HEADER-->
+        <!-- BEGIN PAGE CONTENT-->
+        <div class="row collapse in" id="demo">
+            <div class="col-md-12">
+                <div class="portlet light bordered">
+
+
+                    <div class="portlet-body form">
+                        <div class="row">
+                            <div id="grid"></div>
+                            @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END PAGE CONTENT-->
+    </div>
+    <script src="@Scripts.Url(" ~/JS/DateFilter.js?V8")" type="text/javascript"></script>
+<script src="@Scripts.Url("~/JS/dynamicReport.js?V2")" type="text/javascript"></script>
+    <script type="text/javascript">
+        var fileMailSender = new ManualEmailSender({
+            GridName: "grid",
+            GridRefreshTriggerName: "RunQuery",
+            reportName: "GoodsReceiptNotes",
+        });
+    </script>
+<script type="text/javascript">
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+
+</script>
+    <script>
+
+        var reportConfig = GetReportSetting("GoodsReceiptNotes");
+        function getDateFormat(date) {
+            return kendo.format("{0:" + reportConfig.dateFormat + "}", date);
+        }
+
+        $("#applydp").on("click", function (evt) {
+            evt.preventDefault();
+            $("#RunQuery").trigger("click");
+        })
+
+        $("#loadAdvancedFilters").on("click", function (evt) {
+            evt.preventDefault();
+            $("#RunQuery").trigger("click");
+        });
+
+
+
+        $(document).ready(function () {          
+            var urltest = window.location.protocol + "//" + window.location.host + "/api/SalesHome/GoodsReceiptNotesReport";
+            DateFilter.init(function () {
+                consolidate.init(function () {
+                    BindGrid(urltest);
+                });
+            });
+
+            fileMailSender.init();
+            updateLiveDataIcon();
+
+
+
+
+
+
+
+            $("#RunQuery").click(function (evt) {
+                evt.preventDefault();
+                urltest = window.location.protocol + "//" + window.location.host + "/api/SalesHome/GoodsReceiptNotesReport";
+                KendoGridRefresh(urltest);
+            });
+
+            //BindGrid(urltest);
+        });
+
+        var liveDataIconInterval = '';
+
+        function updateLiveDataIcon() {           
+            var xhr = $.ajax({
+                url: window.location.protocol + "//" + window.location.host +'/api/SalesHome/GetJsonReportLastUpdatedDate?reportName=GoodsReceiptNotesReport',
+                success: function (response) {
+                    
+                    var message = "<span class='pull-left'><b>Last Updated on: </b></span><br /> " + response;
+                    $("#liveData").attr("data-original-title", message)
+                   .tooltip()
+                    .bind("click", function (evt) {
+                        evt.preventDefault();
+                        urltest = window.location.protocol + "//" + window.location.host + "/api/SalesHome/GoodsReceiptNotesReport?liveData=true";
+                        KendoGridRefresh(urltest);
+                    });
+                    if (liveDataIconInterval === '') {                       
+                        liveDataIconInterval = setInterval(function () {
+                            $('#liveData > .fa-circle').fadeOut(1000).fadeIn(1000);
+                        });
+                    }
+
+                }
+            });
+        }
+
+        function BindGrid(readurl) {
+            var companyName = ('@workingContent.CurrentUserinformation.company_name');
+            var fromADdate = $("#FromDateVoucher").val()
+            var toADdate = $("#ToDateVoucher").val();
+            var fromBSdate = $("#fromInputDateVoucher").val();
+            var toBSdate = $("#toInputDateVoucher").val();
+            var branches = ReportFilter.getBranchs();
+            reportConfig = GetReportSetting("GoodsReceiptNotes");
+            var dataSource = new kendo.data.DataSource({
+                type: "json",
+                transport: {
+                    read: {
+                        url: readurl, // <-- Get data from here.
+                        dataType: "json", // <-- The default was "jsonp".
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8"
+                    },
+                    parameterMap: function (options, type) {
+                        var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+                        //  paramMap.formDate = $("#FromDateVoucher").val();
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+                    }
+                },
+
+                error: function (e) {
+                    displayPopupNotification("Sorry error occured while processing data", "error");
+                },
+                serverFiltering: false,
+                serverAggregates: false,
+                schema: {
+                    data: "GoodsReceiptNotesDetailModel", // records are returned in the "data" field of the response
+                    total: "total", // total number of records is in the "total" field of the response
+                    model: {
+                       fields: {
+                    //        //string field no need to add
+                           MRR_NO: {type:"string"},
+                            MRR_DATE: { type: "date" },
+                            SUPPLIER_INV_DATE: { type: "date", nullable: true },
+                           EXCHANGE_RATE: { type: "number" },
+                           QUANTITY: { type: "number" },
+                           UNIT_PRICE: { type: "number" },
+                           TOTAL_PRICE: { type: "number" },
+                       }
+                   }
+                },
+                aggregate: [
+                        { field: "QUANTITY", aggregate: "sum" },
+                        { field: "TOTAL_PRICE", aggregate: "sum" },
+                         { field: "UNIT_PRICE", aggregate: "sum" },
+                ],
+                serverPaging: false,
+                //serverSorting: true,
+                pageSize: reportConfig.defaultPageSize,
+            });
+
+            var grid = $("#grid").kendoGrid({
+                dataSource: dataSource,
+                toolbar: kendo.template($("#toolbar-template").html()),
+                excel: {
+                    fileName: "Goods Receipt Notes",
+                    //proxyURL: "//demos.telerik.com/kendo-ui/service/export",
+                    allPages: true
+                },
+                height: window.innerHeight - 50,
+                sortable: true,
+                reorderable: true,
+                groupable: true,
+                resizable: true,
+                filterable: {
+                    extra: false,
+                    operators: {
+                        number: {
+                            eq: "Is equal to",
+                            neq: "Is not equal to",
+                            gte: "is greater than or equal to	",
+                            gt: "is greater than",
+                            lte: "is less than or equal",
+                            lt: "is less than",
+                        },
+                        string: {
+
+                            eq: "Is equal to",
+                            neq: "Is not equal to",
+                            startswith: "Starts with	",
+                            contains: "Contains",
+                            doesnotcontain: "Does not contain",
+                            endswith: "Ends with",
+                        },
+                        date: {
+
+                            eq: "Is equal to",
+                            neq: "Is not equal to",
+                            gte: "Is after or equal to",
+                            gt: "Is after",
+                            lte: "Is before or equal to",
+                            lt: "Is before",
+                        }
+                    }
+                },
+
+
+
+                columnMenu: true,
+                columnMenuInit: function (e) {
+                    wordwrapmenu(e);
+                    checkboxItem = $(e.container).find('input[type="checkbox"]');
+                },
+                columnShow: function (e) {
+                    if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                        SaveReportSetting('GoodsReceiptNotes', 'grid');
+                },
+                columnHide: function (e) {
+                    if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                        SaveReportSetting('GoodsReceiptNotes', 'grid');
+                },
+                pageable: {
+                    refresh: true,
+                    pageSizes: reportConfig.itemPerPage,
+                    buttonCount: 5
+                },
+                //  autoBind: true,
+                scrollable: {
+                    virtual: true
+                },
+                //scrollable: true,
+                dataBound: function (o) {
+                    var grid = o.sender;
+                    
+                    console.log(grid.DataSource);
+                    if (grid.dataSource.total() == 0) {
+                        var colCount = grid.columns.length + 1;
+                        $(o.sender.wrapper)
+                            .find('tbody')
+                            .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                        displayPopupNotification("No Data Found Given Date Filter.", "info");
+                    }
+
+                    $('div').removeClass('.k-header k-grid-toolbar');                  
+                    UpdateReportUsingSetting("GoodsReceiptNotes", "grid");
+                    updateLiveDataIcon();
+                },
+                columns: [
+                    {
+                        field: "MRR_NO",
+                        title: "MRR_NO",
+                    },
+                    {
+                        field: "MRR_DATE",
+                        title: "MRR_DATE",
+                        format: "{0:" + reportConfig.dateFormat + "}",
+                    },
+                    {
+                        field: "MANUAL_NO",
+                        title: "MANUAL_NO",
+                    },
+                    {
+                        field: "SUPPLIER_NAME",
+                        title: "SUPPLIER",
+                    },
+                    {
+                        field: "SUPPLIER_INV_NO",
+                        title: "SUPPLIER_INV_NO",
+                        hidden: true,
+                    },
+                     {
+                         field: "SUPPLIER_MRR_NO",
+                         title: "SUPPLIER_MRR_NO",
+                         hidden: true,
+                     },
+                     {
+                         field: "SUPPLIER_INV_DATE",
+                         title: "SUPPLIER_INV_DATE",
+                         format: "{0:" + reportConfig.dateFormat + "}",
+                         hidden: true,
+
+                     },
+                       {
+                           field: "PP_NO",
+                           title: "E-PP_NO",
+                           hidden: true,
+                       },
+                       {
+                           field: "REMARKS",
+                           title: "REMARKS",
+                           hidden: true,
+                       },
+                        {
+                            field: "CURRENCY_CODE",
+                            title: "CURRENCY_CODE",
+                            hidden: true,
+                        },
+                    {
+                        field: "LOCATION_EDESC",
+                        title: "LOCATION",
+
+                    },
+                {
+                    field: "ITEM_EDESC",
+                    title: "ITEM",
+                    groupFooterTemplate: 'Total',
+                    footerTemplate: 'Grand Total',
+
+                },
+                {
+                    field: "QUANTITY",
+                    title: "QTY",
+                    aggregates: ["sum"],
+                    template: '<span style="float:right">#= kendo.toString(QUANTITY, "n0")#</span>',
+                    groupHeaderTemplate: "Total Qty: #:sum#",
+                    groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum/ReportFilter.parseAmountFigure(), "n"+ ReportFilter.parseDecimalPlace("AmountRoundUpFilter"))#</span>',
+                    footerTemplate: '<span style="float:right">#= kendo.toString(sum/ReportFilter.parseAmountFigure(), "n"+ ReportFilter.parseDecimalPlace("AmountRoundUpFilter"))#</span>',
+
+                }, {
+                    field: "UNIT_PRICE",
+                    title: "UNIT_PRICE",
+                    template: '<span style="float:right">#= kendo.toString(UNIT_PRICE/ReportFilter.parseAmountFigure(), "n"+ ReportFilter.parseDecimalPlace("AmountRoundUpFilter"))#</span>',
+                }, {
+                    field: "TOTAL_PRICE",
+                    title: "TOTAL_PRICE",
+                    aggregates: ["sum"],
+                    template: '<span style="float:right">#= kendo.toString(TOTAL_PRICE/ReportFilter.parseAmountFigure(), "n"+ ReportFilter.parseDecimalPlace("AmountRoundUpFilter"))#</span>',
+                    groupHeaderTemplate: "Total: #:sum#",
+                    groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum/ReportFilter.parseAmountFigure(), "n"+ ReportFilter.parseDecimalPlace("AmountRoundUpFilter"))#</span>',
+                    footerTemplate: '<span style="float:right">#= kendo.toString(sum/ReportFilter.parseAmountFigure(), "n"+ ReportFilter.parseDecimalPlace("AmountRoundUpFilter"))#</span>',
+                }, {
+                    field: "FORM_EDESC",
+                    title: "FORM",
+                }, {
+                    field: "ITEM_GROUP_EDESC",
+                    title: "ITEM GROUP",
+                }, {
+                    field: "ITEM_SUBGROUP_EDESC",
+                    title: "ITEM SUBGROUP",
+
+                }, {
+                    field: "CATEGORY_EDESC",
+                    title: "CATEGORY",
+                },
+                {
+                    field: "COMPANY_EDESC",
+                    title: "COMPANY",
+                    hidden: true,
+                },
+                {
+                    field: "BRANCH_EDESC",
+                    title: "BRANCH",
+                    hidden: true
+                }
+                ]
+
+            });
+
+        };
+
+        function KendoGridRefresh(readUrl) {
+            $('#grid').val('');
+            $('#grid').html('');
+            BindGrid(readUrl)
+        }
+    </script>

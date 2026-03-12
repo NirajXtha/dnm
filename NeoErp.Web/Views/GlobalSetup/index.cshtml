@@ -1,0 +1,116 @@
+﻿
+
+<script>
+
+    $(document).ready(function () {
+        var urltest = window.location.protocol + "//" + window.location.host + "/Api/GlobalSetup/DbList";
+        dataSource = new kendo.data.DataSource({
+            transport: {
+                read:
+                {
+                    url: urltest,
+                    dataType: "json",
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8",
+                },
+                destroy:
+                {
+                    url: window.location.protocol + "//" + window.location.host + "/GlobalSetup/DeleteDbList",
+                    type: "POST",
+                    dataType: "json",
+                },
+                create:
+                {
+                    url: window.location.protocol + "//" + window.location.host + "/GlobalSetup/UpdateDb",
+                    type: "POST",
+                },
+                update:
+                {
+                    url: window.location.protocol + "//" + window.location.host + "/GlobalSetup/UpdateDb",
+                    type: "POST",
+                    parameterMap: function (options, operation) {
+                        if (operation !== "read" && options.models) {
+                            return {
+                                models: kendo.stringify(options.models)
+                            };
+                        }
+                    }
+                },
+            },
+            pageSize: 10,
+            schema:
+            {
+                model:
+                {
+                    id: "fiscalYear",
+                    fields: {
+                        fiscalYear: { editable: true, nullable: false, type: "string", validation: { required: true } },
+                        dbName: { editable: true, nullable: false, type: "string", validation: { required: true } },
+                    }
+                }
+            }
+        });
+        $("#grid1").kendoGrid({
+            dataSource: dataSource,
+            editable: "inline",
+            pageable: true,
+            toolbar: ["create"],
+
+            columns: [
+                {
+                    field: "fiscalYear",
+                    title: "Fiscal Year",
+                },
+                {
+                    field: "dbName",
+                    title: "Database Name",
+                },
+                {
+                    command: ["edit",
+                        {
+                            name: "destroy",
+                            text: "remove",
+                        }
+                    ],
+                }
+            ],
+            editable: "popup",
+            height: "450px",
+        }).data("kendoGrid");
+    });
+
+
+</script>
+<div class="main-contain-box">
+    <div class="col-sm-12 col-md-12 col-lg-12 margin-top-10">
+        <div class="portlet portlet-sortable light bordered">
+            <div class="portlet-title">
+                <div class="caption text-center">
+               <span class="caption-subject bold uppercase font-green-haze">
+                        <i class="fa fa-database font-green-haze"></i>
+                    Global Database Setup</span>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div id="grid1"></div>
+
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .text-center
+    {
+        text-align:center !important;
+        width:100%;
+         
+    }
+    .k-grid-header th
+    {
+        font-size:11px;
+    }
+  
+    .k-grid-content tr td{
+        font-size:10px;
+    }
+</style>

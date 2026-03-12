@@ -1,0 +1,271 @@
+﻿<style>
+    div.dataTables_length select {
+        width: 45px;
+    }
+
+    div.dataTables_filter input {
+        width: 15em;
+        height: 1.5em;
+    }
+
+    .size {
+        padding: 20px;
+    }
+</style>
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+        </ul>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+
+        <div class="portlet light bordered">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="icon-equalizer font-green-haze"></i>
+                    <span class="caption-subject font-green-haze bold uppercase">Employee Tree Setup</span>
+                </div>
+                <div class="actions pull-right">
+                    <button type="button" class="btn default btn-circle btn-sm" ng-click="cancel()">
+                        <i class="fa fa-times"></i> Cancel
+                    </button>
+                    <button id="SaveToHrEmployeeTree" type="button" class="btn btn-circle btn-green btn-sm">
+                        <i class="fa fa-check"></i> Save
+                    </button>
+                </div>
+
+            </div>
+            <div class="portlet-body form pform-box">
+                <!-- BEGIN FORM-->
+                <form action="#" class="horizontal-form" name="employeeTreeform" novalidate>
+                    <div class="form-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="parentEmployeeCode" class="control-label">Parent Employee</label>
+                                    <input id="parentEmployeeCode" name="parentEmployeeCode" style="width:100%" required>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="form-group">
+                                    <label for="EmployeeCode" class="control-label">Employees</label>
+                                    <input id="EmployeeCode" name="EmployeeCode" style="width:100%" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                <!-- END FORM-->
+                <!-- BEGIN EXAMPLE TABLE PORTLET-->
+                <div class="tblresponsive">
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="text-right">
+                                <label><small><i><strong>(*)</strong> Employee not assigned to application user.</i></small></label>
+                            </div>
+                            <div id="parent_employee_treelist"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    function deleteActionAppend(parent_employee_code, employee_code) {
+        if (parent_employee_code == null) {
+            return "";
+        }
+        return '<a href="javascript:;" data-parent="' + parent_employee_code + '" data-employee="' + employee_code + '" onClick="DeleteEmployee(' + parent_employee_code + ',' + employee_code + ',this)"><i class="fa fa-trash"></i></a>';
+    }
+
+    function employeeNameRender(name) {
+        if (name == null) {
+            return "";
+        }
+        return name;
+    }
+    function renderTreeList() {
+        $("#parent_employee_treelist").kendoTreeList({
+            dataSource: {
+                transport: {
+                    read: {
+                        url: "/api/PlanApi/GetParentEmployeeTreeList",
+                        dataType: "json"
+                    }
+                },
+                schema: {
+                    //model: {
+                    //    id: "EMPLOYEE_CODE_EDESC",
+                    //    parentId: "PARENT_EMPLOYEE_CODE_EDESC",
+                    //    fields: {
+                    //        EMPLOYEE_CODE: { field: "EMPLOYEE_CODE", type: "string" },
+                    //        PARENT_EMPLOYEE_CODE: { field: "PARENT_EMPLOYEE_CODE", type: "string"},
+                    //        LEVEL: { field: "LEVEL", type: "number", defaultValue: 1 },
+                    //    },
+                    //    expanded: true
+                    //}
+                },
+            },
+            // group   : { field: "PARENT_EMPLOYEE_EDESC" },
+            // height: 540,
+            filterable: true,
+            sortable: true,
+            columns: [
+                {
+                    field: "PARENT_EMPLOYEE_EDESC", title: "Parent Employee",
+                    template: "#= employeeNameRender(PARENT_EMPLOYEE_EDESC) #",
+                    width: '45%',
+                },
+                {
+                    field: "EMPLOYEE_EDESC", title: "Employee",
+                    template: "#= employeeNameRender(EMPLOYEE_EDESC) #",
+                    width: '50%'
+                },
+                {
+                    title: "Action", width: '5%',
+                    template: "#= deleteActionAppend(PARENT_EMPLOYEE_CODE,EMPLOYEE_CODE) #",
+                    filterable: false
+                }
+            ],
+
+        });
+    }
+    $(document).ready(function () {
+        $("#parentEmployeeCode").kendoDropDownList({
+            filter: "contains",
+            dataSource: {
+                serverFiltering: false,
+                transport: {
+                    read: {
+                        dataType: "json",
+                        //url: "/api/SubPlanApi/GetChiledLevelEmployee",
+                        url: "/api/SubPlanApi/GetChiledLevelEmployeeForTree",
+                    },
+                    parameterMap: function (data, action) {
+                        if (data.filter != undefined) {
+                            if (data.filter.filters[0] != undefined) {
+                                var newParams = {
+                                    filter: data.filter.filters[0].value
+                                };
+                                return newParams;
+                            }
+                            else {
+                                var newParams = {
+                                    filter: ""
+                                };
+                                return newParams;
+                            }
+                        }
+                        else {
+                            var newParams = {
+                                filter: ""
+                            };
+                            return newParams;
+                        }
+                    }
+                }
+            },
+            placeholder: "Select employee...",
+            dataTextField: "EMPLOYEE_EDESC",
+            dataValueField: "EMPLOYEE_CODE",
+        });
+
+        $("#EmployeeCode").kendoMultiSelect({
+            filter: "contains",
+            dataSource: {
+                serverFiltering: false,
+                transport: {
+                    read: {
+                        dataType: "json",
+                        url: "/api/SubPlanApi/GetChiledLevelEmployeeForTree",
+                    },
+                    parameterMap: function (data, action) {
+                        if (data.filter != undefined) {
+                            if (data.filter.filters[0] != undefined) {
+                                var newParams = {
+                                    filter: data.filter.filters[0].value
+                                };
+                                return newParams;
+                            }
+                            else {
+                                var newParams = {
+                                    filter: ""
+                                };
+                                return newParams;
+                            }
+                        }
+                        else {
+                            var newParams = {
+                                filter: ""
+                            };
+                            return newParams;
+                        }
+                    }
+                }
+            },
+            placeholder: "Select employee...",
+            dataTextField: "EMPLOYEE_EDESC",
+            dataValueField: "EMPLOYEE_CODE",
+        });
+        renderTreeList();
+    });
+
+    $('#SaveToHrEmployeeTree').on('click', function () {
+        var parentEmployeeCode = $('#parentEmployeeCode').val();
+        var employeeCode = $('#EmployeeCode').data("kendoMultiSelect");
+        var selectedEmployees = employeeCode.value();
+        var data = { parentEmployeeCode: parentEmployeeCode, selectedEmployees: selectedEmployees.join(',') };
+        $.ajax({
+            url: "/api/PlanApi/SaveParentEmployeeTreeList",
+            data: data,
+        }).done(function (result) {
+            if (result.includes('success')) {
+                displayPopupNotification("Parent-Child Employee Setup successed.", "success");
+                //window.location = "/Planning/Home/Setup#!Planning/EmployeeTree";
+                //location.reload();
+                $('#parent_employee_treelist').html('');
+                var treeList = $("#parent_employee_treelist").data("kendoTreeList");
+                treeList.destroy();
+                //treeList.refresh();
+                renderTreeList();
+            }
+            else {
+                displayPopupNotification(result, "error");
+            }
+        }).error(function (err) {
+
+        });
+    })
+
+    function DeleteEmployee(parent_employee_code, employee_code, el) {
+
+        var $this = $(el);
+        parent_employee_code = $this.data("parent");
+        employee_code = $this.data("employee");
+        var data = { parent_employee_code: parent_employee_code, employee_code: employee_code };
+        $.ajax({
+            url: "/api/PlanApi/DeleteEmployeeFromTree",
+            data: data
+        }).done(function (result) {
+
+            if (result == "success") {
+                displayPopupNotification("Record deletion successed", "success");
+                //window.location = "/Planning/Home/Setup#!Planning/EmployeeTree";
+                //location.reload();
+                $('#parent_employee_treelist').html('');
+                var treeList = $("#parent_employee_treelist").data("kendoTreeList");
+                treeList.destroy();
+                //treeList.refresh();
+                renderTreeList();
+            }
+        }).error(function (err) {
+            displayPopupNotification(result, "error");
+        })
+    }
+
+</script>
+<script src="@Scripts.Url(" ~/Areas/NeoERP.Planning/js/controller/PlanningMenuNavigation.js")"></script>

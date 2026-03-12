@@ -1,0 +1,339 @@
+﻿@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+@model bool
+
+@if (Model == true)
+{
+    <!-- Trigger the modal with a button -->
+    <a  id="ShowConsolidateModal" data-toggle="modal" data-target="#ConsolidateModal">
+        <div class="btn btn-circle btn-icon-only btn-default" data-placement="left" data-html="true" data-container="body" data-toggle="tooltip"  title="Consolidate Filter">
+        <i class="fa fa-maxcdn"></i>
+            </div>
+    </a>
+
+    <!-- Modal -->
+    <div id="ConsolidateModal" class="modal fade" role="dialog">
+        <div class="modal-dialog popup_filter-modal">
+
+            <!-- Modal content-->
+
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title"><span class="fa fa-clock-o"></span> Consolidate Filter</h4>
+                </div>
+                <div class="modal-body">
+                    <div>
+                        <div id="consolidateTreeView" style="max-height:400px;"></div>
+                    </div>
+                </div>
+                @*<div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-green applydp" data-dismiss="modal" id="applyConsolidate">Apply</button>
+                </div>*@
+            </div>
+
+        </div>
+    </div>
+}
+else
+{
+    <div>
+        <div id="consolidateTreeView" style="max-height:400px;"></div>
+    </div>
+}
+
+
+
+
+
+<script>
+
+    var companyCode = "01";
+    var oldCompanyCode = "";
+
+    var consolidate = function () {
+        return {
+            init: function (callback) {
+                var loadAllBranchUrl = window.location.protocol + "//" + window.location.host + "/api/SalesHome/GetAllConsolidateNodes";
+                var consolidateTreeDataSource = new kendo.data.HierarchicalDataSource({
+                    transport: {
+                        read: {
+                            url: loadAllBranchUrl,
+                            dataType: "json"
+                        }
+                    },
+                    schema: {
+                        model: {
+                            id: "branch_Code",
+                            children: "Items",
+                            hasChildren: "hasBranch",
+                        },
+                        parse: function (response) {
+                            return _.each(_.filter(response, function (x) {
+                                return x.pre_branch_code == '00';
+                            }), function (y) {
+                                y.Items = _.filter(response, function (z) {
+                                    return z.pre_branch_code == y.branch_Code;
+                                });
+                                y.hasBranch = y.Items.length == 0 ? false : true;
+                            });
+                        }
+                    }
+                });
+
+                var count = 0;
+                $("#consolidateTreeView").kendoTreeView({
+                    checkboxes: {
+                        checkChildren: true
+                    },
+                    autoScroll: true,
+                    autoBind: true,
+                    dataSource: consolidateTreeDataSource,
+                    dataTextField: "branch_edesc",
+                    height: 400,
+                    scrollable: {
+                        virtual: true
+                    },
+                    loadOnDemand: false,
+                    check: onCheck,
+                    dataBound: function () {
+                        var treeview = $("#consolidateTreeView").data("kendoTreeView");
+                        var savedCompanyFilter = sessionStorage.getItem('SelectedCompanyFilter');
+                        var saveCompanyFilterObj = JSON.parse(savedCompanyFilter);
+
+                        // Expand all nodes
+                        treeview.expand(".k-item");
+
+                        // Check all nodes recursively
+                        function checkAllNodes(nodes) {
+                            nodes.forEach(function(node) {
+                                var item = treeview.dataItem(treeview.findByUid(node.uid));
+                                if (item) {
+                                    item.set("checked", true);
+                                }
+                                if (node.hasChildren) {
+                                    checkAllNodes(node.children.view());
+                                }
+                            });
+                        }
+                        checkAllNodes(treeview.dataSource.view());
+
+                        // Update indeterminate state
+                        treeview.updateIndeterminate();
+
+                        var isInitialLoad = this._isInitialLoad === undefined ? true : false;
+                        this._isInitialLoad = false;
+
+                        // Handle saved filter if exists
+                        if (saveCompanyFilterObj != null && saveCompanyFilterObj.length > 0) {
+                            for (var branlst in saveCompanyFilterObj) {
+                                if (saveCompanyFilterObj[branlst].Items != null) {
+                                    var companyCheck = treeview.findByText(saveCompanyFilterObj[branlst].branch_edesc);
+                                    if (companyCheck.length > 0) {
+                                        treeview.dataItem(companyCheck).set("checked", true);
+                                    }
+                                } else {
+                                    var branchCheck = treeview.findByText(saveCompanyFilterObj[branlst].branch_edesc);
+                                    if (branchCheck.length > 0) {
+                                        treeview.dataItem(branchCheck).set("checked", true);
+                                    }
+                                }
+                            }
+                            treeview.updateIndeterminate();
+                        }
+
+                        // Handle initial preference check
+                        if (count === 0) {
+                            try {
+                                /* Uncomment and adjust the AJAX call if needed
+                                $.ajax({
+                                    type: 'GET',
+                                    dataType: "json",
+                                    async: false,
+                                    url: window.location.protocol + "//" + window.location.host + "/api/Distribution/GetDistPreferences",
+                                    success: function (data) {
+                                        if (data.SO_CONSOLIDATE_DEFAULT == "Y") {
+                                            checkAllNodes(treeview.dataSource.view());
+                                        } else {
+                                            var updateCheck = treeview.findByText('@workingContent.CurrentUserinformation.company_name');
+                                            if (updateCheck.length > 0) {
+                                                treeview.dataItem(updateCheck).set("checked", true);
+                                            }
+                                        }
+                                    }
+                                });
+                                */
+                            } catch (e) {
+                                var updateCheck = treeview.findByText('@workingContent.CurrentUserinformation.company_name');
+                                if (updateCheck.length > 0) {
+                                    treeview.dataItem(updateCheck).set("checked", true);
+                                }
+                            }
+                            count = 1;
+                            if (callback != undefined) {
+                                setTimeout(function () {
+                                    callback();
+                                });
+                            }
+                        }
+
+                        var checkedBranchCodes = getCheckedBranches(treeview);
+                        var checkedBranchCodesString = checkedBranchCodes.join(',');
+                        var element = document.getElementById('OrderDispatchCtrl');
+                        if (element) {
+                            var scope = angular.element(element).scope();
+                            if (scope) {
+                                scope.$apply(function () {
+                                    scope.getAllDocument(checkedBranchCodesString);
+                                });
+                            }
+                        }
+                    },
+                    check: function (e) {
+                        let treeview = $("#consolidateTreeView").data("kendoTreeView");
+                        var checkedBranchCodes = getCheckedBranches(treeview);
+                        var checkedBranchCodesString = checkedBranchCodes.join(',');
+                        var element = document.getElementById('OrderDispatchCtrl');
+                        if (element) {
+                            var scope = angular.element(element).scope();
+                            if (scope) {
+                                scope.$apply(function () {
+                                    scope.getAllDocument(checkedBranchCodesString);
+                                });
+                            }
+                        }
+                    }
+                });
+
+                $("#consolidateTreeView").data("kendoTreeView").expand(".treeNode");
+            }
+        }
+    }();
+
+    function getCheckedBranches(treeview) {
+        var checkedBranchCodes = [];
+        function traverseAndCollectChecked(nodes) {
+            for (var i = 0; i < nodes.length; i++) {
+                var node = nodes[i];
+                if (node.checked) {
+                    checkedBranchCodes.push(node.branch_Code);
+                }
+                if (node.hasChildren) {
+                    traverseAndCollectChecked(node.children.view());
+                }
+            }
+        }
+        traverseAndCollectChecked(treeview.dataSource.view());
+        return checkedBranchCodes;
+    }
+
+    function populateDocumentListBasedOnBranch(branchCodes) {
+    }
+
+    function getConsolidateData(callback) {
+        var kendoData = $("#consolidateTreeView").data("kendoTreeView");
+        var items = getCheckedItems_consolidate(kendoData);
+        var branchCodeArray = [];
+        if (items.length != 0) {
+            for (var i = 0; i < items.length; i++) {
+                branchCodeArray[i] = items[i].branch_Code;
+            }
+        }
+        $.each(branchCodeArray, function (i, val) {
+            if (val.indexOf('.') == -1) {
+                companyCode = val;
+                return false;
+            } else {
+                companyCode = val.substring(0, val.indexOf('.'));
+                return false;
+            }
+        });
+        if (companyCode != oldCompanyCode) {
+            $.post(window.location.protocol + "//" + window.location.host + "/Home/UpdateCompanyCode?companyCode=" + companyCode);
+            oldCompanyCode = companyCode;
+            if (callback != undefined) {
+                callback();
+            }
+        }
+    }
+
+    function onCheck(e) {
+        var treeview = $("#consolidateTreeView").data("kendoTreeView");
+        var data = treeview.dataItem(e.node);
+        var isExpanded = $(e.node).attr("data-expanded");
+        if (data.pre_branch_code == "00") {
+            if (typeof isExpanded === 'undefined' || isExpanded === false) {
+                treeview.expand(".k-item");
+                treeview.collapse(".k-item");
+                treeview.expand(e.node);
+            }
+        }
+        sessionStorage.removeItem("SelectedCompanyFilter");
+        var checkedData = getCheckedItems_consolidate(treeview);
+        if (checkedData.length > 0) {
+            sessionStorage.setItem("SelectedCompanyFilter", JSON.stringify(checkedData));
+        }
+    }
+
+    function getCheckedItems_consolidate(treeview) {
+        var nodes = treeview.dataSource.view();
+        return getCheckedNodes_consolidate(nodes);
+    }
+
+    function getCheckedNodes_consolidate(nodes) {
+        var node, childCheckedNodes;
+        var checkedNodes = [];
+        for (var i = 0; i < nodes.length; i++) {
+            node = nodes[i];
+            if (node.checked) {
+                checkedNodes.push(node);
+            }
+            if (node.hasChildren) {
+                childCheckedNodes = getCheckedNodes_consolidate(node.children.view());
+                if (childCheckedNodes.length > 0) {
+                    checkedNodes = checkedNodes.concat(childCheckedNodes);
+                }
+            }
+        }
+        if (sessionStorage.getItem("SelectedCompanyFilter")) {
+            var sessionData = JSON.parse(sessionStorage.getItem("SelectedCompanyFilter"));
+            checkedNodes = sessionData;
+        }
+        return checkedNodes;
+    }
+
+</script>
+<script>
+    $(function () {
+        $('#consolidateTreeView').slimScroll({
+            //height: '420px',
+            // opacity: '0.4',
+            railVisible: true,
+            alwaysVisible: true
+
+
+
+        });
+    });
+</script>
+
+@*<script>
+        $(document).ready(function () {
+            $.ajax({
+                type: 'GET',
+                dataType: "json",
+                url: window.location.protocol + "//" + window.location.host + "/Home/GetConsolidateSetting",
+                success: function (data) {
+                    
+                    if (data.SO_CONSOLIDATE_DEFAULT == "Y") {
+                        var ConsolidateTree = $("#consolidateTreeView").data("kendoTreeView");
+                        $("#consolidateTreeView .k-checkbox input").prop("checked", true).trigger("change");
+                    }
+                }
+            });
+        });
+    </script>*@

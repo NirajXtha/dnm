@@ -1,0 +1,903 @@
+﻿@using NeoErp.Core.Models;
+@using NeoErp.Core.Domain;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    ViewBag.Title = "Dashboard";
+    IWorkContext _workContext = EngineContext.Current.Resolve<IWorkContext>();
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+    //Layout = null;
+}
+
+@{
+    var myAreaName = string.Empty;
+    object areaObj;
+    if (ViewContext.RouteData.Values.TryGetValue("area", out areaObj))
+    {
+        myAreaName = areaObj.ToString();
+    }
+}
+
+@*<div ng-app="distributionModule">
+        <div class="row">
+            <div ng-view class="col-md-12 col-sm-12"></div>
+        </div>
+    </div>*@
+<style>
+    a.k-button.k-button-icontext.k-grid-excel {
+        float: right;
+    }
+
+    a.k-button.k-button-icontext.k-grid-pdf {
+        float: right;
+    }
+
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    [data-toggle=buttons] > .btn .radio {
+        display: none;
+    }
+
+    .AmountFigureType {
+        position: absolute;
+        bottom: 103px;
+        right: 32px;
+        font-weight: 600;
+        font-family: sans-serif;
+        font-size: 12px;
+    }
+
+    .DisplayFilterContent {
+        position: absolute;
+        bottom: 105px !important;
+        right: 32px;
+        font-weight: 400;
+        font-family: sans-serif;
+        font-size: 11px;
+    }
+
+    .column {
+        margin-bottom: -68px;
+    }
+
+    /*.portlet.portlet-sortable {
+        min-height: 460px;
+    }*/
+
+    .overlay {
+        position: static !important;
+    }
+
+        .overlay div {
+            /*position: relative;
+    font-size: 34px;
+    margin-top: -17px;
+    top: 50%;*/
+            position: absolute !important;
+            font-size: 28px !important;
+            top: 213px !important;
+            left: 21% !important;
+        }
+
+    .overlay {
+        display: none;
+    }
+
+
+    ul.dropdown-menu.custom {
+        margin-top: 8px !important;
+        border: none;
+        box-shadow: none !important;
+    }
+
+    .dropdown-menu.custom:before {
+        left: 58px !important;
+    }
+
+    .download-btn {
+        margin: 0px !important;
+        padding-top: -2px !important;
+        padding-left: 0px;
+        padding-right: 0px;
+        margin-top: -5px !important;
+        margin-left: 5px !important;
+    }
+
+    .dropdown-menu.custom {
+        left: -27px !important;
+        top: 20px !important;
+    }
+
+    .dropdown > .dropdown-menu:before, .dropdown-toggle > .dropdown-menu:before, .btn-group > .dropdown-menu:before {
+        position: absolute;
+        top: -8px;
+        left: 30px;
+        right: auto;
+        display: inline-block !important;
+        border-right: 8px solid transparent;
+        border-bottom: 8px solid #e0e0e0;
+        border-left: 8px solid transparent;
+        content: '';
+    }
+
+    i.icon-arrow-down {
+        color: #acacac;
+    }
+
+    .btn-group-custom button.btn {
+        padding: 7px 7px !important;
+        float: left;
+    }
+
+    .dropdown-menu.custom {
+        left: -55px !important;
+    }
+
+    a.btnGrid {
+        color: #acacac !important;
+    }
+
+    .fav-inputtext {
+        height: 27px;
+    }
+
+    .input-group-addon {
+        padding: 0px;
+    }
+
+    /*.fav-color, .fav-icon {
+        margin-left: -30px;
+    }*/
+</style>
+<link href="@Styles.Url("~/Content/MainTheme/fontawesome-iconpicker-1.0.0/dist/css/fontawesome-iconpicker.css")" rel="stylesheet" />
+
+<div ng-app="distributionModule">
+    <div class="page-sidebar-wrapper">
+        @Html.Partial("_distributionMenus")
+    </div>
+    <div class="modal fade" id="favModal" tabindex="-1" role="dialog" aria-labelledby="favModalLabel">
+        <div class="modal-dialog modal-custom">
+            <div class="modal-content">
+                <form id="favform" action="" name="favform">
+                    <div class="modal-header">
+                        <button type="button" class="close right-dismis" data-dismiss="modal" aria-hidden="true"></button>
+                        <h4 class="modal-title" id="favModalLabel"><span class="fa fa-star"></span> Add to favourites</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-horizontal">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label class="col-md-1 col-sm-1" for="">Title</label>
+                                        <div class="col-md-11 col-sm-11">
+                                            <input type="text" class="form-control fav-inputtext" name="title" id="favTitle" onkeyup="favTitleChange()" placeholder="Enter Favourite Name to save" required />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <div class="col-md-12 col-sm-12">
+                                            <label class="control-label" for="">Icon</label>
+
+                                            <div class="input-group iconpicker-container">
+                                                <input data-placement="bottomRight" id="favIcon" onchange='$("#favIconClass").removeAttr("class").addClass("fa " + value);' class="fav-inputtext form-control icp icp-auto iconpicker-element iconpicker-input" value="fa-amazon" type="text" required>
+                                                <span class="input-group-addon"><i id="favIconClass" class="fa fa-amazon"></i></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <div class="col-sm-12 col-md-12">
+                                            <label class="control-label" for="">Color</label>
+                                            <div class="row">
+                                                <div class="col-xs-8 col-sm-8 col-md-8">
+                                                    <input type="text" class="form-control fav-inputtext" name="favColor" id="favColor" onchange="$('#color').val(value)" placeholder="Color" />
+                                                </div>
+                                                <div class="col-xs-4 col-sm-4 col-md-4">
+                                                    <input type="color" class="form-control fav-inputtext fav-color" value="#808080" onchange="$('#favColor').val(value)" name="color" id="color" placeholder="Color" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <div class="col-md-12 col-sm-12">
+                                            <label class="control-label" for="">Where to Save</label>
+                                            <div class="">
+                                                <input id="parentMenu" style="width: 100%;" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <div class="col-md-12 col-sm-12">
+                                            <label class="control-label" for="">Description</label>
+                                            <div class="">
+                                                <input type="text" class="form-control fav-inputtext" name="iconText" id="favDescription" placeholder="Description" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button type="submit" id="favSave" class="btn btn-green" onclick="saveFavouriteMenu()">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div id="loader" ng-show="isViewLoading">
+        <div id="box"></div>
+        <div id="hill">NEO</div>
+    </div>
+    @*<div class="loader"></div>*@
+    <div class="page-content-wrapper" id="operationContent">
+        <div class="page-content ">
+            <div ng-view></div>
+        </div>
+    </div>
+</div>
+
+<link href="@Styles.Url("~/Content/MainTheme/assets/global/plugins/jquery-minicolors/jquery.minicolors.css")" rel="stylesheet" />
+
+<link href="@Styles.Url("~/Content/MainTheme/fontawesome-iconpicker-1.0.0/dist/css/fontawesome-iconpicker.css")" rel="stylesheet" />
+
+<script>
+    var moduleCode = '10';
+    var isFirstLoad = {
+        fav: false,
+        favCount: 0,
+        favGroup: false,
+        favGroupCount: 0
+    };
+    var loadCount = 0;
+</script>
+
+@section scripts{
+    <script>
+          var baseUrl = window.location.protocol + "//" + window.location.host + "/Areas/" + "@myAreaName/Content/img";
+          var baseUrl1 = window.location.protocol + "//" + window.location.host + "/Areas/" + "@myAreaName/";
+          $.getScript(baseUrl1 + "js/google-loader.js");
+          $.getScript(baseUrl1 + "js/google-jsapi.js");
+    </script>
+    <!-- angular scripts for Distribution-->
+
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/module/distributionModule.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Service/DistributorService.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Service/DistSetupService.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Service/ResellerService.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Service/QuestionService.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Service/OpeningStockService.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Service/BrandingService.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/DistributorCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/RouteCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/RouteCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/ResellerCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/FarmCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/DealerCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/AreaCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/QuestionCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/SurveySetupCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/CollectionCtrl.js")"></script>
+    @*<script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/AreaCtrl.js")"></script>*@
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/OutletCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/ImageCategoryCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/OtherEntitySetupCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/CompItemCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/CompItemMapCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/Scheme.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/SchemeReport.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/SchemeWiseReportCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/SchemeApprovalCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/SchemeCheckerCtrl.js")"></script>
+
+    @*<script src="@Scripts.Url("~/JS/reportFilter.js")"></script>*@
+    <script src="@Scripts.Url("~/JS/DashboardChartFilter/reportFilter.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/DashboardCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/GroupCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/DistUserMapCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/PerformanceCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/sumOutletCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/OutletSummaryCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/TopEffectiveCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/LessEffectiveCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/MasterDateFilter.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/SalesPersonCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/ItemCumulativeCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/UserSetupTreeCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/ClosingStockCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/OpeningStockCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/VisitImageGallery.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/VisitImageGalleryCondition.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/Controller/NotificationCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/Controller/ItemSetupCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/Controller/TermsAndConditionSetupCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/Controller/EmployeeSetupCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/Controller/BrandingJs/BrandingActivityCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/Controller/BrandingJs/ContractCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/Controller/BrandingJs/ContractSummaryCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/Controller/BrandingJs/SchemeReportCtrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/Controller/BrandingJs/BrandingVisitImageGallery.js")"></script>
+    @*<script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/Controller/DistSalesReturnCtrl.js")"></script>*@
+    <script src="@Scripts.Url("~/Content/MainTheme/Protle.dragger.js")"></script>
+    <script src='@Scripts.Url("~/Areas/NeoERP.Distribution/js/markerclusterer.js")'></script>
+    <script src='@Scripts.Url("~/Areas/NeoERP.Distribution/js/marker.label.min.js")'></script>
+    <script src="@Styles.Url("~/Content/MainTheme/fontawesome-iconpicker-1.0.0/dist/js/fontawesome-iconpicker.js")"></script>
+    <script src="@Scripts.Url("~/Scripts/knockout-2.2.0.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/DistQueryBuilder.js?V4")"></script>
+    <script src="@Styles.Url("~/Content/MainTheme/fontawesome-iconpicker-1.0.0/dist/js/fontawesome-iconpicker.js")"></script>
+    <script src="@Scripts.Url("~/Content/MainTheme/assets/global/plugins/jquery-minicolors/jquery.minicolors.min.js")"></script>
+    <script src="@Scripts.Url("~/Content/MainTheme/assets/global/plugins/bootstrap-daterangepicker/moment.min.js")"></script>
+    <script src="@Scripts.Url("~/Content/MainTheme/assets/global/plugins/bootstrap-wizard/jquery.bootstrap.wizard.min.js")"></script>
+    <script src='@Scripts.Url("~/Scripts/form-wizard.min.js")'></script>
+    <!-- angular plugins-->
+    <script src="@Scripts.Url("~/Scripts/angular.min.js")"></script>
+    <script src="@Scripts.Url("~/Scripts/angular-route.min.js")"></script>
+    <script src="@Scripts.Url("~/Scripts/ngScript/angular-animate.min.js")"></script>
+    <script src="@Scripts.Url("~/Scripts/angular-messages.min.js")"></script>
+    <script src="@Scripts.Url("~/Content/Kendo/kendoAllNew.js")"></script>
+    <script src="@Scripts.Url("~/Scripts/plugins/dataTables/jquery.dataTables.js")"></script>
+    <script src="@Scripts.Url("~/Scripts/plugins/dataTables/angular-datatables.min.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/Scripts/jquery.tree-multiselect.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/Scripts/fullcalendar.min.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/Scripts/gcal.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/Scripts/calendar.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/Controller/calendarReport.js")"></script>
+
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/scheme/Schemectrl.js")"></script>
+    <script src="@Scripts.Url("~/Areas/NeoERP.Distribution/js/Controller/scheme/QrGeneratorctrl.js")"></script>
+
+    <script>
+        var listlength = 0;
+        var progresswidth = 0;
+        var each_percent = 0;
+        $(document).ready(function () {
+            listlenght = $(".form-wizard").find('li').length;
+            each_percent = (100 / listlenght)
+            progresswidth = (each_percent * 1);
+            $('.progress-bar').width(progresswidth + '%');
+        })
+
+        $(".step").click(function () {
+            $this = $(this);
+            $(".form-wizard").find('li').removeClass('active');
+            $this.closest('li').addClass('active');
+            var activeindex = $('.form-wizard').find('li.active').index();
+            progresswidth = (each_percent * (activeindex + 1));
+            $('.progress-bar').width(progresswidth + '%');
+        })
+
+        function update_wizard(activeindex) {
+            $(".form-wizard").find('li').removeClass('active');
+            $(".form-wizard li:eq(" + activeindex + ")").addClass('active');
+            progresswidth = (each_percent * (activeindex + 1));
+            $('.progress-bar').width(progresswidth + '%');
+        }
+    </script>
+
+    <script type="text/javascript">
+
+        function CollapseAll() {
+
+            var elementsA = document.querySelectorAll("#grid a.k-icon.k-minus");
+            if (elementsA.length > 0) {
+
+                for (var i = 0; i < elementsA.length; i++) {
+                    $(elementsA[i]).trigger("click");
+                }
+                return;
+            }
+            var elementsB = document.querySelectorAll("#grid a.k-icon.k-i-collapse");
+            for (var i = 0; i < elementsB.length; i++) {
+                $(elementsB[i]).trigger("click");
+            }
+        }
+
+        function ExpandAll() {
+            var elementsB = document.querySelectorAll("#grid a.k-icon.k-i-expand");
+            if (elementsB.length > 0) {
+
+                for (var i = 0; i < elementsB.length; i++) {
+                    $(elementsB[i]).trigger("click");
+                }
+                return;
+            }
+            var elementsA = document.querySelectorAll("#grid a.k-icon.k-plus");
+            for (var i = 0; i < elementsA.length; i++) {
+                $(elementsA[i]).trigger("click");
+            }
+        }
+
+        //function CollapseExpandAll() {
+
+        //    if ($("#downImage").hasClass('flip')) {
+
+
+        //        $('#collapseAllButton').prop('title', 'Collapse All');
+        //        $("#downImage").toggleClass('flip');
+        //        var elementsB = document.querySelectorAll("#grid a.k-icon.k-i-expand");
+        //        if (elementsB.length > 0) {
+
+        //            for (var i = 0; i < elementsB.length; i++) {
+        //                $(elementsB[i]).trigger("click");
+        //            }
+        //            return;
+        //        }
+        //        var elementsA = document.querySelectorAll("#grid a.k-icon.k-plus");
+        //        for (var i = 0; i < elementsA.length; i++) {
+        //            $(elementsA[i]).trigger("click");
+        //        }
+
+        //    }
+        //    else {
+        //        $("#downImage").toggleClass('flip');
+        //        $('#collapseAllButton').prop('title', 'Expand All');
+        //        var elementsA = document.querySelectorAll("#grid a.k-icon.k-minus");
+        //        if (elementsA.length > 0) {
+
+        //            for (var i = 0; i < elementsA.length; i++) {
+        //                $(elementsA[i]).trigger("click");
+        //            }
+        //            return;
+        //        }
+        //        var elementsB = document.querySelectorAll("#grid a.k-icon.k-i-collapse");
+        //        for (var i = 0; i < elementsB.length; i++) {
+        //            $(elementsB[i]).trigger("click");
+        //        }
+        //    }
+
+        //}
+
+
+        //ORIGINAL
+        function GridSearch() {
+            var grid = $("#grid").data("kendoGrid");
+            var filter = [];
+            var fields = grid.dataSource.options.fields;
+            if (fields == undefined) {
+                var columns = [];
+                $.each(grid.columns, function (idx, item) {
+                    if (item.columns) {
+                        columns = columns.concat(item.columns);
+                    }
+                    else {
+                        columns.push(item);
+                    }
+                });
+                fields = columns;
+            }
+
+            //var check = grid.dataSource && grid.dataSource.options ? true : false;
+            //console.log(check);
+            try {
+                $.each(fields, function (i, v) {
+                    if (v.field != undefined) {
+                        var searchText = $.trim($('.grid-search').val());
+                        var model = grid.dataSource.options.schema.model;
+                        if (model == undefined)
+                            model = grid.dataSource.options.model;
+                        model = model.fields[v.field];
+                        var type = "string";
+                        if (model != undefined && model.type != undefined)
+                            type = model.type;
+                        if (type === "string")
+                            filter.push({ field: v.field, operator: "contains", value: searchText });
+                        else if (type === "number")
+                            filter.push({ field: v.field, operator: "eq", value: searchText });
+                        else if (type === "date") {
+                            var dateValue = new Date(searchText);
+                            searchText = dateValue == "Invalid Date" ? searchText : dateValue;
+                            filter.push({ field: v.field, operator: "eq", value: searchText });
+                        }
+                    }
+                });
+            } catch (e) {
+                var v = fields[1];
+                if (v.field !== undefined) {
+                    var searchText = $.trim($('.grid-search').val());
+                    var model = grid.dataSource.transport.options.schema.model;
+
+                    if (model === undefined) {
+                        model = grid.dataSource.options.model;
+                    }
+                    // Check if model and model.fields are defined
+                    if (model && model.fields && model.fields[v.field]) {
+                        var fieldModel = model.fields[v.field];
+                        var type = fieldModel.type || "string"; // Default to string if type is not defined
+
+                        if (type === "string") {
+                            filter.push({ field: v.field, operator: "contains", value: searchText });
+                        } else if (type === "number") {
+                            filter.push({ field: v.field, operator: "eq", value: searchText });
+                        } else if (type === "date") {
+                            var dateValue = new Date(searchText);
+                            searchText = isNaN(dateValue) ? searchText : dateValue;
+                            filter.push({ field: v.field, operator: "eq", value: searchText });
+                        }
+                    } else {
+                        console.log("Model or field not defined for:", v.field);
+                    }
+                } else {
+                    console.log("Column does not have a field property:", v);
+                }
+            }
+            var filter = {
+                logic: "or",
+                filters: filter,
+            }
+
+            grid.dataSource.filter(filter);
+            if ($(".grid-search").val().length == 0)
+                grid.dataSource.filter([]);
+        }
+
+
+
+
+
+
+
+        // EDITED
+        //function GridSearch2() {
+        //    var grid = $("#grid").data("kendoGrid");
+        //    var filter = [];
+        //    var fields = grid.dataSource.options.fields;
+
+        //    if (fields === undefined) {
+        //        var columns = [];
+        //        $.each(grid.columns, function (idx, item) {
+        //            if (item.columns) {
+        //                columns = columns.concat(item.columns);
+        //            } else {
+        //                columns.push(item);
+        //            }
+        //        });
+        //        fields = columns;
+        //    }
+
+        //    var v = fields[1];
+        //    if (v.field !== undefined) {
+        //        var searchText = $.trim($('.grid-search').val());
+        //        var model = grid.dataSource.transport.options.schema.model;
+
+        //        if (model === undefined) {
+        //            model = grid.dataSource.options.model;
+        //        }
+        //        // Check if model and model.fields are defined
+        //        if (model && model.fields && model.fields[v.field]) {
+        //            var fieldModel = model.fields[v.field];
+        //            var type = fieldModel.type || "string"; // Default to string if type is not defined
+
+        //            if (type === "string") {
+        //                filter.push({ field: v.field, operator: "contains", value: searchText });
+        //            } else if (type === "number") {
+        //                filter.push({ field: v.field, operator: "eq", value: searchText });
+        //            } else if (type === "date") {
+        //                var dateValue = new Date(searchText);
+        //                searchText = isNaN(dateValue) ? searchText : dateValue;
+        //                filter.push({ field: v.field, operator: "eq", value: searchText });
+        //            }
+        //        } else {
+        //            console.log("Model or field not defined for:", v.field);
+        //        }
+        //    } else {
+        //        console.log("Column does not have a field property:", v);
+        //    }
+
+        //    var filterObject = {
+        //        logic: "or",
+        //        filters: filter,
+        //    };
+
+        //    grid.dataSource.filter(filterObject);
+
+        //    // Clear filters if search input is empty
+        //    if ($(".grid-search").val().length === 0) {
+        //        grid.dataSource.filter([]);
+        //    }
+        //}
+
+
+
+
+
+
+
+
+
+        function TreelistSearch() {
+            var treelist = $("#treelist").data("kendoTreeList");
+            var filter = [];
+            var fields = treelist.dataSource.options.fields;
+            if (fields == undefined)
+                fields = treelist.columns;
+            $.each(fields, function (i, v) {
+                if (v.field != undefined) {
+                    var searchText = $.trim($('.grid-search').val());
+                    var model = treelist.dataSource.options.schema.model;
+                    if (model == undefined)
+                        model = treelist.dataSource.options.model;
+                    model = model.fields[v.field];
+                    var type = "string";
+                    if (model != undefined && model.type != undefined)
+                        type = model.type;
+                    if (type === "string")
+                        filter.push({ field: v.field, operator: "contains", value: searchText });
+                    else if (type === "number")
+                        filter.push({ field: v.field, operator: "eq", value: searchText });
+                    else if (type === "date") {
+                        var dateValue = new Date(searchText);
+                        searchText = dateValue == "Invalid Date" ? searchText : dateValue;
+                        filter.push({ field: v.field, operator: "eq", value: searchText });
+                    }
+                }
+            });
+            var filter = {
+                logic: "or",
+                filters: filter,
+            }
+            //get the treelist value from here
+            var getAllNodeList = $("#treelist").data("kendoTreeList");
+            var max = getAllNodeList.tbody[0].childNodes;
+
+            //for expand
+            for (i = 0; i < max.length; i++)getAllNodeList.expand(getAllNodeList.tbody[0].childNodes[i]);
+
+            for (i = 0; i < max.length; i++) {
+
+                var cellLength = max[i].cells;
+
+                for (x = 0; x < cellLength.length; x++) {
+                    if (max[i].cells[x].innerText.indexOf($.trim($('.grid-search').val())) > -1) {
+                        max[i].cells[x].style.color = "red";
+                        // max[i].cells[x].style.boxShadow = "0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)";
+                    }
+
+                }
+            }
+
+            $(getAllNodeList[i]).addClass('').css('background-color', 'hsl(22, 100%, 48%)')
+            //for collapse
+            if ("" == $.trim($(".grid-search").val())) {
+
+                for (i = 0; i < max.length; i++)getAllNodeList.collapse(getAllNodeList.tbody[0].childNodes[i]);
+                for (i = 0; i < max.length; i++) {
+
+                    var cellLength = max[i].cells;
+
+                    for (x = 0; x < cellLength.length; x++) {
+                        max[i].cells[x].style.color = ""
+                        // max[i].cells[x].style.boxShadow = "";
+                    }
+                }
+            }
+
+
+
+            treelist.dataSource.filter(filter);
+            if ($(".grid-search").val().length == 0)
+                treelist.dataSource.filter([]);
+        }
+
+
+        //Theme setting for setup part start here ...
+
+
+        function GetSetupSetting(reportName) {
+            var fav = Arg("fav") == undefined ? reportName : Arg("fav");
+            var result = "";
+
+            $.ajax({
+                type: 'POST',
+                data: { 'reportName': fav },
+                async: false,
+                url: window.location.protocol + "//" + window.location.host + "/Home/GetReportSetting",
+                success: function (data) {
+
+                    result = data;
+                    var topTenReportList = ["TopSalesDealer", "TopSalesEmployee"];
+                    if ($.inArray(fav, topTenReportList) > -1) {
+                        result.defaultPageSize = result.defaultPageSize == undefined ? 10 : parseInt(result.defaultPageSize);
+                        $($("#itemsPerPage").parents()[1]).addClass("sr-only");
+                        $($("#dateFormat").parents()[1]).addClass("sr-only");
+                    }
+                    else
+                        result.defaultPageSize = result.defaultPageSize == undefined ? 100 : parseInt(result.defaultPageSize);
+
+                    if (result.itemPerPage != null && result.itemPerPage != "") {
+                        result.itemPerPage = JSON.parse("[" + result.itemPerPage + "]");
+                        result.itemPerPage.push('ALL');
+
+                    }
+                    else {
+                        result.itemPerPage = JSON.parse("[100,500,1000,5000,10000]");
+                        result.itemPerPage.push('ALL');
+                    }
+
+                    result.dateFormat = _.isEmpty(result.dateFormat) ? "dd-MMM-yyyy" : result.dateFormat;
+
+                    if (!_.isEmpty(result.theme)) {
+                        var selectedTheme = '<link href="' + window.location.protocol + "//" + window.location.host + '/Content/Kendo/styles/' + result.theme + '" rel="stylesheet" tag="kendoTheme" />';
+                        $("#operationContent").find("link[tag='kendoTheme']").remove();
+                        $("#operationContent").append(selectedTheme);
+                    }
+
+
+                    //for tooltip
+                    $('body').tooltip({
+                        selector: '.favourites'
+                    });
+                    //add fav menu
+                    var node = $("#operationContent").find(".page-toolbar > .btn-group > .actions");
+                    if (node[0] != undefined) {
+                        var favnode = node.find("#Savefavriote");
+                        if (favnode[0] == undefined) {
+                            var favColor = location.hash.indexOf('?') != -1 ? "style = 'color:#ffbf00'" : "";
+                            //var html = "<a class='btn btn-circle btn-icon-only btn-default' id='Savefavriote' onclick='loadFavouriteMenu()' href='javascript:;'><i class='fa fa-star' " + favColor + "></i></a>";
+                            var html = "";
+                            node.prepend(html);
+                            isFirstLoad.fav = true;
+                            isFirstLoad.favGroup = true;
+                            isFirstLoad.favCount = 0;
+
+
+                            $("#RunQuery").click(function (evt) {
+                                isFirstLoad.favGroup = true;
+                            });
+
+
+                        }
+
+                        if (location.hash.indexOf('?') != -1 && Arg("fav") != undefined && isFirstLoad.fav) {
+                            if (isFirstLoad.favCount == 1) {
+                                isFirstLoad.fav = false;
+                                favouriteReportSetting.init(result);
+                            } else
+                                isFirstLoad.favCount++;
+                        }
+
+
+
+                    }
+                }
+            });
+            return result;
+        }
+
+    </script>
+
+    <script>
+        function loadFavouriteMenu() {
+            //load parentMenu
+            $("#parentMenu").kendoDropDownList({
+                index: 0,
+                dataTextField: "MENU_EDESC",
+                dataValueField: "MENU_EDESC",
+                dataSource: {
+                    transport: {
+                        read: {
+                            url: "/api/SalesHome/GetDynamicMenu?ModuleCode=" + moduleCode,
+                        }
+                    },
+                    requestEnd: function (e) {
+                        e.response.unshift({ MENU_EDESC: "Favourite", GROUP_SKU_FLAG: "G", ICON_PATH: "", MENU_NO: "01", MODULE_CODE: "01" });
+
+                    }
+                }
+            });
+            var fav = Arg("fav");
+            if (fav != undefined && reportConfig != undefined && fav == reportConfig.reportName) {
+                //reportConfig
+                $("#favTitle").val(reportConfig.reportName);
+                $('#color').val(reportConfig.color);
+                $('#favColor').val(reportConfig.color);
+                try { $("#favIcon").val(reportConfig.icon.replace('fa ', '')); } catch (e) { }
+                $("#favIconClass").removeAttr("class").addClass(reportConfig.icon);
+                $("#favDescription").val(reportConfig.description);
+                $("#favSave").text("Update");
+                $("#parentMenu").data("kendoDropDownList").value(reportConfig.parentMenu);
+            }
+            else {
+                if ($("#favTitle").val().length > 0) {
+                    $("#favform")[0].reset();
+                    $("#favSave").text("Save");
+                    setTimeout(function () { $("#parentMenu").data("kendoDropDownList").select(0); }, 2000)
+                }
+
+
+            }
+
+
+            $('.iconpicker-container').iconpicker();
+
+            //init validator
+            $("#favform").validate({
+                rules: {
+                    favTitle: "required"
+                },
+                messages: {
+                    favTitle: "Please specify your name"
+
+                }
+            });
+            $("#favModal").modal("show");
+        }
+        function saveFavouriteMenu() {
+            var valid = $("#favform").valid();
+            if (!valid) {
+                displayPopupNotification("Invalid Field", "warning");
+                return;
+            }
+
+
+            var title = $("#favTitle").val();
+            //var param = location.hash.indexOf('?') != -1 ? location.hash.substring(0, location.hash.indexOf('?')) : location.hash;
+            var url = location.pathname
+            var A = url.substring(1);
+            var B = location.hash;
+
+            var param = (A + B);
+
+
+            SaveReportConfigSetting({
+                gridName: "grid",
+                reportName: title,
+                parentReportName: "",
+                isFavroite: true,
+                virtualPath: param,
+                icon: "fa " + $("#favIcon").val(),
+                color: $("#favColor").val() == "" ? $('#color').val() : $("#favColor").val(),
+                parentMenu: $("#parentMenu").data("kendoDropDownList").value(),
+                description: $("#favDescription").val(),
+                defaultPageSize: $("#defaultPageSize").val() == "" ? 100 : $("#defaultPageSize").val(),
+                itemPerPage: $("#itemsPerPage").val(),
+                dateFormat: $("#dateFormat option:selected").val(),
+                moduleCode: '10',
+            });
+        }
+        function favTitleChange() {
+            if (Arg("fav") != undefined && Arg("fav").trim() == $("#favTitle").val().trim())
+                $('#favSave').text('Update');
+            else
+                $('#favSave').text('Save');
+        }
+    </script>
+
+}
+
+

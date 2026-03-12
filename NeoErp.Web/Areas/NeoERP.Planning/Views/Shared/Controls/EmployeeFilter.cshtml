@@ -1,0 +1,64 @@
+﻿    <select id="employeeMultiSelect" multiple="multiple" style="width:400px;"></select>
+
+<script>
+
+    $(document).ready(function () {
+        //var autoCompleteurl = window.location.protocol + "//" + window.location.host + "/api/PlanApi/GetEmployeeList";
+        //var autoCompletedataSource = new kendo.data.DataSource({
+        //    transport: {
+        //        read: {
+        //            url: autoCompleteurl,
+        //            dataType: "json",                   
+        //            contentType: "application/json; charset=utf-8"
+        //        }
+        //    }            
+        //});
+        var autoCompleteurl = window.location.protocol + "//" + window.location.host +"/api/SubPlanApi/GetChiledLevelEmployee";
+        var autoCompletedataSource = new kendo.data.DataSource({
+            transport: {
+                read: {
+                    url: autoCompleteurl,
+                    dataType: "json",                   
+                    contentType: "application/json; charset=utf-8"
+                },
+                parameterMap: function (data, action) {
+                    if (data.filter != undefined) {
+                        if (data.filter.filters[0] != undefined) {
+                            var newParams = {
+                                filter: data.filter.filters[0].value
+                            };
+                            return newParams;
+                        }
+                        else {
+                            var newParams = {
+                                filter: ""
+                            };
+                            return newParams;
+                        }
+                    }
+                    else {
+                        var newParams = {
+                            filter: ""
+                        };
+                        return newParams;
+                    }
+                }
+            }
+        });
+    
+        $('#employeeMultiSelect').kendoMultiSelect({
+            dataSource: autoCompletedataSource,
+            dataTextField: "EMPLOYEE_EDESC",
+            dataValueField: "EMPLOYEE_CODE",
+            height: 600,        
+            filter:"contains",
+            headerTemplate: '<div class="col-md-offset-4"><strong>Employee...</strong></div>',           
+            placeholder: "Select Employee...",
+            autoClose: false,           
+            dataBound: function () {               
+                var current = this.value();
+                this._savedOld = current.slice(0);
+            }            
+        });        
+    });    
+</script>

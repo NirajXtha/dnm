@@ -1,0 +1,71 @@
+﻿@{
+    var pageid = ViewData["ActionPageId"];
+}
+
+<select id="categoryMultiSelect_@pageid" multiple="multiple" ></select>
+
+
+<script>
+
+     var _oldItemCategoryData = undefined;
+    $(document).ready(function () {
+
+        var autoCompleteurl = window.location.protocol + "//" + window.location.host + "/api/SalesHome/GetSalesRegisterItemCategories";
+        var autoCompletedataSource = new kendo.data.DataSource({
+            transport: {
+                read: function (options) {
+                    if (_oldItemCategoryData == undefined) {
+                        $.ajax({
+                            url: autoCompleteurl,
+                            type: "GET",
+                            //async: false,
+                            success: function (result) {
+                                options.success(result);
+                                _oldItemCategoryData = result;
+                            },
+                            error: function (result) {
+                                options.error(result);
+                            }
+                        });
+                    }
+                    else {
+                        options.success(_oldItemCategoryData);
+                    }
+                }
+            }
+            //serverFiltering: true
+        });
+
+        $("#categoryMultiSelect_@pageid").kendoMultiSelect({
+            dataSource: autoCompletedataSource,
+            dataTextField: "CategoryName",
+            dataValueField: "CategoryCode",
+            height: 600,
+            //scrollable: {
+            //    virtual: true
+            //},
+            headerTemplate: '<div class="col-md-offset-4"><strong>Item Categories...</strong></div>',
+            //filter: "startswith",
+            placeholder: "Search Item Categories...",
+            autoClose: false,
+            //select: OnMultiSelect,
+            dataBound: function () {
+                var current = this.value();
+                this._savedOld = current.slice(0);
+            },
+            change: OnMultiSelectChange
+        });
+
+        function OnMultiSelectChange(e) {
+            var previous = this._savedOld;
+            var current = this.value();
+            var diff = [];
+            if (previous) {
+                diff = $(previous).not(current).get();
+            }
+            this._savedOld = current.slice(0);
+        }
+    });
+</script>
+
+

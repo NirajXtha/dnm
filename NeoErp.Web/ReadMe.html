@@ -1,0 +1,161 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+</head>
+<body>
+    <h1>
+        NeoErpMIS Structure:
+    </h1>
+
+    <p>
+        NeoErpMIS has been designed to add Modules in runtime without include and recompile any module reference in project. It works on following schenerios.
+        <ul>
+            <li>
+                It uses concept of Seperate Project for Area
+            </li>
+
+        </ul>
+    </p>
+
+    <h1>Steps to Create Module</h1>
+    <ol>
+        <li>
+            Identity the Unique Name of Module you re going to create. You can use any personal prefix to avoide duplication with other modules (Recommended).
+        </li>
+        <li>
+            Open NeoErpMIS Framework Folder >> NeoErp.Web >> Area
+        </li>
+        <li>
+            Create a Folder name with your Unique Module Name.
+        </li>
+
+        <li>
+            Open NeoErpMIS Solution, In Modules
+            <ul>
+                <li>
+                    Right Click >> Add >> Add Solution Folder
+                </li>
+                <li>Give the Unique Module Name</li>
+
+                <li>Right Click on Newly Created Module Name >> Add >> New Project </li>
+                <li>Create a Blank MVC Project in .Net Framework NeoErpMIS based on</li>
+                <li>
+                    <h1>
+                        Must follow the Module Naming Convenstion as Follows
+                    </h1>
+                    <ul>
+                        <li>Module Project Name: NeoErp.Modules.UniqueModuleName </li>
+                        <li>Services: Modules.UniqueModuleName.Service (Optional: If you want to seperate project for Service (BLL) Layer)s</li>
+                        <li>Models: Modules.UniequeModuleName.Models (Optional: If you want to seperate projects for DAL Layer)</li>
+                    </ul>
+                </li>
+                <li><h1>Location for Module</h1>The Creating project should be created directly inside your Unique Module Name in Area Folder</li>
+                <li>
+                    While creating project, if the project has created any other location or inside Project name subfolder in your Unieque Module Name,
+                    <ul>
+                        <li>
+                            Unload the project from solution >> delete the unloaded project from solution
+                        </li>
+                        <li>
+                            Goto Window explorer Cut the project files from current location and paste didrect inside in Your Unieque Module Folder
+                        </li>
+                        <li>
+                            Now, Right Click on Unieque Folder Name insde Module >> Add >> Existing Project >> Browse the project Inside the Area >> Click on Open
+                        </li>
+                    </ul>
+                </li>
+
+            </ul>
+        </li>
+        <li>
+            <h1>
+                Setup Model Project
+            </h1>
+            <ol>
+                <li>Copy the EntityConnection.cs file from any other Model Project and Paste in Route of the Model Project </li>
+                <li>
+                    Open the file and change the Name Space as <b>Modules.UniqueModuleName.Models</b>
+                </li>
+                <li>Change Class name as Name of <b>UniequeModuleNameEntity</b> which you will give while creating Model </li>
+                <li> Change the Constructors accordingly</li>
+                <li>Chage BulidingConnectionString parameters as modelName:<b>UniequeModuleNameEntity</b>, AssemblyName:<b>Modules.UniqueModueName.Models</b></li>
+                <li>Cread a Edmx file from Add>>New Item>> Ado.Net Entity Data Model</li>
+                <li>While Creating Data Model: Give Entity Name as <b>UniequeModuleNameEntity</b>, Give Name Space  as <b>Modules.UniqueModuleName.Models</b></li>
+                <li>Create required Tables, View, Stored Procedures in Database and add into the Edmx. </li>
+                <li> If you are familier with Entity Framwork Code First approach, you can manage yourself (i.e. Creating New Module for Database Management etc.) </li>
+            </ol>
+
+
+            <h1>Setup Module Project</h1>
+            <ol>
+                <li>Copy the *AreaRegistration.cs file from any other Module and Paste in Route of the Module Project </li>
+
+                <li>Rename the Area Registration File as <b>UniqueModuleNameAreaRegistration</b></li>
+                <li>Open the Area Registration File and Change Name Space </li>
+                <li>Change the AreaRegistration details accordingly.</li>
+            </ol>
+
+            <h1>Add Following References</h1>
+            <ol>
+                <li>EntityFramework, EntityFramework.SqlServer,System.Data.Entity and others as per requirements </li>
+                <li> Add Project References: NeoErp.Core, HRM, NeoErp.Core.Models, NeoErp.Data and others as per requirements</li>
+            </ol>
+
+            <h1>Manage Views</h1>
+            <ol>
+                <li>Create a Shared Folder inside View Folder</li>
+                <li>Copy _LayoutModule.cshtml from any other module and Paste Inside Shared Folder and Chages the followings</li>
+                <li>
+                    @{
+                    NeoErp.Core.Models.ModuleMenuModel menu = new NeoErp.Core.Models.ModuleMenuModel();<br />
+                    menu.MenuRootName = <b>"your root menu name for the module";</b> // "mnuCommon";<br />
+                    menu.HomePageLink = <b>"your dashbaord or home page for the module";</b> //"/Main/Dashboard";<br />
+                    menu.HomePageTitle = <b>"Title for the Home Page";</b><br />
+                    ViewBag.menu = menu;
+                    <br />
+                    Layout = "~/Views/Shared/_Layout.cshtml";<br />
+
+                    }<br />
+
+                    @section headtag
+                    {<br />
+                    @RenderSection("headtag", required: false)<br />
+
+                    }
+                    <br />
+                    @RenderBody()
+                    <br />
+                    @section scripts
+                    {<br />
+                    @RenderSection("scripts", required: false)<br />
+                    }
+                </li>
+
+                <li>
+                    Change _ViewStart.cshtml as followings <br />
+                    @{
+                    Layout = "Shared/_LayoutModule.cshtml";
+                    }
+                </li>
+            </ol>
+
+
+
+
+        </li>
+        <li> Now, Write your code and run the NeoErpMIS project, it will automatically attach the module and execute.</li>
+    </ol>
+
+    <h1>Probable Erross:</h1>
+    <ol>
+        <li>
+            <h1>An assembly with the same simple name '.....' has already been imported. Try removing one of the references or sign them to enable side-by-side.</h1>
+            Answer: Clean NeoErp.Web Project and clean other linked projects with the error<br />
+            Rebuild the projects after cleaning and Run <br />
+            If problem preisist, Clear Asp.Net Temporary Project.
+        </li>
+    </ol>
+
+</body>
+</html>

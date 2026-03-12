@@ -1,0 +1,367 @@
+﻿
+
+@using NeoErp.sales.Module.Models;
+
+@{
+    ViewBag.Title = "Trial Balance";
+}
+
+<style>
+    .nav-tabs {
+        /*border-bottom: 1px solid whitesmoke;
+            position: relative;*/
+        width: 100% !important;
+    }
+
+    .md-checkbox label > .box {
+        top: 3px;
+        border: 1px solid #666;
+        height: 15px;
+        width: 15px;
+        z-index: 5;
+        -webkit-transition-delay: 0.2s;
+        -moz-transition-delay: 0.2s;
+        transition-delay: 0.2s;
+        margin-left: 8px;
+        padding-left: -24px;
+    }
+
+    .md-checkbox label {
+        cursor: pointer;
+        padding-left: 30px;
+        font-size: 12px;
+    }
+
+    tr#trParentHeader .k-header {
+        text-align: center !important;
+    }
+
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        border-bottom-width: 0;
+        font-size: 11px;
+    }
+    /*trail balance table css start here*/
+    .tabbable-line > .nav-tabs > li.Legerclass.active {
+        background: 0 0;
+        border-bottom: 4px solid #36c6d3;
+        position: relative;
+    }
+    /*trail balance table css end here*/
+
+    #grid > .k-grid-content > table > tbody > tr.k-footer-template:not([data-parentid="0"] ) {
+        display: none !important;
+    }
+
+    .close {
+        margin-left: 10px !important;
+    }
+
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    div.k-window-content {
+        position: relative;
+        height: 100%;
+        padding: .58em;
+        overflow: inherit !important;
+        outline: 0;
+    }
+
+    .orders.k-grid.k-widget {
+        margin-top: -3px;
+    }
+
+    .orders table .k-grid-header {
+        display: none;
+    }
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+                 font-size:11px;
+            }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .nav-pills > li.active > a, .nav-pills > li.active > a:focus, .nav-pills > li.active > a:hover {
+        background-color: whitesmoke !important;
+    }
+</style>
+<div class="page-content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+        </ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+
+                <div class="btn-group" data-toggle="tooltip" title="Click to filter date range!" data-placement="bottom">
+                    @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                </div>
+                @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+                <a class="btn btn-circle btn-icon-only btn-default gap-right" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample" href="javascript:;">
+                    <i class="icon-arrow-down"></i>
+                </a>
+
+
+                <a class="btn btn-circle btn-icon-only btn-default gap-right" id="RunQuery" href="javsascript:;">
+                    <i class="icon-control-play"></i>
+                </a>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+
+                <div class="portlet-body form">
+                    <div class="tabbable-line">
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="tab1">
+                                <div class="row">
+                                    <div id="grid"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+<script src="@Scripts.Url("~/JS/DateFilter.js?V5")" type="text/javascript"></script>
+<script src="@Scripts.Url("~/JS/dynamicReport.js?V2")" type="text/javascript"></script>
+<script type="text/javascript">
+</script>
+<script>
+    $("#grid").on("mousedown", "tr[role='row']", function (e) {
+
+        if (e.which === 3) {
+            //first remove all selected row
+            //$('tr.k-state-selected', '#grid').removeClass('k-state-selected');
+            //then display selected row
+            //  $(this).addClass("k-state-selected");
+            var gview = $('#grid').data('kendoTreeList');
+            //Getting selected item
+            //   var selectedItem = gview.dataItem($('.k-grid').find("tr.k-state-selected"));
+        }
+    });
+    $("#ShowOpeningrow").on("change", function () {
+        var treelist = $('#grid').data('kendoTreeList');
+
+        if ($(this).is(':checked')) {
+            var row = treelist.thead.find("#trParentHeader");
+            var footerrow = treelist.tbody.find(".k-footer-template");
+            footerrow.find('td:eq(1), td:eq(2)').hide();
+            row.find('th:eq(1)').hide()
+            treelist.hideColumn(1);
+            treelist.hideColumn(2);
+        }
+        else {
+            var row = treelist.thead.find("#trParentHeader");
+            var footerrow = treelist.tbody.find(".k-footer-template");
+            footerrow.find('td:eq(1), td:eq(2)').show();
+            row.find('th:eq(1)').show()
+            treelist.showColumn(1);
+            treelist.showColumn(2);
+        }
+    });
+    function expended(trdiv) {
+
+        var treeList = $('#grid').data('kendoTreeList');
+        $(trdiv).each(function () {
+
+            treeList.expand(this);
+            if (treeList && this.length) {
+                expended(this);
+            }
+        });
+
+    }
+    $(".applydp").on("click", function (evt) {
+
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    })
+
+    $(document).ready(function () {
+        // var myWindow = $("#window");
+        function onClose() {
+            undo.fadeIn();
+        }
+        $('[data-toggle="tooltip"]').tooltip({ delay: { show: 500, hide: 100 } });
+        var formEnglishDate = $("#FromDateVoucher").val();
+        var toEnglishDate = $("#ToDateVoucher").val();
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/AnalysisApi/GetQuantityBalanceAndPaymentRotationDayT";
+        DateFilter.init(function () {
+            consolidate.init(function () {
+                BindGrid(urltest);
+            });
+        });
+
+
+
+        $("#RunQuery").click(function (evt) {
+            evt.preventDefault();
+            var urltest = urltest = window.location.protocol + "//" + window.location.host + "/api/AnalysisApi/GetQuantityBalanceAndPaymentRotationDayT";
+            KendoGridRefresh(urltest);
+        });
+        $("#contextmenu").css({ "top": event.pageY + "px", "left": event.pageX + "px" })
+        $("#context-menu").kendoContextMenu({
+            filter: '.rightColumnClass',
+            target: "#grid",
+            orientation: "vertical",
+            alignToAnchor: true
+        });
+        $("#Subcontext-menu").kendoContextMenu({
+            filter: '.rightColumnClasssub',
+            target: "#grid",
+            orientation: "vertical",
+            alignToAnchor: true
+        });
+
+    });
+
+    function BindGrid(readurl, refresh) {
+        var dataSource = new kendo.data.TreeListDataSource({
+            transport: {
+                read: {
+                    url: readurl, // <-- Get data from here.
+                    dataType: "json", // <-- The default was "jsonp".
+                    type: "POST",
+                    //contentType: "application/json",
+                    data: function (data, evt) {
+                        var datageneric = $("#datageneric option:selected").val();
+                        var treeList = $("#grid").data("kendoTreeList");
+                        var dataSource = treeList.dataSource;
+                        if (data.id) {
+                            var parentNode = dataSource.get(data.id);
+                            return $.extend(ReportFilter.filterAdditionalData(), { parentId: parentNode.ACC_CODE, subledger: parentNode.sub_count, datatype: datageneric })
+
+                        } else {
+                            return $.extend(ReportFilter.filterAdditionalData(), { datatype: datageneric })
+                        }
+
+                    }
+                }
+            },
+
+            schema: {
+                model: {
+                    id: "MasterId",
+                    parentId: "ReportsTo",
+                    fields: {
+                        MasterId: { type: "number", nullable: false, field: "Id" },
+                        ReportsTo: { field: "ParentIdInt", nullable: false, type: "number" },
+                    }
+                }
+            },
+            aggregate: [
+                { field: "CreditLimit", aggregate: "sum" },
+                { field: "Balance", aggregate: "sum" },
+                { field: "Quantity", aggregate: "sum" },
+                { field: "PayRotationDays", aggregate: "sum" },
+                //{ field: "DR_CLOSING", aggregate: "sum" },
+                //{ field: "CR_CLOSING", aggregate: "sum" },
+
+            ]
+
+        });
+        if (refresh) {
+            var grid = $('#grid').data('kendoTreeList');
+            grid.setDataSource(dataSource);
+            grid.refresh();
+
+        }
+        else {
+            $("#grid").kendoTreeList({
+                dataSource: dataSource,
+                selectable: true,
+                change: function () {
+                    var text = "";
+                    var grid = this;
+                },
+                //adding column for the subledger menu
+                columnMenu: true,
+                columnMenuInit: function (e) {
+                    wordwrapmenu(e);
+                },
+
+                //end the adding  column part
+                columns: [
+
+                    {
+                        field: "account_head",
+                        title: "Party Name",
+                        width: "35%",
+                        footerTemplate: '<span style="float:right;font-weight: bolder;">Total Amount</span>'
+                    },
+
+                    {
+                        field: "CreditLimit",
+                        title: "Credit Limit",
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                        format: "{0:n}",
+                        footerTemplate: "<div style='float: right;font-weight: bolder;'>#: kendo.format('{0:n}', sum)#</div>"
+                    }, {
+                        field: "Balance",
+                        title: "Balance",
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                        format: "{0:n}",
+                        footerTemplate: "<div style='float: right;font-weight: bolder;'>#: kendo.format('{0:n}', sum)#</div>"
+                    },
+                    {
+                        field: "Quantity",
+                        title: "Quantity",
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                        format: "{0:n}",
+                        footerTemplate: "<div style='float: right;font-weight: bolder;'>#: kendo.format('{0:n}', sum)#</div>"
+                    },
+
+                    {
+                        field: "PayRotationDays",
+                        title: "Pay Rotation Days",
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                        format: "{0:n}",
+                        footerTemplate: "<div style='float: right;font-weight: bolder;'>#: kendo.format('{0:n}', sum)#</div>"
+                    }
+
+                ],
+            });
+        }
+
+    };
+
+    function KendoGridRefresh(readUrl) {
+        BindGrid(readUrl, true)
+    }
+    $('.nav-pills, .nav-tabs').tabdrop(); // tab drop function for options which added into the menu afer one row get full .
+</script>

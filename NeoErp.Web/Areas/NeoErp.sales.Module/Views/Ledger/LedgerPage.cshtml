@@ -1,0 +1,374 @@
+﻿@model NeoErp.sales.Module.Models.LedgerSetting
+<style>
+        .page-bar {
+            margin-bottom: 0px !important;
+        }
+
+        .k-grid table {
+            table-layout: fixed;
+        }
+
+        .no-data {
+            background-color: red;
+        }
+        /*#grid thead{
+         font-size:11px;
+    }*/
+        .k-grid td {
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .k-grid-content {
+            font-size: 10px;
+        }
+
+        .k-grid-footer {
+            font-size: 10px;
+        }
+</style>
+<div class="page-content">
+
+    @if (Model.showBreadCrumb == true)
+    {
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+            <li>
+                <i class="fa fa-home"></i>
+                <a href="index.html">Home</a>
+                <i class="fa fa-angle-right"></i>
+            </li>
+            <li>
+                <a href="#">Ledger Register</a>
+                <i class="fa fa-angle-right"></i>
+            </li>
+
+        </ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+                <a class="btn btn-circle btn-icon-only btn-default" data-toggle="collapse" href="#demo">
+                    <i class="fa fa-angle-down"></i>
+                </a>
+
+                @*@Html.Partial("~/Views/Shared/Controls/DateField.cshtml",true)*@
+
+                @*<button type="button" class="btn btn-fit-height grey-salt dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-delay="1000" data-close-others="true">
+                        Actions <i class="fa fa-angle-down"></i>
+                    </button>
+                    <ul class="dropdown-menu pull-right" role="menu">
+                        <li>
+                            <a href="#">Action</a>
+                        </li>
+                        <li>
+                            <a href="#">Another action</a>
+                        </li>
+                        <li>
+                            <a href="#">Something else here</a>
+                        </li>
+                        <li class="divider">
+                        </li>
+                        <li>
+                            <a href="#">Separated link</a>
+                        </li>
+                    </ul>*@
+            </div>
+        </div>
+    </div>
+    }
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-title">
+                    <div class="caption font-green">
+                        <i class="icon-pin font-green"></i>
+                        <span class="caption-subject bold uppercase">Ledger Register</span>
+                    </div>
+                    <div class="actions">
+                        <div class="btn-group" data-toggle="tooltip" title="Click to filter date range!" data-placement="bottom">
+                            @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                        </div>
+                        <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="javsascript:;">
+                            <i class="icon-control-play"></i>
+                        </a>
+                        <a class="btn btn-circle btn-icon-only btn-default fullscreen" href="javascript:;" data-toggle="tooltip" title="Get FullScreen Mode!" data-placement="bottom">
+                        </a>
+                        @*<button id="test">test</button>*@
+
+                    </div>
+                </div>
+                <div class="portlet-body form">
+                    <div class="row">
+
+
+                        <div id="grid"></div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+<script>
+
+    $("#applydp").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    })
+
+    $(document).ready(function () {
+        $('[data-toggle="tooltip"]').tooltip({ delay: { show: 500, hide: 100 } });
+        $('.page-toolbar .btn-group a').click(function () {
+
+            $(this).find('i').toggleClass('fa-angle-down fa-angle-up')
+        });
+        var formEnglishDate = $("#FromDateVoucher").val();
+        var toEnglishDate = $("#ToDateVoucher").val();
+        var urltest = Arg.url(window.location.protocol + "//" + window.location.host + "/api/Purchase/GetPurchaseRegister", { formDate: formEnglishDate, toDate: toEnglishDate });
+
+        $("#RunQuery").click(function (evt) {
+            evt.preventDefault();
+            var ddvalue = $("#ddlDateFilterVoucher").val();
+            var formNepalDate = $("#fromInputDateVoucher").val();
+            var toNepalDate = $("#toInputDateVoucher").val();
+            var formEnglishDate = $("#FromDateVoucher").val();
+            var toEnglishDate = $("#ToDateVoucher").val();
+            urltest = Arg.url(window.location.protocol + "//" + window.location.host + "/api/Purchase/GetPurchaseRegister", { formDate: formEnglishDate, toDate: toEnglishDate });
+
+            // BindGrid(urltest);
+            KendoGridRefresh(urltest);
+        });
+
+        BindGrid(urltest);
+    });
+
+    function BindGrid(readurl) {
+
+        var dataSource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: {
+                    url: readurl, // <-- Get data from here.
+                    dataType: "json", // <-- The default was "jsonp".
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8"
+                },
+                parameterMap: function (options, type) {
+                    var paramMap = JSON.stringify(options);
+                    //  paramMap.formDate = $("#FromDateVoucher").val();
+                    delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                    delete paramMap.$format; // <-- remove format parameter.
+                    return paramMap;
+                }
+            },
+
+
+            serverFiltering: true,
+            //serverGrouping: true,
+            serverAggregates: true,
+            //serverSorting: true,
+            //serverFiltering: true,
+            //serverPaging: true,
+            schema: {
+                data: "RegisterDetails", // records are returned in the "data" field of the response
+                total: "total", // total number of records is in the "total" field of the response
+                //aggregates: "Aggrationresult",
+                model: {
+                    fields: {
+                        InvoiceDate: { type: "date" },
+                        Miti: { type: "string" },
+                        PONo: { type: "string" },
+                        GRNNo: { type: "string" },
+                        InvoiceNo: { type: "string" },
+                        ManualNo: { type: "string" },
+                        SuppInvNo: { type: "string" },
+                        SuppInvDate: { type: "date" },
+                        SupplierName: { type: "string" },
+                        StorageLocation: { type: "string" },
+                        Remarks: { type: "string" },
+                        ProductName: { type: "string" },
+                        Unit: { type: "string" },
+                        Quantity: { type: "number" },
+                        NetQty: { type: "number" },
+                        Rate: { type: "number" },
+                        GrossAmount: { type: "number" }
+
+                    }
+                }
+            },
+
+
+            serverPaging: true,
+            //serverSorting: true,
+            pageSize: 100,
+        });
+
+        var grid = $("#grid").kendoGrid({
+            dataSource: dataSource,
+
+            height: 600,
+            sortable: true,
+            reorderable: true,
+            groupable: true,
+            resizable: true,
+            filterable: {
+                extra: false
+            },
+            columnMenu: true,
+            pageable: true,
+            //  autoBind: true,
+            scrollable: {
+                virtual: true
+            },
+            dataBound: function (o) {
+                var grid = o.sender;
+                if (grid.dataSource.total() == 0) {
+                     var colCount = grid.columns.length;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    displayPopupNotification("No Data Found Given Date Filter.", "error");
+                }
+                else {
+                    var g = $("#grid").data("kendoGrid");
+                    for (var i = 0; i < g.columns.length; i++) {
+                        g.showColumn(i);
+                    }
+                    $("div.k-group-indicator").each(function (i, v) {
+                        g.hideColumn($(v).data("field"));
+                    });
+                }
+
+            },
+            columns: [
+                          {
+                              field: "InvoiceDate",
+                              title: "Date",
+                              width: "70px",
+                              format: "{0:dd-MMM-yyyy}"
+                          },
+                          {
+                              field: "Miti",
+                              title: "Miti",
+                              width: "70px"
+                          },
+                          {
+                              field: "PONo",
+                              title: "PO No",
+                              width: "90px"
+
+                          },
+                          {
+                              field: "GRNNo",
+                              title: "GRN No",
+                              width: "90px"
+
+                          },
+                          {
+                              field: "InvoiceNo",
+                              title: "Invoice No",
+                              width: "100px"
+
+                           },
+                           {
+                              field: "ManualNo",
+                              title: "Manual No",
+                              width: "100px"
+                           },
+                           {
+                               field: "SuppInvNo",
+                               title: "Supp Inv No",
+                               width: "100px"
+                           },
+                           {
+                               field: "SuppInvDate",
+                               title: "Supp Inv Date",
+                               width: "100px"
+
+                           },
+                           {
+                               field: "SupplierName",
+                               title: "Supplier Name",
+                               width: "100px"
+
+                           },
+
+                           {
+                               field: "StorageLocation",
+                               title: "Storage Location",
+                               width: "100px"
+
+                           },
+                           {
+                               field: "Remarks",
+                               title: "Remarks",
+                               width: "80px"
+
+                           },
+                           {
+                               field: "ProductName",
+                               title: "Product Name",
+                               width: "100px"
+
+                           },
+                            {
+                                field: "Unit",
+                                title: "Unit",
+                                width: "70px",
+
+
+                            },
+                             {
+                                 field: "Quantity",
+                                 title: "Qty",
+                                 width: "70px",
+                                 attributes: {
+                                     style: "text-align: right;"
+                                 },
+                                 format: "{0:n}",
+                                 aggregates: ["count", "min", "sum"],
+                                 groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                             },
+                             {
+                                 field: "NetQty",
+                                 title: "Net Qty",
+                                 width: "100px",
+                                 attributes: {
+                                     style: "text-align: right;"
+                                 },
+                                 format: "{0:n}",
+                                 aggregates: ["count", "min", "sum"],
+                                 groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                             },
+                             {
+                                 field: "Rate",
+                                 title: "Rate",
+                                 width: "70px"
+                             },
+                             {
+                                 field: "GrossAmount",
+                                 title: "Gross Amount",
+                                 width: "100px",
+                                 attributes: {
+                                     style: "text-align: right;"
+                                 },
+                                 format: "{0:n}",
+                                 aggregates: ["count", "min", "sum"],
+                                 groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum, "n")#</span>',
+                             }
+            ]
+
+        });
+
+    };
+
+    function KendoGridRefresh(readUrl) {
+        $('#grid').val('');
+        $('#grid').html('');
+        BindGrid(readUrl)
+    }
+</script>
+
+

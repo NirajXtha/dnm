@@ -1,0 +1,65 @@
+@* 
+    EXAMPLE: How to use Universal Grid Print in any report
+    
+    This is a template showing how to quickly add print functionality to any Kendo Grid report.
+    Just copy the initialization code below into your report's JavaScript section.
+*@
+
+@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+
+<div class="page-content">
+    <!-- Your existing page content -->
+    <div id="grid" class="table-grid"></div>
+    @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        
+        // 1. Initialize your Kendo Grid as usual
+        var grid = $("#grid").kendoGrid({
+            dataSource: {
+                // ... your datasource configuration
+            },
+            toolbar: kendo.template($("#toolbar-template").html()),
+            columns: [
+                // ... your column definitions
+            ]
+        });
+
+        // 2. Initialize Universal Print - That's it!
+        UniversalGridPrint.init({
+            reportName: 'Your Report Name',  // Change this to your report name
+            companyName: '@Html.Raw(workingContent.CurrentUserinformation.company_name)',
+            branchName: '@Html.Raw(workingContent.CurrentUserinformation.branch_name)'
+        });
+
+        // Optional: If you don't have date filters, set them to null
+        // UniversalGridPrint.init({
+        //     reportName: 'Your Report Name',
+        //     companyName: '@Html.Raw(workingContent.CurrentUserinformation.company_name)',
+        //     branchName: '@Html.Raw(workingContent.CurrentUserinformation.branch_name)',
+        //     fromDateSelector: null,
+        //     toDateSelector: null,
+        //     fromBSDateSelector: null,
+        //     toBSDateSelector: null
+        // });
+
+    });
+</script>
+
+@* 
+    BENEFITS:
+    ✅ No custom print code needed (saves 150+ lines per report)
+    ✅ Automatic header detection (single or multi-level)
+    ✅ Automatic data formatting
+    ✅ Grand Total automatically included
+    ✅ No browser headers/footers (date/time)
+    ✅ Consistent print layout across all reports
+    ✅ Easy to maintain - update once, affects all reports
+*@

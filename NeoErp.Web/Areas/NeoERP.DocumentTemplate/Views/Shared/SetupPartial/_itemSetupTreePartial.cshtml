@@ -1,0 +1,368 @@
+@*<div class="row">
+        <div id="producttree" kendo-tree-view="tree"
+                   k-data-source="treeData"
+             k-options="itemoptions"
+             k-data-bound="itemonDataBound">
+            <span k-template ng-click="BindGrid(dataItem.masterAccountCode)">
+                {{dataItem.ITEM_EDESC}}
+            </span>
+        </div>
+        <ul kendo-context-menu
+            k-filter="'.hasTreeCustomMenu'"
+            k-on-open="menuOpen = menuOpen + 1"
+            k-on-close="menuOpen = menuOpen - 1"
+            k-on-select="onContextSelect(kendoEvent)">
+            <li>Add</li>
+            <li>Update</li>
+            <li>Delete</li>
+        </ul>
+        <ul kendo-context-menu k-filter="'.disableLeftClickOnTree'"></ul>
+    </div>
+    <script>
+        $(document).ready(function () {
+            setTimeout(function () {
+                $('.treeviewspliter .k-widget.k-treeview').slimScroll({
+                    height: '250px'
+                });
+            }, 10);
+        })
+
+    </script>*@
+
+
+<style>
+    .btnadd {
+        margin-top: 2px;
+        float: right;
+        margin-right: 5px !important;
+    }
+
+    /* Ensure vertical scrolling for long item trees */
+    #producttree {
+        max-height: 60vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding-right: 4px; /* avoid scrollbar overlay */
+    }
+
+       .addcolor {
+    color:#ffffff;
+    }
+    /*#producttree {
+        margin-top: 30px;
+    }*/
+</style>
+@*<div ng-controller="accountSetupTreeCtrl">*@
+
+
+@*<div class="btn-group btnadd">
+        <a class="btn btn-sm green-meadow" id="adddocumentformdata" ng-click="addNewItem(event)" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Processing..." href="javascript:;">
+            <i class="fa fa-plus"></i> ADD
+        </a>
+    </div>*@
+
+<div class="portlet box green-box main">
+    <item></item>
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="icon-pin"></i>
+            <span class="caption-subject bold uppercase">Item </span>
+        </div>
+        <div class="actions">
+            <a class="btn dark-green btn-sm" id="adddocumentformdata" @*ng-disabled="newrootinsertFlag!= 'Y'"*@ ng-click="addNewItem(event)" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Processing..." href="javascript:;">
+                <i class="fa fa-plus addcolor"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="portlet-body">
+        <div class="row">
+            <div class="col-md-offset-0 col-md-12">
+                <div class="topmaingroupsearch">
+                    <input class="k-textbox txtMainGroupSearchString"
+                           type="text"
+                           ng-model="txtMainGroupSearchString"
+                           ng-change="filterTreeView()"
+                           placeholder="Search Item Tree..."
+                           style="width:100%" />
+                </div>
+            </div>
+        </div>
+
+
+        <div id="producttree" class="disableLeftClickOnTree" kendo-tree-view="tree"
+             k-data-source="treeData"
+             k-options="itemoptions"
+             k-data-bound="itemonDataBound">
+            <span k-template ng-click="BindGrid(dataItem.masterItemCode)">
+                {{dataItem.ITEM_EDESC}}
+            </span>
+        </div>
+
+        <ul kendo-context-menu
+            k-filter="'.hasTreeCustomMenu'"
+            k-on-open="menuOpen = menuOpen + 1"
+            k-on-close="menuOpen = menuOpen - 1"
+            k-on-select="onContextSelect(kendoEvent)">
+            <li>Add</li>
+            <li>Update</li>
+            <li>Delete</li>
+        </ul>
+        <ul kendo-context-menu k-filter="'.disableLeftClickOnTree'"></ul>
+
+    </div>
+</div>
+<script>
+    // Native CSS-based scrolling is enabled on #producttree via max-height and overflow-y.
+    // Legacy slimScroll initialization removed to prevent conflicting scroll containers.
+
+
+    $(document).ready(function () {
+        $("#acctxtProductSearchString").on("keyup", function () {
+            var searchTerm = $(this).val().trim().toLowerCase();
+            filterTree(searchTerm);
+        });
+        function filterTree(searchTerm) {
+            var treeView = $("#producttree").data("kendoTreeView");
+            if (!treeView || !treeView.dataSource) {
+                console.error("TreeView or dataSource is not initialized.");
+                return;
+            }
+            var dataSource = treeView.dataSource;
+            if (!searchTerm) {
+                dataSource.filter({}); 
+                setTimeout(function () {
+                    treeView.expand(".k-item"); 
+                }, 100);
+                return;
+            }
+            dataSource.filter({
+                field: "ITEM_EDESC",
+                operator: "contains",
+                value: searchTerm
+            });
+            setTimeout(function () {
+                expandFilteredNodes(treeView);
+            }, 100);
+        }
+        function expandFilteredNodes(treeView) {
+            var dataSource = treeView.dataSource;
+            var view = dataSource.view();
+            function expandParents(node, treeView) {
+                var parent = treeView.parent(node);
+                while (parent.length > 0) {
+                    treeView.expand(parent);
+                    parent = treeView.parent(parent);
+                }
+            }
+            function processNode(item, treeView) {
+                var node = treeView.findByUid(item.uid);
+                if (!node) return false;
+                var matches = item.ITEM_EDESC &&
+                    item.ITEM_EDESC.toLowerCase().includes($("#acctxtProductSearchString").val().toLowerCase());
+                var hasMatchingChildren = false;
+                if (item.hasChildren) {
+                    var children = item.children.view();
+                    children.forEach(function (child) {
+                        if (processNode(child, treeView)) {
+                            hasMatchingChildren = true;
+                        }
+                    });
+                }
+                if (matches || hasMatchingChildren) {
+                    treeView.expand(node);
+                    expandParents(node, treeView);
+                    return true;
+                }
+                return false;
+            }
+            view.forEach(function (item) {
+                processNode(item, treeView);
+            });
+        }
+    });
+
+
+
+    //$(document).ready(function () {
+    //    $("#acctxtProductSearchString").on("keyup", function () {
+    //        var searchTerm = $(this).val().trim().toLowerCase();
+    //        filterTree(searchTerm);
+    //    });
+
+    //    function filterTree(searchTerm) {
+    //        var treeView = $("#producttree").data("kendoTreeView");
+    //        if (!treeView || !treeView.dataSource) {
+    //            console.error("TreeView or dataSource is not initialized.");
+    //            return;
+    //        }
+    //        var originalDataSource = treeView.dataSource;
+    //        var pristineData = originalDataSource._pristineData || originalDataSource.data().toJSON();
+    //        if (!searchTerm) {
+    //            treeView.setDataSource(new kendo.data.HierarchicalDataSource({
+    //                data: pristineData,
+    //                schema: {
+    //                    model: {
+    //                        id: "itemCode",
+    //                        children: "Items"
+    //                    }
+    //                }
+    //            }));
+    //            treeView.collapse(".k-item");
+    //            return;
+    //        }
+    //        var filteredData = filterNodes(pristineData, searchTerm);
+    //        var filteredDataSource = new kendo.data.HierarchicalDataSource({
+    //            data: filteredData,
+    //            schema: {
+    //                model: {
+    //                    id: "itemCode",
+    //                    children: "Items"
+    //                }
+    //            }
+    //        });
+    //        treeView.setDataSource(filteredDataSource);
+    //        setTimeout(function () {
+    //            treeView.expand(".k-item");
+    //        }, 100);
+    //    }
+    //    function filterNodes(nodes, searchTerm) {
+    //        var result = [];
+    //        $.each(nodes, function (index, node) {
+    //            var children = node.Items || (node.items ? node.items : []);
+    //            var filteredChildren = filterNodes(children, searchTerm);
+    //            var nodeText = (node.ITEM_EDESC || node.itemName || '').toLowerCase();
+    //            var isMatch = nodeText.includes(searchTerm);
+    //            if (isMatch || filteredChildren.length > 0) {
+    //                var newNode = $.extend(true, {}, node); 
+    //                newNode.Items = filteredChildren; 
+    //                result.push(newNode);
+    //            }
+    //        });
+    //        return result;
+    //    }
+    //});
+
+
+
+
+
+
+    //$(document).ready(function () {
+    //    // Bind keyup event to the search input
+    //    $("#acctxtProductSearchString").on("keyup", function () {
+    //        var searchTerm = $(this).val().trim().toLowerCase();
+    //        filterTree(searchTerm);
+    //    });
+    //    // Function to filter the TreeView based on search term
+    //    function filterTree(searchTerm) {
+    //        var treeView = $("#producttree").data("kendoTreeView");
+    //        // Check if TreeView is initialized
+    //        if (!treeView || !treeView.dataSource) {
+    //            console.error("TreeView or dataSource is not initialized.");
+    //            return;
+    //        }
+    //        var dataSource = treeView.dataSource;
+    //        // Clear existing filters and collapse all nodes if no search term
+    //        if (!searchTerm) {
+    //            dataSource.filter({});
+    //            treeView.collapse(".k-item");
+    //            return;
+    //        }
+    //        // Apply filter using Kendo's built-in "contains" operator
+    //        dataSource.filter({
+    //            field: "ITEM_EDESC",
+    //            operator: "contains",
+    //            value: searchTerm
+    //        });
+    //        // Expand nodes that match the filter or have matching children
+    //        expandFilteredNodes(treeView);
+    //    }
+    //    // Function to expand nodes that match the filter or have matching children
+    //    function expandFilteredNodes(treeView) {
+    //        var dataSource = treeView.dataSource;
+    //        var view = dataSource.view();
+    //        function expandParents(node, treeView) {
+    //            var parent = treeView.parent(node);
+    //            while (parent.length > 0) {
+    //                treeView.expand(parent);
+    //                parent = treeView.parent(parent);
+    //            }
+    //        }
+
+    //        // Recursively process nodes to expand matching nodes and their parents
+    //        function processNode(item, treeView) {
+    //            var node = treeView.findByUid(item.uid);
+    //            if (!node) return false;
+    //            var matches = item.ITEM_EDESC && item.ITEM_EDESC.toLowerCase().includes(
+    //                $("#acctxtProductSearchString").val().toLowerCase()
+    //            );
+    //            var hasMatchingChildren = false;
+    //            if (item.hasChildren) {
+    //                var children = item.children.view();
+    //                children.forEach(function (child) {
+    //                    if (processNode(child, treeView)) {
+    //                        hasMatchingChildren = true;
+    //                    }
+    //                });
+    //            }
+    //            if (matches || hasMatchingChildren) {
+    //                treeView.expand(node);
+    //                expandParents(node, treeView);
+    //                return true;
+    //            }
+    //            return matches || hasMatchingChildren;
+    //        }
+    //        view.forEach(function (item) {
+    //            processNode(item, treeView);
+    //        });
+    //    }
+    //});
+
+
+
+
+    //$("#acctxtProductSearchString").on("keyup", function () {
+    //    var searchTerm = $(this).val().toLowerCase().trim();
+    //    filterTree(searchTerm);
+    //});
+
+    //function filterTree(searchTerm) {
+    //    var treeView = $("#producttree").data("kendoTreeView");
+    //    var dataSource = treeView.dataSource;
+    //    dataSource.filter({});
+    //    if (!searchTerm) {
+    //        treeView.collapse(".k-item");
+    //        return;
+    //    }
+    //    var filter = {
+    //        field: "ITEM_EDESC",
+    //        operator: function (value) {
+    //            return value && value.toLowerCase().indexOf(searchTerm) > -1;
+    //        }
+    //    };
+    //    dataSource.filter(filter);
+    //    setTimeout(function () {
+    //        expandFilteredNodes(treeView);
+    //    }, 100);
+    //}
+    //function expandFilteredNodes(treeView) {
+    //    var items = treeView.dataSource.view();
+
+    //    items.forEach(function (item) {
+    //        expandMatchingNode(item, treeView);
+    //    });
+    //}
+    //function expandMatchingNode(item, treeView) {
+    //    if (item.hasChildren) {
+    //        var children = item.children.view();
+
+    //        children.forEach(function (child) {
+    //            expandMatchingNode(child, treeView);
+    //        });
+    //        if (children.length > 0 || item.AccountName.toLowerCase().includes($("#acctxtProductSearchString").val().toLowerCase())) {
+    //            treeView.expand(item);
+    //        }
+    //    }
+    //}
+</script>

@@ -1,0 +1,559 @@
+﻿
+@{
+    ViewBag.Title = "Consumption Voucher Generate";
+    Layout = null;
+}
+
+<style>
+
+    /* .not-active {
+        pointer-events: none;
+        cursor: default;
+        text-decoration: none;
+        color: black;
+    }*/
+
+    .k-splitbar.k-splitbar-horizontal {
+        width: 5px;
+    }
+
+    .k-calendar {
+        width: 210px !important;
+    }
+
+    .k-splitter {
+        height: 490px !important;
+    }
+
+    .portlet-title.mingap {
+        min-height: auto !important;
+    }
+
+    .bottomspance {
+        padding: 2px 15px !important;
+    }
+
+    .portlet-title.mingap {
+        min-height: auto !important;
+    }
+
+    .bottomspance .portlet-body {
+        padding-top: 2px !important;
+    }
+
+    .portlet {
+        margin-top: 0px;
+        margin-bottom: 7px !important;
+    }
+
+
+    .bodyController {
+        margin-top: 4px;
+    }
+
+
+
+    .main .k-widget.k-dropdown.k-header {
+        min-height: 22px !important;
+    }
+
+    .main .k-dropdown-wrap.k-state-default {
+        min-height: 24px !important;
+        font-size: 11px;
+    }
+
+
+
+    .k-splitter .k-scrollable {
+        overflow-y: hidden !important;
+    }
+
+    .k-scrollable .k-widget.k-treeview {
+        max-height: 444px;
+        overflow: auto !important;
+    }
+
+    .k-i-calendar {
+        margin-top: -10px;
+    }
+
+    span.k-icon.k-i-warning {
+        display: none;
+    }
+
+    .calendar-icon-2 {
+        top: 24px !important;
+    }
+
+    .k-widget.k-datepicker {
+        background-color: transparent !important;
+    }
+
+    .k-grid td .k-checkbox-label {
+        display: none !important;
+    }
+
+    #inwardTransactionModal .modal-dialog {
+        width: 95%; /* Use a wide modal for this form */
+        max-width: 1400px;
+    }
+
+    .well-legend {
+        font-size: 14px;
+        font-weight: bold;
+        border-bottom: 0;
+        width: auto;
+        padding: 0 5px;
+        margin-bottom: 0;
+        display: inline-block;
+    }
+
+    fieldset.well {
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 4px;
+        height: 100%;
+    }
+
+    .bordered-radio-group {
+        border: 1px solid lightgray;
+        border-radius: 5px;
+        padding: 5px 10px;
+        display: inline-block;
+    }
+
+    .stage-status-group {
+        padding-top: 15px;
+        padding-bottom: 15px;
+        border-top: 1px solid #ddd;
+        border-bottom: 1px solid #ddd;
+        margin-bottom: 15px;
+    }
+
+        .stage-status-group .form-group {
+            text-align: center;
+        }
+
+        .stage-status-group .checkbox label {
+            font-weight: bold;
+        }
+
+    div#ndp-nepali-box {
+        z-index: 99999 !important;
+    }
+</style>
+
+<div class="row" id="ConsumptionVoucherGenerateCtrl" ng-controller="ConsumptionVoucherGenerateCtrl">
+
+    <div class="col-md-12">
+
+        <div class="portlet light form-fit bordered bottomspance" style="width: 100%">
+            <div class="portlet mingap">
+
+                <div class="portlet-title">
+
+                    <div class="caption caption-title ng-binding">
+                        <a class="btn-back pull-left" data-toggle="tooltip" data-placement="top" title="Back To Dashboard" href="/DocumentTemplate/Home/Dashboard">
+                            <i class="fa fa-arrow-circle-left"></i>
+                        </a>
+                        <i class="fa fa-gift font-green-haze"></i>
+                        <span class="caption-subject font-green-haze bold uppercase">{{FormName}}</span>
+                    </div>
+
+                    <div class="actions">
+                        <a class="btn dark-green btn-sm addcolor" id="createbtn" ng-click="printConsumptionVoucherGenerate()">
+                            <i class="fa fa-print"></i> Print
+                        </a>
+                        <a class="btn dark-green btn-sm addcolor" id="createbtn" ng-click="showModalForNew(event)">
+                            <i class="fa fa-plus"></i> New
+                        </a>
+                        <a class="btn dark-green btn-sm addcolor" id="createbtn" ng-click="BindConsumptionVoucherGenerateGrid()">
+                            <i class="fa fa-file"></i> Show Report
+                        </a>
+                    </div>
+
+                </div>
+
+                <div class="portlet-body">
+
+                    <div class="row">
+                        <div class="col-md-12 col-sm-12">
+                            <div class="col-sm-2 col-md-2 col-lg-2">
+                                <div class="form-group">
+                                    <label>Product Filter:</label>
+                                    <div>
+                                        <input type="text" id="dispatchlog" name="dispatchlog" ng-model="PRODUCT_FILTER" class="form-control productFilter" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-2 col-md-2 col-lg-2">
+                                <div class="form-group">
+                                    <label for="date-range-select">Date Range:</label>
+                                    <select id="date-range-select" onchange="updateDateRange(this.value)" class="form-control">
+                                        <option value="today">Today</option>
+                                        <option value="yesterday">Yesterday</option>
+                                        <option value="month">This Month</option>
+                                        <option value="year">This Year</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-sm-4 col-md-4 col-lg-4">
+                                <div class="form-group">
+                                    <label for="englishdatedocument">From Date:</label>
+                                    <div>
+                                        <input id="englishdatedocument" kendo-date-picker
+                                               ng-model="FROM_DATE"
+                                               k-options="monthSelectorOptionsSingle" data-toggle="tooltip"
+                                               title="Select date" class="form-control fromDate" style="width: calc(50% - 5px); display: inline-block; margin-right: 5px;" />
+
+                                        <div class="col-xs-6 col-sm-6 col-md-6 nopadding-left pl-1" style="display: inline-block; vertical-align: top;">
+                                            <input type="text" id="nepaliDate5"
+                                                   data-checkfor="englishdatedocument" onchange="ConvertNepToEng(this)"
+                                                   data-toggle="tooltip" title="Select date" class="nepali-calendar form-control" style="width: 100%; height: 25px" />
+                                            <i class="fa fa-calendar form-control-feedback calendar-icon-2" data-toggle="tooltip" title="Select date" style="top:5px !important;"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 col-sm-4 col-lg-4">
+                                <label for="englishdatedocument1">To Date:</label>
+                                <div>
+                                    <input id="englishdatedocument1" kendo-date-picker
+                                           ng-model="TO_DATE"
+                                           k-options="monthSelectorOptionsSingle1" data-toggle="tooltip" title="Select date" style="width: calc(50% - 5px); display: inline-block; margin-right: 5px;" class="form-control toDate" />
+
+                                    <div class="col-xs-6 col-sm-6 col-md-6 nopadding-left pl-1" style="display: inline-block; vertical-align: top;">
+                                        <input type="text" id="nepaliDate51" data-checkfor="englishdatedocument" onchange="ConvertNepToEng(this)" data-toggle="tooltip" title="Select date" class="nepali-calendar form-control" style="width: 100%; height: 25px" />
+                                        <i class="fa fa-calendar form-control-feedback calendar-icon-2" data-toggle="tooltip" title="Select date" style="top:5px !important;"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+                <div class="divider"></div>
+                <div class="row">
+                    <div class="" style="overflow-x: hidden">
+                        @Html.Partial("~/Areas/NeoERP.DocumentTemplate/Views/Shared/PartialView/_GridToolbar.cshtml")
+                        <kendo-grid id="CategoryBaseGrid" options="CategoryBaseGridOptions" class="kendo_gride_table" style="width:100%;">
+                        </kendo-grid>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+
+    function showloader() {
+        $(".busy-loader").css("display", "block");
+    }
+    function hideloader() {
+        $(".busy-loader").css("display", "none");
+    }
+
+    $(".nepali-calendar").nepaliDatePicker({
+        npdMonth: true,
+        onFocus: true,
+        npdYear: true,
+        npdYearCount: 10,
+        altFormat: "dd-MMM-YYYY",
+        dateFormat: "dd-MMM-YYYY",
+        onChange: function (evt) {
+            var nepalidate = $("#nepaliDate5").val();
+            var nepalidate1 = $("#nepaliDate51").val();
+            var gateNepaliDate = $("#gateNepaliDate").val();
+            var billNepaliDate = $("#billNepaliDate").val();
+            var Engdate = BS2AD(nepalidate);
+            var Engdate1 = BS2AD(nepalidate1);
+            var engGateDate = BS2AD(gateNepaliDate);
+            var engBillDate = BS2AD(billNepaliDate);
+            var FormattedEngDate = moment(Engdate).format('DD-MMM-YYYY');
+            var FormattedEngDate1 = moment(Engdate1).format('DD-MMM-YYYY');
+            var FormattedEngGateDate = moment(engGateDate).format('DD-MMM-YYYY');
+            var FormattedEngBillDate = moment(engBillDate).format('DD-MMM-YYYY');
+            $("#englishdatedocument").val(FormattedEngDate);
+            $("#englishdatedocument1").val(FormattedEngDate1);
+            $("#gateEnglishDate").val(FormattedEngGateDate);
+            $("#billEnglishDate").val(FormattedEngBillDate);
+        }
+    });
+
+    function ConvertNepToEng(e) {
+        var date = BS2AD($("#nepaliDate5").val());
+        var date1 = BS2AD($("#nepaliDate51").val());
+        var FormattedEngDate = moment(date).format('DD-MMM-YYYY');
+        var FormattedEngDate1 = moment(date1).format('DD-MMM-YYYY');
+        $("#englishdatedocument").val(FormattedEngDate);
+        $("#englishdatedocument1").val(FormattedEngDate1);
+    }
+
+    function ConvertGateNepToEng(e) {
+        debugger
+        var date = BS2AD($("#gateNepaliDate").val());
+        var FormattedEngDate = moment(date).format('DD-MMM-YYYY');
+        $("#gateEnglishDate").val(FormattedEngDate);
+    }
+
+    function ConvertBillNepToEng(e) {
+        debugger
+        var date = BS2AD($("#billNepaliDate").val());
+        var FormattedEngDate = moment(date).format('DD-MMM-YYYY');
+        $("#billEnglishDate").val(FormattedEngDate);
+    }
+
+    $('a').tooltip();
+
+    function ConvertEngDateToNep(eng) {
+
+        if (eng === undefined)
+            return;
+        var engmonthreq = "";
+        var arr = eng.split('-');
+        var day = (arr[0]);
+        var month = (arr[1]);
+        var year = (arr[2]);
+        if (month == "Jan") { engmonthreq = "01" }
+        else if (month == "Feb") { engmonthreq = "02" }
+        else if (month == "Mar") { engmonthreq = "03" }
+        else if (month == "Apr") { engmonthreq = "04" }
+        else if (month == "May") { engmonthreq = "05" }
+        else if (month == "Jun") { engmonthreq = "06" }
+        else if (month == "Jul") { engmonthreq = "07" }
+        else if (month == "Aug") { engmonthreq = "08" }
+        else if (month == "Sep") { engmonthreq = "09" }
+        else if (month == "Oct") { engmonthreq = "10" }
+        else if (month == "Nov") { engmonthreq = "11" }
+        else if (month == "Dec") { engmonthreq = "12" }
+        engdatereq = year + '-' + engmonthreq + '-' + day;
+        return convertednepdate = AD2BS(engdatereq);
+    }
+
+
+</script>
+
+<script type="text/javascript">
+    function loadFavouriteMenu() {
+        //load parentMenu
+        $("#parentMenu").kendoDropDownList({
+            index: 0,
+            dataTextField: "MENU_EDESC",
+            dataValueField: "MENU_EDESC",
+            dataSource: {
+                transport: {
+                    read: {
+                        url: "/api/SalesHome/GetDynamicMenu?ModuleCode=" + moduleCode,
+                    }
+                },
+                requestEnd: function (e) {
+                    e.response.unshift({ MENU_EDESC: "Favourite", GROUP_SKU_FLAG: "G", ICON_PATH: "", MENU_NO: "01", MODULE_CODE: "01" });
+
+                }
+            }
+        });
+        var fav = Arg("fav");
+
+        if (fav != undefined && reportConfig != undefined && fav == reportConfig.reportName) {
+            //reportConfig
+            $("#favTitle").val(reportConfig.reportName);
+            $('#color').val(reportConfig.color);
+            $('#favColor').val(reportConfig.color);
+            try { $("#favIcon").val(reportConfig.icon.replace('fa ', '')); } catch (e) { }
+            $("#favIconClass").removeAttr("class").addClass(reportConfig.icon);
+            $("#favDescription").val(reportConfig.description);
+            $("#favSave").text("Update");
+            $("#parentMenu").data("kendoDropDownList").value(reportConfig.parentMenu);
+        }
+        else {
+            if ($("#favTitle").val().length > 0) {
+                $("#favform")[0].reset();
+                $("#favSave").text("Save");
+                setTimeout(function () { $("#parentMenu").data("kendoDropDownList").select(0); }, 2000)
+            }
+
+
+        }
+
+
+        $('.iconpicker-container').iconpicker();
+
+        //init validator
+        $("#favform").validate({
+            rules: {
+                favTitle: "required"
+            },
+            messages: {
+                favTitle: "Please specify your name"
+
+            }
+        });
+        $("#favModal").modal("show");
+    }
+    function saveFavouriteMenu() {
+
+        var valid = $("#favform").valid();
+        if (!valid) {
+            displayPopupNotification("Invalid Field", "warning");
+            return;
+        }
+
+
+        var title = $("#favTitle").val();
+        var param = location.hash.indexOf('?') != -1 ? location.hash.substring(0, location.hash.indexOf('?')) : location.hash;
+
+        SaveReportConfigSetting({
+            gridName: "grid",
+            reportName: title,
+            parentReportName: "",
+            isFavroite: true,
+            virtualPath: param,
+            icon: "fa " + $("#favIcon").val(),
+            color: $("#favColor").val() == "" ? $('#color').val() : $("#favColor").val(),
+            parentMenu: $("#parentMenu").data("kendoDropDownList").value(),
+            description: $("#favDescription").val(),
+            defaultPageSize: $("#defaultPageSize").val() == "" ? 100 : $("#defaultPageSize").val(),
+            itemPerPage: $("#itemsPerPage").val(),
+            moduleCode: "01",
+            HideOption: $("#facHideOption").prop("checked") == true ? "Hide" : "show",
+            dateFormat: $("#dateFormat option:selected").val()
+        });
+    }
+    function favTitleChange() {
+        if (Arg("fav") != undefined && Arg("fav").trim() == $("#favTitle").val().trim())
+            $('#favSave').text('Update');
+        else
+            $('#favSave').text('Save');
+    }
+    function CollapseAll() {
+
+        var elementsA = document.querySelectorAll("#grid a.k-icon.k-minus");
+        if (elementsA.length > 0) {
+
+            for (var i = 0; i < elementsA.length; i++) {
+                $(elementsA[i]).trigger("click");
+            }
+            return;
+        }
+        var elementsB = document.querySelectorAll("#grid a.k-icon.k-i-collapse");
+        for (var i = 0; i < elementsB.length; i++) {
+            $(elementsB[i]).trigger("click");
+        }
+    }
+    function ExpandAll() {
+        var elementsB = document.querySelectorAll("#grid a.k-icon.k-i-expand");
+        if (elementsB.length > 0) {
+
+            for (var i = 0; i < elementsB.length; i++) {
+                $(elementsB[i]).trigger("click");
+            }
+            return;
+        }
+        var elementsA = document.querySelectorAll("#grid a.k-icon.k-plus");
+        for (var i = 0; i < elementsA.length; i++) {
+            $(elementsA[i]).trigger("click");
+        }
+    }
+    function GridSearch() {
+        if ($.trim($('.grid-search').val()) != '') {
+            $('.search input').css('margin-left', '-9px !important')
+        }
+        else {
+            $('.search input').css('margin-left', '0px')
+        }
+
+        var grid = $("#ConsumptionVoucherGenerateGrid").data("kendoGrid");
+        var tempServerFilter = grid.dataSource.options.serverFiltering;
+        grid.dataSource.options.serverFiltering = false;
+        var filter = [];
+        $.each(grid.columns, function (i, v) {
+            if (v.field != undefined) {
+                var searchText = $.trim($('.grid-search').val());
+                var model = grid.dataSource.options.schema.model.fields[v.field];
+                var type = "string";
+                if (model != undefined)
+                    type = model.type;
+                if (type === "string")
+                    filter.push({ field: v.field, operator: "contains", value: searchText });
+                else if (type === "number")
+                    filter.push({ field: v.field, operator: "eq", value: searchText });
+                else if (type === "date") {
+                    var dateValue = new Date(searchText);
+                    searchText = dateValue == "Invalid Date" ? searchText : dateValue;
+                    filter.push({ field: v.field, operator: "eq", value: searchText });
+                }
+            }
+
+        });
+        var filter = {
+            logic: "or",
+            filters: filter,
+        }
+
+        grid.dataSource.filter(filter);
+        if ($(".grid-search").val().length == 0)
+            grid.dataSource.filter([]);
+        grid.bind("dataBound", function () {
+            grid.dataSource.options.serverFiltering = tempServerFilter;
+        });
+    }
+
+    function updateDateRange(selectedRange) {
+
+        let startDate, endDate;
+        let today = moment();
+
+        endDate = today.toDate();
+
+        switch (selectedRange) {
+            case 'today':
+                startDate = moment().toDate();
+                break;
+            case 'yesterday':
+                startDate = moment().subtract(1, 'days').toDate();
+                break;
+            case 'month':
+                let todayNepaliDateForMonth = ConvertEngDateToNep(moment().format('DD-MMM-YYYY'));
+                let firstDayOfMonthNepali = todayNepaliDateForMonth.substring(0, 7) + '-01';
+                startDate = BS2AD(firstDayOfMonthNepali);
+                break;
+            case 'year':
+                let todayNepaliDateForYear = ConvertEngDateToNep(moment().format('DD-MMM-YYYY'));
+                let firstDayOfYearNepali = todayNepaliDateForYear.substring(0, 4) + '-01-01';
+                startDate = BS2AD(firstDayOfYearNepali);
+                break;
+            default:
+                return;
+        }
+
+        $("#englishdatedocument").data("kendoDatePicker").value(startDate);
+        $("#englishdatedocument1").data("kendoDatePicker").value(endDate);
+
+        let englishFromDate = $("#englishdatedocument").data("kendoDatePicker").value();
+        let englishToDate = $("#englishdatedocument1").data("kendoDatePicker").value();
+
+        let nepaliFromDate = ConvertEngDateToNep(moment(englishFromDate).format('DD-MMM-YYYY'));
+        let nepaliToDate = ConvertEngDateToNep(moment(englishToDate).format('DD-MMM-YYYY'));
+
+        $("#nepaliDate5").val(nepaliFromDate);
+        $("#nepaliDate51").val(nepaliToDate);
+    }
+
+    setTimeout(function () {
+        debugger
+        let startDate, endDate;
+        let today = moment();
+        endDate = today.toDate();
+        startDate = moment().subtract(1, 'days').toDate();
+        $("#englishdatedocument").data("kendoDatePicker").value(startDate);
+        $("#englishdatedocument1").data("kendoDatePicker").value(endDate);
+
+        let nepaliFromDate = ConvertEngDateToNep(moment(startDate).format('DD-MMM-YYYY'));
+        let nepaliToDate = ConvertEngDateToNep(moment(endDate).format('DD-MMM-YYYY'));
+
+        $("#nepaliDate5").val(nepaliFromDate);
+        $("#nepaliDate51").val(nepaliToDate);
+    }, 500)
+</script>

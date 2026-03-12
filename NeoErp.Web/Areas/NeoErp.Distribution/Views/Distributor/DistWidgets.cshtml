@@ -1,0 +1,481 @@
+﻿@model  List<NeoErp.Distribution.Service.Model.DistMatrixModel>
+
+    @{
+    Layout = null;
+    }
+    <style>
+        .dashboard-stat .details .number {
+            font-size: 20px !important;
+        }
+
+        .dashboard-stat .details .desc {
+            font-size: 14px !important;
+        }
+    </style>
+    @if (Model.ToList().Count > 0)
+    {
+    <style>
+            /*.garugetest {
+            background: transparent url('../../../images/gauge-container-partial.png') no-repeat 50% 50%;;
+
+           width: 240px;
+            height: 40px;
+            text-align: center;
+            margin: 0 auto 30px auto;
+        }*/
+            #dashboardWidget {
+                /*//  float: left;
+            margin-top: 5px;
+            margin-bottom: 10px;*/
+            }
+
+            .gauge {
+                display: inline-block;
+                width: 230px;
+                height: 140px;
+                margin: 0 auto;
+            }
+
+            .widgetstitle {
+                bottom: 20px;
+                position: absolute;
+                bottom: -5px;
+                padding-left: 53px;
+            }
+
+            .common {
+                height: 145px !important;
+                /*position:relative;*/
+            }
+
+            /*.spedo-meter {
+          border: 3px dashed #aaa;
+          /*height: 45px;
+          width: 344px;
+          background: #ccc;
+        }*/
+    </style>
+
+
+
+    <div id="widgetDashboard">
+        @if (Model.Where(x => x.QUICKTYPE == "M").ToList().Count > 0)
+        {
+        <div class="col-md-12">
+            <!-- BEGIN Portlet PORTLET-->
+            <div class="portlet">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-gift"></i>Metric
+                    </div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse" data-original-title="" title=""> </a>
+                        <a href="javascript:;" data-toggle="modal" class="config" data-original-title="" title=""> </a>
+                        <a href="javascript:;" class="reload" data-original-title="" title=""> </a>
+                        <a href="javascript:;" class="fullscreen" data-original-title="" title=""> </a>
+                        <a href="javascript:;" class="remove" data-original-title="" title=""> </a>
+                    </div>
+                </div>
+                <div class="row portlet-body clearfix" id="metric_sortable">
+                    @foreach (var item in Model.Where(x => x.QUICKTYPE == "M"))
+                    {
+                    if (!string.IsNullOrEmpty(item.aggValue))
+                    {
+                    var bgcolor = item.WidgetsBGColor;
+                    var fontColor = item.widgetsColor;
+                    var isblink = false;
+                    var aggValue = 0M;
+                    Decimal.TryParse(item.aggValue, out aggValue);
+                    if (item.MINVALUES > 0)
+                    {
+                    if (aggValue <= item.MINVALUES)
+                    {
+                    bgcolor = item.WidgetsBGColor;
+                    fontColor = item.widgetsColor;
+                    isblink = item.MINISBLINK == "Y" ? true : false;
+                    }
+                    else if (item.MAXVALUES > item.MINVALUES)
+                    {
+                    if (aggValue >= item.MAXVALUES)
+                    {
+                    bgcolor = item.MAXBGCOLOR;
+                    fontColor = item.MAXFONTCOLOR;
+                    isblink = item.MAXISBLINK == "Y" ? true : false;
+                    }
+                    else
+                    {
+                    bgcolor = item.MIDBGCOLOR;
+                    fontColor = item.MIDFONTCOLOR;
+                    isblink = item.MIDISBLINK == "Y" ? true : false;
+                    }
+                    }
+                    }
+                    if (item.QUICKTYPE == "M")
+                    {
+
+
+                    <div class="col-lg-3 col-md-3 col-sm-6 col-xs-12 dashboard_widgets" id="metric_@item.ReportId">
+                        <a class="dashboard-stat dashboard-stat-v2 blue" style="background-color:@bgcolor" href="javascript:;">
+                            <div class="visual">
+                                <i class="fa @if (string.IsNullOrEmpty(item.widgetFontIcon))
+                                   {<text>fa-comments</text> }
+                                        else
+                                        {<text>@item.widgetFontIcon</text> } "></i>
+                            </div>
+                            <div class="details">
+                                <div class="number @if (isblink)
+                                     {<text>blinking</text> } ">
+                                            <span data-counter="counterup" class="counter" style="color:@fontColor" data-value="@item.aggValue">@item.aggValue</span>
+                                        </div>
+                                <div class="desc" style="color:@fontColor"> @item.widgetsTitle </div>
+                            </div>
+                        </a>
+                    </div>
+
+
+
+                    }
+
+                    }
+
+
+                    }
+                </div>
+            </div>
+            <!-- END Portlet PORTLET-->
+        </div>
+        }
+        @if (Model.Where(x => x.QUICKTYPE == "S").ToList().Count > 0)
+        {
+        <div class="col-md-12">
+            <!-- BEGIN Portlet PORTLET-->
+            <div class="portlet">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-gift"></i>SpeedoMeter
+                    </div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse" data-original-title="" title=""> </a>
+                        <a href="#portlet-config" data-toggle="modal" class="config" data-original-title="" title=""> </a>
+                        <a href="javascript:;" class="reload" data-original-title="" title=""> </a>
+                        <a href="javascript:;" class="fullscreen" data-original-title="" title=""> </a>
+                        <a href="javascript:;" class="remove" data-original-title="" title=""> </a>
+                    </div>
+                </div>
+                <div class="portlet-body" id="speedometer_sortable">
+                    @foreach (var item in Model.Where(x => x.QUICKTYPE == "S").OrderBy(x => x.orderIndex))
+                    {
+                    if (!string.IsNullOrEmpty(item.aggValue))
+                    {
+                    var bgcolor = item.WidgetsBGColor;
+                    var fontColor = item.widgetsColor;
+                    var isblink = false;
+                    var aggValue = 0M;
+                    Decimal.TryParse(item.aggValue, out aggValue);
+                    if (item.MINVALUES > 0)
+                    {
+                    if (aggValue <= item.MINVALUES)
+                    {
+                    bgcolor = item.WidgetsBGColor;
+                    fontColor = item.widgetsColor;
+                    isblink = item.MINISBLINK == "Y" ? true : false;
+                    }
+                    else if (item.MAXVALUES > item.MINVALUES)
+                    {
+                    if (aggValue >= item.MAXVALUES)
+                    {
+                    bgcolor = item.MAXBGCOLOR;
+                    fontColor = item.MAXFONTCOLOR;
+                    isblink = item.MAXISBLINK == "Y" ? true : false;
+                    }
+                    else
+                    {
+                    bgcolor = item.MIDBGCOLOR;
+                    fontColor = item.MIDFONTCOLOR;
+                    isblink = item.MIDISBLINK == "Y" ? true : false;
+                    }
+                    }
+                    }
+                    if (item.QUICKTYPE == "S")
+                    {
+                    @*<div id="speedometer_sortable" class="portlet portlet-sortable">
+                        *@
+                        <div class="col-lg-2 col-md-2 col-sm-4 col-xs-8 spedo-meter dashboard_widgets">
+                            <div id="gauge_@item.ReportId" class="gauge portlet-sortable">
+                            </div>
+                            <div class="widgetstitle font-green">@item.widgetsTitle</div>
+                            @*<div class="gauge gauge-sortable-empty"> </div>*@
+                            @*
+                        </div>*@
+                    </div>
+                    <script>
+                            $("#gauge_@item.ReportId").kendoRadialGauge({
+                                //gaugeArea: {
+                                //    width: "230px",
+                                //    height: "130",
+                                //},
+
+                                pointer: {
+                                    value: '@aggValue'
+                                },
+
+                                scale: {
+                                    minorUnit: 5,
+                                    startAngle: -30,
+                                    endAngle: 210,
+                                    max: '@item.SPEEDOMETERMAXVALUE',
+                                    labels: {
+                                        position: "@item.LABELPOSITION",
+
+                                    },
+                                    ranges: [
+                                        {
+                                            from: 0,
+                                            to: '@item.MINVALUES',
+                                            color: '@item.WidgetsBGColor'
+
+                                        }, {
+                                            from: '@item.MINVALUES',
+                                            to: '@item.MAXVALUES',
+                                            color: "@item.MIDBGCOLOR"
+                                        }, {
+                                            from: '@item.MAXVALUES',
+                                            to: '@item.SPEEDOMETERMAXVALUE',
+                                            color: "@item.MAXBGCOLOR"
+                                        }
+                                    ]
+                                }
+                            });
+                            var tooltip = $('#gauge_@item.ReportId').kendoTooltip({
+                                filter: '[fill="rgba(255,102,0,.999)"]',
+                                position: "center",
+                                content: $("#gauge_@item.ReportId").data("kendoRadialGauge").value(),
+                                show: function (e) {
+                                    e.sender.options.content = $("#gauge_@item.ReportId").data("kendoRadialGauge").value();
+                                    e.sender.refresh();
+                                }
+                            }).data("kendoTooltip");
+
+                            //PortletDraggable.init("Dashboard_Widgets_SpedoMeter", "#speedometer_sortable");
+
+                            @*$("#gauge_@item.ReportId").parent().parent().sortable({
+                                connectWith: ".gauge.k-gauge.ui-sortable"
+                            }).disableSelection();*@
+
+                    </script>
+                    }
+                    }
+
+
+                    }
+                </div>
+            </div>
+            <!-- END Portlet PORTLET-->
+        </div>
+        }
+        @if (Model.Where(x => x.QUICKTYPE == "L").ToList().Count > 0)
+        {
+        <style>
+            hr.style-three {
+                border: 0;
+                border-bottom: 1px dashed #ccc;
+                background: #999;
+            }
+
+
+
+
+            #linearGauge-container {
+                display: inline-block;
+                text-align: center;
+                height: 330px;
+                width: 150px;
+                background: transparent url("../../../content/linear-gauge-container.png") no-repeat 50% 50%;
+            }
+
+            .linergauge {
+                width: 100%;
+                height: 310px;
+                margin-top: 5%;
+            }
+        </style>
+        <div class="col-md-12">
+            <!-- BEGIN Portlet PORTLET-->
+            <div class="portlet">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="fa fa-gift"></i>Linear Meter
+                    </div>
+                    <div class="tools">
+                        <a href="javascript:;" class="collapse" data-original-title="" title=""> </a>
+                        <a href="#portlet-config" data-toggle="modal" class="config" data-original-title="" title=""> </a>
+                        <a href="javascript:;" class="reload" data-original-title="" title=""> </a>
+                        <a href="" class="fullscreen" data-original-title="" title=""> </a>
+                        <a href="javascript:;" class="remove" data-original-title="" title=""> </a>
+                    </div>
+                </div>
+                <div class="portlet-body" id="speedometer_sortable">
+                    @foreach (var item in Model.Where(x => x.QUICKTYPE == "L").OrderBy(x => x.orderIndex))
+                    {
+                    if (!string.IsNullOrEmpty(item.aggValue))
+                    {
+                    var bgcolor = item.WidgetsBGColor;
+                    var fontColor = item.widgetsColor;
+                    var isblink = false;
+                    var aggValue = 0M;
+                    Decimal.TryParse(item.aggValue, out aggValue);
+                    if (item.MINVALUES > 0)
+                    {
+                    if (aggValue <= item.MINVALUES)
+                    {
+                    bgcolor = item.WidgetsBGColor;
+                    fontColor = item.widgetsColor;
+                    isblink = item.MINISBLINK == "Y" ? true : false;
+                    }
+                    else if (item.MAXVALUES > item.MINVALUES)
+                    {
+                    if (aggValue >= item.MAXVALUES)
+                    {
+                    bgcolor = item.MAXBGCOLOR;
+                    fontColor = item.MAXFONTCOLOR;
+                    isblink = item.MAXISBLINK == "Y" ? true : false;
+                    }
+                    else
+                    {
+                    bgcolor = item.MIDBGCOLOR;
+                    fontColor = item.MIDFONTCOLOR;
+                    isblink = item.MIDISBLINK == "Y" ? true : false;
+                    }
+                    }
+                    }
+                    if (item.QUICKTYPE == "L")
+                    {
+                    @*<div id="speedometer_sortable" class="portlet portlet-sortable">
+                        *@
+                        <div class="col-lg-2 col-md-2 col-sm-4 col-xs-8 spedo-meter dashboard_widgets">
+                            <div id="linearGauge-container">
+                                <div id="liner_@item.ReportId" class="linergauge gauge portlet-sortable">
+                                </div>
+                            </div>
+
+                            <div class="widgetstitleliner font-green" style="text-align:center;">@item.widgetsTitle</div>
+                            @*<div class="gauge gauge-sortable-empty"> </div>*@
+                            @*
+                        </div>*@
+                    </div>
+                    <script>
+                                    $("#liner_@item.ReportId").kendoLinearGauge({
+                                        pointer: {
+                                            value: 65,
+                                            shape: "arrow"
+                                        },
+                                        scale: {
+                                            majorUnit: 20,
+                                            minorUnit: 5,
+                                            max: '@item.SPEEDOMETERMAXVALUE',
+                                    labels: {
+                                        position: "@item.LABELPOSITION",
+
+                                    },
+                                    ranges: [
+                                        {
+                                            from: 0,
+                                            to: '@item.MINVALUES',
+                                            color: '@item.WidgetsBGColor'
+
+                                        }, {
+                                            from: '@item.MINVALUES',
+                                            to: '@item.MAXVALUES',
+                                            color: "@item.MIDBGCOLOR"
+                                        }, {
+                                            from: '@item.MAXVALUES',
+                                            to: '@item.SPEEDOMETERMAXVALUE',
+                                            color: "@item.MAXBGCOLOR"
+                                        }
+                                    ]
+                                        }
+                                    });
+
+
+                            //PortletDraggable.init("Dashboard_Widgets_SpedoMeter", "#speedometer_sortable");
+
+                            @*$("#gauge_@item.ReportId").parent().parent().sortable({
+                                connectWith: ".gauge.k-gauge.ui-sortable"
+                            }).disableSelection();*@
+
+                    </script>
+                    }
+                    }
+
+
+                    }
+                </div>
+            </div>
+            <!-- END Portlet PORTLET-->
+        </div>
+        }
+
+    </div>
+    <script>
+    function blink(selector) {
+        $(".blinking").fadeOut('slow', function () {
+            $(this).fadeIn('slow', function () {
+                blink(this);
+            });
+        });
+    };
+
+    $(document).ready(function () {
+
+        $("#speedometer_sortable").sortable({
+            connectWith: ".spedo-meter",
+            opacity: 0.8,
+            item: '.spedo-meter',
+            coneHelperSize: true,
+            forcePlaceholderSize: true,
+            tolerance: "pointer",
+            helper: "clone",
+            tolerance: "pointer",
+            forcePlaceholderSize: !0,
+            helper: "clone",
+            //cancel: ".gauge-sortable-empty, .gauge-fullscreen", // cancel dragging if portlet is in fullscreen mode
+            revert: 250, // animation in milliseconds
+            update: function (e, t) {
+                t.item.prev().hasClass("gauge-sortable-empty") && t.item.prev().before(t.item)
+
+                var order1 = $('#speedometer_sortable>div div').map(function () {
+                    if (this.id == null || this.id == "") {
+                        return;
+                    }
+                    return this.id;
+                }).toArray().join(',');
+
+                var order2 = $('#metric_sortable >div').map(function () {
+                    if (this.id == null || this.id == "") {
+                        return;
+                    }
+                    return this.id;
+                }).toArray().join(',');
+                var order = order1 + ',' + order2;
+                saveToDB(order, "Dashboard_Widgets_SpedoMeter");
+
+            }
+        });
+        //PortletDraggable.init("Dashboard_Widgets_SpedoMeter", "#speedometer_sortable");
+         blink(".blinking");
+        //$('.blinking').blink({ delay: 200 });
+
+    });
+
+
+
+    </script>
+    <script>
+            //$(document).ready(function () {
+            //    $('.counter').counterUp({
+            //        delay: 10,
+            //        time: 1000
+            //    });
+            //});
+    </script>
+    }

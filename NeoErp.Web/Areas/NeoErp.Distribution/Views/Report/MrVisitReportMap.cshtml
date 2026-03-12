@@ -1,0 +1,533 @@
+﻿@using NeoErp.Core.Models;
+@using NeoErp.Core;EmployeeFilter
+@using NeoErp.Core.Infrastructure;
+@using NeoErp.Core.Models.CustomModels
+@using System.Text;
+
+@{
+    Layout = null;
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+
+
+
+
+
+<style>
+
+
+        #map-canvas {
+        height: 100%;
+        width: 100%;
+        background: #fff;
+    }
+
+    #map-panel {
+        width: 100%;
+        height: 450px;
+        margin: 0 auto;
+        border: solid;
+        padding: 10px;
+    }
+
+    .small-box {
+        border: 1px solid;
+        padding: 0px 6px;
+        margin-right: 3px;
+    }
+
+/*    .k-widget.k-multiselect.k-header {
+        position: absolute;
+        top: 55px;
+        left: 25%;
+        margin: auto 0;
+        width: 45%;
+        z-index: 1;
+    }*/
+
+    #dateFilterPanel {
+        position: absolute;
+        top: 122px;
+        left: 4%;
+        margin: auto 0;
+        width: 18%;
+        z-index: 1;
+    }
+
+    .ui-datepicker-trigger {
+        height: 21px;
+    }
+
+    #dateFilter {
+        height: 21px;
+        padding-top: 5px;
+        font-size: 11px !important;
+        width: 70px;
+        text-align: center;
+    }
+
+    #mapSymbols {
+        position: absolute;
+        top: 55px;
+        right: 4%;
+        z-index: 1;
+    }
+
+        #mapSymbols ul {
+            list-style: none;
+            padding-left: 0px;
+        }
+
+            #mapSymbols ul li {
+                margin: 4px;
+                color: #000;
+            }
+
+    .indicators-box {
+        background-color: rgba(255, 255, 255, 0.6);
+    }
+
+    .ajax-busy {
+        position: absolute;
+        top: 11px;
+        right: 78px;
+        z-index: 999999;
+    }
+
+    .slider-container {
+        display: flex;
+        flex-direction: row;
+        gap: 2px;
+        float: inline-end;
+        margin: 5px 0;
+    }
+
+    #mapSlider {
+        width: 15%; /* Set the width to 25% of the container */
+    }
+</style>
+
+<head>
+    <link href="@Styles.Url("https://unpkg.com/leaflet@1.9.4/dist/leaflet.css")" rel="stylesheet" />
+
+    @*<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" type="text/javascript" />*@
+
+</head>
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb"></ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+                <div class="actions">
+                    <div class="ajax-busy">
+                        <div class="">
+                            <i class="fa fa-refresh fa-spin fa-2x fa-fw ajax-loading text-success" aria-hidden="true" style="display:none"></i>
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                        {
+                        ShowDistEmployeeFilter = true,
+                        })
+                    </div>
+                </div>
+
+
+
+
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="row collapse in" id="demo">
+    <div class="col-md-12">
+        <div class="portlet light bordered">
+            <div class="slider-container">
+                <span id="OSM">Open Street Map</span>
+                <input type="range" id="mapSlider" min="0" max="1" step="1" value="0">
+                <span id="googleMap">Google Map </span>
+
+            </div>
+            <div class="portlet-body form">
+                <div class="row">
+                    <div class="br"></div>
+                    <div id="map-panel">
+                        <div id="map-canvas">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<script src="@Scripts.Url("~/JS/reportFilter.js")"></script>
+
+<script src="@Scripts.Url("~/JS/DateFilter.js")" type="text/javascript"></script>
+
+<script>
+    
+
+
+    var myMap = function () {
+        var markers = [], map, marker;
+        var baseUrl = window.location.protocol + "//" + window.location.host + "/Areas/NeoERP.Distribution";
+        var readUrl = window.location.protocol + "//" + window.location.host + "/api/Distribution/GetMrVistitedPlan";
+        _oldSaved = {};
+        var myLatlng = new google.maps.LatLng(27.70320076199206, 85.31524620117193);
+        var bounds = new google.maps.LatLngBounds();
+        var path = new google.maps.MVCArray();
+        var mapOptions = {
+            zoom: 10,
+            center: myLatlng,
+            mapTypeId: google.maps.MapTypeId.ROADMAP,
+            fullscreenControl: true,
+            fullscreenControlOptions: {
+                position: google.maps.ControlPosition.RIGHT_BOTTOM
+            },
+
+        };
+        var currentInfoWindows = [];
+        var timeout;
+        var currentOverlays = [];
+        var sliderValue = $('#mapSlider').val();
+        if (sliderValue == 1) {
+            var intervalId = setInterval(function () {
+                getMRData(readUrl);
+            }, 1000);
+        }
+
+
+        function init() {
+            if (google == undefined) {
+                location.reload();
+                return;
+            }
+            map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+            $("#map-panel").css({ "height": window.innerHeight - 150 });
+            window.clearInterval(_oldSaved.interval);
+            clearMarker();
+            if (_oldSaved.polyline != undefined)
+                _oldSaved.polyline.setMap(null);
+            $("#mapSymbols").hide();
+
+            getMRData(readUrl);
+        }
+        function CustomIconOverlay(map, iconUrl) {
+            var overlay = new google.maps.OverlayView();
+
+            overlay.position = null; // Current position of the overlay
+
+            overlay.onAdd = function () {
+                var div = document.createElement('div');
+                div.style.position = 'absolute';
+                div.style.width = '40px';
+                div.style.height = '40px';
+                div.style.backgroundImage = `url(${iconUrl})`;
+                div.style.backgroundSize = 'contain';
+                div.style.backgroundRepeat = 'no-repeat';
+                div.style.transform = 'translate(-50%, -50%)'; // Center the icon
+
+                this.div = div;
+
+                var panes = this.getPanes();
+                panes.overlayImage.appendChild(div);
+            };
+
+            // Called when the overlay needs to be drawn or redrawn
+            overlay.draw = function () {
+                if (this.position && this.div) {  // Ensure the div is available
+                    // Check if getProjection() is available
+                    var overlayProjection = this.getProjection();
+                    if (overlayProjection) {
+                        var positionPixel = overlayProjection.fromLatLngToDivPixel(this.position);
+
+                        this.div.style.left = positionPixel.x + 'px';
+                        this.div.style.top = positionPixel.y + 'px';
+                    } else {
+                        console.log("Projection is not available yet.");
+                    }
+                }
+            };
+
+            overlay.onRemove = function () {
+                if (this.div) {
+                    this.div.parentNode.removeChild(this.div);
+                    this.div = null;
+                }
+            };
+
+            overlay.setPosition = function (lat, lng) {
+                this.position = new google.maps.LatLng(lat, lng);
+                this.draw(); // Redraw the overlay with the new position
+            };
+
+            overlay.setMap(map);
+            currentOverlays.push(overlay);
+            return overlay;
+        }
+        function addMarkerDetails(response) {
+            // Loop through all entities in the response and create individual markers
+            $.each(response, function (i, entity) {
+                if (entity.LATITUDE && entity.LONGITUDE) {
+                    var latitude = entity.LATITUDE == null ? 0 : entity.LATITUDE;
+                    var longitude = entity.LONGITUDE == null ? 0 : entity.LONGITUDE;
+                    var userLocation = new google.maps.LatLng(latitude, longitude);
+
+                    // Create a new custom overlay and info window for each entity
+                    var iconUrl = baseUrl + "/Content/img/rec.png";
+                    var overlay = new CustomIconOverlay(map, iconUrl);
+                    overlay.setPosition(latitude, longitude);
+
+                    // Create a new info window for each entity
+                    var contentString = '<p><b>' + entity.ENTITY_NAME + '</b>';
+                    if (entity.ACTIVITY_TIME && entity.ACTIVITY_TIME.trim()) {
+                        contentString += "<br/><b><small>Last Seen: </small></b>" +
+                            moment(entity.ACTIVITY_TIME.trim()).format("DD MMM, YYYY hh:mm a");
+                    }
+
+                    var infoWindow = new google.maps.InfoWindow({
+                        content: contentString,
+                        position: userLocation
+                    });
+                    infoWindow.open(map);
+                    currentInfoWindows.push(infoWindow);
+
+                } else {
+                    console.log("Invalid coordinates: Latitude or Longitude is missing.");
+                }
+            });
+        }
+        function getMRData(readUrl) {
+            $.ajax({
+                url: readUrl,
+                dataType: 'json',
+                contentType: 'application/json; charset=UTF-8',
+                type: 'POST',
+                complete: function (response, status) {
+                    response = response.responseJSON;
+                    debugger;
+                    if ("undefined" != typeof response && "object" == typeof response) {
+                        clearMarker();
+                        ArrangeVisitDetailData(response);
+                    }
+                    //console.log("gMap");
+                }
+            });
+        }
+        function clearMarker() {
+            for (var i = 0; i < currentInfoWindows.length; i++) {
+                currentInfoWindows[i].close();  // Close each InfoWindow
+            }
+            currentInfoWindows = [];
+            for (var i = 0; i < currentOverlays.length; i++) {
+                currentOverlays[i].setMap(null);  // Remove each overlay from the map
+            }
+            currentOverlays = [];  // Reset the overlays array
+        }
+        function ArrangeVisitDetailData(data) {
+            debugger;
+            path = new google.maps.MVCArray();
+            bounds = new google.maps.LatLngBounds();
+            var newDetailData = [];
+            var entityCodeListAssigned = _.uniq(_.compact(_.pluck(data.AssignRouteList, "ENTITY_CODE")));
+            var unmatchedVisitRoute = _.filter(data.VisitActivityList, function (x) {
+                return !_.contains(entityCodeListAssigned, x.ENTITY_CODE);
+            });
+            if (unmatchedVisitRoute.length > 0) {
+                _.each(unmatchedVisitRoute, function (x) {
+                    if (x.TRACK_TYPE != null && x.TRACK_TYPE == "TRK") {
+                        x.path = path;
+                        x.bounds = bounds;
+                        //x.color = 'blue-dot.png';
+                        x.isPath = true;
+                        x.status = "Track";
+                        newDetailData.push(x);
+                    }
+                    else {
+                        x.path = path;
+                        x.bounds = bounds;
+                        x.isPath = true;
+                        newDetailData.push(x);
+                    }
+                });
+            }
+            addMarkerDetails(_(newDetailData).sort(function (a, b) {
+                return new Date(a.ACTIVITY_TIME) - new Date(b.ACTIVITY_TIME);
+            }));
+            $("#mapSymbols").show();
+        }
+        return {
+            init: init,
+        }
+    }();
+
+
+    // OSM map ------------------------------
+    var OSMmap = function () {
+
+        var spCode = "";
+        var newUrl;
+        $('#loadAdvancedFilters').on('click', function (e) {
+            var filters = ReportFilter.filterAdditionalData();
+            spCode = filters.ReportFilters.DistEmployeeFilter[0];
+            console.log(spCode);
+            newUrl = window.location.protocol + "//" + window.location.host + "/api/Distribution/GetMrVistitedPlan?spCode=" + "'" + spCode + "'";
+            OSMmap.getMRData(newUrl)
+        });
+
+        var markers = [], map;
+        var readUrl = window.location.protocol + "//" + window.location.host + "/api/Distribution/GetMrVistitedPlan?spCode=";
+        //var readUrl = window.location.protocol + "//" + window.location.host;
+        var currentInfoWindows = [];
+
+        var sliderValue = $('#mapSlider').val();
+        if (sliderValue == 0) {
+
+            var intervalId = setInterval(function () {
+                if (spCode !== "" && spCode !== undefined) {
+                    getMRData(newUrl);
+                } else {
+
+                getMRData(readUrl);
+                }
+            }, 3000);
+        }
+
+        function init() {
+            clearMarkers();
+            if (map) {
+                map.remove();
+                map = null; // Clear the map instance
+            }
+            map = L.map('map-canvas').setView([27.673723921148326, 85.30787354178088], 10);
+
+            // Add OSM tile layer
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            $("#map-panel").css({ "height": window.innerHeight - 150 });
+            getMRData(readUrl);
+        }
+
+        function addOSMmarkerDetails(response) {
+            $.each(response.VisitActivityList, function (i, entity) {
+
+
+
+                if (entity.LATITUDE && entity.LONGITUDE) {
+                    var latitude = entity.LATITUDE == null ? 0 : entity.LATITUDE;
+                    var longitude = entity.LONGITUDE == null ? 0 : entity.LONGITUDE;
+                    var userLocation = [latitude, longitude];
+
+                    // Create a new marker
+                    var marker = L.marker(userLocation).addTo(map);
+                    var contentString = '<p><b>' + entity.ENTITY_NAME + '</b>';
+                    if (entity.ACTIVITY_TIME && entity.ACTIVITY_TIME.trim()) {
+                        contentString += "<br/><b><small>Last Seen: </small></b>" +
+                            moment(entity.ACTIVITY_TIME.trim()).format("DD MMM, YYYY hh:mm a");
+                    }
+
+                    // Bind popup to marker
+                    marker.bindPopup(contentString);
+                    currentInfoWindows.push(marker);
+                    //marker.openPopup();
+                } else {
+                    var marker = L.marker([27.673723921148326, 85.30787354178088]).addTo(map);
+                    currentInfoWindows.push(marker);
+                    console.error("Invalid coordinates: Latitude or Longitude is missing.");
+                }
+            });
+        }
+
+        function getMRData(readUrl) {
+            $.ajax({
+                url: readUrl,
+                dataType: 'json',
+                contentType: 'application/json; charset=UTF-8',
+                type: 'POST',
+                complete: function (response, status) {
+                    response = response.responseJSON;
+                    if (response && typeof response === "object") {
+                        //console.log(response);
+                        clearMarkers();
+                        addOSMmarkerDetails(response);
+                    }
+                }
+            });
+        }
+
+        function clearMarkers() {
+            for (var i = 0; i < currentInfoWindows.length; i++) {
+                map.removeLayer(currentInfoWindows[i]);
+            }
+            currentInfoWindows = [];
+        }
+
+        return {
+            init: init,
+            getMRData: getMRData
+        }
+    }();
+
+    //$(document).ready(function () {
+    //    if (typeof L === 'undefined') {
+    //        console.error("Leaflet is not loaded.");
+    //        return;
+    //    }
+    //    myMap.init();
+    //});
+
+    async function loadLeaflet() {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+            script.type = "text/javascript";
+            script.async = true;
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+        });
+    }
+
+    (async function () {
+        try {
+            await loadLeaflet();
+            $(document).ready(function () {
+                if (typeof L === 'undefined') {
+                    console.error("Leaflet is not loaded.");
+                    return;
+                }
+
+                OSMmap.init();
+                $('#mapSlider').on('input', function () {
+                    const value = $(this).val();
+                    if (value == 0) {
+                        //$('#mapTypeLabel').text('OSM Map');
+
+                        OSMmap.init();
+                    } else {
+                        //$('#mapTypeLabel').text('Google Map');
+
+                        myMap.init();
+                    }
+                });
+            });
+        } catch (error) {
+            console.error("Failed to load Leaflet:", error);
+        }
+    })();
+
+    loadLeaflet();
+
+    
+
+</script>
+
+<script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js")"></script>

@@ -1,0 +1,211 @@
+﻿@model NeoErp.sales.Module.Models.LedgerSearch
+<style>
+    .page-bar {
+        margin-bottom: 0px !important;
+    }
+
+    div.k-window-content {
+        position: relative;
+        height: 100%;
+        padding: .58em;
+        overflow: inherit !important;
+        outline: 0;
+    }
+
+    .orders.k-grid.k-widget {
+        margin-top: -3px;
+    }
+
+    .orders table .k-grid-header {
+        display: none;
+    }
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+         font-size:11px;
+    }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .k-footer-template {
+        display: none;
+    }
+</style>
+<div class="row">
+
+
+    <div id="@Model.GridName"></div>
+
+
+</div>
+
+<script type="text/javascript">
+
+
+
+    $(document).ready(function () {
+        var formEnglishDate = $("#FromDateVoucher").val();
+        var toEnglishDate = $("#ToDateVoucher").val();
+        var urltest = Arg.url(window.location.protocol + "//" + window.location.host + "/api/Ledger/GetSubLedgersSummary", { formDate: formEnglishDate, toDate: toEnglishDate, accountCode: '@Model.accountCode',subCode:'@Model.SubCode' });
+       
+      BindGridSubLedger(urltest);
+    });
+
+    function BindGridSubLedger(readurl) {
+        var dataSource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: readurl
+            },
+            serverFiltering: true,
+            serverAggregates: true,
+            serverPaging: false,
+            schema: {
+                model: {
+                    fields: {
+                        VoucherDate: { type: "date" },
+
+                    }
+                }
+            },
+            aggregate: [
+       { field: "OpeningDr", aggregate: "sum" },
+                    { field: "OpeningCr", aggregate: "sum" },
+                   //  { field: "NetAmount", aggregate: "sum" }
+            ],
+        });
+        var element = $("#@Model.GridName").kendoGrid({
+            dataSource: dataSource,
+
+            sortable: true,
+            pageable: false,
+
+            columns: [
+                {
+                    field: "Miti",
+                    title: "Miti",
+                    width: "100px"
+                },
+                 {
+                     field: "VoucherDate",
+                     title: "Date",
+                     width: "100px",
+                     format: "{0:dd-MMM-yyyy}",
+                 },
+                 {
+                     title: "Opening Balance",
+                     attributes: {
+                         style: "text-align: right;"
+                     },
+                     //width: "200px",
+                     columns: [{
+                         field: "OpeningDr",
+                         title: "Dr Amount",
+                         width: "80px",
+                         attributes: {
+                             style: "text-align: right;"
+                         },
+                         format: "{0:n}",
+                         //template: '<span style="float:right">#= kendo.toString(DR_OPENING, "n") #</span>'
+                         //aggregates: "sum",
+                        // footerTemplate: "<div style='float: right'>#= sum#</div>"
+                     },
+                {
+                    field: "OpeningCr",
+                    title: "Cr Amount",
+                    width: "80px",
+                    attributes: {
+                        style: "text-align: right;"
+                    },
+                    format: "{0:n}",
+                    //footerTemplate: "<div style='float: right'>#= sum#</div>"
+                    //template: '<span style="float:right">#= kendo.toString(CR_OPENING, "n") #</span>'
+                }]
+                 },
+                {
+                    title: "Transaction Balance",
+                    attributes: {
+                        style: "text-align: center;"
+                    },
+                    //width: "200px",
+                    columns: [{
+                        field: "DrAmount",
+                        title: "Dr Amount",
+                        width: "80px",
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                        format: "{0:n}",
+                        //template: '<span style="float:right">#= kendo.toString(DR_AMT, "n") #</span>'
+
+                    },
+                {
+                    field: "CrAmount",
+                    title: "Cr Amount",
+                    width: "80px",
+                    attributes: {
+                        style: "text-align: right;"
+                    },
+                    format: "{0:n}",
+                    //template: '<span style="float:right">#= kendo.toString(CR_AMT, "n") #</span>'
+
+                }]
+                },
+                {
+                    title: "Closing Balance",
+                    attributes: {
+                        style: "text-align: center;"
+                    },
+                    //width: "200px",
+                    columns: [{
+                        field: "ClosingDr ",
+                        title: "Dr Amount",
+                        width: "80px",
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                        format: "{0:n}",
+                        //template: '<span style="float:right">#= kendo.toString(DR_CLOSING, "n") #</span>'
+
+                    },
+                {
+                    field: "ClosingCr",
+                    title: "Cr Amount",
+                    width: "80px",
+                    attributes: {
+                        style: "text-align: right;"
+                    },
+                    format: "{0:n}",
+                    //template: '<span style="float:right">#= CR_CLOSING #</span>'
+                }]
+                }
+
+            ]
+        });
+
+    };
+
+    function KendoGridRefreshSubLedger(readUrl) {
+        $("#@Model.GridName").val('');
+        $("#@Model.GridName").html('');
+        BindGridSubLedger(readUrl)
+    }
+
+   
+</script>

@@ -1,0 +1,343 @@
+﻿@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+    ViewBag.Title = "Create Plan";
+    Layout = null;
+    int plancode =ViewBag.PlanCode;
+}
+
+
+<style>
+    .k-grid {
+        font-size: 11px;
+    }
+    .k-autocomplete.k-state-default, .k-picker-wrap.k-state-default, .k-numeric-wrap.k-state-default, .k-dropdown-wrap.k-state-default {
+        background-color: #fafafa;
+    }
+
+    .input-group.input-medium.date-picker.input-daterange {
+        width: 100% !important;
+    }
+
+    .datefilter > label {
+        text-align: left;
+    }
+
+    fieldset {
+        border: 1px solid #aaa;
+        border-radius: 5px;
+    }
+
+    legend {
+        display: block;
+        width: 25%;
+        padding: 0;
+        margin-bottom: 5px;
+        font-size: 12px;
+        line-height: inherit;
+        color: #725959;
+        border: 0;
+        border-bottom: 1px solid #e5e5e5;
+    }
+
+    .md-radio-inline > div {
+        padding: 0px 10px 0px 0px;
+        float: left;
+    }
+</style>
+
+<div class="row">
+    <form id="generateplan_copy" name="generateplan_copy">
+        <div class="col-md-12">
+            <div class="form-group">
+                <label class="control-label">Plan Name </label>
+                <input type="text" id="planName_copy" name="planName_copy" class="form-control input-sm" value="- copy" required />
+                <input type="hidden" id="plancode_copy" name="plancode_copy" value="" />
+            </div>
+            <div class="mulitiitem-select">
+                <div class="form-group">
+                    <fieldset>
+                        <legend>Plan Options</legend>
+                        <div class="col-md-12">
+                            <!--<div class="md-radio-inline">
+                                <div class="">
+                                    <input type="radio" id="customer_product" name="customer_product_option_copy" value="customer_product" class="" disabled>
+                                    <label for="radio14">
+                                        <span class="inc"></span>
+                                        <span class="check"></span>
+                                        <span class="box"></span> Customer/Product
+                                    </label>
+                                </div>
+                                <div class="has-error">
+                                    <input type="radio" id="product_only" name="customer_product_option_copy" value="product_only" disabled>
+                                    <label for="radio15">
+                                        <span class="inc"></span>
+                                        <span class="check"></span>
+                                        <span class="box"></span> Product
+                                    </label>
+                                </div>
+                            </div>-->
+                        </div>
+                        <!--<div class="col-md-6 form-group">
+                            <div>
+                                <label class="control-label">Select customer</label>
+                                <input id="customers_copy" name="customers_copy" style="width: 100%;" />
+                            </div>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <div>
+                                <label class="control-label">Select employee</label>
+                                <input id="employees_copy" name="employees_copy" style="width: 100%;" />
+                            </div>
+                        </div>-->
+                        <div class="col-md-6 form-group">
+                            <div>
+                                <label class="control-label">Select branch</label>
+                                <input id="branchs_copy" name="branchs_copy" style="width: 100%;" />
+                            </div>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <div>
+                                <label class="control-label">Select division</label>
+                                <input id="divisions_copy" name="divisions_copy" style="width: 100%;" />
+                            </div>
+                        </div>
+                    </fieldset>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="control-label">Remarks</label>
+                <input type="text" id="remarks" name="remarks" class="form-control input-sm"/>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    var branchCode = '@workingContent.CurrentUserinformation.branch_code';
+    var p_code = '@plancode';
+    var d1 = $.Deferred();
+    var d2 = $.Deferred();
+    var d3 = $.Deferred();
+    var d4 = $.Deferred();
+    $(document).ready(function () {
+        //BindCustomer();
+        //BindEmployee();
+        BindBranch();
+        BindDivision();
+        setTimeout(function () {
+            $('.portlet.light.bordered').css({ 'height': window.innerHeight - 110 });
+        }, 100);
+        $.when(d3, d4).then(function(){
+            if(p_code != null && p_code != undefined && p_code !=''){
+                $.ajax({
+                    //url: '/api/PlanSetupApi/GetPlanDetailValueByPlanCode',
+                    url: '/api/LedgerBudgetPlanApi/GetPlanDetailValueByPlanCode',
+                    data:{plancode:p_code}
+                }).done(function (result) {
+                    $('#planName_copy').val(result.LBAPlan.PLAN_EDESC + ' -Copy')
+                    $('#plancode_copy').val(result.LBAPlan.PLAN_CODE);
+
+                    var branchDropdownlist = $("#branchs_copy").data("kendoDropDownList")
+                    var divisionDropdownlist = $("#divisions_copy").data("kendoDropDownList")
+                    branchDropdownlist.value(result.LBAPlan.BRANCH_CODE);
+                    divisionDropdownlist.value(result.LBAPlanDtlList[0].DIVISION_CODE);
+
+                    //if (result.customerCode != null && result.customerCode != undefined && result.customerCode != '') {
+                    //    $('input:radio[name="customer_product_option_copy"]').filter('[value="customer_product"]').attr('checked', true);
+                    //    var customerDropdownlist = $("#customers_copy").data("kendoDropDownList")
+                    //    var branchDropdownlist = $("#branchs_copy").data("kendoDropDownList")
+                    //    var divisionDropdownlist = $("#divisions_copy").data("kendoDropDownList")
+                    //    var employeeDropdownlist = $("#employees_copy").data("kendoDropDownList")
+
+                    //    customerDropdownlist.value(result.customerCode);
+                    //    branchDropdownlist.value(result.BRANCH_CODE);
+                    //    divisionDropdownlist.value(result.salesPlanDetail[0].DIVISION_CODE);
+                    //    employeeDropdownlist.value(result.salesPlanDetail[0].EMPLOYEE_CODE);
+                    //}
+                    //else {
+                    //    $('input:radio[name="customer_product_option_copy"]').filter('[value="product_only"]').attr('checked', true);
+                    //}
+
+                }).error(function (err) {
+
+                })
+            }
+        })        
+    });
+
+    function BindCustomer() {
+        $("#customers_copy").kendoDropDownList({
+            optionLabel: "--Select Customer--",
+            filter: "contains",
+            dataTextField: "CUSTOMER_EDESC",
+            dataValueField: "CUSTOMER_CODE",
+            dataSource: {
+                type: "json",
+                serverFiltering: false,
+                transport: {
+                    read: {
+                        dataType: "json",
+                        url: "/api/SubPlanApi/GetChiledLevelCustomers",
+                    },
+                    parameterMap: function (data, action) {
+                        if (data.filter != undefined) {
+                            if (data.filter.filters[0] != undefined) {
+                                var newParams = {
+                                    filter: data.filter.filters[0].value
+                                };
+                                return newParams;
+                            }
+                            else {
+                                var newParams = {
+                                    filter: ""
+                                };
+                                return newParams;
+                            }
+                        }
+                        else {
+                            var newParams = {
+                                filter: ""
+                            };
+                            return newParams;
+                        }
+                    }
+                }
+            },
+            dataBound: function(){
+                d1.resolve();
+            }
+        });
+    }
+    function BindEmployee() {
+        $("#employees_copy").kendoDropDownList({
+            optionLabel: "--Select Employee--",
+            filter: "contains",
+            dataTextField: "EMPLOYEE_EDESC",
+            dataValueField: "EMPLOYEE_CODE",
+            dataSource: {
+                type: "json",
+                serverFiltering: false,
+                transport: {
+                    read: {
+                        dataType: "json",
+                        url: "/api/SubPlanApi/GetChiledLevelEmployee",
+                    },
+                    parameterMap: function (data, action) {
+                        if (data.filter != undefined) {
+                            if (data.filter.filters[0] != undefined) {
+                                var newParams = {
+                                    filter: data.filter.filters[0].value
+                                };
+                                return newParams;
+                            }
+                            else {
+                                var newParams = {
+                                    filter: ""
+                                };
+                                return newParams;
+                            }
+                        }
+                        else {
+                            var newParams = {
+                                filter: ""
+                            };
+                            return newParams;
+                        }
+                    }
+                }
+            },
+            dataBound: function () {
+                d2.resolve();
+            }
+        });
+    }
+    function BindBranch() {
+        $("#branchs_copy").kendoDropDownList({
+            dataTextField: "BRANCH_EDESC",
+            dataValueField: "BRANCH_CODE",
+            optionLabel: "--Select Branch--",
+            filter: "contains",
+            dataSource: {
+                type: "json",
+                serverFiltering: false,
+                transport: {
+                    read: {
+                        dataType: "json",
+                        url: "/api/SubPlanApi/GetChiledLevelBranch",
+                    },
+                    parameterMap: function (data, action) {
+                        if (data.filter != undefined) {
+                            if (data.filter.filters[0] != undefined) {
+                                var newParams = {
+                                    filter: data.filter.filters[0].value
+                                };
+                                return newParams;
+                            }
+                            else {
+                                var newParams = {
+                                    filter: ""
+                                };
+                                return newParams;
+                            }
+                        }
+                        else {
+                            var newParams = {
+                                filter: ""
+                            };
+                            return newParams;
+                        }
+                    }
+                }
+            },
+            dataBound: function () {
+                d3.resolve();
+            }
+        });
+    }
+    function BindDivision() {
+        $("#divisions_copy").kendoDropDownList({
+            dataTextField: "DIVISION_EDESC",
+            dataValueField: "DIVISION_CODE",
+            optionLabel: "--Select Division--",
+            filter: "contains",
+            dataSource: {
+                type: "json",
+                serverFiltering: false,
+                transport: {
+                    read: {
+                        dataType: "json",
+                        url: "/api/SubPlanApi/GetChiledLevelDivision",
+                    },
+                    parameterMap: function (data, action) {
+                        if (data.filter != undefined) {
+                            if (data.filter.filters[0] != undefined) {
+                                var newParams = {
+                                    filter: data.filter.filters[0].value
+                                };
+                                return newParams;
+                            }
+                            else {
+                                var newParams = {
+                                    filter: ""
+                                };
+                                return newParams;
+                            }
+                        }
+                        else {
+                            var newParams = {
+                                filter: ""
+                            };
+                            return newParams;
+                        }
+                    }
+                }
+            },
+            dataBound: function () {
+                d4.resolve();
+            }
+        });
+    }
+</script>

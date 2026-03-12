@@ -1,0 +1,1308 @@
+﻿@{
+    ViewBag.Title = "Ledger Statement";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+<style>
+    #cover {
+        position: fixed;
+        top: 0;
+        left: 0;
+        background: rgba(0,0,0,0.6);
+        z-index: 5;
+        width: 100%;
+        height: 100%;
+        display: none;
+    }
+
+   
+    .cancel {
+        display: block;
+        position: absolute;
+        top: 5px;
+        right: 12px;
+        font-size: 15px;
+        text-decoration: none;
+        text-align: center;
+        cursor: pointer;
+        border: 1px solid #e1e1e1;
+        height: 24px;
+        width: 24px;
+    }
+
+        .cancel:hover, .Maximize:hover {
+            background-color: #333;
+            color: #f7f7f7;
+        }
+</style>
+<div class="row">
+    <div class="col-lg-12" style="background-color: #f5f5f5; height:38px;">
+        <div style="float:left">
+            <ol class="breadcrumb">
+                <li class="active">
+                    <i class="fa fa-home"></i>
+                    <a href="@Url.Action("Index","Home")">Home </a> <i class="fa fa-angle-double-right"></i>
+                    <a href="@Url.Action("LedgerStatement", "TrialBalance")">Ledger Statement</a> <i class="fa fa-angle-double-right"></i>
+                    <label id="divReportName" style="font-weight:normal; font-size:13px"></label>
+                </li>
+            </ol>
+        </div>
+        <div class="btn-group" role="group" style="float: right; padding-top:6px;">
+            @Html.Partial("~/Views/TrialBalance/Search.cshtml")
+        </div>
+        <div style="clear:both"></div>
+    </div>
+</div><div class="col-md-12" style="text-align: right;">
+    <label style="font-size: 12px;font-weight:100"">figure in:</label><label id="asdf" style="font-size: 12px; font-weight:100"></label>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        @Html.Partial("~/Views/TrialBalance/SearchContent.cshtml")<div id="`" class="row"></div>
+    </div>
+    <div class="col-md-12">
+        <div class="table-content" id="gridMain" style="margin-top:15px">
+            <table id="jqGrid"></table>
+            <div id="jqGridPager"></div>
+        </div>
+    </div>
+</div>
+<div id="VoucherScreen" style="position: absolute;">
+        <div class="Maximize1" style="left: 8px; width: 52px">
+            <img src="../Images/print.png" width="19" height="21" onclick="PrintVoucher()">
+            @*<img src="../Images/export.png" width="18" height="17">*@
+        </div>
+        <div onclick="document.getElementById('VoucherScreen').style.display = 'none';" class="cancel">
+            <span class="fa fa-times"></span>
+        </div>
+        <div id="divJQGridVoucher" class="page-content" style="display: block; width: 100%; margin-top: 40px; padding:10px;position:relative;float:left;">
+            <div class="neoHeadTitle">
+                <span class="neotitleName">Neoteric Nepal Pvt. Ltd.</span>
+                <span class="neoAddress">Jawalakhel, Lalitput</span>
+                <span class="neoContact">Ph: 01-542547845, 54795247</span>
+                <div id="dvVoucherDate"></div>
+                <div id="dvVoucherNo"></div>
+            </div>
+            <table class="table">              
+                <tr>
+                    <td colspan="3">
+                        <table id="JQGridVoucher" class="table-bordered" style="width: 100%"></table>
+                        <div id="JQGridVoucher_pager" style="display: none"></div>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="3">
+                        <div id="dvNiration" style="margin-top: 12px;"></div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div id="dvCreatedBy" style="text-align:left;margin-top: 12px;"></div>
+                    </td>
+                    <td>
+                        <div id="dvPostedBy" style="text-align:right; margin-top: 12px;"></div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+<div class="row">
+    <div class="col-md-12">       
+        <!-- Modal -->
+        <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">            
+             <form class="form-horizontal"  onsubmit="return false;" method="post">
+                <div class="modal-dialog" role="document">
+                <div class="modal-content" style="width:800px;">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <div id="PopupHeader">
+                            <h4 class="modal-title" id="myModalLabel">Preference Setup</h4>
+                        </div>
+                    </div>
+                        <div class="modal-body">
+                            <div class="panel-body">
+                                <div class="form-group">
+                                    <div class="col-md-12 filterizeDate">
+                                        <label style="font-size: 12px; font-weight: normal">Date Filter</label>
+                                        <select class="dateFilterSelect" id="ddlDateFilterP" name="DateStep">
+                                            <option value ="CT" selected="selected">Custom</option>
+                                            <option value="TD">Today</option>
+                                            <option value="TM">This Month</option>
+                                            <option value="LM">Last Month</option>
+                                            <option value="TQ">This Quater</option>
+                                            <option value="LQ">Last Quarter</option>
+                                            <option value="TH">This Half Year</option>
+                                            <option value="LH">Last Half Year</option>
+                                            <option value="TY">This Year</option>
+                                            <option value="LY">Last Year</option>
+                                        </select>
+
+                                        <label style="font-size: 12px; font-weight: normal">From Date</label>
+                                        <input type="text" id="fromInputDateP" class="frmDataInput" placeholder="From Date" />
+                                        <input type="text" name="FromDateP" id="FromDateP" class="readOnlyInput" readonly="readonly" placeholder="From Date" style="width: 12%;" />
+
+                                        <label style="font-size: 12px; font-weight: normal">To Date</label>
+                                        <input type="text" class="frmDataInput" id="toInputDateP" placeholder="To Date">
+                                        <input type="text" name="ToDateP" class="readOnlyInput" readonly="readonly" id="ToDateP" placeholder="To Date" style="width: 12%;">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <div class="pref-slide">
+                                            <p>
+                                                <input type="text" name="figureAmount" id="figure1" readonly="" style="font-size: 10px; border: 0; color: #009999; font-weight: bold;">
+                                            </p>
+                                            <div id="slider1">
+                                                <label for="figure" style="font-size: 12px; font-weight: normal">Figure in</label>
+                                            </div>
+                                        </div>
+                                        <div class="pref-slide">
+                                            <p>
+                                                <input type="text" id="round1" name="roundupAmount" readonly="" style="font-size: 10px; border: 0; color: #009999; font-weight: bold;">
+                                            </p>
+                                            <div id="roundSlider1">
+                                                <label for="round" style="font-size: 12px; font-weight: normal">Round up</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group" id="ledgerP">
+                                        <label style="font-size: 12px; font-weight: normal">Account Head</label>
+                                        <select id="comboboxP" class="form-control" name="ledgerP">
+                                            <option>Select</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" id="btnOk" class="btn btn-primary" data-dismiss="modal">OK</button>
+                            <button type="button" id="btnLoad" class="btn btn-primary" onclick="return false;" data-toggle="modal" data-target="#MyPrefernces">Load</button>
+                            <button type="submit" id="btnSave" onclick="return btnSaveClick();" class="btn btn-primary" data-toggle="modal" data-target="#mysave">Save</button>
+                        </div>                        
+                </div>
+            </div>
+                <div class="modal fade" id="mysave" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                            <div class="modal-content modal-inner-popup">
+                                <div class="modal-header">
+                                    <button type="button" class="close DiaableInput" onclick=" $('#mysave').modal('toggle'); " aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                    Save As
+                                </div>
+                                <div class="modal-body">
+                                    <span id="MsgPrefName" style="font-size: 10px; color: indianred;"></span>
+                                    <table id="ShowWhenSave"></table>
+                                </div>
+                                <div class="modal-footer">
+                                    <div class="pref-input-div">
+                                        <label>Preference Name:</label>
+                                        <input id="PreferenceName" type="text" name="PreferenceName" disabled required /><input type="checkbox" name="SetDefault" id="SetDefault" style="width:22px;height:16px;"><label>Show in Menu</label>
+                                    </div>
+                                    <button type="submit" id="btnSavepref" class="btn btn-primary" data-dismiss="modal"><span class="fa fa-floppy-o" aria-hidden="true"></span></button>
+                                    <button type="button" class="btn btn-danger DiaableInput" onclick=" $('#mysave').modal('toggle'); "><span class="glyphicon glyphicon-remove"></span></button>
+                                </div>
+                            </div>
+                        </div>
+                <div class="modal fade" id="MyPrefernces" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                            <div class="modal-content modal-inner-popup">
+                                <div class="modal-header">
+                                    <button type="button" class="close" onclick=" $('#MyPrefernces').modal('toggle'); " aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                    Load
+                                </div>
+                                <div class="modal-body">
+                                    <div id="LoadPreferncesWidth">
+                                        <table id="LoadPrefernces"></table>
+                                        @* <button onclick="return deleteSelectedRow();" title="Remove" class="btn btn-danger">Remove</button>*@
+
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <div class="pref-input-div">
+                                        <span id="ShowHideThisSpan" style="font-size: 11px; color: indianred; display: none">No rows are selected</span>
+                                    </div>
+                                    <button onclick="return getSelectedRow();" style="float: right;" class="btn btn-success">Load</span></button>
+                                </div>
+                            </div>
+                        </div>
+              </form>
+        </div>
+    </div>
+
+
+</div>
+<div class="window-load" id="Loading">
+    <img src="~/Images/Loading.gif" />
+</div>
+<input type="hidden" id="hdAc" value="0" />
+<script>
+    $(document).ready(function () {
+        $('#trialexpand').hide();
+    });
+</script>
+<script>
+    $(document).ready(function () {
+
+      $('#asdf').text("Actual");
+        //pathArray = location.href.split('=');
+        //protocol = pathArray[0];
+        //if (protocol != pathArray) {
+        //    param = {
+        //        prefCode: window.location.search.substr(1).split('=')[1],
+        //    };
+        //    $.ajax({
+        //        type: 'POST',
+        //        async: false,
+        //        url: "../TrialBalance/getledgerprefdata",
+        //        data: JSON.stringify(param),
+        //        contentType: "application/json; charset=utf-8",
+        //        success: function (response) {
+        //            figureAmount = response[0].figureAmount;
+        //            decimalPlacesAmount = response[0].roundupAmount;
+        //            fromDate = response[0].fromDate;
+        //            toDate = response[0].toDate;
+        //            ledger = response[0].ledger;
+        //            //$("#round1") = decimalPlacesAmount;
+        //            //$("#figure1") = figureAmount;
+        //            $("#divBalanceSheetReport").empty().append(response);
+        //        }
+        //    });
+        //    function reloaddata() {
+
+        //        $('#Loading').show();
+        //        $('#MyContextMenu').hide();
+        //        $('#MyContextMenus').hide();
+
+
+        //        var param = {
+        //            From: fromDate,
+        //            To: toDate,
+        //            figureAmount: figureAmount,
+        //            roundupAmount: decimalPlacesAmount,
+        //            Id: ledger,
+        //        };
+
+        //        var grid = $("#jqGrid");
+        //        $.ajax({
+        //            type: 'POST',
+        //            async: false,
+        //            url: '../TrialBalance/OnLedgerRequested',
+        //            dataType: "json",
+        //            data: param,
+        //            success: function (data) {
+        //                $('#asdf').text(figureAmount);
+        //                grid.trigger("reloadGrid", [{ current: true }]);
+        //                $("#jqGrid").show();
+        //                if ($('#hdAc').val() != 'Select') {
+        //                    $("#gridMain").show();
+        //                }
+        //                else {
+        //                    $("#gridMain").hide();
+        //                }
+        //            },
+        //            error: function () { }
+        //        });
+        //        $.ajax({
+        //            type: 'POST',
+        //            async: false,
+        //            url: "../TrialBalance/GetLedgerName/",
+        //            data: JSON.stringify(param),
+        //            contentType: "application/json; charset=utf-8",
+        //            success: function (response) {
+        //                $("#divReportName").empty().append(response);
+        //            }
+        //        });
+        //        if ($('#hdAc').val() != 'Select') {
+        //            $("#combobox").val($('#hdAc').val()).combobox("refresh");
+        //        }
+        //        $('#Loading').hide();
+
+
+        //    }
+        //    reloaddata();
+        //}
+        //else {
+        //    LoadTreeData1('0');
+        //}
+
+      LoadTreeData1('0');
+
+
+
+    });
+
+    $("#btnCommonSearch").on("click", function (eve) {
+        LoadTreeData('1');
+    });
+    $("#btnOk").on("click", function (eve) {
+        LoadTreeData1('1');
+    });
+    $("#btnSavepref").on("click", function (eve) {
+        var param = {
+            Id: $("#ddlDateFilterP").val(),
+            From: $("#FromDateP").val(),
+            To: $("#ToDateP").val(),
+            figureAmount: $("#figure1").val(),
+            roundupAmount: $("#round1").val(),
+            PreferenceName: $("#PreferenceName").val(),
+            SetDefault: $("#SetDefault").val(),
+            LedgerP: $("#comboboxP").val(),
+        };
+        $.ajax({
+            type: 'POST',
+            async: false,
+            url: "../TrialBalance/LedgerStatement/",
+            data: JSON.stringify(param),
+            contentType: "application/json; charset=utf-8",
+            success: function (response) {
+                $("#divBalanceSheetReport").empty().append(response);
+            }
+        });
+
+    })
+    function LoadTreeData(PageId) {
+        $('#Loading').show();
+        $("#jqGrid").hide();
+        var param;
+        if (window.location.search.substr(1).split('&') == '') {
+            PageId = '1';
+        }
+        if (PageId == '0') {
+            param = {
+                Id: window.location.search.substr(1).split('&')[0].split('=')[1],
+                From: window.location.search.substr(1).split('&')[1].split('=')[1],
+                To: window.location.search.substr(1).split('&')[2].split('=')[1],
+            };
+            $('#hdAc').val(window.location.search.substr(1).split('&')[0].split('=')[1]);
+        }
+        else {
+                param = {
+                    Id: $("#combobox").val(),
+                    From: $("#FromDate").val(),
+                    To: $("#ToDate").val(),
+                };            
+            $('#hdAc').val($("#combobox").val());
+        }
+        var grid = $("#jqGrid");
+        $.ajax({
+            type: 'POST',
+            async: false,
+            url: '../TrialBalance/OnLedgerRequested',
+            dataType: "json",
+            data: param,
+            success: function (data) {
+                grid.trigger("reloadGrid", [{ current: true }]);
+                $("#jqGrid").show();
+                if ($('#hdAc').val() != 'Select') {
+                    $("#gridMain").show();
+                }
+                else {
+                    $("#gridMain").hide();
+                }
+            },
+            error: function () { }
+        });
+        $.ajax({
+            type: 'POST',
+            async: false,
+            url: "../TrialBalance/GetLedgerName/",
+            data: JSON.stringify(param),
+            contentType: "application/json; charset=utf-8",
+            success: function (response) {
+                $("#divReportName").empty().append(response);
+            }
+        });
+        if ($('#hdAc').val() != 'Select') {
+            $("#combobox").val($('#hdAc').val()).combobox("refresh");
+        }
+        $('#Loading').hide();
+    }
+    function LoadTreeData1(PageId) {
+        $('#Loading').show();
+        $("#jqGrid").hide();
+        var param;
+        if (window.location.search.substr(1).split('&') == '') {
+            PageId = '1';
+        }
+        if (PageId == '0') {
+            param = {
+                Id: window.location.search.substr(1).split('&')[0].split('=')[1],
+                From: window.location.search.substr(1).split('&')[1].split('=')[1],
+                To: window.location.search.substr(1).split('&')[2].split('=')[1],
+                From: window.location.search.substr(1).split('&')[1].split('=')[1],
+                To: window.location.search.substr(1).split('&')[2].split('=')[1],
+            };
+            $('#hdAc').val(window.location.search.substr(1).split('&')[0].split('=')[1]);
+        }
+        else {
+                param = {
+                    Id: $("#comboboxP").val(),
+                    From: $("#FromDateP").val(),
+                    To: $("#ToDateP").val(),
+                    figureAmount: $("#figure1").val(),
+                    roundupAmount: $("#round1").val(),
+                }
+            $('#hdAc').val($("#combobox").val());
+        }
+        var grid = $("#jqGrid");
+        $.ajax({
+            type: 'POST',
+            async: false,
+            url: '../TrialBalance/OnLedgerRequested',
+            dataType: "json",
+            data: param,
+            success: function (data) {
+                switch ($("#figure1").val()) {
+                    case "lakh": figureAmount = 100000;
+                        break;
+                    case "thousand": figureAmount = 1000;
+                        break;
+                    case "crore": figureAmount = 10000000;
+                        break;
+                    case "Actual": figureAmount = 1;
+                        break;
+                }
+                if ($("#figure1").val() == "") {
+                    $('#asdf').text("Actual");
+                }
+                else {
+                    $('#asdf').text($("#figure1").val());
+                }
+                grid.trigger("reloadGrid", [{ current: true }]);
+                $("#jqGrid").show();
+                if ($('#hdAc').val() != 'Select') {
+                    $("#gridMain").show();
+                }
+                else {
+                    $("#gridMain").hide();
+                }
+            },
+            error: function () { }
+        });
+        $.ajax({
+            type: 'POST',
+            async: false,
+            url: "../TrialBalance/GetLedgerName/",
+            data: JSON.stringify(param),
+            contentType: "application/json; charset=utf-8",
+            success: function (response) {
+                $("#divReportName").empty().append(response);
+            }
+        });
+        if ($('#hdAc').val() != 'Select') {
+            $("#combobox").val($('#hdAc').val()).combobox("refresh");
+        }
+        $('#Loading').hide();
+    }
+</script>
+<script>
+    function jqGridwidth() {
+        setInterval(function () {
+            width = $(".table-content").width();
+            jQuery("#jqGrid").setGridWidth(width);
+        });
+    }
+    $(document).ready(function () {
+        $("#menu-toggle").click(function () {
+            jqGridwidth();
+        });
+
+    });
+</script>
+<script type="text/javascript">
+   
+    $(document).ready(function () {
+        var emp = {
+            Id: $("#combobox").val(),
+            From: $("#FromDate").val(),
+            To: $("#ToDate").val(),
+        };
+
+        classToSet = "hidden-xs"; //"hidden-xs", "ui-helper-hidden"
+
+        function applyClassesToHeaders(table) {
+            var columnInfo, iCol, iRow,
+                htable = $(table.grid.hDiv).find("table.ui-jqgrid-htable")[0],
+                firstRow = table.rows[0];
+            colModel = $(table).jqGrid("getGridParam", "colModel");
+            for (iCol = 0; iCol < colModel.length; iCol++) {
+                columnInfo = colModel[iCol];
+                if (columnInfo.classes) {
+                    for (iRow = 0; iRow < htable.rows.length; iRow++) {
+                        $(htable.rows[iRow].cells[iCol]).addClass(columnInfo.classes);
+                    }
+                    $(firstRow.cells[iCol]).addClass(columnInfo.classes);
+                }
+            }
+        }
+
+        $("#jqGrid").jqGrid({
+            url: '../TrialBalance/OnLedgerRequested',
+            mtype: "GET",
+            datatype: "json",
+            //data: emp,
+            colNames: ["Count", "Voucher Date", "Voucher No", "Particulars", "Dr Amount", "Cr Amount"],
+            colModel: [
+                { name: 'Count', hidden: true },
+                { width: 80, name: 'VoucherDate', sortable: false },
+                { width: 100, name: 'VoucherNO', sortable: false, resizable: false, search: false },
+                { width: 300, name: 'Particulars', sortable: false, resizable: false, search: false, align:"left" },
+                { width: 100, name: 'DR_AMOUNT', align: "right", sortable: false, resizable: false, search: false },
+                { width: 100, name: 'CR_AMOUNT', align: "right", sortable: false, resizable: false, search: false }
+            ],
+            ondblClickRow: function (rowId, iRow, iCol, e) {
+                var rowData = jQuery("#jqGrid").getRowData(rowId);
+                var VoucherDate = rowData['VoucherDate'];
+                var VoucherNO = rowData['VoucherNO'];
+                document.getElementById('VoucherScreen').style.display = 'block';
+                $("#divJQGridVoucher").show();
+                jQuery("#JQGridVoucher")
+                    .setGridParam({ url: "../TrialBalance/OnTrialBalanceDateWiseDetailsRequested?id=" + VoucherNO.replace("&", "__"), page: 1 })
+                    .trigger('reloadGrid');
+                var grid = $("#JQGridVoucher");
+                var gview = grid.parents("div.ui-jqgrid-view");
+                gview.children("div.ui-jqgrid-hdiv").hide();
+                $("#dvVoucherNo").html('<b>Voucher No: </b>' + VoucherNO);
+                $("#dvVoucherDate").html('<b>Voucher Date: </b>' + VoucherDate);
+            },
+            gridComplete: function () {
+                var JQGridDetailscount = jQuery("#jqGrid").jqGrid('getGridParam', 'records');
+                if (JQGridDetailscount == 0) {
+                    jQuery("#divjqGrid").show();
+                }
+                else {
+                    jQuery("#divjqGrid").show();
+                }
+            },
+            gridview: true,
+            viewrecords: true,
+            height: ($('#page-wrapper').height() - 38 - 31 - 18 - 21 - 26 - 15),
+            rowNum: 25,
+            caption:"Ledger Statement",
+            loadComplete: function () {
+                $(this).triggerHandler('resize.jqGrid');
+            },
+            pager: "#jqGridPager"
+        });
+        applyClassesToHeaders($('#jqGrid')[0]);
+
+        $(window).on('resize.jqGrid', function () {
+            $('#jqGrid').jqGrid('setGridWidth', $("#page-wrapper").width() - 20);
+        }).triggerHandler('resize.jqGrid');
+    });
+
+    var paramsJQGridVoucher = {};
+    paramsJQGridVoucher.initialized = false;
+    $("#JQGridVoucher").jqGrid({
+        url: "../TrialBalance/OnTrialBalanceDateWiseDetailsRequested",
+        mtype: "GET",
+        datatype: "json",
+        page: 1,
+        jsonReader: { id: "VoucherNO" },
+        prmNames: { id: "VoucherNO" },
+        colNames: ["Voucher No.", "SNo.", "Account Head", "Niration", "Debit", "Credit", "Created By", "Posted By"],
+        colModel: [
+            { key: true, width: 50, name: "VoucherNO", hidden: true },
+            { width: 50, name: "SNo" },
+            { width: 463, name: "Particulars", align: "justify", resizable: false },
+            { width: 50, name: "Niration", hidden: true },
+            { width: 100, name: "DRAMOUNT", align: "right", sortable: false, resizable: false, search: false },
+            { width: 100, name: "CRAMOUNT", align: "right", sortable: false, resizable: false, search: false },
+            { width: 50, name: "CREATED_BY", hidden: true },
+            { width: 50, name: "POSTED_BY", hidden: true },
+        ],
+        pager: "#JQGridVoucher_pager",
+        gridComplete: function () {
+            $("#gview_JQGridVoucher .ui-jqgrid-bdiv").css("height", "");
+            $("#gview_JQGridVoucher .ui-jqgrid-bdiv").css("max-height", "370px");
+            var JQGridVouchercount = jQuery("#JQGridVoucher").jqGrid('getGridParam', 'records');
+            if (JQGridVouchercount == 0) {
+                jQuery("#divJQGridVoucher").show();
+            }
+            else {
+                jQuery("#divJQGridVoucher").show();
+            }
+            var ids = jQuery("#JQGridVoucher").jqGrid('getDataIDs');
+            for (var i = 1; i < 2; i++) {
+                var rowId = ids[i];
+                var rowData = jQuery("#JQGridVoucher").getRowData(rowId);
+                var Niration = rowData['Niration'];
+                var CreatedBy = rowData['CREATED_BY'];
+                var PostedBy = rowData['POSTED_BY'];
+                $("#dvNiration").html('<b>Narration: </b>' + Niration);
+                $("#dvPostedBy").html('<b>Posted By: </b>' + CreatedBy);
+                $("#dvCreatedBy").html('<b>Created By: </b>' + PostedBy);
+            }
+        },
+        // Customizations
+        scroll: false, // controls visibility of recordtext
+        width: 760,
+        shrinkToFit: true,
+        height: "370px",
+        //recordtext: "{2} Records", // overrides default set in grid.locale-en.js
+        viewrecords: true,
+        loadError: JQGridDemo.jqGrid_aspnet_loadErrorHandler,
+    });
+    $("#JQGridVoucher_pager_center").hide(); // Hides the central paging control
+    jQuery('#JQGridVoucher').bindKeys(); // binds the up/down arrow keys:
+
+</script>
+
+<script>
+    $("#btnLoad").click(function () {
+        $(".HideMeOnLoad").remove();
+        $("#LoadPrefernces").jqGrid('setGridParam', { datatype: 'json' }).trigger('reloadGrid');
+        var $grid = $("#LoadPrefernces"),
+        emptyMsgDiv = $("<div class='HideMeOnLoad'><span style='font-size:12px;padding:5px;'> No records found...</span></div>");
+        $("#LoadPrefernces").jqGrid({
+            url: '../TrialBalance/LedgerAjax',
+            mtype: "GET",
+            datatype: "json",
+            colModel: [
+                { label: 'PrefernceId', name: 'PREF_CODE', key: true, autowidth: true, hidden: true },
+                { label: 'NAME', name: 'PREF_NAME', width: 480 },
+                { name: 'Action', index: 'act', align: 'center', width: 100, sortable: false },
+            ],
+            emptyrecords: "prefernces are not saved",
+            viewrecords: true,
+            autowidth: true,
+            shrinkToFit: false,
+            width:580,
+            rowNum: 20,
+            gridComplete: function () {
+                var ts = this;
+                if (ts.p.reccount === 0) {
+                    $(this).hide();
+                    emptyMsgDiv.show();
+                } else {
+                    $(this).show();
+                    emptyMsgDiv.hide();
+                }
+                var ids = jQuery("#LoadPrefernces").jqGrid('getDataIDs');
+                for (var i = 0; i < ids.length; i++) {
+                    var cl = ids[i];
+                    be = "<button class='btn-preference btn-pref-rem' onclick='deleteSelectedRow(" + cl + ")'><span class='fa fa-close'></span></button>";
+                    jQuery("#LoadPrefernces").jqGrid('setRowData', ids[i], { Action: be });
+                }
+            }
+        });
+        emptyMsgDiv.insertAfter($grid.parent());
+    });
+    function getSelectedRow() {
+        var rsteps = ["0", "0.0", "0.00", "0.000", "0.0000"];
+        var fsteps = ["Actual", "thousand", "lakh", "crore", ];
+
+        $("#ShowHideThisSpan").hide();
+        var grid = $("#LoadPrefernces");
+        var rowKey = grid.jqGrid('getGridParam', "selrow");
+        if (rowKey) {
+            $.ajax({
+                url: "../TrialBalance/LedgerAjaxComplete?rowKey=" + rowKey, success: function (result) {
+                    var res = result.split(",");
+
+                    var arrayLength = res.length;
+                    var i = 0;
+                    if (res[2] == "1") { var j = 0; }
+                    if (res[2] == "1000") { var j = 1; }
+                    if (res[2] == "100000") { var j = 2; }
+                    if (res[2] == "10000000") { var j = 3; }
+                    $("#slider1").slider({
+                        value: j,
+                        min: 0,
+                        max: 3,
+                        slide: function (event, ui) {
+                            $("#figure1").val(fsteps[ui.value]);
+                        }
+                    });
+                    $("#figure1").val(fsteps[j]);
+                    //$("#figure1").val(fsteps[$("#slider1").slider("value")]);
+                    if (res[3] == '0') { var k = 0; }
+                    if (res[3] == '0.0') { var k = 1; }
+                    if (res[3] == '0.00') { var k = 2; }
+                    if (res[3] == '0.000') { var k = 3; }
+                    if (res[3] == '0.0000') { var k = 4; }
+                    $("#roundSlider1").slider({
+                        value: k,
+                        min: 0,
+                        max: 4,
+                        slide: function (event, ui) {
+                            $("#round1").val(rsteps[ui.value]);
+                        }
+                    });
+                    $("#round1").val(rsteps[k]);
+
+                    //$("#FromDate").val(res[5]);
+                    //$('#fromInputDate').val(AD2BS($("#FromDate").val()));
+                    var test = res[4].toString();
+                    $('#ddlDateFilterP').val(test);
+                    //var fd = res[5].toString();
+                    //$('#FromDateP').val(fd);
+                    $("#FromDateP").val(res[5]);
+                    $('#fromInputDateP').val(AD2BS($("#FromDateP").val()));
+                    //var td = res[6].toString();
+                    //$('#ToDateP').val(td);
+                    $("#ToDateP").val(res[6]);
+                    $('#toInputDate').val(AD2BS($("#ToDateP").val()));
+                    var ledger = res[7].toString();
+                    $('#comboboxP').val(ledger);
+                    var id = $(".adddiv button:last").attr("id");
+                    for (var l = 0 ; l <= id ; l++) {
+                        if (l == 0) {
+                            document.getElementById(l.toString() + l.toString()).remove();
+                            document.getElementById(l.toString() + l.toString() + l.toString() + l.toString()).remove();
+                        } else {
+                            document.getElementById(l.toString()).remove();
+                            document.getElementById(l.toString() + l.toString()).remove();
+                            document.getElementById(l.toString() + l.toString() + l.toString() + l.toString()).remove();
+                        }
+                    }
+                    var SetId = 0;
+                    $('.adddiv').append("<div class='newbox' id='" + SetId.toString() + SetId.toString() + SetId.toString() + "'><input type='text' id='" + SetId.toString() + SetId.toString() + SetId.toString() + SetId.toString() + "' value='" + 0 + "' readonly='true' style='width:30%;'><input type='text' id='" + SetId.toString() + SetId.toString() + "' name='Steps[" + SetId + "]'  style='width:30%;margin-left:4px;' value='" + res[5] + "' onblur='ModifyNextId(this.id);' /></div>");
+                    SetId = 1;
+                    for (var i = 6; i < arrayLength; i++) {
+                        $('.adddiv').append("<div class='newbox' id='" + SetId.toString() + SetId.toString() + SetId.toString() + "'><input type='text' id='" + SetId.toString() + SetId.toString() + SetId.toString() + SetId.toString() + "' value='" + (parseInt(res[i - 1]) + 1) + "' readonly='true' style='width:30%;'><input type='text' id='" + SetId.toString() + SetId.toString() + "' name='Steps[" + SetId + "]'  style='width:30%;margin-left:4px;' value='" + res[i] + "' onblur='ModifyNextId(this.id);' /><button id=" + SetId.toString() + " onclick='return DeleteThis(this.id);' class='btn-preference btn-pref-rem'><span class='fa fa-close'></span></button></div>");
+                        SetId = SetId + 1;
+                    }
+                    $('#MyPrefernces').modal('toggle');
+                }
+            });
+        }
+        else {
+            $("#ShowHideThisSpan").show();
+        }
+        return false;
+    }
+
+    function deleteSelectedRow(rowKey) {
+        $("#ShowHideThisSpan").hide();
+        if (confirm('Are You Sure!')) {
+            if (rowKey) {
+                $.ajax({
+                    url: "../TrialBalance/LedgerAjaxRemoveRow?rowKey=" + rowKey, success: function () {
+                        $("#LoadPrefernces").jqGrid('setGridParam', { datatype: 'json' }).trigger('reloadGrid');
+                    }
+
+                });
+                $("#LoadPrefernces").jqGrid('setGridParam', { datatype: 'json' }).trigger('reloadGrid');
+            }
+            else {
+                $("#ShowHideThisSpan").show();
+            }
+        }
+        return false;
+    }
+
+    function btnSaveClick() {
+        $("#PreferenceName").prop('disabled', false);
+        $("#ShowWhenSave").jqGrid({
+            url: '../TrialBalance/LedgerAjax',
+            mtype: "GET",
+            datatype: "json",
+            colModel: [
+                { label: 'PrefernceId', name: 'PREF_CODE', key: true, autowidth: true, hidden: true },
+                { label: 'NAME', name: 'PREF_NAME', width: 580, },
+            ],
+            emptyrecords: "prefernces are not saved",
+            viewrecords: true,
+            autowidth: true,
+            shrinkToFit: false,
+            width: 580,
+            rowNum: 20,
+        });
+
+        return false;
+    }
+
+    $("#SetDefault").change(function () {
+        if ($('#SetDefault').is(':checked')) {
+            $("#SetDefaultMsg").html("Default");
+        } else {
+            $("#SetDefaultMsg").html("");
+        }
+    });
+    $(".DiaableInput").click(function () {
+        $("#PreferenceName").prop('disabled', true);
+    });
+</script>
+<script>
+    function validateArrY() {
+        $("#MsgPrefName").html("");
+        var id = document.getElementById("CheckDiv").innerHTML;
+        var counter = 0;
+        for (var i = 0; i <= parseInt(id) ; i++) {
+
+            if (document.getElementById(i.toString() + i.toString()) != null) {
+                var RealValue = document.getElementById(i.toString() + i.toString()).value;
+                $('.ActualAddDiv').append("<div class='NewDivision'><input type='text' name='Steps[" + counter + "]' value='" + RealValue + "' readonly='true' style='width:30%;'></div>");
+
+                if (document.getElementById(i.toString()) != null) {
+                    document.getElementById(i.toString()).remove();
+                }
+                if (document.getElementById(i.toString() + i.toString()) != null) {
+                    document.getElementById(i.toString() + i.toString()).remove();
+                }
+                if (document.getElementById(i.toString() + i.toString() + i.toString()) != null) {
+                    document.getElementById(i.toString() + i.toString() + i.toString()).remove();
+                }
+                if (document.getElementById(i.toString() + i.toString() + i.toString() + i.toString()) != null) {
+                    document.getElementById(i.toString() + i.toString() + i.toString() + i.toString()).remove();
+                }
+                counter = counter + 1;
+            }
+        }
+        $.ajax({
+            url: "../TrialBalance/GetPreferenceNameListLedger", success: function (result) {
+                var res = result.split(",");
+                var arrayLength = res.length;
+                var Name = $("#PreferenceName").val();
+                for (var i = 0; i <= res.length - 1; i++) {
+                    if (res[i] == Name) {
+                        if (confirm('Update Existing')) {
+                            $('#Loading').show();
+                            $('#sambhoo').hide();
+                            $('#myModal').modal('toggle');
+                            return true;
+                        } else {
+                            $("#MsgPrefName").html("Please Change Your Prefernce Name");
+                            return false;
+                        }
+                    }
+                }
+
+            }
+        });
+        //$('#Loading').show();
+        //$('#sambhoo').hide();
+        //$('#myModal').modal('toggle');
+        return true;
+    }
+    
+    function DeleteThis(id) {
+        document.getElementById(id).remove();
+        document.getElementById(id + id).remove();
+        if (document.getElementById(id + id + id) != null) {
+            document.getElementById(id + id + id).remove();
+        }
+        if (document.getElementById(id + id + id + id) != null) {
+            document.getElementById(id + id + id + id).remove();
+        }
+        var TotalId = parseInt(document.getElementById("CheckDiv").innerHTML);
+        var NextVal = 0;
+        for (var j = 0 ; j <= TotalId ; j++) {
+
+            if (document.getElementById(j.toString() + j.toString()) != null) {
+                NextVal = document.getElementById(j.toString() + j.toString()).value;
+            }
+            for (var k = j ; k <= TotalId; k++) {
+                var NextId = parseInt(k) + 1;
+                if (document.getElementById(NextId.toString() + NextId.toString() + NextId.toString() + NextId.toString()) != null) {
+                    document.getElementById(NextId.toString() + NextId.toString() + NextId.toString() + NextId.toString()).value = parseInt(NextVal) + 1;
+                    break;
+                }
+            }
+        }
+        return false;
+    }
+    function ModifyNextId(id) {
+        var NextVal = parseInt($('#' + id).val()) + 1;
+        $('#' + id).next('input').val(NextVal);
+        $('#' + id).next('button').next('input').val(NextVal);
+    }
+
+
+</script>
+<script>
+    var rsteps = [
+   "0",
+   "0.0",
+   "0.00",
+   "0.000",
+   "0.0000"
+    ];
+    var fsteps = [
+    "Actual",
+    "thousand",
+    "lakh",
+    "crore",
+    ];
+    $(function () {
+        $("#slider1").slider({
+            value: 0,
+            min: 0,
+            max: 3,
+            slide: function (event, ui) {
+                $("#figure1").val(fsteps[ui.value]);
+            }
+        });
+        $("#figure1").val(fsteps[$("#slider1").slider("value")]);
+        $("#roundSlider1").slider({
+            value: 2,
+            min: 0,
+            max: 4,
+            slide: function (event, ui) {
+                $("#round1").val(rsteps[ui.value]);
+            }
+        });
+        $("#round1").val(rsteps[$("#roundSlider1").slider("value")]);
+    });
+</script>
+
+<script>
+    $(document).ready(function () {
+        $('#fromInputDateP').nepaliDatePicker({
+            ndpEnglishInput: 'FromDateP'
+        });
+        $('#toInputDateP').nepaliDatePicker({
+            ndpEnglishInput: 'ToDateP'
+        });
+        var current_date = getNepaliDate();
+        $('#fromInputDateP').val(current_date);
+        $('#toInputDateP').val(current_date);
+        $("#FromDateP").datepicker({ dateFormat: 'yy-mm-dd' });
+        $("#ToDateP").datepicker({ dateFormat: 'yy-mm-dd' });
+        $('#FromDateP').val(BS2AD($("#fromInputDateP").val()));
+        $('#ToDateP').val(BS2AD($("#toInputDateP").val()));
+
+        //if ($('#ddlDateFilterP').val() == "CT") {
+        //    $('#fromInputDateP').prop('disabled', false);
+        //    $('#FromDateP').prop('disabled', false);
+        //    $('#toInputDateP').prop('disabled', false);
+        //    $('#ToDateP').prop('disabled', false);
+        //}
+        //$('#ddlDateFilterP').change(function () {
+        //    if ($('#ddlDateFilterP').val() == "CT") {
+        //        $('#fromInputDateP').prop('disabled', false);
+        //        $('#FromDateP').prop('disabled', false);
+        //        $('#toInputDateP').prop('disabled', false);
+        //        $('#ToDateP').prop('disabled', false);
+        //    }
+        //    else {
+        //        $('#fromInputDateP').prop('disabled', true);
+        //        $('#FromDateP').prop('disabled', true);
+        //        $('#toInputDateP').prop('disabled', true);
+        //        $('#ToDateP').prop('disabled', true);
+        //    }
+        //});
+    });
+</script>
+<script type="text/javascript">
+    $(function () {
+        $("#ddlDateFilterP").change(function () {
+            var current_date = getNepaliDate();
+            var current_date = current_date.split("-");
+            var cYear = current_date[0];
+            var cMonth = current_date[1];
+            var cDay = current_date[2];
+            if ($('option:selected', this).val() == "TD") {
+                var FromDate = cYear + "-" + cMonth + "-" + cDay;
+                var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                $("#fromInputDateP").val(FromDate);
+                $("#toInputDateP").val(ToDate);
+            }
+            else if ($('option:selected', this).val() == "TY") {
+                var FromDate = cYear + "-" + "04" + "-" + "01";
+                var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                $("#fromInputDateP").val(FromDate);
+                $("#toInputDateP").val(ToDate);
+            }
+            else if ($('option:selected', this).val() == "LY") {
+                var FromDate = (cYear - 1) + "-" + "04" + "-" + "01";
+                var ToDate = cYear + "-" + "03" + "-" + numberOfBsDays(cYear, "2");
+                $("#fromInputDateP").val(FromDate);
+                $("#toInputDateVoucher").val(ToDate);
+            }
+            else if ($('option:selected', this).val() == "TM") {
+                var FromDate = cYear + "-" + cMonth + "-" + "01";
+                var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                $("#fromInputDateP").val(FromDate);
+                $("#toInputDateP").val(ToDate);
+            }
+            else if ($('option:selected', this).val() == "LM") {
+                if (cMonth == 1) {
+                    cYear = cYear - 1;
+                    cMonth = "12";
+                }
+                else {
+                    cMonth = cMonth - 1;
+                }
+                var newToDate = numberOfBsDays(cYear, (cMonth - 1));
+                if (cMonth > 1 && (cMonth) < 10)
+                    cMonth = "0" + cMonth;
+                var FromDate = cYear + "-" + cMonth + "-" + "01";
+                var ToDate = cYear + "-" + cMonth + "-" + newToDate;
+                $("#fromInputDateP").val(FromDate);
+                $("#toInputDateP").val(ToDate);
+            }
+            else if ($('option:selected', this).val() == "TQ") {
+                if (cMonth > 3 && cMonth < 7) {
+                    var FromDate = cYear + "-" + "04" + "-" + "01";
+                    var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                    $("#fromInputDateP").val(FromDate);
+                    $("#toInputDateP").val(ToDate);
+                }
+                else if (cMonth > 6 && cMonth < 10) {
+                    var FromDate = cYear + "-" + "07" + "-" + "01";
+                    var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                    $("#fromInputDateP").val(FromDate);
+                    $("#toInputDateP").val(ToDate);
+                }
+                else if (cMonth > 9 && cMonth <= 12) {
+                    var FromDate = cYear + "-" + "10" + "-" + "01";
+                    var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                    $("#fromInputDateP").val(FromDate);
+                    $("#toInputDateP").val(ToDate);
+                }
+                else if (cMonth >= 1 && cMonth < 4) {
+                    var FromDate = cYear + "-" + "01" + "-" + "01";
+                    var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                    $("#fromInputDateP").val(FromDate);
+                    $("#toInputDateP").val(ToDate);
+                }
+            }
+            else if ($('option:selected', this).val() == "LQ") {
+                if (cMonth > 3 && cMonth < 7) {
+                    var FromDate = cYear + "-" + "01" + "-" + "01";
+                    var ToDate = cYear + "-" + "03" + "-" + numberOfBsDays(cYear, "2");
+                    $("#fromInputDateP").val(FromDate);
+                    $("#toInputDateP").val(ToDate);
+                }
+                else if (cMonth > 6 && cMonth < 10) {
+                    var FromDate = cYear + "-" + "04" + "-" + "01";
+                    var ToDate = cYear + "-" + "06" + "-" + numberOfBsDays(cYear, "5");
+                    $("#fromInputDateP").val(FromDate);
+                    $("#toInputDateP").val(ToDate);
+                }
+                else if (cMonth > 9 && cMonth <= 12) {
+                    var FromDate = cYear + "-" + "07" + "-" + "01";
+                    var ToDate = (cYear + 1) + "-" + "09" + "-" + numberOfBsDays((cYear + 1), "8");
+                    $("#fromInputDateP").val(FromDate);
+                    $("#toInputDateP").val(ToDate);
+                }
+                else if (cMonth >= 1 && cMonth < 4) {
+                    var FromDate = (cYear - 1) + "-" + "10" + "-" + "01";
+                    var ToDate = (cYear - 1) + "-" + "12" + "-" + numberOfBsDays((cYear - 1), "11");
+                    $("#fromInputDateP").val(FromDate);
+                    $("#toInputDateP").val(ToDate);
+                }
+            }
+            else if ($('option:selected', this).val() == "TH") {
+                if (cMonth > 3 && cMonth < 10) {
+                    var FromDate = cYear + "-" + "04" + "-" + "01";
+                    var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                    $("#fromInputDateP").val(FromDate);
+                    $("#toInputDateP").val(ToDate);
+                }
+                else {
+                    var FromDate = cYear + "-" + "10" + "-" + "01";
+                    var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                    $("#fromInputDateP").val(FromDate);
+                    $("#toInputDateP").val(ToDate);
+                }
+            }
+            else if ($('option:selected', this).val() == "LH") {
+                if (cMonth > 3 && cMonth < 10) {
+                    var FromDate = (cYear - 1) + "-" + "10" + "-" + "01";
+                    var ToDate = cYear + "-" + "03" + "-" + numberOfBsDays(cYear, "2");
+                    $("#fromInputDateP").val(FromDate);
+                    $("#toInputDateP").val(ToDate);
+                }
+                else if (cMonth >= 10) {
+                    var FromDate = cYear + "-" + "04" + "-" + "01";
+                    var ToDate = cYear + "-" + "09" + "-" + numberOfBsDays(cYear, "8");
+                    $("#fromInputDateP").val(FromDate);
+                    $("#toInputDateP").val(ToDate);
+                }
+                else {
+                    var FromDate = (cYear - 1) + "-" + "04" + "-" + "01";
+                    var ToDate = (cYear - 1) + "-" + "09" + "-" + numberOfBsDays((cYear - 1), "8");
+                    $("#fromInputDateP").val(FromDate);
+                    $("#toInputDateP").val(ToDate);
+                }
+            }
+            $('#FromDateP').val(BS2AD($("#fromInputDateP").val()));
+            $('#ToDateP').val(BS2AD($("#toInputDateP").val()));
+        });
+    });
+    //$(document).ready(function () {
+    //    pathArray = location.href.split('?');
+    //    protocol = pathArray[0];
+    //    if (protocol == pathArray ) {
+    //        $('.fa-arrow-down').addClass('active').attr('aria-expanded', 'true');
+    //        $('#search').addClass('in');
+    //    }
+    //})
+
+</script>
+
+<script>
+    (function ($) {
+        $.widget("custom.combobox", {
+            _create: function () {
+                this.wrapper = $("<span>")
+                  .addClass("custom-combobox")
+                  .insertAfter(this.element);
+
+                this.element.hide();
+                this._createAutocomplete();
+                this._createShowAllButton();
+            },
+
+            _createAutocomplete: function () {
+                var selected = this.element.children(":selected"),
+                  value = selected.val() ? selected.text() : "";
+
+                this.input = $("<input>")
+                  .appendTo(this.wrapper)
+                  .val(value)
+                  .attr("title", "")
+                  .addClass("custom-combobox-input ui-widget ui-widget-content ui-state-default ui-corner-left")
+
+                  .autocomplete({
+                      delay: 0,
+                      minLength: 0,
+                      source: $.proxy(this, "_source")
+                  })
+                  .tooltip({
+                      tooltipClass: "ui-state-highlight"
+                  });
+
+                this._on(this.input, {
+                    autocompleteselect: function (event, ui) {
+                        ui.item.option.selected = true;
+                        this._trigger("select", event, {
+                            item: ui.item.option
+                        });
+                    },
+
+                    autocompletechange: "_removeIfInvalid"
+                });
+            },
+
+            _createShowAllButton: function () {
+                var input = this.input,
+                  wasOpen = false;
+                $("<a>")
+                  .attr("tabIndex", -1)
+                  .attr("title", "Show All Items")
+                  .tooltip()
+                  .appendTo(this.wrapper)
+
+                  .removeClass("ui-corner-all")
+                  .addClass("ui-button custom-combobox-toggle  ui-icon ui-icon-triangle-1-s ui-corner-right btn-dropdown-custom")
+                     .button({
+                         icons: {
+                             primary: "ui-button-icon-primary ui-icon ui-icon-triangle-1-s"
+                         },
+                         text: false
+                     })
+                  .mousedown(function () {
+                      wasOpen = input.autocomplete("widget").is(":visible");
+                  })
+                  .click(function () {
+                      input.focus();
+
+                      // Close if already visible
+                      if (wasOpen) {
+                          return;
+                      }
+
+                      // Pass empty string as value to search for, displaying all results
+                      input.autocomplete("search", "");
+                  });
+            },
+
+            _source: function (request, response) {
+                var matcher = new RegExp($.ui.autocomplete.escapeRegex(request.term), "i");
+                response(this.element.children("option").map(function () {
+                    var text = $(this).text();
+                    if (this.value && (!request.term || matcher.test(text)))
+                        return {
+                            label: text,
+                            value: text,
+                            option: this
+                        };
+                }));
+            },
+
+            _removeIfInvalid: function (event, ui) {
+
+                // Selected an item, nothing to do
+                if (ui.item) {
+                    return;
+                }
+
+                // Search for a match (case-insensitive)
+                var value = this.input.val(),
+                  valueLowerCase = value.toLowerCase(),
+                  valid = false;
+                this.element.children("option").each(function () {
+                    if ($(this).text().toLowerCase() === valueLowerCase) {
+                        this.selected = valid = true;
+                        return false;
+                    }
+                });
+
+                // Found a match, nothing to do
+                if (valid) {
+                    return;
+                }
+
+                // Remove invalid value
+                this.input
+                  .val("")
+                  .attr("title", value + " didn't match any item")
+                  .tooltip("open");
+                this.element.val("");
+                this._delay(function () {
+                    this.input.tooltip("close").attr("title", "");
+                }, 2500);
+                this.input.autocomplete("instance").term = "";
+            },
+            refresh: function () {
+                selected = this.element.children(":selected");
+                this.input.val(selected.text());
+            },
+            _destroy: function () {
+                this.wrapper.remove();
+                this.element.show();
+            }
+        });
+    })(jQuery);
+
+    $(function () {
+        $("#combobox").combobox();
+    });
+</script>
+<script>
+    var Ledger = {
+        init: function () {
+
+            Ledger.BindDropdown();
+        },
+        BindDropdown: function () {
+            $.ajax({
+                cache: false,
+                type: "Post",
+                url: "@Url.Action("GetLedgerList", "TrialBalance")",
+                success: function (data) {
+                    $("#comboboxP").html('');
+                    $.each(data, function (key, value) {
+                        $("#comboboxP").append($('<option></option>').val(value.ACC_CODE).html(value.ACC_EDESC));
+                    })
+                }
+            });
+            $.ajax({
+                cache: false,
+                type: "Post",
+                url: "@Url.Action("GetLedgerList", "TrialBalance")",
+                success: function (data) {
+                    $("#combobox").html('');
+                    $.each(data, function (key, value) {
+                        $("#combobox").append($('<option></option>').val(value.ACC_CODE).html(value.ACC_EDESC));
+                    })
+                }
+              });
+        },
+    }
+    $(function () {
+        Ledger.init();
+    })
+</script>

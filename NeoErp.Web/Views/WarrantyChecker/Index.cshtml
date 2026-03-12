@@ -1,0 +1,351 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_LayoutNew.cshtml";
+}
+<style>
+    .color-green {
+      color: green;
+    }
+
+    .color-red {
+      color: red;
+    }
+    .cwidth{
+        min-height:90px;
+        width: 32%;
+        box-shadow: 5px 5px 5px #ddd;
+        -moz-box-shadow: 5px 5px 5px #ddd;
+        -webkit-box-shadow: 5px 5px 5px #ddd;
+        -o-box-shadow:5px 5px 5px #ddd;
+        margin-top:10px;
+    } 
+    .cwidth:focus,.cwidth:active{
+        box-shadow: 5px 5px 5px #ddd !important;
+        -moz-box-shadow: 5px 5px 5px #ddd !important;
+        -webkit-box-shadow: 5px 5px 5px #ddd !important;
+        -o-box-shadow:5px 5px 5px #ddd !important;
+        border:none !important;
+
+    }
+</style>
+<div class="page-content-wrapper" id="operationContent">
+    <div class="page-content full-width" style="min-height:310px">
+            <div ng-app="warrantyApp" >
+                <div ng-controller="warrantyCtrl" class="row row-details">
+                        <!-- BEGIN PAGE CONTENT-->
+                        <div class="a col-lg-12">
+                        <div class="divList">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <!-- BEGIN EXAMPLE TABLE PORTLET-->
+                                    <div class="portlet portlet-sortable  light bordered">
+                                        <div class="portlet-title">
+                                            <div class="caption">
+                                                <i class="fa fa-globe"></i>
+                                                <span class="caption-subject bold uppercase font-green-haze">Warranty Checker</span>
+                                            </div>
+                                            <div class="tools">
+                                                <a href="javascript:;" class="collapse">
+                                                </a>
+                                               
+                                                <a href="javascript:;" class="reload" ng-click="ReloadGrid()">
+                                                </a>
+                                               
+                                            </div>
+                                        </div>
+                                    
+                                    <div class="col-xs-4"></div>
+                                        <div class="portlet-body">
+                                                <div class="row">
+                                                <div class="col-xs-12">
+                                                    @*<div class="col-xs-2"></div>*@
+                                                    <div class="col-xs-12 well well-sm">
+                                                    <div ng-form="warranty" role="search" novalidate>
+                                                      <div class="navbar-form navbar-left col-md-6" >    
+                                                        <div style="position:center" role="search">
+                                                            <div class="form-group">
+                                                                <input type="text" name="serial" ng-model="serialNo" class="form-control" placeholder="MAC/Serial No" required>
+                                                                <div ng-messages="warranty.serial.$error" ng-if="warranty.$submitted || warranty.$touched">
+                                                                    <div ng-message="required">
+                                                                         @*<span class="required">This field is required</span>*@
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <button type="submit" class="btn btn-default" ng-click="GetWarrantyData(warranty.$valid)"><span class="glyphicon glyphicon-search" ></span></button>
+                                                        </div>
+                                                    </div>
+                                                   </div>
+                                                    <br />
+                                                    <div ng-if="warrantyMsg == true">
+                                                        <h3 style="padding: 2% 0% 0% 40%;"><span ng-class="{'color-green':MESSAGE ==='Warranty'}" ng-show="warrantyMsg" ><b><i>{{MESSAGE}} Period.</i></b></span></h3>
+                                                    </div>
+                                                    <div ng-if="messageLabel == true">
+                                                        <h3 style="padding: 2% 0% 0% 40%;"><span style="color:#db7070;" ng-show="messageLabel"><b><i>No Warranty Detail. !!!</i></b></span></h3>
+                                                    </div>
+                                                    <span us-spinner="{radius:12, width:4, length: 8}" spinner-key="spinner-1"></span>
+                                                    <table class="table table-striped table-hover table-bordered" ng-show="tableDiv" ng-model="WarrantyModel">
+                                                        <thead>
+                              
+                                                        </thead>
+                                                        <tbody>
+                                
+                                                            <tr>
+                                                                <td class="hidden-xs"> <span>Activation Date:</span> </td>
+                                                                <td class="hidden-xs"> {{ACTIVATION_DATE | date:'yyyy-MM-dd'}} </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="hidden-xs"> <span>Valid Date:</span> </td>
+                                                                <td class="hidden-xs"> {{VALID_DATE | date:'yyyy-MM-dd'}} </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="hidden-xs"> <span>Near Expairy:</span> </td>
+                                                                <td class="hidden-xs"> {{EXPIARY_DAYS}} </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="hidden-xs"> <span>Service Type:</span> </td>
+                                                                <td class="hidden-xs"> {{SERVICE_TYPE}} </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="hidden-xs"> <span>Billing Name:</span> </td>
+                                                                <td class="hidden-xs"> {{ACTIVATED_NAME}} </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="hidden-xs"> <span>Contact No:</span> </td>
+                                                                <td class="hidden-xs"> {{CONTACT_NO}} </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="hidden-xs"> <span>Message Condition:</span> </td>
+                                                                <td class="hidden-xs" ng-class="{'color-red': MESSAGE === 'Expired/Thieve','color-red': MESSAGE === 'Expired', 'color-green': MESSAGE != 'Expired'}"> {{MESSAGE}} </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="hidden-xs"> <span>Defact Message:</span> </td>
+                                                                <td ng-show="defactMsg">
+                                                                    <select ui-select2 class="form-control input-medium select2me" select-selection="defactno" ng-model="defectItem" name="defacto" required>
+                                                                        <option value="">Select Defact...</option>
+                                                                        <option value="{{defact.DEFECT_CODE}}" ng-repeat="defact in defacto">{{defact.DEFECT_DESC}}</option>
+                                                                    </select>
+                                                                    <br />
+                                                                    <textarea class="form-control cwidth " rows="4" cols="50" placeholder="Comment" ng-model="defectDesc"></textarea>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                    </div>
+                                                    @*<div class="col-xs-2"></div>*@
+                                                </div>
+                                            </div>
+                                            </div>
+                                                
+                                        <div class="row" ng-show="btnDiv">
+                                            @*<div class="col-xs-2"></div>*@
+                                            <div class="col-xs-8 invoice-block">
+                                                @*<a class="btn btn-lg blue hidden-print margin-bottom-5"> Print
+                                                    <i class="fa fa-print"></i>
+                                                </a>*@
+                                                <a class="btn btn-lg green hidden-print margin-bottom-5" ng-click="SaveServiceMsg()"> Submit Defect Msg
+                                                    <i class="fa fa-check"></i>
+                                                </a>
+                                            </div>
+                                            @*<div class="col-xs-2"></div>*@
+                                        </div>
+                                    </div>
+                                    <!-- END EXAMPLE TABLE PORTLET-->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                        <!-- END PAGE CONTENT-->
+                    </div>
+            </div>
+        </div>
+ </div>
+<script src="~/Scripts/ngScript/spin.min.js"></script>
+<script src="~/Scripts/ngScript/angular-spinner.js"></script>
+<script type="text/javascript">
+    (function () {
+        angular.
+          module('warrantyApp', ['kendo.directives', 'angularSpinner']).
+          controller('warrantyCtrl', ['$scope', 'warrantyService','usSpinnerService', function ($scope, warrantyService,usSpinnerService) {
+              $scope.serialNo = [];
+              $scope.WarrantyModel = [];
+              $scope.btnDiv = false;
+              $scope.tableDiv = false;
+              $scope.messageLabel = false;
+              $scope.warrantyMsg = false;
+              $scope.defactMsg = true;
+              $scope.defacto = [];
+              $scope.GetWarrantyData = function (isValid) {
+                  if (isValid)
+                  {
+                       usSpinnerService.spin('spinner-1');
+                      var warrantyData = warrantyService.getData($scope.serialNo);
+                      warrantyData.then(function (response) {
+                          $scope.WarrantyModel = response.data;
+                          $scope.messageLabel = false;
+                          $scope.defactMsg = true;
+                          if ($scope.WarrantyModel.Message != "Empty") {
+                              $scope.tableDiv = true;
+                              $scope.btnDiv = true;
+                              $scope.warrantyMsg = true;
+                              WarrantyDefact();
+                              $scope.INVOICE_NO = $scope.WarrantyModel.INVOICE_NO;
+                              $scope.ACTIVATED_NAME = $scope.WarrantyModel.ACTIVATED_NAME;
+                              $scope.SERVICE_TYPE = $scope.WarrantyModel.SERVICE_TYPE;
+                              $scope.CONTACT_NO = $scope.WarrantyModel.CONTACT_NO;
+                              $scope.ACTIVATION_DATE = $scope.WarrantyModel.ACTIVATION_DATE;
+                              $scope.VALID_DATE = $scope.WarrantyModel.VALID_DATE;
+                              if ($scope.WarrantyModel.EXPIARY_DAYS < 0) {
+                                  $scope.EXPIARY_DAYS = Math.abs($scope.WarrantyModel.EXPIARY_DAYS) + " Days Ago";
+                              }
+                              else {
+                                  $scope.EXPIARY_DAYS = $scope.WarrantyModel.EXPIARY_DAYS + " Days";
+                              }
+                              if ($scope.WarrantyModel.SERVICE_TYPE == 'Warranty') {
+                                  if ($scope.WarrantyModel.THIEF_FLAG == 'Y') {
+                                      $scope.MESSAGE = "Thieve";
+                                  } else {
+                                      $scope.MESSAGE = $scope.WarrantyModel.SERVICE_TYPE;
+                                  }
+                              }
+                              else {
+                                  if ($scope.WarrantyModel.THIEF_FLAG == 'Y') {
+                                      $scope.MESSAGE = "Expired/Thieve";
+                                  } else   if ($scope.WarrantyModel.EXPIARY_DAYS < 0)
+                                  {
+                                      $scope.MESSAGE = "Expired";
+                                  }
+                                  else if($scope.WarrantyModel.EXPIARY_DAYS > 0)
+                                  {
+                                      $scope.MESSAGE = "Warranty";
+                                  }
+                                  else {
+                                      $scope.MESSAGE = "Expired";
+                                  }
+
+                              }
+                          } else {
+                              $scope.tableDiv = false;
+                              $scope.btnDiv = false;
+                              $scope.WarrantyModel = "";
+                              clear();
+                              $scope.warrantyMsg = false;
+                              $scope.messageLabel = true;
+                              toastr.warning("No warranty available.");
+                          }
+                          usSpinnerService.stop('spinner-1');
+                      }),
+                   function () {
+                        toastr.error('Error in getting records');
+                    }
+                  }
+                  else {
+                      toastr.error("Enter Serial No.");
+                      clear();
+                      $scope.warrantyMsg = false;
+                      $scope.messageLabel = false;
+                      $scope.defectItem = false;
+                      $scope.defactMsg = false;
+                  }
+                  
+              }
+
+              $scope.SaveServiceMsg = function () {
+
+                  var param = {
+                      INVOICE_NO :$scope.INVOICE_NO,
+                      DEFECT_CODE : $scope.defectItem,
+                      DEFECT_DESC: $scope.defectDesc,
+                  }
+
+                  var warrantyData = warrantyService.saveMsg(param);
+                  warrantyData.then(function (response) {
+                      toastr.success('Save Successfully !!!');
+                      $scope.defectItem = '';
+                      $scope.defectDesc = "";
+                    }, function () {
+                        toastr.error('Error ');
+                    });
+              }
+
+              function WarrantyDefact() {
+                  var defactData = warrantyService.GetDefact();
+                  defactData.then(function (response) {
+                      console.log("Defact",response.data);
+                      $scope.defacto = response.data;
+                    }, function () {
+                        toastr.error('Error in getting defacts list');
+                    });
+              }
+
+              function clear() {
+                 $scope.INVOICE_NO = "";
+                $scope.ACTIVATED_NAME = "";
+                $scope.SERVICE_TYPE = "";
+                $scope.CONTACT_NO = "";
+                $scope.ACTIVATION_DATE = "";
+                $scope.VALID_DATE = "";
+                $scope.EXPIARY_DAYS = "";
+                $scope.MESSAGE = "";
+              }
+              
+          }]).
+          service('warrantyService', ['$http', '$q', '$timeout', function ($http, $q, $timeout) {
+              return {
+                  getData: function (serialNo) {
+                      // This could be $http or any other promise returning service.
+                      // Use a deferred and $timeout to simulate a network request.
+                      var deferred = $q.defer()
+                      $timeout(function () {
+                         var results = $http({
+                                method: "post",
+                                url: "/WarrantyChecker/GetWarrantyInfo",
+                                params: {
+                                    serialNo: JSON.stringify(serialNo)
+                                }
+                            })
+                            .success(function (data) {
+                                return data.data;
+                            });
+                          deferred.resolve(results);
+                      }, 500);
+
+                      return deferred.promise;
+                  },
+                  saveMsg: function (param) {
+                      var deferred = $q.defer()
+                      $timeout(function () {
+                         var results = $http({
+                                method: "post",
+                                url: "/WarrantyChecker/SaveWarrantyServiceMsg",
+                                data:  JSON.stringify(param)
+                            })
+                            .success(function (data) {
+                                return data.data;
+                            });
+                          deferred.resolve(results);
+                      }, 500);
+
+                      return deferred.promise;
+                  },
+
+                  GetDefact: function () {
+                      var deferred = $q.defer()
+                      $timeout(function () {
+                         var results = $http({
+                                method: "post",
+                                url: "/WarrantyChecker/GetDefact",
+                            })
+                            .success(function (data) {
+                                return data.data;
+                            });
+                          deferred.resolve(results);
+                      }, 500);
+
+                      return deferred.promise;
+                  },
+              };
+          }]);
+    })();
+
+</script>

@@ -1,0 +1,224 @@
+﻿<div id="search" class="collapse form-control-static" style="border-top: 1px solid #E7E7E7; border-bottom: 1px solid #E7E7E7; padding: 0px; ">
+    
+                            <div class="row" style="widows: initial;">
+                                <div class="col-md-12">
+                                   @* <div class="filterDateOption">
+                                        <label>Date Filter</label>
+                                        <select class="dateFilterSelect" id="ddlDateFilter" name="DateStep" style="width: 50%;">
+                                            <option value="TD" selected="selected">Today</option>
+                                            <option value="TM">This Month</option>
+                                            <option value="LM">Last Month</option>
+                                            <option value="TQ">This Quater</option>
+                                            <option value="LQ">Last Quarter</option>
+                                            <option value="TH">This Half Year</option>
+                                            <option value="LH">Last Half Year</option>
+                                            <option value="TY">This Year</option>
+                                            <option value="LY">Last Year</option>
+                                        </select>
+                                    </div>
+                                    <div class="frmCol">
+                                        <label>From Date</label>
+                                        <input type="text" id="fromInputDate" class="frmDataInput" placeholder="From Date" style="width: 30%;" />
+                                        <input type="text" name="FromDate" id="FromDate" class="readOnlyInput" readonly="true" placeholder="From Date" style="width: 30%;" />
+                                    </div>
+                                    <div class="ToCol">
+                                        <label>To Date</label>
+                                        <input type="text" class="frmDataInput" id="toInputDate" placeholder="To Date" style="width: 30%;">
+                                        <input type="text" name="ToDate" class="readOnlyInput" readonly="true" id="ToDate" placeholder="To Date" style="width: 30%;">
+                                    </div>                      
+                                    <button class="btn btn-primary" id="btnCommonSearch">Go</button>*@
+                                    <label style:"font-size:12px;">Language:</label> 
+                                    <select id="language" name="language" style="width: 7%;font-size:12px;"
+                                         onchange="this.options[this.selectedIndex].value && (window.location = this.options[this.selectedIndex].value);">
+                                            <option value="~/Report/SalesReports">English</option>
+                                            <option value="~/Report/SalesReportsNepali">Nepali</option>
+                                         </select>
+                                    <button type="button" id="btnPreference" class="btn btn-primary" data-toggle="modal" data-target="#myModal" style="float: right;">
+                                    Preference
+                                    </button>
+                                </div>
+                            </div>
+                        
+</div>
+
+<div id="export" class="collapse form-control-static" style="border-top: 1px solid #E7E7E7; border-bottom: 1px solid #E7E7E7; padding: 0px; z-index: 1;">
+    <ul>
+        <li><a href="../TrialBalance/ExportToExcel" id="xls" class="fa fa-file-excel-o" onclick="return ExportToExcel(this.id);"></a><br /><i>Excel</i></li>
+       
+        <li><a href="../TrialBalance/ExportToExcel" id="ms-word" onclick="return ExportToExcel(this.id);" class="fa fa-file-word-o" ></a><br /><i>Word</i></li>
+    </ul>
+</div>
+<div id="table" class="collapse form-control-static" style="border-top: 1px solid #E7E7E7; border-bottom: 1px solid #E7E7E7; padding: 0px; z-index: 1;">
+    <ul>
+        <li><a href="/TrialBalance/Index" class="icon icon-square44"></a><br /><i>Home</i></li>
+        <li><a href="/TrialBalance/Consolidated" class="icon icon-hierarchy4"></a><br /><i>Tree</i></li>
+    </ul>
+</div>
+<div id="chart" class="collapse form-control-static" style="border-top: 1px solid #E7E7E7; border-bottom: 1px solid #E7E7E7; padding: 0px; z-index: 1;">
+    <ul>
+        <li><a href="/TrialBalance/Graph/Bar" class="icon icon-chart15"></a><br /><i>Bar Graph</i></li>
+        <li><a href="" class="icon icon-chart"></a><br /><i>Pie Chart</i></li>
+        <li><a href="" class="icon icon-data60"></a><br /><i>Line Graph</i></li>
+    </ul>
+</div>
+<script>
+    $(document).ready(function () {
+        //alert(BS2AD('2072-04-27'));
+        //alert(AD2BS('2015-08-12'));
+        $('#fromInputDate').nepaliDatePicker();
+        $('#toInputDate').nepaliDatePicker();
+        var current_date = getNepaliDate();
+        $('#fromInputDate').val(current_date);
+        $('#toInputDate').val(current_date);
+    });
+</script>
+<script type="text/javascript">
+$(function () {
+    $("#ddlDateFilter").change(function () {
+        var current_date = getNepaliDate();
+        var current_date = current_date.split("-");
+        var cYear = current_date[0];
+        var cMonth = current_date[1];
+        var cDay = current_date[2];      
+        
+        if ($('option:selected', this).val() == "TD") {
+            var FromDate = cYear + "-" + cMonth + "-" + cDay;
+            var ToDate = cYear + "-" + cMonth + "-" + cDay;
+            $("#fromInputDate").val(FromDate);
+            $("#toInputDate").val(ToDate);
+        }
+        else if($('option:selected', this).val() == "TY")
+        {
+            var FromDate = cYear + "-" + "04" + "-" + "01";
+            var ToDate = cYear + "-" + cMonth + "-" + cDay;
+            $("#fromInputDate").val(FromDate);
+            $("#toInputDate").val(ToDate);
+        }
+        else if ($('option:selected', this).val() == "LY") {   
+            var FromDate = (cYear - 1) + "-" + "04" + "-" + "01";
+            var ToDate = cYear + "-" + "03" + "-" + numberOfBsDays(cYear, "2"); 
+            $("#fromInputDate").val(FromDate);
+            $("#toInputDate").val(ToDate);
+        }
+        else if ($('option:selected', this).val() == "TM") {
+            var FromDate = cYear + "-" + cMonth + "-" + "01";
+            var ToDate = cYear + "-" + cMonth + "-" + cDay;
+            $("#fromInputDate").val(FromDate);
+            $("#toInputDate").val(ToDate);
+        }
+        else if ($('option:selected', this).val() == "LM") {
+            if (cMonth == 1)
+            {
+                cYear = cYear - 1;
+                cMonth = "12";
+            }
+            else {
+                cMonth = cMonth - 1;
+            }
+            var newToDate = numberOfBsDays(cYear, (cMonth-1));
+            if (cMonth > 1 && (cMonth) < 10)
+                cMonth = "0" + cMonth;
+            var FromDate = cYear + "-" + cMonth + "-" + "01";
+            var ToDate = cYear + "-" + cMonth + "-" + newToDate;
+            $("#fromInputDate").val(FromDate);
+            $("#toInputDate").val(ToDate);
+        }
+        else if ($('option:selected', this).val() == "TQ") {
+            if (cMonth > 3 && cMonth < 7) {
+                var FromDate = cYear + "-" + "04" + "-" + "01";
+                var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                $("#fromInputDate").val(FromDate);
+                $("#toInputDate").val(ToDate);
+            }
+            else if (cMonth > 6 && cMonth < 10) {
+                var FromDate = cYear + "-" + "07" + "-" + "01";
+                var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                $("#fromInputDate").val(FromDate);
+                $("#toInputDate").val(ToDate);
+            }
+            else if (cMonth > 9 && cMonth <= 12) {
+                var FromDate = cYear + "-" + "10" + "-" + "01";
+                var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                $("#fromInputDate").val(FromDate);
+                $("#toInputDate").val(ToDate);
+            }
+            else if (cMonth >= 1 && cMonth < 4) {
+                var FromDate = cYear + "-" + "01" + "-" + "01";
+                var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                $("#fromInputDate").val(FromDate);
+                $("#toInputDate").val(ToDate);
+            }
+        }
+        else if ($('option:selected', this).val() == "LQ") {
+            if (cMonth > 3 && cMonth < 7) {
+                var FromDate = cYear + "-" + "01" + "-" + "01";
+                var ToDate = cYear + "-" + "03" + "-" + numberOfBsDays(cYear, "2");
+                $("#fromInputDate").val(FromDate);
+                $("#toInputDate").val(ToDate);
+            }
+            else if (cMonth > 6 && cMonth < 10) {
+                var FromDate = cYear + "-" + "04" + "-" + "01";
+                var ToDate = cYear + "-" + "06" + "-" + numberOfBsDays(cYear, "5");
+                $("#fromInputDate").val(FromDate);
+                $("#toInputDate").val(ToDate);
+            }
+            else if (cMonth > 9 && cMonth <= 12) {
+                var FromDate = cYear + "-" + "07" + "-" + "01";
+                var ToDate = (cYear + 1) + "-" + "09" + "-" + numberOfBsDays((cYear + 1), "8");
+                $("#fromInputDate").val(FromDate);
+                $("#toInputDate").val(ToDate);
+            }
+            else if (cMonth >= 1 && cMonth < 4) {
+                var FromDate = (cYear-1) + "-" + "10" + "-" + "01";
+                var ToDate = (cYear - 1) + "-" + "12" + "-" + numberOfBsDays((cYear - 1), "11");
+                $("#fromInputDate").val(FromDate);
+                $("#toInputDate").val(ToDate);
+            }
+        }
+        else if ($('option:selected', this).val() == "TH") {
+            if (cMonth > 3 && cMonth < 10) {
+                var FromDate = cYear + "-" + "04" + "-" + "01";
+                var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                $("#fromInputDate").val(FromDate);
+                $("#toInputDate").val(ToDate);
+            }
+            else {
+                var FromDate = cYear + "-" + "10" + "-" + "01";
+                var ToDate = cYear + "-" + cMonth + "-" + cDay;
+                $("#fromInputDate").val(FromDate);
+                $("#toInputDate").val(ToDate);
+            }
+        }
+        else if ($('option:selected', this).val() == "LH") {
+            if (cMonth > 3 && cMonth < 10) {
+                var FromDate = (cYear-1) + "-" + "10" + "-" + "01";
+                var ToDate = cYear + "-" + "03" + "-" + numberOfBsDays(cYear, "2");
+                $("#fromInputDate").val(FromDate);
+                $("#toInputDate").val(ToDate);
+            }
+            else if (cMonth >=10) {
+                var FromDate = cYear + "-" + "04" + "-" + "01";
+                var ToDate = cYear + "-" + "09" + "-" + numberOfBsDays(cYear, "8");
+                $("#fromInputDate").val(FromDate);
+                $("#toInputDate").val(ToDate);
+            }
+            else {
+                var FromDate = (cYear-1) + "-" + "04" + "-" + "01";
+                var ToDate = (cYear - 1) + "-" + "09" + "-" + numberOfBsDays((cYear - 1), "8");
+                $("#fromInputDate").val(FromDate);
+                $("#toInputDate").val(ToDate);
+            }
+        }
+    });
+});
+</script>
+<script>
+    function ExportToExcel(Type) {
+        debugger;
+
+        id = document.getElementById("UrlAppend").innerHTML;
+        level = document.getElementById("LevelAppend").innerHTML;
+        location.href = window.location.href.split('/')[0] + window.location.href.split('/')[1] + 'ExportToExcel' + '?id=' + id + "&level=" +level + "&Type=" + Type;
+        return false;
+    }
+</script>

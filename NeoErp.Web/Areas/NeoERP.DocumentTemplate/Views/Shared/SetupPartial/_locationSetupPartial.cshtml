@@ -1,0 +1,335 @@
+﻿<style>
+    .mb-0 {
+        margin-bottom: 0px !important;
+    }
+
+    .mb--8 {
+        margin-bottom: -8px !important;
+    }
+
+    .k-animation-container, .k-widget, .k-widget *, .k-animation-container *, .k-widget ::before, .k-animation-container ::after, .k-block .k-header, .k-list-container {
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
+    }
+
+    .locationtype {
+        height: 24px;
+    }
+
+    .k-grid-content {
+        height: 285px !important
+    }
+
+    #kGrid {
+        height: 427px !important;
+    }
+
+    .addcolor {
+        color: #ffffff;
+    }
+
+    .modal-medium-large {
+        width: 820px;
+    }
+</style>
+<div class="portlet box green-box main">
+    <location></location>
+    <div class="portlet-title">
+        <div class="caption ng-binding">
+            <i class="fa fa-list-alt"></i>
+            <span class="caption-subject bold uppercase">
+                Location
+            </span>
+        </div>
+        <div class="actions">
+            <a class="btn dark-green btn-sm addcolor" id="createbtn" ng-click="showModalForNew(event)" ng-disabled="treenodeselected!= 'Y'">
+                <i class="fa fa-plus"></i> NEW
+            </a>
+        </div>
+    </div>
+    <div class="portlet-body">
+        <div class="row">
+            <div class="col-md-offset-8 col-md-4 search_box">
+                <div class="topsearch" style="display:block;">
+                    <a class="btn-linkicon fa fa-search" style="margin-right: -13px;" ng-click="BindGrid('All')"></a>
+                    <input class="k-textbox txtSearchString" type="text" id="loctxtSearchString" ng-model="txtSearchString" name="search" placeholder="enter search text..." style="margin-left: 13px;" />
+                </div>
+            </div>
+        </div>
+        <kendo-grid id="kGrid" options="locationChildGridOptions" k-rebind="locationChildGridOptions">
+        </kendo-grid>
+    </div>
+    <div class="modal fade-out" id="locationModal" data-backdrop="static" tabindex="-1" data-width="760">
+        <div class="modal-dialog modal-medium-large popup">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true" next-on-tab>&times;</button>
+                    <h4 class="modal-title">
+                        <span class="fa fa-file"></span>
+                        Location Model
+                    </h4>
+                </div>
+
+                <div class="modal-body mb--8">
+                    <form name="locationsArrform" class="form-horizontal">
+                        <div class="row">
+                            <div class="col-sm-6 col-md-6 col-lg-6">
+                                <div class="form-group">
+                                    <label class="control-label col-sm-4 col-md-4 col-lg-4">Under Group:</label>
+                                    <div class="col-sm-8 col-md-8 col-lg-8">
+                                        <select id="masterlocationcode" kendo-drop-down-list
+                                                k-options="locationGroupOptions"
+                                                style="width: 100%" disabled></select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-6 col-lg-6">
+                                <div class="form-group">
+                                    <div class="col-sm-12 col-md-12 col-lg-12">
+                                        <fieldset class="fieldset-box">
+                                            <legend>Record Type</legend>
+                                            <div class="col-sm-8 col-md-8 radiobox">
+                                                <span class="radio_btn">
+                                                    <input type="radio" name="locationType" ng-model="locationsArr.GROUP_SKU_FLAG" value="G" ng-disabled="groupchilddisabled"> Group
+                                                </span>
+                                                <span>
+                                                    <input type="radio" name="locationType" ng-model="locationsArr.GROUP_SKU_FLAG" value="I" ng-disabled="groupchilddisabled"> Individual
+                                                </span>
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-6 col-md-6 col-lg-6">
+                                <div class="form-group">
+                                    <label class="control-label col-sm-4 col-md-4 col-lg-4">Shortcut:</label>
+                                    <div class="col-sm-8 col-md-8 col-lg-8">
+                                        <input type="text" id="shortcut" name="shortcut" ng-model="locationsArr.LOCATION_CODE" ng-if="saveupdatebtn=='Update'" class="form-control" readonly  />
+                                        <input type="text" id="shortcut" name="shortcut" ng-model="locationsArr.TEMP_LOCATION_CODE" ng-if="saveupdatebtn=='Save'" class="form-control" readonly />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-6 col-lg-6">
+                                <div class="form-group">
+                                    <label class="control-label col-sm-4 col-md-4 col-lg-4">
+                                        In English:<span style="color:red" ng-show="locationsArrform.locationName.$invalid">
+                                            <span ng-show="locationsArrform.locationName.$error.required">*</span>
+                                        </span>
+                                    </label>
+                                    <div class=" col-sm-8 col-md-8 col-lg-8">
+                                        <input type="text" id="locationName" name="locationName" ng-model="locationsArr.LOCATION_EDESC" class="form-control" required />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-6 col-md-6 col-lg-6">
+                                <div class="form-group">
+                                    <label class="control-label col-sm-4 col-md-4 col-lg-4">
+                                        Storage Capacity:<span style="color:red" ng-show="locationsArrform.storagecapacity.$invalid">
+                                            <span ng-show="locationsArrform.storagecapacity.$error.required">*</span>
+                                        </span>
+                                    </label>
+                                    <div class="col-sm-8 col-md-8 col-lg-8">
+                                        <input type="number" id="storagecapacity" name="storagecapacity" ng-model="locationsArr.STORAGE_CAPACITY" class="form-control" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-6 col-lg-6">
+                                <div class="form-group">
+                                    <label class="control-label  col-sm-4 col-md-4 col-lg-4">In Nepali:</label>
+                                    <div class=" col-sm-8 col-md-8 col-lg-8">
+                                        <input type="text" id="locationNname" name="LOCATION_NDESC" ng-model="locationsArr.LOCATION_NDESC" class="form-control" />
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-6 col-md-6 cpl-lg-6">
+                                <div class="form-group">
+                                    <label class="control-label col-md-4 col-lg-4">Location Type:</label>
+                                    <div class="col-sm-8 col-md-8 col-lg-8">
+                                        @*<select id="locationTypeCode" ng-model="locationsArr.LOCATION_TYPE_CODE"
+                                                k-options="locationTypeOptions" kendo-combo-box style="width: 100%"></select>*@
+
+                                        <select id="locationTypeCode" name="locationTypeCode"
+                                                kendo-drop-down-list
+                                                k-options="locationTypeOptions"
+                                                ng-model="locationsArr.LOCATION_TYPE_CODE" k-value-primitive="true"
+                                                style="width: 100%; font-size: 12px;"></select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-6 col-lg-6">
+                                <div class="form-group">
+                                    <label class="control-label col-sm-4 col-md-4 col-lg-4"> Branch Name:</label>
+                                    <div class="col-sm-8 col-md-8 col-lg-8">
+                                        <select id="branchCode" ng-model="locationsArr.BRANCH_CODE"
+                                                k-options="locationBranchOptions" kendo-combo-box style="width: 100%"></select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row" ng-show="locationsArr.GROUP_SKU_FLAG=='I'">
+                            <div class="col-sm-6 col-md-6 col-lg-6">
+                                <div class="form-group">
+                                    <label class="control-label col-sm-4 col-md-4 col-lg-4">
+                                        Address:<span style="color:red" ng-show="locationsArrform.address.$invalid">
+                                            <span ng-show="locationsArrform.address.$error.required">*</span>
+                                        </span>
+                                    </label>
+                                    <div class="col-sm-8 col-md-8 col-lg-8">
+                                        <input type="text" id="address" name="address" ng-model="locationsArr.ADDRESS" class="form-control" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-6 col-lg-6">
+                                <div class="form-group">
+                                    <label class="control-label col-sm-4 col-md-4 col-lg-4">Contact Person:</label>
+                                    <div class="col-sm-8 col-md-8 col-lg-8">
+                                        <input type="text" id="contactperson" name="contactperson" ng-model="locationsArr.AUTH_CONTACT_PERSON" class="form-control" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row" ng-show="locationsArr.GROUP_SKU_FLAG=='I'">
+                            <div class="col-sm-6 col-md-6 col-lg-6">
+                                <div class="form-group">
+                                    <label class="control-label col-sm-4 col-md-4">
+                                        Tel/Mob No:<span style="color:red" ng-show="locationsArrform.mobileno.$invalid || locationsArrform.mobileno.$error.pattern">
+                                            <span ng-show="locationsArrform.mobileno.$error.required || locationsArrform.mobileno.$error.pattern">*</span>
+                                        </span>
+                                    </label>
+                                    <div class="col-sm-8 col-md-8 col-lg-8">
+                                        <input type="text" id="mobileno" maxlength="10" ng-pattern="phoneNumbr" name="mobileno" ng-model="locationsArr.TELEPHONE_MOBILE_NO" class="form-control" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-6 col-lg-6">
+                                <div class="form-group">
+                                    <label class="control-label col-sm-4 col-md-4">
+                                        Email:<span style="color:red" ng-show="locationsArrform.email.$invalid">
+                                            <span ng-show="locationsArrform.email.$error.required">*</span>
+                                        </span>
+                                    </label>
+                                    <div class="col-sm-8 col-md-8 col-lg-8">
+                                        <input type="text" id="email" name="email" ng-model="locationsArr.EMAIL" class="form-control" placeholder="Yourname@yahoo.com" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row" ng-show="locationsArr.GROUP_SKU_FLAG=='I'">
+                            <div class="col-sm-6 col-md-6 col-lg-6">
+                                <div class="form-group">
+                                    <label class="control-label col-sm-4 col-md-4">Fax:</label>
+                                    <div class="col-sm-8 col-md-8 col-lg-8">
+                                        <input type="text" id="fax" name="fax" ng-model="locationsArr.FAX" class="form-control" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-md-6 col-lg-6">
+                                <div class="form-group mb-0">
+                                    <label class="control-label  col-sm-4 col-md-4 col-lg-4">
+                                        MOU:<span style="color:red" ng-show="locationsArrform.locationMUCode.$invalid">
+                                            <span ng-show="locationsArrform.locationMUCode.$error.required">*</span>
+                                        </span>
+                                    </label>
+                                    <div class="col-sm-8 col-md-8 col-lg-8">
+                                        <select id="locationMUCode" name="locationMUCode" ng-model="locationsArr.MU_CODE" kendo-combo-box
+                                                k-options="muCodeOptions"
+                                                style="width: 100%"></select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row" ng-show="locationsArr.GROUP_SKU_FLAG=='I'">
+                            <div class="col-sm-6 col-md-6 col-lg-6" style="margin-top: 15px;">
+                                <div class="form-group">
+                                    <label class="control-label col-sm-4 col-md-4">Remarks:</label>
+                                    <div class="col-sm-8 col-md-8 col-lg-8">
+                                        <textarea type="text" id="remarks" name="remarks" ng-model="locationsArr.REMARKS" class="form-control"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-green" id="savedocumentformdata" ng-click="saveNewLocation(locationsArrform.$valid)" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Processing..." href="javascript:;">
+                        <i class="fa fa-floppy-o"></i> {{saveupdatebtn}}
+                    </button>
+                    <button type="button" class="btn btn-sm btn-default" data-dismiss="modal" ng-click="Location_Cancel()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+
+<script>
+    $(document).ready(function () {
+        $(".topsearch").hide();
+        $("#loctxtSearchString").keyup(function () {
+            var val = $('#loctxtSearchString').val();
+            $("#kGrid").data("kendoGrid").dataSource.filter({
+                logic: "or",
+                filters: [
+                    {
+                        field: "LOCATION_EDESC",
+                        operator: "contains",
+                        value: val
+                    },
+                    {
+                        field: "AUTH_CONTACT_PERSON",
+                        operator: "contains",
+                        value: val
+                    },
+                    {
+                        field: "TELEPHONE_MOBILE_NO",
+                        operator: "contains",
+                        value: val
+                    },
+                    {
+                        field: "CREATED_BY",
+                        operator: "contains",
+                        value: val
+                    },
+                    {
+                        field: "CREATED_DATE",
+                        operator: "contains",
+                        value: val
+                    }
+                ]
+            });
+        });
+        setTimeout(function () {
+
+            $('.k-list').slimScroll({
+                height: '250px'
+            });
+        }, 100);
+        $('.nav-tabs a').on('click', function (e) {
+            e.preventDefault();
+            //if ($(this).attr('href') == '#tab_1') {
+            //    $('#tab_1').tab('show')
+            //}
+            if ($(this).attr('href') == '#tab_2') {
+                $('#tab_2').tab('show')
+            }
+        });
+    });
+</script>
+<script src="@Scripts.Url(" ~/JS/reportFilter.js")"></script>

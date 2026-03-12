@@ -1,0 +1,778 @@
+﻿
+@using NeoErp.sales.Module.Models;
+
+@{
+    ViewBag.Title = "Purchase Register Page";
+}
+
+<style>
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        border-bottom-width: 0;
+        font-size: 11px;
+    }
+    /*trail balance table css start here*/
+.AccountFixTreeView {
+    width: 417px;
+}
+.DrOpeningFixTreeView {
+    width:79px;
+}
+.CrOpeningFixTreeView
+{ width:79px;
+	
+}
+.DrTrasactionFixTreeView {
+    width: 79px;
+}
+.CrTrasactionFixTreeView {
+    width: 80px;
+}
+
+.DrclosingFixTreeView {
+    width: 80px;
+}
+
+.CrclosingFixTreeView {
+    width: 73px;
+}
+
+
+
+.AccountFixTreeView2
+{
+    width:386px;
+
+}
+
+.DrOpeningFixTreeView2
+{
+    width:80px;
+
+}
+.CrOpeningFixTreeView2
+{
+    width:80px;
+}
+.DrTrasactionFixTreeView2
+{
+    width:80px;
+
+}
+.DrclosingFixTreeView2
+{
+    width:80px;
+
+}
+    .CrTrasactionFixTreeView2 {
+        width:80px;
+    }
+
+    .AccountFixTreeView3 {
+        width:352px;
+    }
+.DrOpeningFixTreeView3
+{
+    width:80px;
+}
+.CrOpeningFixTreeView3
+{
+    width:80px;
+}
+    .DrTrasactionFixTreeView3 {
+        width:80px;
+    }
+
+    .CrTrasactionFixTreeView3
+    {
+        width:80px;
+
+    }
+
+    .DrclosingFixTreeView3 {
+        width:80px;
+    }
+
+
+/*trail balance table css end here*/
+
+
+    .close{
+        margin-left:10px !important;
+    }
+    .page-bar {
+        margin-bottom: 0px !important;
+    }
+    div.k-window-content {
+    position: relative;
+    height: 100%;
+    padding: .58em;
+    overflow: inherit !important;
+    outline: 0;
+}
+        .orders.k-grid.k-widget {
+    margin-top: -3px;
+}
+     .orders table .k-grid-header
+    {
+        display:none;
+    }
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+         font-size:11px;
+    }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+    .k-footer-template{
+      display:none;
+    }
+</style>
+<div class="page-content">
+    <ul id="context-menu" style="display:none;">
+        <li id="ledgerSummaryContextmenu">
+          Ledger Detail
+                </li>
+        <li id="ledgerDetailSummaryContextmenu">
+            Ledger summary
+        </li>
+        
+    </ul>
+
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+            <li>
+                <i class="fa fa-home"></i>
+                <a href="index.html">Home</a>
+                <i class="fa fa-angle-right"></i>
+            </li>
+            <li>
+                <a href="#">Trial Balance</a>
+                <i class="fa fa-angle-right"></i>
+            </li>
+
+        </ul>
+       
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+                <div class="btn-group" data-toggle="tooltip" title="Click to filter date range!" data-placement="bottom">
+                    @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                </div>
+               
+                <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="javsascript:;">
+                    <i class="icon-control-play"></i>
+                </a>
+                <a class="btn btn-circle btn-icon-only btn-default fullscreen" href="javascript:;" data-toggle="tooltip" title="Get FullScreen Mode!" data-placement="bottom">
+                </a>
+
+                @*@Html.Partial("~/Views/Shared/Controls/DateField.cshtml",true)*@
+
+                @*<button type="button" class="btn btn-fit-height grey-salt dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-delay="1000" data-close-others="true">
+                        Actions <i class="fa fa-angle-down"></i>
+                    </button>
+                    <ul class="dropdown-menu pull-right" role="menu">
+                        <li>
+                            <a href="#">Action</a>
+                        </li>
+                        <li>
+                            <a href="#">Another action</a>
+                        </li>
+                        <li>
+                            <a href="#">Something else here</a>
+                        </li>
+                        <li class="divider">
+                        </li>
+                        <li>
+                            <a href="#">Separated link</a>
+                        </li>
+                    </ul>*@
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+              
+                <div class="portlet-body form">
+                    <div class="tabbable-line">
+
+
+                        <ul class="nav nav-tabs" id="tabs">
+
+                            <li class="active" id="firsttab"><a  data-toggle="tab"  href="javascript:void(0)">Trial Balance</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="tab1">
+                                <div class="row">
+
+
+                                    <div id="grid"></div>
+                                    <script type="text/x-kendo-template" id="template">
+
+                                        <div class="orders"></div>
+
+
+                                    </script>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+    <input type="hidden" id="ledgerAccountNo" value="0" />
+    <input type="hidden" id="ledgerAccountName" value="Select Table Row First(error)" />
+    <div id="window">
+        <div class="" id="accountledger">
+            </div>
+        
+    </div>
+
+</div>
+<script>
+    $("#tabs").on("click", ".close", function () {
+     
+        var test = $(this).parent().attr("href");
+        $(this).parent().remove();
+        $(test).remove();
+        $(".tab-pane").removeClass("active");
+        $("#tab1").addClass('active');
+        $('#tabs a:first').tab('show');
+       
+    })
+    
+    $("#firsttab").on("click", function () {
+        $(".tab-pane").removeClass("active");
+        $("#tab1").addClass('active');
+        $('#tabs a:first').tab('show');
+    })
+    $("#ledgerDetailSummaryContextmenu").on("click", function (evt) {
+        evt.stopPropagation();
+        var formEnglishDate = $("#FromDateVoucher").val();
+        var toEnglishDate = $("#ToDateVoucher").val();
+        var nextTab = $('#tabs li').size() + 1;
+        var accountName = $("#ledgerAccountName").val();
+        // create the tab
+        $('<li><a href="#tab' + nextTab + '" data-toggle="tab"> ' + accountName + '<span class="close">×</span> <div class="clearfix"></div></a></li>').appendTo('#tabs');
+
+        // create the tab content
+
+        var accountNo = $("#ledgerAccountNo").val();
+
+        $.ajax({
+            url: '@Url.Action("LedgerSummaryReport", "Ledger")',
+            data: { formDate: formEnglishDate, toDate: toEnglishDate, AccountCode: accountNo, totalTab: nextTab },
+            cache: false,
+            type: "POST",
+            dataType: "html",
+            success: function (data, textStatus, XMLHttpRequest) {
+                $('<div class="tab-pane" id="tab' + nextTab + '">' + data + '</div>').appendTo('.tab-content');
+                $('#tabs a:last').tab('show');
+                $("#tab" + nextTab).addClass('active');
+                $(window).resize();
+                //  $("#accountledger").html(data);
+            }
+        });
+        // make the new tab active
+        $('#tabs a:last').tab('show');
+    });
+    $("#ledgerSummaryContextmenu").on("click", function () {
+        var formEnglishDate = $("#FromDateVoucher").val();
+        var toEnglishDate = $("#ToDateVoucher").val();
+      //  $('#tab1').removeClass("active");
+        var nextTab = $('#tabs li').size() + 1;
+        var accountName = $("#ledgerAccountName").val();
+        // create the tab
+        $('<li><a href="#tab' + nextTab + '" data-toggle="tab"> ' + accountName + '<span class="close">×</span> <div class="clearfix"></div></a></li>').appendTo('#tabs');
+       
+        // create the tab content
+     
+        var accountNo = $("#ledgerAccountNo").val();
+      
+        $.ajax({
+            url: '@Url.Action("PopUpLedgerDetails", "Ledger")',
+            data: { formDate: formEnglishDate, toDate: toEnglishDate, AccountCode: accountNo, totalTab:nextTab },
+            cache: false,
+            type: "POST",
+            dataType: "html",
+            success: function (data, textStatus, XMLHttpRequest) {
+                $('<div class="tab-pane" id="tab' + nextTab + '">' + data + '</div>').appendTo('.tab-content');
+                $('#tabs a:last').tab('show');
+                $("#tab" + nextTab).addClass('active');
+                $(window).resize();
+              //  $("#accountledger").html(data);
+            }
+        });
+        // make the new tab active
+        $('#tabs a:last').tab('show');
+    });
+
+    function onDataBoundtest(arg) {
+        this.pager.element.hide();
+        var grid = this;
+        grid.tbody.find('>tr').each(function () {
+            var dataItem = grid.dataItem(this);
+            var childnumbher = dataItem.CHILD_REC;
+
+            if (childnumbher <= 0) {
+                $(this).find(".k-hierarchy-cell a").removeClass("k-icon");
+            }
+
+        })
+
+    }
+    $("#applydp").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    })
+
+    $(document).ready(function () {
+        // var myWindow = $("#window");
+        function onClose() {
+            undo.fadeIn();
+        }
+      
+        $('[data-toggle="tooltip"]').tooltip({ delay: { show: 500, hide: 100 } });
+       
+        var formEnglishDate = $("#FromDateVoucher").val();
+        var toEnglishDate = $("#ToDateVoucher").val();
+        var urltest = Arg.url(window.location.protocol + "//" + window.location.host + "/api/TrialBalance/GetParentLedger", { formDate: formEnglishDate, toDate: toEnglishDate });
+
+        $("#RunQuery").click(function (evt) {
+            evt.preventDefault();
+            var ddvalue = $("#ddlDateFilterVoucher").val();
+            var formNepalDate = $("#fromInputDateVoucher").val();
+            var toNepalDate = $("#toInputDateVoucher").val();
+            var formEnglishDate = $("#FromDateVoucher").val();
+            var toEnglishDate = $("#ToDateVoucher").val();
+            urltest = Arg.url(window.location.protocol + "//" + window.location.host + "/api/TrialBalance/GetParentLedger", { formDate: formEnglishDate, toDate: toEnglishDate });
+
+            // BindGrid(urltest);
+            KendoGridRefresh(urltest);
+        });
+
+        BindGrid(urltest);
+        $("#test").click(function (evt) {
+          //  alert("test");
+            var grid = $("#grid").data("kendoGrid");
+            var grid = $('#grid').data('kendoGrid');
+            var allMasterRows = grid.tbody.find('>tr.k-master-row');
+
+            //Loop through each row, if a row has a detail row following it then collapse that master row
+            for (var i = 0; i < allMasterRows.length; i++) {
+                if (allMasterRows.eq(i).next('tr.k-detail-row').length > 0) {
+                    grid.collapseRow(allMasterRows.eq(i));
+                }
+            }
+            //grid.hideColumn("DR_OPENING");
+            //grid.hideColumn("CR_OPENING");
+           // grid.expandRow(grid.tbody.find("tr.k-master-row"));
+        });
+        var grid = $('.orders').data('kendoGrid');
+    //    kendoHelpers.grid.eventRowDoubleClick(grid,
+    //    function (dataItem) {
+    ////  alert(dataItem.ACC_CODE);
+       
+    //});
+
+    });
+
+    function BindGrid(readurl) {
+
+
+        var dataSource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: readurl,
+            },
+            serverFiltering: true,
+            serverAggregates: true,
+            serverPaging: false,
+            //schema: {
+            //    model: {
+            //        fields: {
+            //            ItemName: { type: "string" },
+            //            Unit: { type: "string" },
+            //            Quantity: { type: "number" },
+            //            RatePerUnit: { type: "number" },
+            //            GrossAmount: { type: "number" },
+            //            NetAmount: { type: "number" },
+            //            AvgLandingCost: { type: "number" },
+            //        }
+            //    }
+            //},
+            aggregate: [
+       { field: "DR_OPENING", aggregate: "sum" },
+                    { field: "CR_OPENING", aggregate: "sum" },
+                   //  { field: "NetAmount", aggregate: "sum" }
+            ],
+        });
+        var element = $("#grid").kendoGrid({
+            dataSource: dataSource,
+
+            sortable: true,
+            pageable: false,
+
+
+            detailTemplate: kendo.template($("#template").html()),
+            detailInit: detailInit,
+            //dataBound: function() {
+            //    this.expandRow(this.tbody.find("tr.k-master-row").first());
+            //},
+
+            columns: [
+                 
+                {
+                    field: "account_head",
+                    title: "Account Name",
+                    width: "400px"
+                },
+                 {
+                     title: "Opening Balance",
+                     attributes: {
+                         style: "text-align: right;"
+                     },
+                     //width: "200px",
+                     columns: [{
+                         field: "DR_OPENING",
+                         title: "Dr Amount",
+                         width: "80px",
+                         attributes: {
+                             style: "text-align: right;"
+                         },
+                         format: "{0:n}",
+                         //template: '<span style="float:right">#= kendo.toString(DR_OPENING, "n") #</span>'
+                         //aggregates: "sum",
+                        // footerTemplate: "<div style='float: right'>#= sum#</div>"
+                     },
+                {
+                    field: "CR_OPENING",
+                    title: "Cr Amount",
+                    width: "80px",
+                    attributes: {
+                        style: "text-align: right;"
+                    },
+                    format: "{0:n}",
+                    //footerTemplate: "<div style='float: right'>#= sum#</div>"
+                    //template: '<span style="float:right">#= kendo.toString(CR_OPENING, "n") #</span>'
+                }]
+                 },
+                {
+                    title: "Transaction Balance",
+                    attributes: {
+                        style: "text-align: center;"
+                    },
+                    //width: "200px",
+                    columns: [{
+                        field: "DR_AMT",
+                        title: "Dr Amount",
+                        width: "80px",
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                        format: "{0:n}",
+                        //template: '<span style="float:right">#= kendo.toString(DR_AMT, "n") #</span>'
+
+                    },
+                {
+                    field: "CR_AMT",
+                    title: "Cr Amount",
+                    width: "80px",
+                    attributes: {
+                        style: "text-align: right;"
+                    },
+                    format: "{0:n}",
+                    //template: '<span style="float:right">#= kendo.toString(CR_AMT, "n") #</span>'
+
+                }]
+                },
+                {
+                    title: "Closing Balance",
+                    attributes: {
+                        style: "text-align: center;"
+                    },
+                    //width: "200px",
+                    columns: [{
+                        field: "DR_CLOSING ",
+                        title: "Dr Amount",
+                        width: "80px",
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                        format: "{0:n}",
+                        //template: '<span style="float:right">#= kendo.toString(DR_CLOSING, "n") #</span>'
+
+                    },
+                {
+                    field: "CR_CLOSING",
+                    title: "Cr Amount",
+                    width: "80px",
+                    attributes: {
+                        style: "text-align: right;"
+                    },
+                    format: "{0:n}",
+                    //template: '<span style="float:right">#= CR_CLOSING #</span>'
+                }]
+                }
+
+            ]
+        });
+
+    };
+
+    function KendoGridRefresh(readUrl) {
+        $('#grid').val('');
+        $('#grid').html('');
+        BindGrid(readUrl)
+    }
+
+    function detailInit(e) {
+
+       //
+        var accountnameWidth = 377;
+        var dr_openingwidth = 82 + "px";
+        var cr_openingwidth = 82 + "px";
+        var dr_Trasactionwidth = 82 + "px";
+        var cr_Trasactionwidth = 82 + "px";
+        var dr_closingwidth = 82 + "px";
+        var cr_closingwidth = 76 + "px";
+        var AccountNameClass = "AccountFixTreeView";
+        var dr_openingClass = "DrOpeningFixTreeView";
+        var cr_openingClass = "CrOpeningFixTreeView";
+        var dr_TrasactionClass = "DrTrasactionFixTreeView";
+        var cr_TrasactionClass = "CrTrasactionFixTreeView";
+        var dr_closingClass = "DrclosingFixTreeView";
+        var cr_closingnClass = "CrclosingFixTreeView";
+        var detailRow = e.detailRow;
+        var testdata = e.data;
+        var masterId = testdata.MASTER_ACC_CODE;
+      //  alert(masterId);
+        var contains = (masterId.indexOf('.') > -1);
+        if (contains) {
+            var j = masterId.split('.');
+            var count = j.length - 1;
+            var level = count + 1;
+            if (level == 3)
+            {
+                var FixTreeViewClass = "FixTreeView3";
+                var accountnameWidth = 314;
+                var dr_openingwidth = 83 + "px";
+                var cr_openingwidth = 82 + "px";
+                var dr_Trasactionwidth = 82 + "px";
+                var cr_Trasactionwidth = 83 + "px";
+                var dr_closingwidth = 84 + "px";
+                var cr_closingwidth = 64 + "px";
+                var AccountNameClass = "AccountFixTreeView3";
+                var dr_openingClass = "DrOpeningFixTreeView3";
+                var cr_openingClass = "CrOpeningFixTreeView3";
+                var dr_TrasactionClass = "DrTrasactionFixTreeView3";
+                var cr_TrasactionClass = "CrTrasactionFixTreeView3";
+                var dr_closingClass = "DrclosingFixTreeView3";
+                var cr_closingnClass = "CrclosingFixTreeView3";
+            }
+            if (level == 2) {
+                var FixTreeViewClass = "FixTreeView2";
+                var accountnameWidth = 347;
+                var dr_openingwidth = 83 + "px";
+                var cr_openingwidth = 83 + "px";
+                var dr_Trasactionwidth = 83 + "px";
+                var cr_Trasactionwidth = 83 + "px";
+                var dr_closingwidth = 83 + "px";
+                var cr_closingwidth = 70 + "px";
+                var AccountNameClass = "AccountFixTreeView2";
+                var dr_openingClass = "DrOpeningFixTreeView2";
+                var cr_openingClass = "CrOpeningFixTreeView2";
+                var dr_TrasactionClass = "DrTrasactionFixTreeView2";
+                var cr_TrasactionClass = "CrTrasactionFixTreeView2";
+                var dr_closingClass = "DrclosingFixTreeView2";
+                var cr_closingnClass = "CrclosingFixTreeView2";
+            }
+           // alert(level);
+            //if (count > 1) {
+            //    var cont = $(this).val();
+            //    var str = $(this).val().length;
+
+            //    $(this).val(cont.substring(0, str));
+            //}
+        }
+        //var treelevelReached = true;
+        //if (treelevelReached==true)
+        //{
+        //    if (testdata.TreeLevel== 2) {
+        //        treelevelReached = false;
+        //        accountnameWidth = 342;
+        //    }
+        //}
+
+
+        var accountwidthPix = accountnameWidth + "px";
+        var formEnglishDate = $("#FromDateVoucher").val();
+        var toEnglishDate = $("#ToDateVoucher").val();
+        var childUrl = Arg.url(window.location.protocol + "//" + window.location.host + "/api/TrialBalance/GetchildLedgers", { formDate: formEnglishDate, toDate: toEnglishDate, id: masterId });
+        detailRow.find(".orders").kendoGrid({
+            dataSource: {
+                type: "json",
+                transport: {
+                    read: childUrl
+                },
+                serverPaging: true,
+                serverSorting: true,
+                serverFiltering: true,
+                pageSize: 7,
+                aggregate: [
+                { field: "CR_OPENING", aggregate: "sum" },
+                { field: "DR_OPENING", aggregate: "sum" }]
+                        },
+            scrollable: false,
+            dataBound: onDataBoundtest,
+            sortable: true,
+            pageable: true,
+
+            detailTemplate: kendo.template($("#template").html()),
+            detailInit: detailInit,
+            showFooter: false,
+            selectable: true,
+            change: function() {
+                var text = "";
+                var grid = this;
+                grid.select().each(function() {
+                    var dataItem = grid.dataItem($(this));
+                    $("#ledgerAccountNo").val(dataItem.ACC_CODE);
+                    $("#ledgerAccountName").val(dataItem.account_head);
+                });
+            },
+            columns: [
+                {
+                    field: "account_head",
+                    title: "Account Name",
+                   // width: accountwidthPix,
+                    attributes: {
+                        "class":AccountNameClass
+                    },
+                    template: '<span class="ledgerSummary">#=account_head#</span>'
+                 //   template: '<a href="#=account_head#" class="undo">#=account_head#</a>'
+                },
+                {
+                    field: "DR_OPENING",
+                    title: "Dr Amount",
+                  //  width: dr_openingwidth,
+                    attributes: {
+                        "class":dr_openingClass,
+                        style: "text-align: right;"
+                    },
+                    format: "{0:n}",
+
+                },
+                {
+                    field: "CR_OPENING",
+                    title: "Cr Amount",
+                 //   width: cr_openingwidth,
+                 
+                    attributes: {
+                        "class": cr_openingClass,
+                        style: "text-align: right;"
+                    },
+                    format: "{0:n}",
+                    //footerTemplate: "<div style='float: right'>#= sum#</div>"
+                },
+                {
+                    field: "DR_AMT",
+                    title: "Dr Amount",
+                   // width: dr_Trasactionwidth,
+                    attributes: {
+                        "class": dr_TrasactionClass,
+                        style: "text-align: right;"
+                    },
+                    format: "{0:n}",
+                },
+                {
+                    field: "CR_AMT",
+                    title: "Cr Amount",
+                  //  width: cr_Trasactionwidth,
+                    attributes: {
+                        "class": cr_TrasactionClass,
+                        style: "text-align: right;"
+                    },
+                    format: "{0:n}",
+                },
+                 {
+                     field: "DR_CLOSING ",
+                     title: "Dr Amount",
+                    // width: dr_closingwidth,
+                     attributes: {
+                         "class": dr_closingClass,
+                         style: "text-align: right;"
+                     },
+                     format: "{0:n}",
+                 },
+                {
+                    field: "CR_CLOSING",
+                    title: "Cr Amount",
+                   // width: cr_closingwidth,
+                    attributes: {
+                        "class": cr_closingnClass,
+                        style: "text-align: right;"
+                    },
+                    format: "{0:n}",
+                }
+
+            ]
+        });
+        $('.k-grid-content tr').dblclick(function (evt) {
+            evt.stopPropagation();
+            var accountNo = $("#ledgerAccountNo").val();
+            //'201237'
+            $.ajax({
+                url: '@Url.Action("PopUpLedgerDetails", "Ledger")',
+                data: { formDate: formEnglishDate, toDate: toEnglishDate, AccountCode: accountNo },
+                cache: false,
+                type: "POST",
+                dataType: "html",
+                success: function (data, textStatus, XMLHttpRequest) {
+                    $("#accountledger").html(data);
+                }
+            });
+
+            $("#window").kendoWindow({
+                width: "900px",
+                //height:"500px",
+                title: "Ledger Information",
+                visible: false,
+                position: {
+                    top: 100, // or "100px"
+                    left: "10%"
+                },
+                actions: [
+                    "Pin",
+                    "Minimize",
+                    "Maximize",
+                    "Close"
+                ],
+                // close: onClose
+            }).data("kendoWindow").open();
+          
+        });      
+       
+    }
+</script>

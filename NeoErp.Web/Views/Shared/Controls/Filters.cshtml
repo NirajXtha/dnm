@@ -1,0 +1,330 @@
+﻿
+@*<div id="filterCustomers">
+    <div class="demo-section k-content">
+        <div class="form-inline">
+            <div class="form-group">
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#filterModal" id="filterbutton">Filter Customer</button>               
+            </div>
+        </div>
+    </div>
+</div>*@
+
+<a class="btn btn-circle btn-icon-only btn-default" href="#filterModal" data-toggle="modal">
+    <i class="fa fa-filter"></i>
+</a>
+
+
+
+<div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                @*<button type="button" class="close" data-dismiss="modal" onclick="$('#filterModal').modal('toggle');" aria-label="Close"><span aria-hidden="true">&times;</span></button>*@
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                <h4 class="modal-title" id="filterModalLabel">Filter Customer</h4>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                        @*<div class="form-group col-md-6">
+                            <label class="control-label">Select Multiple Customer</label>
+                            <input class="control-group k-textbox" id="customersAutoComplete" />
+                        </div>*@
+                        @*<div class="form-group col-md-6">
+                            <label class="control-label">Selected Customer:</label>
+                            <input class="control-group k-textbox" id="txtSelectedCustomer" />
+                        </div>*@
+                        <select class="col-md-10" id="multiselect" multiple="multiple"></select>
+                </div>
+                <div>
+                    <div id="treeViewParent" style="height:400px; width:100%;"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn green" id="loadfilteredCustomers" data-dismiss="modal">OK</button>
+                <button type="button" class="btn dark btn-outline" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+
+    $(document).ready(function () {
+
+        //Autocomplete customer list
+        var autoCompleteurl = window.location.protocol + "//" + window.location.host + "/api/SalesHome/GetSalesRegisterCustomers";
+        var autoCompletedataSource = new kendo.data.DataSource({
+            transport: {
+                read: {
+                    url: autoCompleteurl,
+                    dataType: "json"
+                }
+            }
+            //serverFiltering: true
+        });
+
+        function OnMultiSelect(e) {
+            var dataItem = this.dataItem(e.item.index());
+            //show selected item in textbox
+            $("#txtSelectedCustomer").val(dataItem.CustomerId);
+            //Make the selected customer checked in treeView here...
+            var treeView = $("#treeViewParent").data('kendoTreeView');
+            var dataSource = treeView.dataSource;
+            //var dataItem = dataSource.get(e.items[0].customerId);
+            var mydataItem = dataSource.get(dataItem.CustomerCode);
+            //var isChecked = mydataItem.checked;
+            if (typeof mydataItem != 'undefined') {
+                $("#_" + mydataItem.uid).attr('checked', true);
+            }         
+        };
+
+        //$("#customersAutoComplete").kendoAutoComplete({
+        //    dataSource: autoCompletedataSource,
+        //    dataTextField: "CustomerName",
+        //    dataValueField: "CustomerCode",
+        //    filter: "startswith",
+        //    placeholder: "Select Customer...",
+        //    separator: ", ",
+        //    select: onAutoCompleteSelect
+        //});
+
+        $("#multiselect").kendoMultiSelect({
+            dataSource: autoCompletedataSource,
+            dataTextField: "CustomerName",
+            dataValueField: "CustomerCode",
+            height: 600,
+            headerTemplate: '<div><h2>Customers</h2></div>',
+            //filter: "startswith",
+            placeholder: "Select Customers...",
+            autoClose: false,
+            select: OnMultiSelect,
+            dataBound: function () {
+                var current = this.value();
+                this._savedOld = current.slice(0);
+            },
+            change: OnMultiSelectChange
+        });
+
+        function OnMultiSelectChange(e) {
+            var previous = this._savedOld;
+            var current = this.value();
+            var diff = [];
+            if (previous) {
+                diff = $(previous).not(current).get();
+            }
+            this._savedOld = current.slice(0);
+            if (diff.length > 0) {
+                //Make the removed customer unChecked in treeView here...
+                var treeView = $("#treeViewParent").data('kendoTreeView');
+                var dataSource = treeView.dataSource;
+                var mydataItem = dataSource.get(diff);
+                $("#_" + mydataItem.uid).attr('checked', false);
+            }
+        }
+
+        var loadAllCustomersUrl = window.location.protocol + "//" + window.location.host + "/api/SalesHome/GetAllCustomerNodes";
+        var loadCustomerByNodeUrl = window.location.protocol + "//" + window.location.host + "/api/SalesHome/GetAllCustomersByCustId?custId=";
+
+        var localData;
+        var treeParentdataSource = new kendo.data.HierarchicalDataSource({
+            transport: {
+                read: function (options) {
+                    if (typeof options.data.customerId != 'undefined') {
+                        var id = options.data.customerId;
+                        var data = getNextLevel(localData, id);
+                        if (data) {
+                            options.success(data);
+                        } else {
+                            var currentnode = get(localData, id);
+                            $.ajax({
+                                url: loadCustomerByNodeUrl + currentnode.customerId + "&Level=" + currentnode.Level + "&masterCode=" + currentnode.masterCustomerCode,
+                                //data: 'customerId=' + id + '&Level=1' + currentnode.Level,
+                                data: currentnode,
+                                type: "GET",
+                                success: function (result) {
+                                    setTimeout(function () {
+                                        var res = result;
+                                        addToLocalData(localData, res, currentnode.customerId);
+                                        options.success(res);
+                                    }, 1000);
+
+                                },
+                                error: function (result) {
+                                    options.error(result);
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        $.ajax({
+                            url: loadAllCustomersUrl,
+                            //data: 'customerId=' + null + '&Level=' + null + "&masterCode=" + null,
+                            type: "GET",
+                            success: function (result) {
+                                setTimeout(function () {
+                                    options.success(result);
+                                }, 1000);
+                                localData = result;
+                            },
+                            error: function (result) {
+                                options.error(result);
+                            }
+                        });
+                    }
+                }
+            },
+            schema: {
+                model: {
+                    id: "customerId",
+                    hasChildren: "hasCustomers",
+                    masterCustCode: "masterCustomerCode"
+                }
+            }
+        });
+
+        $("#treeViewParent").kendoTreeView({
+            checkboxes: {
+                //name: "checkedItems[]",   // Sets the name attribute of the checkbox inputs. That name will be posted to the server.
+                checkChildren: true // checkboxes of child items get checked when the checkbox of a parent item is checked
+                //template:               //disables checking of paent nodes
+                //  "# if (item.hasCustomers==false) { #" +
+                //      "<input type='checkbox' #= item.checked ? 'checked' : '' #>" +
+                //  "# } #"
+                //template: "# if(item.hasCustomers==false){# <input type='checkbox'  name='section[#= item.customerId #]' value='true' />#} #"
+            },
+            autoScroll: true,
+            autoBind: true,   // If set to false the widget will not bind to the data source during initialization. In this case data binding will occur when the change event of the data source is fired.
+            //loadOnDemand: false, // FORCE LAZY LOADING OF SUBLEVELS ; Indicates whether the child DataSources should be fetched lazily when parent groups get expanded. Setting this to false causes all child DataSources to be loaded at initialization time.
+            dataSource: treeParentdataSource,
+            dataTextField: "customerName",
+            height: 400,
+            scrollable: {
+                virtual: true
+            },
+            check: onCheck,
+        });
+
+        $("#treeViewParent").data("kendoTreeView").expand(".treeNode");
+
+        // function that gathers IDs of checked nodes
+        function checkedNodeIds(nodes, checkedNodes) {
+            for (var i = 0; i < nodes.length; i++) {
+                if (nodes[i].checked) {
+                    checkedNodes.push(nodes[i].id);
+                }
+
+                if (nodes[i].hasChildren) {
+                    checkedNodeIds(nodes[i].children.view(), checkedNodes);
+                }
+            }
+        }
+
+        //TreeView Parent changed state to grab checked node values
+        //$("#treeViewParent").data("kendoTreeView").dataSource.bind("change", function (e) {
+        //    if (e.field == "checked") {
+        //        //alert($("[data-role=treeview] :checked").items[0].customerId);
+        //        var dataItemCustomerID = e.items[0].customerId;
+
+        //        //$("#txtSelectedCustomer").val(dataItemCustomerID);
+        //        $("#txtSelectedCustomer").val(e.items[0].customerId);
+        //    }
+        //});
+
+        function onCheck(e) {
+            // get the multiselect values.
+            var multiselect = $("#multiselect").data("kendoMultiSelect");            
+            var mvalue = multiselect.value();
+            //get the customerId of the checked node
+            var dataItemCustomerID = this.dataItem(e.node).customerId;
+            if (this.dataItem(e.node).checked == true) {                
+                $("#txtSelectedCustomer").val(dataItemCustomerID);
+                //append the selected node value in multiselect when checked
+                var res = [];
+                res.push(dataItemCustomerID);
+                res.forEach(function (dataItem) {
+                    var temp = $.merge($.merge([], mvalue), [dataItem]);
+                    temp = $.unique(temp);
+                    multiselect.value(temp);
+                    multiselect._savedOld = temp.slice(0)
+                });
+
+            }
+            if (this.dataItem(e.node).checked == false) {
+                $("#txtSelectedCustomer").val('');
+                //remove value from multiselect if the node is unchecked
+                mvalue.forEach(function (dataItem) {
+                    //var temp = $.grep($.grep(mvalue,[]), [dataItem]);
+                    var temp = $.grep(mvalue, function (a) { return a != dataItem });
+                    temp = $.unique(temp);
+                    multiselect.value(temp);
+                });
+
+            }
+        }
+
+
+
+        //Checks if nodes are already in the tree and returns it if it does
+        function getNextLevel(data, id) {
+            if (!id) {
+                return data;
+            } else {
+                for (var i = 0; i < data.length; i++) {
+                    if (data[i].customerId == id) {
+                        return data[i].Items;
+                    } else if (data[i].Items) {
+                        for (var j = 0; j < data[i].Items.length; j++) {
+                            if (data[i].Items[j].customerId == id) {
+                                return data[i].Items[j].Items;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        //Get Tree object for a given customerId
+        function get(data, id) {
+            if (id) {
+                for (var i = 0; i < data.length; i++) {
+                    if (data[i].customerId == id) {
+                        return data[i];
+                    }
+                    else if (data[i].Items) {
+                        for (var j = 0; j < data[i].Items.length; j++) {
+                            if (data[i].Items[j].customerId == id) {
+                                return data[i].Items[j];
+                            }
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        //Add newly read nodes to cached tree
+        function addToLocalData(localdata, data, id) {
+            if (!id) {
+                return localdata;
+            } else {
+                for (var i = 0; i < localdata.length; i++) {
+                    if (localdata[i].customerId == id) {
+                        localdata[i].Items = data;
+                        return;
+                    } else {
+                        if (localdata[i].Items) {
+                            for (var j = 0; j < localdata[i].Items.length; j++) {
+                                if (localdata[i].Items[j].customerId == id) {
+                                    localdata[i].Items[j].Items = data;
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+    });
+</script>

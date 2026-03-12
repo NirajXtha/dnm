@@ -1,0 +1,301 @@
+﻿
+@using NeoErp.Core.Models;
+@{
+    ViewBag.Title = "Reseller detail report";
+    Layout = null;
+}
+<style>
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+        // width: 183px !important;
+    }
+
+    /*.page-bar {
+            margin-bottom: 0px !important;
+        }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+                  font-size:11px;
+             }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    a.k-button.k-button-icontext.k-grid-excel {
+        float: right;
+    }
+
+    .Reseller-map-fullscreen {
+        display: none;
+        background-color: #fff;
+        text-align: center;
+        height: 35px;
+        width: 24px;
+        cursor: pointer;
+        background: url() -52px -86px no-repeat;
+        background-image: url('../../Content/map/asset/img/sv5.png');
+        margin-top: 12px;
+        margin-left: 20px;
+    }
+
+    #map-canvas {
+        height: 100%;
+        width: 100%;
+        background: #fff;
+    }
+
+    #Reseller-map-panel {
+        width: 100%;
+        height: 430px;
+        margin: 0 auto;
+        /*border: solid;*/
+        padding: 10px;
+    }
+
+    .number {
+        text-align: right;
+    }
+
+    .text {
+        text-align: left;
+    }
+
+    .date {
+        text-align: center;
+    }
+
+    .custom-combobox {
+        position: relative;
+        display: inline-block;
+    }
+
+    .custom-combobox-toggle {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        margin-left: -1px;
+        padding: 0;
+    }
+
+    .custom-combobox-input {
+        margin: 0;
+        padding: 5px 10px;
+        width: 200px;
+    }
+
+    #DistAdd {
+        display: none;
+    }
+
+    #mapReset {
+        padding: 1px 5px 1px 5px;
+        color: white;
+        background-color: #1a9492;
+        border: 1px;
+        margin-top: 4px;
+    }
+
+    .controls {
+        margin-top: 10px;
+        border: 1px solid transparent;
+        border-radius: 2px 0 0 2px;
+        box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        height: 32px;
+        outline: none;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    #mapSearchBox {
+        background-color: #fff;
+        font-family: Roboto;
+        font-size: 15px;
+        font-weight: 300;
+        margin-left: 12px;
+        padding: 0 11px 0 13px;
+        text-overflow: ellipsis;
+        width: 300px;
+    }
+
+        #mapSearchBox:focus {
+            border-color: #4d90fe;
+        }
+    /*.k-list-container
+               {
+                   max-height:150px !important;
+                   overflow-y:auto !important;
+               }*/
+
+
+
+
+    .material-switch > input[type="checkbox"] {
+        display: none;
+    }
+
+    .material-switch > label {
+        cursor: pointer;
+        height: 0px;
+        position: relative;
+        width: 40px;
+    }
+
+        .material-switch > label::before {
+            background: rgb(0, 0, 0);
+            box-shadow: inset 0px 0px 10px rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            content: '';
+            height: 16px;
+            margin-top: -8px;
+            position: absolute;
+            opacity: 0.3;
+            transition: all 0.4s ease-in-out;
+            width: 31px;
+        }
+
+    .material-switch {
+        margin-top: 1px !important;
+    }
+
+        .material-switch > label::after {
+            background: rgb(255, 255, 255);
+            border-radius: 16px;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.3);
+            content: '';
+            height: 19px;
+            left: -4px;
+            margin-top: -8px;
+            position: absolute;
+            top: -1.5px;
+            transition: all 0.3s ease-in-out;
+            width: 19px;
+        }
+
+        .material-switch > input[type="checkbox"]:checked + label::before {
+            background: inherit;
+            opacity: 0.5;
+        }
+
+        .material-switch > input[type="checkbox"]:checked + label::after {
+            background: inherit;
+            left: 12px;
+        }
+
+    /*#ResellerCreateForm .k-multiselect-wrap li {
+        margin: 2px 2px 1px 4px !important;
+    }*/
+    #ResellerCreateForm .k-multiselect-wrap.k-floatwrap {
+        height: auto !important;
+    }
+</style>
+
+
+<div class="content">
+    <div ng-controller="ResellerDetailCtrl">
+        <div id="resellerSourceModal" class="modal fade" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                        <h4 class="modal-title">
+                            Select Source
+                        </h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row form-group">
+                            <div class="col-md-4 col-sm-4" style="text-align:right">
+                                <label for="sourceSelect">Select Source</label>
+                            </div>
+                            <div class="col-md-6 col-sm-6">
+                                <select ng-model="Source" id="sourceSelect" name="sourceSelect" style="width:100%">
+                                    <option value="B">Web/Mobile</option>
+                                    <option value="M">Mobile</option>
+                                    <option value="W">Web</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-green" ng-click="ApplySource()">Apply</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="page-bar">
+            <ul class="page-breadcrumb"></ul>
+            <div class="actions pull-right actionbutton">
+                @*<div class="btn-group">
+                        <a class="btn btn-circle btn-icon-only btn-default" data-toggle="modal" data-target="#resellerSourceModal" title="Source">
+                            <i class="fa fa-archive"></i>
+                        </a>
+                    </div>*@
+                <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery">
+                    <i class="icon-control-play"></i>
+                </a>
+                <div class="btn-group">
+                    @Html.Partial("~/Views/Shared/Controls/_SetupConfig.cshtml", "ResellerDetailReport")
+                </div>
+            </div>
+        </div>
+
+        <div class="row collapse in" id="demo">
+            <div class="col-md-12">
+                <div class="portlet light bordered">
+                    <div class="portlet-body form">
+                        <div class="row kendo_table">
+                            <kendo-grid options="grid" id="grid">
+                            </kendo-grid>
+                            @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<script>
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+
+    $("#sourceSelect").kendoMultiSelect({
+        maxSelectedItems: 1,
+        autoClose: false
+    });
+
+    $("#RunQuery").on("click", function () {
+        $('#grid').data('kendoGrid').dataSource.read();
+    });
+
+</script>
+<script src="@Scripts.Url("~/JS/reportFilter.js")"></script>
+
+<script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js?V2")"></script>

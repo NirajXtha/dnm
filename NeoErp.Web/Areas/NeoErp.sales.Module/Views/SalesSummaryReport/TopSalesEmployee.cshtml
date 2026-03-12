@@ -1,0 +1,367 @@
+﻿@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+
+
+                                                          
+
+<style>
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+    }
+
+  
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+             font-size:11px;
+        }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-content-locked {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .k-grid-header {
+        font-size: 11px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    .red {
+        color: green !important;
+    }
+</style>
+
+<div class="page-content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb"></ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+                <div class="actions">
+
+                    @Html.Partial("~/Views/Shared/Controls/ComposeMail.cshtml")
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                        <i class="icon-control-play"></i>
+                    </a>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "TopSalesEmployee")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+
+
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div id="grid"></div>                       
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+
+<div class="script">
+    <script src="@Scripts.Url("~/JS/dynamicReport.js?V2")" type="text/javascript"></script>
+    <script type="text/javascript">
+        var fileMailSender = new ManualEmailSender({
+            GridName: "grid",
+            GridRefreshTriggerName: "RunQuery",
+            reportName: "TopSalesEmployee",
+        });
+    </script>
+    <script>
+        $(".defaultPageSize").text("No. of Employee");
+    var reportConfig = GetReportSetting("TopSalesEmployee");
+        var columns = [];
+        ;
+    function getDateFormat(date) {
+        return kendo.format("{0:" + reportConfig.dateFormat + "}", date);
+    }
+
+    $(".applydp").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    })
+
+    $("#loadAdvancedFilters").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    });
+
+
+
+        $(document).ready(function () {           
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/SalesSummaryReportApi/GetTopSalesEmployee";
+        BindGrid(urltest);
+        fileMailSender.init();
+
+
+
+
+
+
+
+        $("#RunQuery").click(function (evt) {
+            evt.preventDefault();
+            urltest = window.location.protocol + "//" + window.location.host + "/api/SalesSummaryReportApi/GetTopSalesEmployee";
+            KendoGridRefresh(urltest);
+        });
+
+        //BindGrid(urltest);
+    });
+
+
+        function BindGrid(readurl) {
+            
+        var companyName = ('@workingContent.CurrentUserinformation.company_name');
+        var fromADdate = $("#FromDateVoucher").val()
+        var toADdate = $("#ToDateVoucher").val();
+        var fromBSdate = $("#fromInputDateVoucher").val();
+        var toBSdate = $("#toInputDateVoucher").val();
+        var branches = ReportFilter.getBranchs();
+        reportConfig = GetReportSetting("TopSalesEmployee");
+        var dataSource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: {
+                    url: readurl + "?pageSize=" + reportConfig.defaultPageSize, // <-- Get data from here.
+                    dataType: "json", // <-- The default was "jsonp".
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8",
+                },
+                parameterMap: function (options, type) {
+                    var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+                    //  paramMap.formDate = $("#FromDateVoucher").val();
+                    delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                    delete paramMap.$format; // <-- remove format parameter.
+                    return paramMap;
+                },
+
+            },
+
+            error: function (e) {
+                displayPopupNotification("Sorry error occured while processing data", "error");
+            },
+            serverFiltering: false,
+            serverAggregates: false,
+            serverPaging: false,
+            //serverSorting: true,
+            pageSize: reportConfig.defaultPageSize,
+        });
+        var grid = $("#grid").kendoGrid({
+            dataSource: dataSource,
+            //toolbar: kendo.template($("#toolbar-template").html()),
+            excel: {
+                fileName: "Top Employees",
+                //proxyURL: "//demos.telerik.com/kendo-ui/service/export",
+                allPages: true
+            },
+            //height: window.innerHeight - 150,
+            sortable: true,
+            reorderable: true,
+            groupable: false,
+            resizable: true,
+            filterable: {
+                extra: false,
+                operators: {
+                    number: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "is greater than or equal to	",
+                        gt: "is greater than",
+                        lte: "is less than or equal",
+                        lt: "is less than",
+                    },
+                    string: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        startswith: "Starts with	",
+                        contains: "Contains",
+                        doesnotcontain: "Does not contain",
+                        endswith: "Ends with",
+                    },
+                    date: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "Is after or equal to",
+                        gt: "Is after",
+                        lte: "Is before or equal to",
+                        lt: "Is before",
+                    }
+                }
+            },
+            columnMenu: true,
+            columnMenuInit: function (e) {
+                wordwrapmenu(e);
+                checkboxItem = $(e.container).find('input[type="checkbox"]');
+            },
+            columnShow: function (e) {
+                if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                    SaveReportSetting('TopSalesEmployee', 'grid');
+            },
+            columnHide: function (e) {
+                if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                    SaveReportSetting('TopSalesEmployee', 'grid');
+            },
+            pageable: {
+                refresh: true,
+                pageSizes: reportConfig.itemPerPage,
+                buttonCount: 5
+            },
+            scrollable: {
+                virtual: true
+            },
+            dataBound: function (o) {
+                ;
+                var grid = o.sender;
+                if (grid.dataSource.data().length == 0) {
+                    var colCount = grid.columns.length + 1;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    displayPopupNotification("No Data Found Given Date Filter.", "info");
+                }
+                else if (_.isEmpty(grid.dataSource.data()[0].EMPLOYEE_MTD))
+                {
+                    $.each(grid.element.find("tbody tr"), function (i, o) {
+                        ;
+                        $(o).find("td:first").attr("colspan", "4")
+                            .attr("style", "background-color:white")
+                            .attr("class", "alert alert-danger");
+                        $(o).find("td")[1].remove();
+                        $(o).find("td")[1].remove();
+                        $(o).find("td")[1].remove();
+                    });
+                    grid.element.find("tbody tr:first td:first").text("Sorry, no data :(");
+                }
+
+
+                $('div').removeClass('.k-header k-grid-toolbar');
+                UpdateReportUsingSetting("TopSalesEmployee", "grid");
+                // grid.dataSource.page(1);
+            },
+            columns: [
+                {
+                    title: "MTD",
+                    columns: [
+                        {
+                            field: "EMPLOYEE_MTD",
+                            title: "EMPLOYEE",
+                        },
+                        {
+                            field: "TARGET_MTD",
+                            title: "TARGET",
+                            format: "{0:n}",
+                            attributes: {
+                                style: "text-align: right;"
+                            },
+                        },
+                        {
+                            field: "AMOUNT_MTD",
+                            title: "SALES",
+                            attributes: {
+                                style: "text-align: right;"
+                            },
+                        },
+                        {
+                            title: "%eg Achieve",
+                            template: function (data) {
+                                return data.TARGET_MTD == 0 ? "0 %" : ((data.AMOUNT_MTD - data.TARGET_MTD) / data.TARGET_MTD * 100).toFixed(2) + " %"
+                            },
+                            format: "{0:n}",
+                            attributes: {
+                                style: "text-align: right;"
+                            },
+                        }
+                    ]
+                },
+                {
+                    title: "YTD",
+                    columns: [
+                        {
+                            field: "EMPLOYEE_YTD",
+                            title: "EMPLOYEE",
+                        },
+                        {
+                            field: "TARGET_YTD",
+                            title: "TARGET",
+                            format: "{0:n}",
+                            attributes: {
+                                style: "text-align: right;"
+                            },
+                        },
+                        {
+                            field: "AMOUNT_YTD",
+                            title: "SALES",
+                            format: "{0:n}",
+                            attributes: {
+                                style: "text-align: right;"
+                            },
+                        },
+                        {
+                            title: "%eg Achieve",
+                            template: function (data) {
+                                return data.TARGET_YTD == 0 ? "0 %" : ((data.AMOUNT_YTD - data.TARGET_YTD) / data.TARGET_YTD * 100).toFixed(2) + " %"
+                            },
+                            format: "{0:n}",
+                            attributes: {
+                                style: "text-align: right;"
+                            },
+                        }
+                    ]
+                }
+            ]
+
+        });
+
+    };
+
+    function KendoGridRefresh(readUrl) {
+        $('#grid').val('');
+        $('#grid').html('');
+        BindGrid(readUrl)
+    }
+
+
+
+
+
+    </script>
+</div>
+
+
+

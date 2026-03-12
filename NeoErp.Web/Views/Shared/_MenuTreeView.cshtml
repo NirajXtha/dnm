@@ -1,0 +1,243 @@
+﻿
+<div>
+    <div class="row">
+        <button type="button" class="btn green" id="menuchange_custom">Save order <i class="icon-arrow-down"></i></button>
+        <h4>TreeView</h4>
+        <div id="menuTreeView" style="height:250px;"></div>
+        
+
+    </div>
+    <ul id="menu">
+        <li><img src="http://demos.telerik.com/kendo-ui/content/web/toolbar/forward.png" />Add</li>
+        <li><img src="http://demos.telerik.com/kendo-ui/content/web/toolbar/forward.png" />Edit</li>
+        <li><img src="http://demos.telerik.com/kendo-ui/content/web/treeview/close.png" />Delete</li>
+    </ul>
+</div>
+<style>
+    button#menuchange_custom {
+    float: right;
+}
+</style>
+
+<script>
+    $(document).ready(function () {
+        debugger;
+        document.DataTableTest = function () {
+            setTimeout(function () {
+                $('.datatable').DataTable();
+            }, 200)
+        }
+
+        GetMenuInTreeView = function () {
+            var tree = $("#menuTreeView").data("kendoTreeView");
+            tree.dataSource.read();
+        }
+
+        var loadAllMenusUrl = window.location.protocol + "//" + window.location.host + "/api/MenuSettings/GetAllMenusNodes";
+        var loadMenusByNodeUrl = window.location.protocol + "//" + window.location.host + "/api/MenuSettings/GetAllMenusByMenuNo";
+        var localData;
+        var menuTreeDataSource = new kendo.data.HierarchicalDataSource({
+            transport: {
+                read: function (options) {
+                    if (typeof options.data.MENU_NO != 'undefined') {
+                        var id = options.data.MENU_NO;
+                        var data = getNextLevel(localData, id);
+                        if (data) {
+                            options.success(data);
+                        } else {
+                            var currentnode = get(localData, id);
+                            $.ajax({
+                                url: loadMenusByNodeUrl,
+                                data: {
+                                    menuNo: currentnode.MENU_NO,
+                                    level: currentnode.LEVEL,
+                                    masterCode: currentnode.MASTER_MENU_CODE
+                                },
+                                type: "GET",
+                                success: function (result) {
+                                    setTimeout(function () {
+                                        var res = result;
+                                        addToLocalData(localData, res, currentnode.MENU_NO);
+                                        options.success(res);
+                                    }, 1000);
+
+                                },
+                                error: function (result) {
+                                    options.error(result);
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        $.ajax({
+                            url: loadAllMenusUrl,
+                            type: "GET",
+                            success: function (result) {
+                                setTimeout(function () {
+                                    options.success(result);
+                                }, 1000);
+                                localData = result;
+                            },
+                            error: function (result) {
+                                options.error(result);
+                            }
+                        });
+                    }
+                }
+            },
+            schema: {
+                model: {
+                    id: "MENU_NO",
+                    hasChildren: "hasMenus",
+                    masterMCode: "MASTER_MENU_CODE"
+                }
+            }
+        });
+        var obj;
+        $("#menuTreeView").kendoTreeView({
+            autoScroll: true,
+            autoBind: true,
+            dataSource: menuTreeDataSource,
+            dataTextField: "MENU_EDESC",
+            dragAndDrop: true,
+            height: 400,
+
+            scrollable: {
+                virtual: true
+            },
+            select: function (e) {
+                onSelect(e);
+            },
+            drop: function (e) {
+                debugger;
+                var data = $('#menuTreeView').data('kendoTreeView').dataItem(e.sourceNode);
+                var newData = $('#menuTreeView').data('kendoTreeView').dataItem(e.destinationNode);
+                if (e.dropPosition == "over")
+                    e.setValid(true);
+                if (data.PRE_MENU_NO != '00') {
+                    e.setValid(true);
+                }
+            },
+
+        });
+
+        $("#menuchange_custom").on('click', function () {
+            debugger;
+            var menuno = $("#menuTreeView").data("kendoTreeView").dataSource.data();
+            var arr = [];
+            for (var i = 0; i < menuno.length; i++) {
+                arr.push({ MENU_NO: menuno[i].MENU_NO, ORDER: i + 1 });
+            }
+            var urltest = window.location.protocol + "//" + window.location.host + "/api/MenuSettings/ChangeMenuOrder";
+            $.ajax({
+                url: urltest,
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(arr),
+                type: "POST",
+                success: function (data) {
+                    displayPopupNotification("updated", "success");
+                }
+            })
+
+        })
+
+        function onSelect(e) {
+            var tv = $("#menuTreeView").data("kendoTreeView");
+            var item = tv.dataItem(e.node);
+            obj = item;
+        }
+
+        $("#menuTreeView").data("kendoTreeView").expand(".treeNode");
+        //Checks if nodes are already in the tree and returns it if it does
+        function getNextLevel(data, id) {
+            if (!id) {
+                return data;
+            } else {
+                for (var i = 0; i < data.length; i++) {
+                    if (data[i].MENU_NO == id) {
+                        return data[i].Items;
+                    } else if (data[i].Items) {
+                        for (var j = 0; j < data[i].Items.length; j++) {
+                            if (data[i].Items[j].MENU_NO == id) {
+                                return data[i].Items[j].Items;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        //Get Tree object for a given menuno
+        function get(data, id) {
+            if (id) {
+                for (var i = 0; i < data.length; i++) {
+                    if (data[i].MENU_NO == id) {
+                        return data[i];
+                    }
+                    else if (data[i].Items) {
+                        for (var j = 0; j < data[i].Items.length; j++) {
+                            if (data[i].Items[j].MENU_NO == id) {
+                                return data[i].Items[j];
+                            }
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        //Add newly read nodes to cached tree
+        function addToLocalData(localdata, data, id) {
+            if (!id) {
+                return localdata;
+            } else {
+                for (var i = 0; i < localdata.length; i++) {
+                    if (localdata[i].MENU_NO == id) {
+                        localdata[i].Items = data;
+                        return;
+                    } else {
+                        if (localdata[i].Items) {
+                            for (var j = 0; j < localdata[i].Items.length; j++) {
+                                if (localdata[i].Items[j].MENU_NO == id) {
+                                    localdata[i].Items[j].Items = data;
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
+        $("#menu").kendoContextMenu({
+            target: "#menuTreeView",
+            filter: ".k-in",
+
+            select: function (e) {
+
+                var button = $(e.item);
+                var node = $(e.target);
+
+                if (button.text() == "Add") {
+                    angular.element(document.getElementById('menuSettingController')).scope().AddMenuDiv(obj);
+                }
+                else if (button.text() == "Edit") {
+                    angular.element(document.getElementById('menuSettingController')).scope().editMenu(obj);
+                }
+                else {
+                    angular.element(document.getElementById('menuSettingController')).scope().setTemp(obj);
+                }
+
+            }
+        });
+
+    });
+    $(function () {
+        $('#menuTreeView').slimScroll({
+            //color: "#FFF",
+        });
+    });
+</script>
+

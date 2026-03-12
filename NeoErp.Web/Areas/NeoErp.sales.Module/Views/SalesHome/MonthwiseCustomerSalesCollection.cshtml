@@ -1,0 +1,1326 @@
+﻿
+
+@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+<style>
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+    }
+
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+         font-size:11px;
+    }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-content-locked {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .k-grid-header {
+        font-size: 11px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+</style>
+
+
+
+<div class="page-content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+            @*<li>
+                    <i class="fa fa-home"></i>
+                    <a href="/main/DashBoard">Home</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>
+                <li>
+                    <a href="sales/saleshome/dashboard/Dashboard">Organiser</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>*@
+        </ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+                <div class="actions">
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                    </div>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+                    </div>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                   {
+                       ShowSupplierFilter = true,
+                       ShowPurchaseDocumentFilter = true,
+                       //ShowAreaFilter = true,
+                       //ShowProductFilter = true,
+                       //ShowCategoryFilter = true,
+                       //ShowCompanyFilter = true,
+                       //ShowBranchFilter = true
+                   })
+                    </div>
+
+                    @Html.Partial("~/Views/Shared/Controls/_reportFilterSettings.cshtml", new ReportFilterSettingsModel()
+               {
+                   ShowAmountFigureFilter = true,
+                   ShowAmountFilter = true,
+                   ShowAmountRoundUpFilter = true,
+                   ShowRangeAmountFilter = true,
+
+               })
+
+                    @Html.Partial("~/Views/Shared/Controls/ComposeMail.cshtml")
+                    <a data-toggle="modal" id="RunQuery" href="#">
+                        <div class="btn btn-circle btn-icon-only btn-default" data-placement="left" data-html="true" data-container="body" data-toggle="tooltip" title="Refresh">
+                            <i class="icon-control-play"></i>
+                        </div>
+                    </a>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "MonthwiseCustomerSalesCollection")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+
+
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div id="grid" class="table-grid"></div>
+                        @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+<script src="@Scripts.Url("~/JS/DateFilter.js?V5")" type="text/javascript"></script>
+<script src="@Scripts.Url("~/JS/dynamicReport.js?V2")" type="text/javascript"></script>
+<script type="text/javascript">
+    var fileMailSender = new ManualEmailSender({
+        GridName: "grid",
+        GridRefreshTriggerName: "Runquery",
+        reportName: "DateWiseSalesDetails",
+    });
+</script>
+<script type="text/javascript">
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+
+</script>
+<script>
+
+    var reportConfig = GetReportSetting("MonthwiseCustomerSalesCollection");
+    function getDateFormat(date) {
+        return kendo.format("{0:" + reportConfig.dateFormat + "}", date);
+    }
+
+    $(".applydp").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    })
+
+    $("#loadAdvancedFilters").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    });
+
+    $(document).ready(function () {
+
+         DateFilter.init(function () {
+                  consolidate.init(function () {
+                    BindGrid(urltest);
+                });
+         });
+
+        fileMailSender.init();
+
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/SalesHome/GetMonthwiseCustomerSalesCollection";
+
+        $("#RunQuery").click(function (evt) {
+            evt.preventDefault();
+            urltest = window.location.protocol + "//" + window.location.host + "/api/SalesHome/GetMonthwiseCustomerSalesCollection";
+            KendoGridRefresh(urltest);
+        });
+
+        //BindGrid(urltest);
+    });
+
+    function KendoGridRefresh(readUrl) {
+        $('#grid').data("kendoTreeList").destroy();
+        $('#grid').val('');
+        $('#grid').html('');
+        BindGrid(readUrl)
+    }
+
+   @*function BindGrid(readurl) {
+       var companyName = ('@workingContent.CurrentUserinformation.company_name');
+       var fromADdate = $("#FromDateVoucher").val();
+       var toADdate = $("#ToDateVoucher").val();
+       var fromBSdate = $("#fromInputDateVoucher").val();
+       var toBSdate = $("#toInputDateVoucher").val();
+       var branches = ReportFilter.getBranchs();
+       reportConfig = GetReportSetting("MonthwiseCustomerSalesCollection");
+        if ($("#grid").data("kendoTreeList")) {
+            $("#grid").data("kendoTreeList").destroy();
+            $("#grid").empty();
+        }
+
+        // Initialize new TreeList
+        $("#grid").kendoTreeList({
+            dataSource: {
+                type: "json",
+                transport: {
+                    read: {
+                        url: readurl,
+                        dataType: "json",
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8"
+                    },
+                    parameterMap: function (options, type) {
+                        let paramMap = $.extend(options, ReportFilter.filterAdditionalData());
+                        delete paramMap.$inlinecount;
+                        delete paramMap.$format;
+                        return JSON.stringify(paramMap);
+                    }
+                },
+                error: function (e) {
+                    displayPopupNotification("Sorry error occured while processing data", "error");
+                },
+                serverFiltering: true,
+                serverAggregates: true,
+                schema: {
+                    data: "CustomerSales",
+                    total: function (response) {
+                        return response.Total || response.total || (response.VatSalesRegisterNew?.length || 0);
+                    },
+                    aggregates: "AggregationResult",
+                    model: {
+                        id: "MASTER_CUSTOMER_CODE",
+                        parentId: "PRE_CUSTOMER_CODE",
+                        fields: {
+                            MASTER_CUSTOMER_CODE: { type: "string", editable: false },
+                            PRE_CUSTOMER_CODE: { type: "string", nullable: true },
+                            CUSTOMER_EDESC: { type: "string" },
+                            GROUP_FLAG: { type: "string" },
+                            CUSTOMER_CODE: { type: "string" },
+                            ITEM_CODE: { type: "string" },
+                            ITEM_EDESC: { type: "string" },
+                            INDEX_MU_CODE: { type: "string" },
+                            // Monthly collection and values
+                            S_VALUE: { type: "number" },
+                            S_COLLECTION: { type: "number" },
+                            B_VALUE: { type: "number" },
+                            B_COLLECTION: { type: "number" },
+                            A_VALUE: { type: "number" },
+                            A_COLLECTION: { type: "number" },
+                            K_VALUE: { type: "number" },
+                            K_COLLECTION: { type: "number" },
+                            M_VALUE: { type: "number" },
+                            M_COLLECTION: { type: "number" },
+                            P_VALUE: { type: "number" },
+                            P_COLLECTION: { type: "number" },
+                            Mg_VALUE: { type: "number" },
+                            Mg_COLLECTION: { type: "number" },
+                            F_VALUE: { type: "number" },
+                            F_COLLECTION: { type: "number" },
+                            C_VALUE: { type: "number" },
+                            C_COLLECTION: { type: "number" },
+                            Bh_VALUE: { type: "number" },
+                            Bh_COLLECTION: { type: "number" }
+                        }
+                    }
+                },
+                aggregate: [
+                    { field: "S_COLLECTION", aggregate: "sum" },
+                    { field: "S_VALUE", aggregate: "sum" },
+                    { field: "B_COLLECTION", aggregate: "sum" },
+                    { field: "B_VALUE", aggregate: "sum" },
+                    { field: "A_COLLECTION", aggregate: "sum" },
+                    { field: "A_VALUE", aggregate: "sum" },
+                    { field: "K_COLLECTION", aggregate: "sum" },
+                    { field: "K_VALUE", aggregate: "sum" },
+                    { field: "M_COLLECTION", aggregate: "sum" },
+                    { field: "M_VALUE", aggregate: "sum" },
+                    { field: "P_COLLECTION", aggregate: "sum" },
+                    { field: "P_VALUE", aggregate: "sum" },
+                    { field: "Mg_COLLECTION", aggregate: "sum" },
+                    { field: "Mg_VALUE", aggregate: "sum" },
+                    { field: "F_COLLECTION", aggregate: "sum" },
+                    { field: "F_VALUE", aggregate: "sum" },
+                    { field: "C_COLLECTION", aggregate: "sum" },
+                    { field: "C_VALUE", aggregate: "sum" },
+                    { field: "Bh_COLLECTION", aggregate: "sum" },
+                    { field: "Bh_VALUE", aggregate: "sum" }
+                ],
+
+                serverPaging: true,
+                //serverSorting: true,
+                pageSize: reportConfig.defaultPageSize,
+            },
+            animation: {
+                expand: true,
+            },
+            toolbar: kendo.template($("#toolbar-template").html()),
+            excel: {
+                fileName: "Vat Sales Return Register New",
+                //proxyURL: "//demos.telerik.com/kendo-ui/service/export",
+                allPages: true
+            },
+            excelExport: function (e) {
+                e.preventDefault();
+                var workbook = e.workbook;
+                var sheet = workbook.sheets[0];
+
+                // Step 1: Clean the footer (Grand Total) values by removing any HTML tags
+                for (var i = 0; i < sheet.rows.length; i++) {
+                    var row = sheet.rows[i];
+
+                    if (row.type === "footer") { // Only for footer rows
+                        for (var j = 0; j < row.cells.length; j++) {
+                            var cell = row.cells[j];
+
+                            if (cell && cell.value && typeof cell.value === "string") {
+                                // Remove HTML tags and extra spaces
+                                cell.value = cell.value.replace(/<[^>]*>/g, '').trim();
+
+                                // Optional: if cell is numeric after cleanup, convert it to number
+                                if (!isNaN(cell.value.replace(/,/g, ""))) {
+                                    cell.value = parseFloat(cell.value.replace(/,/g, ""));
+                                }
+                            }
+                        }
+                    }
+                }
+                // Step 2: Add custom headers before the data rows
+                sheet.rows.unshift({
+                    cells: [{ value: "Vat Sales Return Register New".split('').join(' '), colSpan: 18 }]
+                });
+                var filterText = $("#AdvanceFilter").attr('data-original-title');
+                if (filterText.indexOf('|') < 0) {
+                    filterText = $((filterText).replace(/<strong>/g, "|")).text().replace('|', '').split('|').reverse();
+                    $.each(filterText, function (k, item) {
+                        sheet.rows.unshift({
+                            cells: [{ value: item, colSpan: 18 }]
+                        });
+                    });
+                }
+                if (filterText.toString().indexOf('Date Range') < 0) {
+                    sheet.rows.unshift({
+                        cells: [{ value: "From :- " + fromADdate + "(" + fromBSdate + ")" + "\t To :- " + toADdate + "(" + toBSdate + ")", colSpan: 18 }]
+                    });
+                }
+                for (var companyCount = 0; companyCount < branches.length; companyCount++) {
+                    sheet.rows.unshift({
+                        cells: [{ value: branches[companyCount].Company + " :- " + branches[companyCount].Branches.join(','), colSpan: 18 }]
+                    });
+                }
+                sheet.rows.unshift({
+                    cells: [{ value: companyName.split('').join(' '), colSpan: 18 }]
+                });
+                // Step 3: Create a final Workbook object
+                var WorkbookFinal = new kendo.ooxml.Workbook({
+                    sheets: [{
+                        columns: [
+                            { width: 110 } // Optional: you can set widths properly if you want
+                        ],
+                        rows: sheet.rows
+                    }]
+                });
+                // Step 4: Save the final Excel file
+                kendo.saveAs({
+                    dataURI: WorkbookFinal.toDataURL(),
+                    fileName: "Vat Sales Return Register New.xlsx"
+                });
+            },
+            height: window.innerHeight - 50,
+            height: 600,
+            pageSize: 50,
+            pageable: {
+                pageSizes: [50, 100, 200],
+                buttonCount: 5,
+                refresh: true
+            },
+            filterable: {
+                extra: false,
+                operators: {
+                    number: {
+                        eq: "Is equal to", neq: "Is not equal to",
+                        gte: "Is greater than or equal to", gt: "Is greater than",
+                        lte: "Is less than or equal to", lt: "Is less than"
+                    },
+                    string: {
+                        eq: "Is equal to", neq: "Is not equal to",
+                        startswith: "Starts with", contains: "Contains",
+                        doesnotcontain: "Does not contain", endswith: "Ends with"
+                    },
+                    date: {
+                        eq: "Is equal to", neq: "Is not equal to",
+                        gte: "Is after or equal to", gt: "Is after",
+                        lte: "Is before or equal to", lt: "Is before"
+                    }
+                }
+            },
+            groupable: true,
+            sortable: true,
+            reorderable: true,
+            columnMenu: true,
+            resizable: true,
+            editable: "inline",
+            columnMenuInit: function (e) {
+                wordwrapmenu(e);
+                checkboxItem = $(e.container).find('input[type="checkbox"]');
+            },
+            columnShow: function (e) {
+                if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                    SaveReportSetting('MonthwiseCustomerSalesCollection', 'grid');
+            },
+            columnHide: function (e) {
+                if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                    SaveReportSetting('MonthwiseCustomerSalesCollection', 'grid');
+            },
+            pageable: {
+                refresh: true,
+                pageSizes: reportConfig.itemPerPage,
+                buttonCount: 5
+            },
+            scrollable: true,  // simple scrolling, not virtual
+
+
+            dataBound: function (e) {
+                var treeList = e.sender;
+                if (treeList.dataSource.total() === 0) {
+                    var colCount = treeList.columns.length + 1;
+                    $(treeList.wrapper)
+                        .find('tbody')
+                        .append('<tr class="k-treelist-group"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    displayPopupNotification("No Data Found Given Date Filter.", "info");
+                } else {
+                    // Optional: Add any TreeList-specific handling if needed
+                }
+
+                // Remove unwanted classes (if needed)
+                $('div').removeClass('k-header k-grid-toolbar');
+
+                // Update report settings (custom function - ensure it's valid for TreeList too)
+                UpdateReportUsingSetting("MonthwiseCustomerSalesCollection", "treeList");
+            },
+
+            columns: [
+
+                     {
+                    field: "CUSTOMER_EDESC",
+                    title: "Customer >>> Product",
+                    width: 320,
+                    //template: function (dataItem) {
+                    //    return dataItem?.ITEM_EDESC || dataItem?.CUSTOMER_EDESC || "";
+                    //},
+                       footerTemplate: '<span style="float:right"> Grand Total</span>',
+                    },
+
+
+
+                //{
+                //    field: "CUSTOMER_EDESC",
+                //    title: "Customer >>> Product",
+                //    width: 220,
+                //    template: function (dataItem) {
+                //        if (dataItem.GROUP_FLAG === "G") {
+                //            return `<b> ${dataItem.CUSTOMER_EDESC}</b>`;
+                //        }
+                //         else if (dataItem.GROUP_FLAG === "I") {
+                //            return `<b> ${dataItem.CUSTOMER_EDESC}</b>`;
+                //        } else {
+                //            return dataItem.CUSTOMER_EDESC || "";
+                //        }
+                //    }
+                //},
+                {
+                    field: "ITEM_CODE",
+                    title: "Code",
+                    width: 80
+                },
+                {
+                    field: "INDEX_MU_CODE",
+                    title: "Unit",
+                    width: 80
+                },
+                {
+                    field: "S_COLLECTION",
+                    title: "Shrawan_Quantity",
+                    aggregates: ["sum"],
+                    groupFooterTemplate: '<span style="float:right">#=kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter"))#</span>',
+                    format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter") + "}",
+                    footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                    width: "140px"
+                },
+                {
+                    field: "S_VALUE",
+                    title: "Shrawan_Value",
+                    aggregates: ["sum"],
+                    groupFooterTemplate: '<span style="float:right">#=kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter"))#</span>',
+                    format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter") + "}",
+                    footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter")) #</span> # } #',
+                    width: "140px"
+                },
+                {
+                    field: "B_COLLECTION",
+                    title: "Bhadra_Quantity",
+                    aggregates: ["sum"],
+                    groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                    format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                    footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                    width: "140px",
+                },
+                {
+                    field: "B_VALUE",
+                    title: "Bhadra_Value",
+                    aggregates: ["sum"],
+                    groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                    format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                    footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                    width: "140px",
+                }, {
+                    field: "A_COLLECTION",
+                    title: "Ashoj_Quantity",
+                    aggregates: ["sum"],
+                    groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                    format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                    footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                    width: "140px",
+                },
+                {
+                    field: "A_VALUE",
+                    title: "Ashoj_Value",
+                    aggregates: ["sum"],
+                    groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                    format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                    footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                    width: "140px",
+                },
+                {
+                    field: "K_COLLECTION",
+                    title: "Karthik_Quantity",
+                    aggregates: ["sum"],
+                    groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                    format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                    footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                    width: "140px",
+                },
+                {
+                    field: "K_VALUE",
+                    title: "Karthik_Value",
+                    aggregates: ["sum"],
+                    groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                    format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                    footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                    width: "140px",
+                },
+                {
+                    field: "M_COLLECTION",
+                    title: "Mangsir_Quantity",
+                    aggregates: ["sum"],
+                    groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                    format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                    footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                    width: "140px",
+                },
+                {
+                    field: "M_VALUE",
+                    title: "Mangsir_Value",
+                    aggregates: ["sum"],
+                    groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                    format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                    footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                    width: "140px",
+                },
+                {
+                    field: "P_COLLECTION",
+                    title: "Poush_Quantity",
+                    aggregates: ["sum"],
+                    groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                    format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                    footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                    width: "140px",
+                },
+                {
+                    field: "P_VALUE",
+                    title: "Poush_Value",
+                    aggregates: ["sum"],
+                    groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                    format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                    footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                    width: "140px",
+                },
+                {
+                    field: "Mg_COLLECTION",
+                    title: "Magh_Quantity",
+                    aggregates: ["sum"],
+                    groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                    format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                    footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                    width: "140px",
+                },
+                {
+                    field: "Mg_VALUE",
+                    title: "Magh_Value",
+                    aggregates: ["sum"],
+                    groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                    format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                    footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                    width: "140px",
+                },
+                {
+                    field: "F_COLLECTION",
+                    title: "Falgun_Quantity",
+                    aggregates: ["sum"],
+                    groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                    format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                    footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                    width: "140px",
+                },
+                {
+                    field: "F_VALUE",
+                    title: "Falgun_Value",
+                    aggregates: ["sum"],
+                    groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                    format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                    footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                    width: "140px",
+                },
+                {
+                    field: "C_COLLECTION",
+                    title: "Chaitra_Quantity",
+                    aggregates: ["sum"],
+                    groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                    format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                    footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                    width: "140px",
+                },
+                {
+                    field: "C_VALUE",
+                    title: "Chaitra_Value",
+                    aggregates: ["sum"],
+                    groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                    format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                    footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                    width: "140px",
+                },
+                {
+                    field: "Bh_COLLECTION",
+                    title: "Baisakh_Quantity",
+                    aggregates: ["sum"],
+                    groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                    format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                    footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                    width: "140px",
+                },
+                {
+                    field: "Bh_VALUE",
+                    title: "Baisakh_Value",
+                    aggregates: ["sum"],
+                    groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                    format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                    footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                    width: "140px",
+                }
+
+            ],
+
+
+
+
+        });
+    }*@
+
+  // test
+
+
+
+   @*function BindGrid(readurl) {
+    var companyName = ('@workingContent.CurrentUserinformation.company_name');
+    var fromADdate = $("#FromDateVoucher").val();
+    var toADdate = $("#ToDateVoucher").val();
+    var fromBSdate = $("#fromInputDateVoucher").val();
+    var toBSdate = $("#toInputDateVoucher").val();
+    var branches = ReportFilter.getBranchs();
+    reportConfig = GetReportSetting("MonthwiseCustProdNetSales");
+
+    if ($("#grid").data("kendoTreeList")) {
+        $("#grid").data("kendoTreeList").destroy();
+        $("#grid").empty();
+    }
+
+    $("#grid").kendoTreeList({
+        dataSource: {
+            type: "json",
+            transport: {
+                read: {
+                    url: readurl,
+                    dataType: "json",
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8"
+                },
+                parameterMap: function (options, type) {
+                    let paramMap = $.extend(options, ReportFilter.filterAdditionalData());
+                    delete paramMap.$inlinecount;
+                    delete paramMap.$format;
+                    return JSON.stringify(paramMap);
+                }
+            },
+
+            schema: {
+                data: "MonthwiseNetSales",
+                total: function (response) {
+                    return response.Total || response.total || (response.VatSalesRegisterNew?.length || 0);
+                },
+                model: {
+                    id: "MASTER_CUSTOMER_CODE",
+                    parentId: "PRE_CUSTOMER_CODE",
+                    fields: {
+                        MASTER_CUSTOMER_CODE: { type: "string", editable: false },
+                        PRE_CUSTOMER_CODE: { type: "string", nullable: true },
+                        CUSTOMER_EDESC: { type: "string" },
+                        GROUP_FLAG: { type: "string" },
+                        CUSTOMER_CODE: { type: "string" },
+                        ITEM_CODE: { type: "string" },
+                        ITEM_EDESC: { type: "string" },
+                        INDEX_MU_CODE: { type: "string" },
+                        // Monthly quantities and values
+                        S_QTY: { type: "number" }, S_VALUE: { type: "number" },
+                        B_QTY: { type: "number" }, B_VALUE: { type: "number" },
+                        A_QTY: { type: "number" }, A_VALUE: { type: "number" },
+                        K_QTY: { type: "number" }, K_VALUE: { type: "number" },
+                        M_QTY: { type: "number" }, M_VALUE: { type: "number" },
+                        P_QTY: { type: "number" }, P_VALUE: { type: "number" },
+                        Mg_QTY: { type: "number" }, Mg_VALUE: { type: "number" },
+                        F_QTY: { type: "number" }, F_VALUE: { type: "number" },
+                        C_QTY: { type: "number" }, C_VALUE: { type: "number" },
+                        Bh_QTY: { type: "number" }, Bh_VALUE: { type: "number" }
+                    }
+                }
+            },
+            aggregate: [
+                // Monthly quantities and values
+                { field: "S_QTY", aggregate: "sum" },
+                { field: "S_VALUE", aggregate: "sum" },
+                { field: "B_QTY", aggregate: "sum" },
+                { field: "B_VALUE", aggregate: "sum" },
+                { field: "A_QTY", aggregate: "sum" },
+                { field: "A_VALUE", aggregate: "sum" },
+                { field: "K_QTY", aggregate: "sum" },
+                { field: "K_VALUE", aggregate: "sum" },
+                { field: "M_QTY", aggregate: "sum" },
+                { field: "M_VALUE", aggregate: "sum" },
+                { field: "P_QTY", aggregate: "sum" },
+                { field: "P_VALUE", aggregate: "sum" },
+                { field: "Mg_QTY", aggregate: "sum" },
+                { field: "Mg_VALUE", aggregate: "sum" },
+                { field: "F_QTY", aggregate: "sum" },
+                { field: "F_VALUE", aggregate: "sum" },
+                { field: "C_QTY", aggregate: "sum" },
+                { field: "C_VALUE", aggregate: "sum" },
+                { field: "Bh_QTY", aggregate: "sum" },
+                { field: "Bh_VALUE", aggregate: "sum" },
+
+                // Totals
+                { field: "TOTAL_QTY", aggregate: "sum" },
+                { field: "TOTAL_VALUE", aggregate: "sum" }
+            ],
+            serverPaging: true,
+            serverFiltering: true,
+            serverSorting: true,
+            pageSize: reportConfig.defaultPageSize,
+        },
+        //animation: {
+        //    expand: true,
+        //},
+        toolbar: kendo.template($("#toolbar-template").html()),
+        excel: {
+            fileName: "Monthwise CustomerProduct NetSales",
+            //proxyURL: "//demos.telerik.com/kendo-ui/service/export",
+            allPages: true
+        },
+        excelExport: function (e) {
+            debugger;
+            console.log("Export triggered"); // ✅ Confirm the export event is firing
+            e.preventDefault();
+            var workbook = e.workbook;
+            var sheet = workbook.sheets[0];
+
+            // Step 1: Clean the footer (Grand Total) values by removing any HTML tags
+            for (var i = 0; i < sheet.rows.length; i++) {
+                var row = sheet.rows[i];
+
+                if (row.type === "footer") { // Only for footer rows
+                    for (var j = 0; j < row.cells.length; j++) {
+                        var cell = row.cells[j];
+
+                        if (cell && cell.value && typeof cell.value === "string") {
+                            // Remove HTML tags and extra spaces
+                            cell.value = cell.value.replace(/<[^>]*>/g, '').trim();
+
+                            // Optional: if cell is numeric after cleanup, convert it to number
+                            if (!isNaN(cell.value.replace(/,/g, ""))) {
+                                cell.value = parseFloat(cell.value.replace(/,/g, ""));
+                            }
+                        }
+                    }
+                }
+            }
+            // Step 2: Add custom headers before the data rows
+            sheet.rows.unshift({
+                cells: [{ value: "Monthwise CustomerProduct NetSales".split('').join(' '), colSpan: 18 }]
+            });
+            var filterText = $("#AdvanceFilter").attr('data-original-title');
+            if (filterText.indexOf('|') < 0) {
+                filterText = $((filterText).replace(/<strong>/g, "|")).text().replace('|', '').split('|').reverse();
+                $.each(filterText, function (k, item) {
+                    sheet.rows.unshift({
+                        cells: [{ value: item, colSpan: 18 }]
+                    });
+                });
+            }
+            if (filterText.toString().indexOf('Date Range') < 0) {
+                sheet.rows.unshift({
+                    cells: [{ value: "From :- " + fromADdate + "(" + fromBSdate + ")" + "\t To :- " + toADdate + "(" + toBSdate + ")", colSpan: 18 }]
+                });
+            }
+            for (var companyCount = 0; companyCount < branches.length; companyCount++) {
+                sheet.rows.unshift({
+                    cells: [{ value: branches[companyCount].Company + " :- " + branches[companyCount].Branches.join(','), colSpan: 18 }]
+                });
+            }
+            sheet.rows.unshift({
+                cells: [{ value: companyName.split('').join(' '), colSpan: 18 }]
+            });
+            // Step 3: Create a final Workbook object
+            var WorkbookFinal = new kendo.ooxml.Workbook({
+                sheets: [{
+                    columns: [
+                        { width: 110 } // Optional: you can set widths properly if you want
+                    ],
+                    rows: sheet.rows
+                }]
+            });
+            // Step 4: Save the final Excel file
+            kendo.saveAs({
+                dataURI: WorkbookFinal.toDataURL(),
+                fileName: "Monthwise CustomerProduct NetSales.xlsx"
+            });
+        },
+        height: window.innerHeight - 50,
+        pageable: {
+            pageSizes: [50, 100, 200],
+            buttonCount: 5,
+            refresh: true
+        },
+        filterable: {
+            extra: false,
+            operators: {
+                number: {
+                    eq: "Is equal to", neq: "Is not equal to",
+                    gte: "Is greater than or equal to", gt: "Is greater than",
+                    lte: "Is less than or equal to", lt: "Is less than"
+                },
+                string: {
+                    eq: "Is equal to", neq: "Is not equal to",
+                    startswith: "Starts with", contains: "Contains",
+                    doesnotcontain: "Does not contain", endswith: "Ends with"
+                },
+                date: {
+                    eq: "Is equal to", neq: "Is not equal to",
+                    gte: "Is after or equal to", gt: "Is after",
+                    lte: "Is before or equal to", lt: "Is before"
+                }
+            }
+        },
+        sortable: true,
+        reorderable: true,
+        columnMenu: true,
+        resizable: true,
+        editable: "inline",
+        dataBound: function (e) {
+            var treeList = e.sender;
+            if (treeList.dataSource.total() === 0) {
+                var colCount = treeList.columns.length + 1;
+                $(treeList.wrapper)
+                    .find('tbody')
+                    .append('<tr class="k-treelist-group"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                displayPopupNotification("No Data Found Given Date Filter.", "info");
+            }
+            $('div').removeClass('k-header k-grid-toolbar');
+            UpdateReportUsingSetting("MonthwiseCustProdNetSales", "treeList");
+        },
+        columns: [
+            {
+                field: "CUSTOMER_EDESC",
+                title: "Customer >>> Product",
+                width: 320,
+                    template: function (dataItem) {
+                        return dataItem?.ITEM_EDESC || dataItem?.CUSTOMER_EDESC || "";
+                    },
+                   footerTemplate: '<span style="float:right"> Grand Total</span>',
+            },
+            {
+                field: "ITEM_CODE",
+                title: "Item Code",
+                width: 80
+            },
+            {
+                field: "INDEX_MU_CODE",
+                title: "Unit",
+                width: 80
+            },
+            // Month columns (Shrawan)
+            //{
+            //    title: "Shrawan",
+            //    columns: [
+            //        {
+            //            field: "S_QTY",
+            //            title: "Quantity",
+            //            aggregates: ["sum"],
+            //            groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+            //            format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+            //            footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+
+            //            width: "90px",
+            //        },
+            //        {
+            //            field: "S_VALUE",
+            //            title: "Value",
+            //            aggregates: ["sum"],
+            //            groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+            //            format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+            //            footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+            //            width: "90px",
+            //        }
+            //    ]
+            //},
+
+                {
+                    field: "S_QTY",
+                    title: "Shrawan_Quantity",
+                    aggregates: ["sum"],
+                    groupFooterTemplate: '<span style="float:right">#=kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter"))#</span>',
+                    format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter") + "}",
+                    footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                    width: "140px"
+                },
+                {
+                    field: "S_VALUE",
+                    title: "Shrawan_Value",
+                    aggregates: ["sum"],
+                    groupFooterTemplate: '<span style="float:right">#=kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter"))#</span>',
+                    format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter") + "}",
+                    footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter")) #</span> # } #',
+                    width: "140px"
+            },
+            {
+                field: "B_QTY",
+                title: "Bhadra_Quantity",
+                aggregates: ["sum"],
+                groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                width: "140px",
+            },
+            {
+                field: "B_VALUE",
+                title: "Bhadra_Value",
+                aggregates: ["sum"],
+                groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                width: "140px",
+            }, {
+                field: "A_QTY",
+                title: "Ashoj_Quantity",
+                aggregates: ["sum"],
+                groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                width: "140px",
+            },
+            {
+                field: "A_VALUE",
+                title: "Ashoj_Value",
+                aggregates: ["sum"],
+                groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                width: "140px",
+            },
+            {
+                field: "K_QTY",
+                title: "Karthik_Quantity",
+                aggregates: ["sum"],
+                groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                width: "140px",
+            },
+            {
+                field: "K_VALUE",
+                title: "Karthik_Value",
+                aggregates: ["sum"],
+                groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                width: "140px",
+            },
+            {
+                field: "M_QTY",
+                title: "Mangsir_Quantity",
+                aggregates: ["sum"],
+                groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                width: "140px",
+            },
+            {
+                field: "M_VALUE",
+                title: "Mangsir_Value",
+                aggregates: ["sum"],
+                groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                width: "140px",
+            },
+            {
+                field: "P_QTY",
+                title: "Poush_Quantity",
+                aggregates: ["sum"],
+                groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                width: "140px",
+            },
+            {
+                field: "P_VALUE",
+                title: "Poush_Value",
+                aggregates: ["sum"],
+                groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                width: "140px",
+            },
+            {
+                field: "Mg_QTY",
+                title: "Magh_Quantity",
+                aggregates: ["sum"],
+                groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                width: "140px",
+            },
+            {
+                field: "Mg_VALUE",
+                title: "Magh_Value",
+                aggregates: ["sum"],
+                groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                width: "140px",
+            },
+            {
+                field: "F_QTY",
+                title: "Falgun_Quantity",
+                aggregates: ["sum"],
+                groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                width: "140px",
+            },
+            {
+                field: "F_VALUE",
+                title: "Falgun_Value",
+                aggregates: ["sum"],
+                groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                width: "140px",
+            },
+            {
+                field: "C_QTY",
+                title: "Chaitra_Quantity",
+                aggregates: ["sum"],
+                groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                width: "140px",
+            },
+            {
+                field: "C_VALUE",
+                title: "Chaitra_Value",
+                aggregates: ["sum"],
+                groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                width: "140px",
+            },
+            {
+                field: "Bh_QTY",
+                title: "Baisakh_Quantity",
+                aggregates: ["sum"],
+                groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                width: "140px",
+            },
+            {
+                field: "Bh_VALUE",
+                title: "Baisakh_Value",
+                aggregates: ["sum"],
+                groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+                width: "140px",
+            }
+        ],
+    });
+}*@
+
+
+function BindGrid(readurl) {
+    // Retrieve necessary parameters
+    var companyName = ('@workingContent.CurrentUserinformation.company_name');
+    var fromADdate = $("#FromDateVoucher").val();
+    var toADdate = $("#ToDateVoucher").val();
+    var fromBSdate = $("#fromInputDateVoucher").val();
+    var toBSdate = $("#toInputDateVoucher").val();
+    var branches = ReportFilter.getBranchs();
+    var reportConfig = GetReportSetting("MonthwiseCustomerSalesCollection");
+
+    // Destroy existing TreeList to prevent duplicates
+    if ($("#grid").data("kendoTreeList")) {
+        $("#grid").data("kendoTreeList").destroy();
+        $("#grid").empty();
+    }
+
+    // Initialize the TreeList
+    $("#grid").kendoTreeList({
+        dataSource: {
+            type: "json",
+            transport: {
+                read: {
+                    url: readurl,
+                    dataType: "json",
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8"
+                },
+                parameterMap: function (options, type) {
+                    let paramMap = $.extend(options, ReportFilter.filterAdditionalData());
+                    delete paramMap.$inlinecount;
+                    delete paramMap.$format;
+                    return JSON.stringify(paramMap);
+                }
+            },
+            error: function (e) {
+                displayPopupNotification("An error occurred while processing data", "error");
+            },
+            schema: {
+                data: "CustomerSales",
+                total: function (response) {
+                    return response.Total || response.total || (response.VatSalesRegisterNew?.length || 0);
+                },
+                model: {
+                    id: "MASTER_CUSTOMER_CODE",
+                    parentId: "PRE_CUSTOMER_CODE",
+                    fields: {
+                        MASTER_CUSTOMER_CODE: { type: "string", editable: false },
+                        PRE_CUSTOMER_CODE: { type: "string", nullable: true },
+                        CUSTOMER_EDESC: { type: "string" },
+                        GROUP_FLAG: { type: "string" },
+                        CUSTOMER_CODE: { type: "string" },
+                        ITEM_CODE: { type: "string" },
+                        ITEM_EDESC: { type: "string" },
+                        S_VALUE: { type: "number" },
+                        S_COLLECTION: { type: "number" },
+                        B_VALUE: { type: "number" },
+                        B_COLLECTION: { type: "number" },
+                        A_VALUE: { type: "number" },
+                        A_COLLECTION: { type: "number" },
+                        K_VALUE: { type: "number" },
+                        K_COLLECTION: { type: "number" },
+                        M_VALUE: { type: "number" },
+                        M_COLLECTION: { type: "number" },
+                        P_VALUE: { type: "number" },
+                        P_COLLECTION: { type: "number" },
+                        Mg_VALUE: { type: "number" },
+                        Mg_COLLECTION: { type: "number" },
+                        F_VALUE: { type: "number" },
+                        F_COLLECTION: { type: "number" },
+                        C_VALUE: { type: "number" },
+                        C_COLLECTION: { type: "number" },
+                        Bh_VALUE: { type: "number" },
+                        Bh_COLLECTION: { type: "number" }
+                    }
+                }
+            },
+            aggregate: [
+                { field: "S_COLLECTION", aggregate: "sum" },
+                { field: "S_VALUE", aggregate: "sum" },
+                { field: "B_COLLECTION", aggregate: "sum" },
+                { field: "B_VALUE", aggregate: "sum" },
+                { field: "A_COLLECTION", aggregate: "sum" },
+                { field: "A_VALUE", aggregate: "sum" },
+                { field: "K_COLLECTION", aggregate: "sum" },
+                { field: "K_VALUE", aggregate: "sum" },
+                { field: "M_COLLECTION", aggregate: "sum" },
+                { field: "M_VALUE", aggregate: "sum" },
+                { field: "P_COLLECTION", aggregate: "sum" },
+                { field: "P_VALUE", aggregate: "sum" },
+                { field: "Mg_COLLECTION", aggregate: "sum" },
+                { field: "Mg_VALUE", aggregate: "sum" },
+                { field: "F_COLLECTION", aggregate: "sum" },
+                { field: "F_VALUE", aggregate: "sum" },
+                { field: "C_COLLECTION", aggregate: "sum" },
+                { field: "C_VALUE", aggregate: "sum" },
+                { field: "Bh_COLLECTION", aggregate: "sum" },
+                { field: "Bh_VALUE", aggregate: "sum" }
+            ],
+            serverPaging: true,
+            serverFiltering: true,
+            serverAggregates: true,
+            pageSize: reportConfig.defaultPageSize
+        },
+        toolbar: kendo.template($("#toolbar-template").html()),
+        height: window.innerHeight - 50,
+        pageable: {
+            pageSizes: [50, 100, 200],
+            buttonCount: 5,
+            refresh: true
+        },
+        filterable: {
+            extra: false,
+            operators: {
+                number: {
+                    eq: "Is equal to", neq: "Is not equal to",
+                    gte: "Is greater than or equal to", gt: "Is greater than",
+                    lte: "Is less than or equal to", lt: "Is less than"
+                },
+                string: {
+                    eq: "Is equal to", neq: "Is not equal to",
+                    startswith: "Starts with", contains: "Contains",
+                    doesnotcontain: "Does not contain", endswith: "Ends with"
+                },
+                date: {
+                    eq: "Is equal to", neq: "Is not equal to",
+                    gte: "Is after or equal to", gt: "Is after",
+                    lte: "Is before or equal to", lt: "Is before"
+                }
+            }
+        },
+        sortable: true,
+        reorderable: true,
+        columnMenu: true,
+        resizable: true,
+        editable: "inline",
+        dataBound: function (e) {
+            var treeList = e.sender;
+            if (treeList.dataSource.total() === 0) {
+                var colCount = treeList.columns.length + 1;
+                $(treeList.wrapper)
+                    .find('tbody')
+                    .append('<tr class="k-treelist-group"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                displayPopupNotification("No Data Found Given Date Filter.", "info");
+            }
+            $('div').removeClass('k-header k-grid-toolbar');
+            UpdateReportUsingSetting("MonthwiseCustomerSalesCollection", "treeList");
+        },
+        columns: [
+            //{
+            //    field: "CUSTOMER_EDESC",
+            //    title: "Customer >>> Product",
+            //    width: 320,
+            //    template: function (dataItem) {
+            //        return dataItem && dataItem.CUSTOMER_EDESC ? dataItem.CUSTOMER_EDESC : "";
+            //    },
+            //    footerTemplate: "" // Fix: use string, not a function
+            //},
+            //{
+            //    field: "CUSTOMER_CODE",
+            //    title: "Customer Code",
+            //    width: 80
+            //},
+           
+
+            {
+                field: "S_COLLECTION",
+                title: "Shrawan_Collection",
+                aggregates: ["sum"],
+                groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter"))#</span>',
+                format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter") + "}",
+                footerTemplate: '<span style="float:right">#= kendo.toString(S_COLLECTION.sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span>',
+                width: "140px"
+            },
+            {
+                field: "S_VALUE",
+                title: "Shrawan_Value",
+                aggregates: ["sum"],
+                groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter"))#</span>',
+                format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter") + "}",
+                footerTemplate: '<span style="float:right">#= kendo.toString(S_VALUE.sum, "n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter")) #</span>',
+                width: "140px"
+            }
+
+
+           
+        ]
+    });
+
+
+}
+
+
+
+
+
+
+
+
+
+</script>
+
+

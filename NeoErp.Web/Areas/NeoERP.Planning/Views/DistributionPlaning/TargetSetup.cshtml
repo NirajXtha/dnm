@@ -1,0 +1,270 @@
+﻿@{
+    ViewBag.Title = "TargetSetup";
+    Layout = null;
+}
+
+
+<style>
+    .k-grid {
+        font-size: 11px;
+    }
+    .viewAction {
+        color: saddlebrown;
+        text-decoration: none !important;
+    }
+    .editAction {
+        text-decoration: none !important;
+        color: green;
+    }
+    .deleteAction {
+        text-decoration: none !important;
+        color: red;
+    }
+    .color-notify {
+        float: left;
+        padding-left: 5px;
+    }
+
+    .color-box-1 {
+        height: 13px;
+        width: 13px;
+        background-color: #91D598;
+        border: 1px solid #9c9797;
+        margin-top: 2px;
+        float: left;
+    }
+
+    .color-box-2 {
+        height: 13px;
+        width: 13px;
+        background-color: #D4FAB6;
+        border: 1px solid #9c9797;
+        margin-top: 2px;
+        float: left;
+    }
+
+    .color-box-3 {
+        height: 13px;
+        width: 13px;
+        background-color: #fff;
+        border: 1px solid #9c9797;
+        margin-top: 2px;
+        float: left;
+    }
+    .modal-dialog {
+        width: 617px;
+        margin: 0px auto;
+    }
+    .modal {
+        width: 619px;
+    }
+    .plant-identification {
+        padding-top: 22px;
+        padding-left: 20px;
+    }
+</style>
+<div class="row">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-title">
+                    <div class="caption">
+                        <i class="icon-speech font-green-haze "></i>
+                        <span class="caption-subject font-green-haze bold uppercase"> Target List</span>
+                    </div>
+                    <div class="actions pull-right">
+                        <a href="/Planning/DistributionPlaning/Index#!Planning/CreateTargetSetup" class="btn btn-circle btn-green btn-sm">
+                            <i class="fa fa-plus-circle"></i> Add
+                        </a>
+                    </div>
+                </div>
+                <div class="portlet-body">
+                    <div id="grid"></div>
+                </div>
+            </div>
+        </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        BindGrid();
+        hideloader();
+    });
+
+    function BindGrid() {
+        var mainurl = window.location.protocol + "//" + window.location.host + "/api/DistributionPlaningApi/GetTargetList";
+        var dataSource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: {
+                    url: mainurl,
+                    dataType: "json",
+                    type: "get",
+                    contentType: "application/json; charset=utf-8"
+                }
+            },
+            schema: {
+                model: {
+                    fields: {
+                        FROM_DATE: { type: "date" },
+                        END_DATE: { type: "date" }
+                    }
+                }
+            },
+            serverPaging: false,
+            pageSize: 10
+        });
+
+        $("#grid").kendoGrid({
+            dataSource: dataSource,
+            sortable: true,
+            pageable: {
+                refresh: true,
+                pageSizes: true,
+                buttonCount: 5
+            },
+            reorderable: true,
+            groupable: false,
+            resizable: true,
+            filterable: {
+                extra: false,
+                operators: {
+                    number: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "is greater than or equal to",
+                        gt: "is greater than",
+                        lte: "is less than or equal to",
+                        lt: "is less than"
+                    },
+                    string: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        startswith: "Starts with",
+                        contains: "Contains",
+                        doesnotcontain: "Does not contain",
+                        endswith: "Ends with"
+                    },
+                    date: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "Is after or equal to",
+                        gt: "Is after",
+                        lte: "Is before or equal to",
+                        lt: "Is before"
+                    }
+                }
+            },
+            columnMenu: true,
+            pageable: true,
+            dataBinding: function () {
+                record = (this.dataSource.page() - 1) * this.dataSource.pageSize();
+            },
+            scrollable: {
+                virtual: true
+            },
+            dataBound: function (o) {
+                var grid = o.sender;
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.length;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    displayPopupNotification("No Data Found Given Date Filter.", "Info");
+                } else {
+                    var g = $("#grid").data("kendoGrid");
+                    for (var i = 0; i < g.columns.length; i++) {
+                        g.showColumn(i);
+                    }
+                    $("div.k-group-indicator").each(function (i, v) {
+                        g.hideColumn($(v).data("field"));
+                    });
+                }
+            },
+            columns: [
+                {
+                    title: "SN",
+                    field: "TARGET_ID",
+                    width: "70px"
+                },
+                {
+                    field: "TARGET_NAME",
+                    title: "Target Name"
+                },
+                {
+                    field: "FROM_DATE",
+                    title: "Start Date",
+                    format: "{0:dd-MMM-yyyy}"
+                },
+                {
+                    field: "END_DATE",
+                    title: "End Date",
+                    format: "{0:dd-MMM-yyyy}"
+                },
+                {
+                    title: "Action",
+                    template: `
+                    <a class='fa fa-eye viewAction' href='javascript:void(0)' data-id='#= TARGET_ID #' title='View'></a>&nbsp;&nbsp;
+                    <a class='fa fa-edit editAction' href='javascript:void(0)' data-id='#= TARGET_ID #' title='Edit'></a>&nbsp;&nbsp;
+                    <a class='fa fa-trash deleteAction' href='javascript:void(0)' data-id='#= TARGET_ID #' title='Delete'></a>
+                `,
+                    width: 200
+                }
+            ]
+        });
+    }
+
+    $(document).on('click', '.deleteAction', function () {
+        var targetId = $(this).data('id');
+        bootbox.confirm({
+            title: "Delete Target",
+            message: "Are you sure you want to delete?",
+            buttons: {
+                confirm: {
+                    label: '<i class="fa fa-check"></i> Yes',
+                    className: 'btn-success'
+                },
+                cancel: {
+                    label: '<i class="fa fa-times"></i> No',
+                    className: 'btn-danger'
+                }
+            },
+            callback: function (result) {
+                if (result) {
+                    var deleteUrl = "/api/DistributionPlaningApi/UpdateTarget?targetId=" + targetId;
+                    $.ajax({
+                        url: deleteUrl,
+                        type: 'POST', // Ensure the method is POST
+                        contentType: 'application/json; charset=utf-8', // Set content type
+                        success: function (response) {
+                            if (response.STATUS_CODE === 200) {
+                                displayPopupNotification(response.MESSAGE, "success");
+                                RefreshGrid(); // Refresh the grid after successful deletion
+                            } else {
+                                displayPopupNotification(response.MESSAGE, "error");
+                            }
+                        },
+                        error: function () {
+                        }
+                    });
+                }
+            }
+        });
+    });
+    $(document).on('click', '.viewAction', function () {
+        var targetId = $(this).data('id');
+        window.location.href = "/Planning/DistributionPlaning/Index#!Planning/ViewTarget/" + targetId;
+    });
+    $(document).on('click', '.editAction', function () {
+        var targetId = $(this).data('id');
+        window.location.href = "/Planning/DistributionPlaning/Index#!Planning/EditTarget/" + targetId;
+    });
+    function RefreshGrid() {
+        $('#grid').data("kendoGrid").dataSource.read();
+        if (grid) {
+            grid.dataSource.read(); // Re-read the data source
+            grid.refresh(); // Refresh the grid to reflect the new data
+        }
+    }
+
+</script>
+

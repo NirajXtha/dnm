@@ -1,0 +1,367 @@
+
+
+<style>
+    .party-modal-container {
+        max-height: 70vh;
+    }
+
+    #itemModal .modal-content,
+    #customerModal .modal-content,
+    #dealerModal .modal-content,
+    #supplierModal .modal-content {
+        display: flex;
+        flex-direction: column;
+        max-height: 90vh;
+    }
+    #itemModal .modal-body,
+    #customerModal .modal-body,
+    #dealerModal .modal-body,
+    #supplierModal .modal-body {
+        flex: 1 1 auto;
+        overflow: auto;
+    }
+    #itemModal .modal-footer,
+    #customerModal .modal-footer,
+    #dealerModal .modal-footer,
+    #supplierModal .modal-footer {
+        position: relative;
+        z-index: 11; /* above any grid internals */
+        background: #fff;
+        box-shadow: 0 -2px 6px rgba(0,0,0,0.05);
+    }
+
+    .party-modal-left .tree-container,
+    .party-modal-right .grid-container {
+        min-height: 450px;
+        max-height: 600px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #fff;
+        padding: 8px;
+        height: 520px;
+    }
+
+    .party-modal-left .tree-container { overflow-y: auto; }
+
+    .party-modal-right .grid-container { overflow: hidden; }
+
+    .party-modal-right { position: relative; }
+    .party-modal-right:before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: #eee;
+    }
+
+    #customerModal .modal-dialog,
+    #dealerModal .modal-dialog,
+    #supplierModal .modal-dialog,
+    #itemModal .modal-dialog {
+        width: 90% !important;
+        max-width: 1200px !important;
+    }
+
+    #customerModal .party-modal-container,
+    #dealerModal .party-modal-container,
+    #supplierModal .party-modal-container {
+        max-height: 70vh;
+    }
+
+    #customerModal .party-modal-left .tree-container,
+    #customerModal .party-modal-right .grid-container,
+    #dealerModal .party-modal-left .tree-container,
+    #dealerModal .party-modal-right .grid-container,
+    #supplierModal .party-modal-left .tree-container,
+    #supplierModal .party-modal-right .grid-container {
+        min-height: 450px;
+        max-height: 600px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #fff;
+        padding: 8px;
+    }
+
+    #customerModal .party-modal-left .tree-container,
+    #dealerModal .party-modal-left .tree-container,
+    #supplierModal .party-modal-left .tree-container {
+        overflow-y: auto;
+    }
+
+    #customerModal .party-modal-right .grid-container,
+    #dealerModal .party-modal-right .grid-container,
+    #supplierModal .party-modal-right .grid-container {
+        overflow: visible;
+    }
+
+    #customerModal .party-modal-right,
+    #dealerModal .party-modal-right,
+    #supplierModal .party-modal-right {
+        position: relative;
+    }
+
+    #customerModal .party-modal-right:before,
+    #dealerModal .party-modal-right:before,
+    #supplierModal .party-modal-right:before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: #eee;
+    }
+
+    #customerSelectedGrid .k-grid,
+    #dealerSelectedGrid .k-grid,
+    #supplierSelectedGrid .k-grid,
+    #selectedItemsGrid .k-grid {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    #customerSelectedGrid .k-grid .k-grid-content,
+    #dealerSelectedGrid .k-grid .k-grid-content,
+    #supplierSelectedGrid .k-grid .k-grid-content,
+    #selectedItemsGrid .k-grid .k-grid-content {
+        max-height: 400px;
+        overflow-y: auto;
+        position: relative; /* ensure it doesn't escape stacking context */
+    }
+
+    #customerSelectedGrid .k-grid .k-pager-wrap,
+    #dealerSelectedGrid .k-grid .k-pager-wrap,
+    #supplierSelectedGrid .k-grid .k-pager-wrap,
+    #selectedItemsGrid .k-grid .k-pager-wrap {
+        border-top: 1px solid #ddd;
+        background: #f9f9f9;
+    }
+
+    .party-modal-left .tree-container,
+    .party-modal-right .grid-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .party-modal-right .grid-container {
+        min-height: 450px;
+        max-height: 600px;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+
+    .party-modal-right .grid-container > div {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .party-modal-right .grid-container .k-grid {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .party-modal-right .grid-container .k-grid .k-grid-content {
+        flex: 1;
+        overflow-y: auto;
+        z-index: 1;
+    }
+</style>
+
+<div class="modal fade" id="customerModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">{{getModalTitle ? getModalTitle() : 'Select Customers'}}</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-inline" style="margin-bottom:15px; display:flex; gap:15px; align-items:center; padding:10px; background:#f8f9fa; border-radius:4px;">
+                    <label class="radio-inline"><input type="radio" ng-model="customerSelectMode" value="group"> Group</label>
+                    <label class="radio-inline"><input type="radio" ng-model="customerSelectMode" value="individual"> Individual</label>
+                    <label class="checkbox-inline" style="margin-left:15px;"><input type="checkbox" ng-model="customerSelectAll" ng-change="toggleCustomerSelectAll()"> Select All</label>
+                </div>
+                
+                <div class="party-modal-container">
+                    <div class="row" style="margin:0; height:100%;">
+                        <div ng-class="{'col-sm-12': customerSelectMode=='group', 'col-sm-6': customerSelectMode=='individual'}" class="party-modal-left" style="padding-right:8px;">
+                            <div class="row" style="margin-bottom:10px;">
+                                <div class="col-xs-12">
+                                    <input type="text" class="form-control input-sm" ng-model="customerTreeSearch" ng-change="filterCustomerTree(customerTreeSearch)" placeholder="Search tree..." />
+                                </div>
+                            </div>
+                            <div class="tree-container">
+                                <div id="customerTreeView"></div>
+                            </div>
+                        </div>
+                        
+                        <div ng-class="{'col-sm-6': customerSelectMode=='individual'}" ng-show="customerSelectMode=='individual'" class="party-modal-right" style="padding-left:8px;">
+                            <div class="row" style="margin-bottom:10px;">
+                                <div class="col-xs-12">
+                                    <input type="text" class="form-control input-sm" id="customerGridSearch" placeholder="Search selected..." />
+                                </div>
+                            </div>
+                            <div class="grid-container">
+                                <div id="customerSelectedGrid"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" ng-click="selectCurrentParty ? selectCurrentParty() : (selectParty && selectParty('customer'))">Select</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="itemModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Select Items</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-inline" style="margin-bottom:15px; display:flex; gap:15px; align-items:center; padding:10px; background:#f8f9fa; border-radius:4px;">
+                    <label class="radio-inline"><input type="radio" ng-model="itemSelectMode" value="group"> Group</label>
+                    <label class="radio-inline"><input type="radio" ng-model="itemSelectMode" value="individual"> Individual</label>
+                    <label class="checkbox-inline" style="margin-left:15px;"><input type="checkbox" ng-model="itemSelectAll" ng-change="toggleItemSelectAll()"> Select All</label>
+                </div>
+                
+                <div class="party-modal-container">
+                    <div class="row" style="margin:0; height:100%;">
+                        <div ng-class="{'col-sm-12': itemSelectMode=='group', 'col-sm-6': itemSelectMode=='individual'}" class="party-modal-left" style="padding-right:8px;">
+                            <div class="row" style="margin-bottom:10px;">
+                                <div class="col-xs-12">
+                                    <input type="text" class="form-control input-sm" ng-model="itemTreeSearch" ng-change="filterItemTree(itemTreeSearch)" placeholder="Search tree..." />
+                                </div>
+                            </div>
+                            <div class="tree-container">
+                                <div id="itemTreeView"></div>
+                            </div>
+                        </div>
+                        
+                        <div ng-class="{'col-sm-6': itemSelectMode=='individual'}" ng-show="itemSelectMode=='individual'" class="party-modal-right" style="padding-left:8px;">
+                            <div class="row" style="margin-bottom:10px;">
+                                <div class="col-xs-12">
+                                    <input type="text" class="form-control input-sm" id="itemGridSearch" placeholder="Search selected..." />
+                                </div>
+                            </div>
+                            <div class="grid-container">
+                                <div id="selectedItemsGrid"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" ng-click="selectItems()">Select Items</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="dealerModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Select Dealers</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-inline" style="margin-bottom:15px; display:flex; gap:15px; align-items:center; padding:10px; background:#f8f9fa; border-radius:4px;">
+                    <label class="radio-inline"><input type="radio" ng-model="dealerSelectMode" value="group"> Group</label>
+                    <label class="radio-inline"><input type="radio" ng-model="dealerSelectMode" value="individual"> Individual</label>
+                    <label class="checkbox-inline" style="margin-left:15px;"><input type="checkbox" ng-model="dealerSelectAll" ng-change="toggleDealerSelectAll()"> Select All</label>
+                </div>
+                
+                <div class="party-modal-container">
+                    <div class="row" style="margin:0; height:100%;">
+                        <div ng-class="{'col-sm-12': dealerSelectMode=='group', 'col-sm-6': dealerSelectMode=='individual'}" class="party-modal-left" style="padding-right:8px;">
+                            <div class="row" style="margin-bottom:10px;">
+                                <div class="col-xs-12">
+                                    <input type="text" class="form-control input-sm" ng-model="dealerTreeSearch" ng-change="filterDealerTree(dealerTreeSearch)" placeholder="Search tree..." />
+                                </div>
+                            </div>
+                            <div class="tree-container">
+                                <div id="dealerTreeView"></div>
+                            </div>
+                        </div>
+                        
+                        <div ng-class="{'col-sm-6': dealerSelectMode=='individual'}" ng-show="dealerSelectMode=='individual'" class="party-modal-right" style="padding-left:8px;">
+                            <div class="row" style="margin-bottom:10px;">
+                                <div class="col-xs-12">
+                                    <input type="text" class="form-control input-sm" id="dealerGridSearch" placeholder="Search selected..." />
+                                </div>
+                            </div>
+                            <div class="grid-container">
+                                <div id="dealerSelectedGrid"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" ng-click="selectCurrentParty ? selectCurrentParty() : (selectParty && selectParty('dealer'))">Select</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="supplierModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Select Suppliers</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-inline" style="margin-bottom:15px; display:flex; gap:15px; align-items:center; padding:10px; background:#f8f9fa; border-radius:4px;">
+                    <label class="radio-inline"><input type="radio" ng-model="supplierSelectMode" value="group"> Group</label>
+                    <label class="radio-inline"><input type="radio" ng-model="supplierSelectMode" value="individual"> Individual</label>
+                    <label class="checkbox-inline" style="margin-left:15px;"><input type="checkbox" ng-model="supplierSelectAll" ng-change="toggleSupplierSelectAll()"> Select All</label>
+                </div>
+                
+                <div class="party-modal-container">
+                    <div class="row" style="margin:0; height:100%;">
+                        <div ng-class="{'col-sm-12': supplierSelectMode=='group', 'col-sm-6': supplierSelectMode=='individual'}" class="party-modal-left" style="padding-right:8px;">
+                            <div class="row" style="margin-bottom:10px;">
+                                <div class="col-xs-12">
+                                    <input type="text" class="form-control input-sm" ng-model="supplierTreeSearch" ng-change="filterSupplierTree(supplierTreeSearch)" placeholder="Search tree..." />
+                                </div>
+                            </div>
+                            <div class="tree-container">
+                                <div id="supplierTreeView"></div>
+                            </div>
+                        </div>
+                        
+                        <div ng-class="{'col-sm-6': supplierSelectMode=='individual'}" ng-show="supplierSelectMode=='individual'" class="party-modal-right" style="padding-left:8px;">
+                            <div class="row" style="margin-bottom:10px;">
+                                <div class="col-xs-12">
+                                    <input type="text" class="form-control input-sm" id="supplierGridSearch" placeholder="Search selected..." />
+                                </div>
+                            </div>
+                            <div class="grid-container">
+                                <div id="supplierSelectedGrid"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" ng-click="selectCurrentParty ? selectCurrentParty() : (selectParty && selectParty('supplier'))">Select</button>
+            </div>
+        </div>
+    </div>
+</div>

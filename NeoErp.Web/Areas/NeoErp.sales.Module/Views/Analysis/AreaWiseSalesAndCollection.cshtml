@@ -1,0 +1,542 @@
+﻿
+
+@using NeoErp.Core.Models;
+<style>
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+        width: 183px !important;
+    }
+
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+         font-size:11px;
+    }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+    /*button#locationToggle {
+        height: 29px;
+    }*/
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+</style>
+<div class="page-content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+        </ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+
+                <div class="actions">
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DateFieldPicker.cshtml", false)
+                        @*@Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)*@
+                    </div>
+                    @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                   {
+                       //ShowLocationWiseFilter = true,
+                       //ShowProductFilter = true,
+                       //ShowSupplierFilter = true,
+                       //ShowBranchFilter = true,
+                       ShowAreaFilter = true,
+                   })
+                    </div>
+                    @Html.Partial("~/Views/Shared/Controls/_reportFilterSettings.cshtml", new ReportFilterSettingsModel()
+               {
+                   //ShowAmountFigureFilter = true,
+                   //ShowAmountFilter = true,
+                   //ShowAmountRoundUpFilter = true,
+                   //ShowRangeAmountFilter = true
+               })
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                        <i class="icon-control-play"></i>
+                    </a>
+
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "AreaWiseSalesAndCollection")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div id="grid"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+@Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+<script src="@Scripts.Url("~/JS/DateFilter.js?V5")" type="text/javascript"></script>
+<script src="@Scripts.Url("~/JS/dynamicReport.js?V2")" type="text/javascript"></script>
+<script type="text/javascript">
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+
+</script>
+<script>
+
+    var reportConfig = GetReportSetting("AreaWiseSalesAndCollection");
+    function getDateFormat(date) {
+        return kendo.format("{0:" + reportConfig.dateFormat + "}", date)
+    }
+
+    //$("#supplierMultiSelect").closest(".row").hide();
+
+    $(".applydp").on("click", function (evt) {
+
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+        $(this).closest("#applydp").modal('hide');
+    });
+
+    $("#loadAdvancedFilters").on("click", function (evt) {
+        debugger;
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    });
+
+    $("#RunQuery").click(function (evt) {
+        evt.preventDefault();
+
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/AnalysisApi/GetAreaWiseSalesAndCollection"
+        KendoGridRefresh(urltest);
+    });
+
+    function CalcDate(Date, Days, add) {
+
+        var startdate = moment(Date).format("DD.MM.YYYY");
+        var new_date = moment(startdate, "DD-MM-YYYY").add('days', Days);
+        if (add == true) {
+            return new_date.format('DD-MMM-YYYY');
+        }
+
+        else {
+            var now = moment();
+            var overDueDays = now.diff(new_date, "days");
+            return overDueDays;
+        }
+    }
+
+
+    function CalcBalanceAmount(grandTotal, dr, cr) {
+        var ds = $("#grid").data("kendoGrid").dataSource;
+        if (grandTotal == true) {
+            var aggregates = ds.aggregates();
+            var grandSum = aggregates.BillAmount.sum - aggregates.RecAmount.sum;
+            if (grandSum > 0)
+                return kendo.toString(grandSum, "n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter"));
+            else
+                return kendo.toString(Math.abs(grandSum), "n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter"));
+
+        }
+        else {
+            var grandSum = dr - cr;
+            if (grandSum > 0)
+                return kendo.toString(grandSum, "n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter"));
+            else
+                return kendo.toString(Math.abs(grandSum), "n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter"));
+        }
+
+    }
+
+    function balanceAmount(amount) {
+        if (amount > 0)
+            return kendo.toString(amount, "n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter"));
+        else
+            return kendo.toString(Math.abs(amount), "n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter"));
+    }
+
+    function BindGrid(readurl) {
+        reportConfig = GetReportSetting("AreaWiseSalesAndCollection");
+        var dataSource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: {
+                    url: readurl, // <-- Get data from here.
+                    dataType: "json", // <-- The default was "jsonp".
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8"
+                },
+                parameterMap: function (options, type) {
+                    var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+                    delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                    delete paramMap.$format; // <-- remove format parameter.
+                    return paramMap;
+                }
+            },
+
+            error: function (e) {
+                displayPopupNotification("Sorry error occured while processing data", "error");
+            },
+            serverFiltering: false,
+            serverAggregates: true,
+            schema: {
+                data: "AreaWiseSalesAndCollectionModel", // records are returned in the "data" field of the response
+                total: "total", // total number of records is in the "total" field of the response
+                aggregates: "AggregationResult",
+                model: {
+                    fields: {
+                        AreaName: { type: "string" },
+                        DailySales: { type: "number" },
+                        DailyCollection: { type: "number" },
+                        MonthlySales: { type: "number" },
+                        MonthlyCollection: { type: "number" },
+                        YearlySales: { type: "number" },
+                        YearlyCollection: { type: "number" },
+                    }
+                }
+            },
+            aggregate: [
+                { field: "DailySales", aggregate: "sum" },
+                { field: "DailyCollection", aggregate: "sum" },
+                { field: "MonthlySales", aggregate: "sum" },
+                { field: "MonthlyCollection", aggregate: "sum" },
+                { field: "YearlySales", aggregate: "sum" },
+                { field: "YearlyCollection", aggregate: "sum" }
+
+            ],
+            serverPaging: false,
+            serverSorting: false,
+            pageSize: reportConfig.defaultPageSize,
+        });
+
+
+        var grid = $("#grid").kendoGrid({
+            dataSource: dataSource,
+
+            toolbar: kendo.template($("#toolbar-template").html()),
+            excel: {
+                allPages: true,
+                fileName: "Area Wise Sales And Collection Report",
+            },
+            excelExport: function (e) {
+                //Report header details
+                var fromADdate = $("#FromDateVoucher").val()
+                var toADdate = $("#ToDateVoucher").val();
+                var fromBSdate = $("#fromInputDateVoucher").val();
+                var toBSdate = $("#toInputDateVoucher").val();
+                var branches = ReportFilter.getBranchs();
+                var sheet = e.workbook.sheets[0];
+                for (var i = 0; i < sheet.rows.length; i++) {
+                    if (sheet.rows[i].type != "group-footer" && sheet.rows[i].type != "footer")
+                        continue;
+                    var row = sheet.rows[i];
+                    for (var b = 0; b < row.cells.length; b++) {
+
+                        if (row.cells[b] != undefined)
+                            row.cells[b].value = $(row.cells[b].value).text();
+                    }
+                }
+
+                var rows = e.workbook.sheets[0].rows;
+                rows.unshift({
+                    height: 20,
+                    width: 100,
+                    cells: [{
+                        value: "Area Wise Sales And Collection Report",
+                        background: "#3fd5c0",
+                        textAlign: "center",
+                        colSpan: 7,
+                        fontSize: 15,
+                        width: 100,
+                    }]
+                });
+                var filterText = $("#AdvanceFilter").attr('data-original-title');
+                if (filterText.indexOf('|') < 0) {
+                    filterText = $((filterText).replace(/<strong>/g, "|")).text().replace('|', '').split('|').reverse();;
+                    $.each(filterText, function (k, item) {
+                        rows.unshift({
+                            cells: [{ value: item, colSpan: 9 }]
+                        });
+                    });
+                }
+                if (filterText.toString().indexOf('Date Range') < 0) {
+                    rows.unshift({
+                        cells: [{ value: "From :- " + fromADdate + "(" + fromBSdate + ")" + "\t To :- " + toADdate + "(" + toBSdate + ")", colSpan: 9 }]
+                    });
+                } 
+                for (var companyCount = 0; companyCount < branches.length; companyCount++) {
+                    rows.unshift({
+                        cells: [{ value: branches[companyCount].Company + " :- " + branches[companyCount].Branches.join(','), colSpan: 9 }]
+                    });
+                }
+            },
+            pdf:
+            {
+                avoidLinks: true,
+                pageSize: "auto",
+                margin: {
+                    top: "2m",
+                    left: "1m",
+                    right: "1m",
+                    buttom: "1m",
+
+                },
+                landscape: true,
+                repeatHeaders: true,
+                scale: 0.8,
+            },
+            height: window.innerHeight - 50,
+            reorderable: true,
+            resizable: true,
+            groupable: true,
+            sortable: true,
+            filterable: {
+                extra: false,
+                operators: {
+                    number: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "is greater than or equal to	",
+                        gt: "is greater than",
+                        lte: "is less than or equal",
+                        lt: "is less than",
+                    },
+                    string: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        startswith: "Starts with	",
+                        contains: "Contains",
+                        doesnotcontain: "Does not contain",
+                        endswith: "Ends with",
+                    },
+                    date: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "Is after or equal to",
+                        gt: "Is after",
+                        lte: "Is before or equal to",
+                        lt: "Is before",
+                    }
+                }
+            },
+            columnMenu: true,
+            columnMenuInit: function (e) {
+                wordwrapmenu(e);
+                checkboxItem = $(e.container).find('input[type="checkbox"]');
+            },
+            columnShow: function (e) {
+                if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                    SaveReportSetting('AreaWiseSalesAndCollection', 'grid');
+            },
+            columnHide: function (e) {
+                if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                    SaveReportSetting('AreaWiseSalesAndCollection', 'grid');
+            },
+            pageable: {
+                refresh: true,
+                pageSizes: reportConfig.itemPerPage,
+                buttonCount: 5
+            },
+            //  autoBind: true,
+            scrollable: {
+                virtual: true
+            },
+            dataBound: function (o) {
+                var grid = o.sender;
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.length;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    displayPopupNotification("No Data Found Given Date Filter.", "info");
+                }
+                else {
+                    var g = $("#grid").data("kendoGrid");
+                    for (var i = 0; i < g.columns.length; i++) {
+                        g.showColumn(i);
+                    }
+                    $("div.k-group-indicator").each(function (i, v) {
+                        g.hideColumn($(v).data("field"));
+                    });
+                    $('div').removeClass('.k-header k-grid-toolbar');
+
+                }
+                UpdateReportUsingSetting("AreaWiseSalesAndCollection", "grid");
+            },
+            columns: [
+                {
+                    field: "AreaName",
+                    title: "Area Name",
+                    width: "100px",
+                    attributes: {
+                        style: "text-align: left;"
+                    },
+                    footerTemplate: '<span style="float:right">#= "Grand Total" #</span>',
+                    //groupFooterTemplate: '<span style="float:right">#= "Total" #</span>',
+                },
+                {
+                    title: "Daily",
+                    width: "200px",
+                    columns: [{
+                        field: "DailySales",
+                        title: "Daily Sales",
+                        width: "100px",
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                        format: "{0:n" + ReportFilter.parseDecimalPlace('AmountRoundUpFilter').toString() + "}",
+                        aggregates: ["sum"],
+                        footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()) #</span>',
+                        groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum,"n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                    },
+                    {
+                        field: "DailyCollection",
+                        title: "Daily Collection",
+                        width: "90px",
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                        format: "{0:n" + ReportFilter.parseDecimalPlace('AmountRoundUpFilter').toString() + "}",
+                        aggregates: ["sum"],
+                        footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()) #</span>',
+                        groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum,"n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+
+                    }],
+                },
+                {
+                    title: "MTD",
+                    width: "200px",
+                    columns: [{
+                        field: "MonthlySales",
+                        title: "Monthly Sales",
+                        width: "90px",
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                        format: "{0:n" + ReportFilter.parseDecimalPlace('AmountRoundUpFilter').toString() + "}",
+                        aggregates: ["sum"],
+                        footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()) #</span>',
+                        groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum,"n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+
+
+                    },
+                    {
+                        field: "MonthlyCollection",
+                        title: "Monthly Collection",
+                        width: "90px",
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                        format: "{0:n" + ReportFilter.parseDecimalPlace('AmountRoundUpFilter').toString() + "}",
+                        aggregates: ["sum"],
+                        footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()) #</span>',
+                        groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum,"n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+
+
+                    }],
+                },
+                {
+                    title: "YTD",
+                    width: "200px",
+                    columns: [{
+                        field: "YearlySales",
+                        title: "Yearly Sales",
+                        width: "90px",
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                        format: "{0:n" + ReportFilter.parseDecimalPlace('AmountRoundUpFilter').toString() + "}",
+                        aggregates: ["sum"],
+                        footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()) #</span>',
+                        groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum,"n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()) #</span>',
+                    },
+                    {
+                        field: "YearlyCollection",
+                        title: "Yearly Collection",
+                        width: "90px",
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                        format: "{0:n" + ReportFilter.parseDecimalPlace('AmountRoundUpFilter').toString() + "}",
+                        aggregates: ["sum"],
+                        footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()) #</span>',
+                        groupFooterTemplate: '<span style="float:right">#= kendo.toString(sum,"n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString()) #</span>',
+                    }],
+                }
+            ]
+
+        });
+
+    };
+
+
+    function KendoGridRefresh(readUrl) {
+        $('#grid').val('');
+        $('#grid').html('');
+        BindGrid(readUrl)
+    }
+    $(document).ready(function () {
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/AnalysisApi/GetAreaWiseSalesAndCollection"
+        DateFilter.init(function () {
+            consolidate.init(function () {
+                BindGrid(urltest);
+                var favourite = document.globalFavourite;
+                if (favourite.length >= 1) {
+                    debugger;
+                    ReportnameExcel = favourite[0].Report.reportName;
+                }
+            });
+        });
+        var formEnglishDate = $("#FromDateVoucher").val();
+        var toEnglishDate = $("#ToDateVoucher").val();
+        $("#RunQuery").click(function (evt) {
+            evt.preventDefault();
+
+            urltest = window.location.protocol + "//" + window.location.host + "/api/AnalysisApi/GetAreaWiseSalesAndCollection";
+            KendoGridRefresh(urltest);
+        });
+    });
+</script>
+
+

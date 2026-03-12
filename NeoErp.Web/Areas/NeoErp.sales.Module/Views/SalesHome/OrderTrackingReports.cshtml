@@ -1,0 +1,1430 @@
+﻿
+
+@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+<style>
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+    }
+
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+         font-size:11px;
+    }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-content-locked {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .k-grid-header {
+        font-size: 11px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    .k-grid-toolbar .k-button-icontext {
+        padding-left: 7px !important;
+    }
+
+    .k-button.k-button-icontext.k-grid-excel {
+        float: right !important;
+    }
+</style>
+
+
+
+<div class="page-content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+            @*<li>
+                    <i class="fa fa-home"></i>
+                    <a href="/main/DashBoard">Home</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>
+                <li>
+                    <a href="sales/saleshome/dashboard/Dashboard">Organiser</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>*@
+        </ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+                <div class="actions">
+                    <div class="btn-group">
+                        <select id="reportSelector" class="form-control">
+                            <option value="CustomerwiseOrderTracking" selected>Customerwise Order Tracking</option>
+                            <option value="GroupProductwiseOrderPending">GroupProductwise Order Pending</option>
+
+                        </select>
+                    </div>
+
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                    </div>
+                    <div class="btn-group" style="display: none;">
+                        @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+                    </div>
+                    <div class="btn-group" style="display: none;">
+                        @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                   {
+                       ShowSupplierFilter = true,
+                       ShowPurchaseDocumentFilter = true,
+                       //ShowAreaFilter = true,
+                       //ShowProductFilter = true,
+                       //ShowCategoryFilter = true,
+                       //ShowCompanyFilter = true,
+                       //ShowBranchFilter = true
+                   })
+                    </div>
+
+                    @Html.Partial("~/Views/Shared/Controls/_reportFilterSettings.cshtml", new ReportFilterSettingsModel()
+               {
+                   ShowAmountFigureFilter = true,
+                   ShowAmountFilter = true,
+                   ShowAmountRoundUpFilter = true,
+                   ShowRangeAmountFilter = true,
+
+               })
+                    @Html.Partial("~/Views/Shared/Controls/ComposeMail.cshtml")
+                    <a id="PrintReport" class="k-grid-print" style="cursor: pointer;">
+                        <div class="btn btn-circle btn-icon-only btn-default" data-placement="left" data-html="true"
+                             data-container="body" data-toggle="tooltip" title="Print Report">
+                            <i class="fa fa-print"></i>
+                        </div>
+                    </a>
+                    <a data-toggle="modal" id="RunQuery" href="#">
+                        <div class="btn btn-circle btn-icon-only btn-default" data-placement="left" data-html="true" data-container="body" data-toggle="tooltip" title="Refresh">
+                            <i class="icon-control-play"></i>
+                        </div>
+                    </a>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "VatSalesRegisterNew")
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+
+
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div id="grid" class="table-grid"></div>
+                        @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+<script src="@Scripts.Url("~/JS/DateFilter.js?V5")" type="text/javascript"></script>
+<script src="@Scripts.Url("~/JS/dynamicReport.js?V2")" type="text/javascript"></script>
+<script type="text/javascript">
+    var fileMailSender = new ManualEmailSender({
+        GridName: "grid",
+        GridRefreshTriggerName: "Runquery",
+        // reportName: "VatSalesRegisterNew",
+    });
+</script>
+<script type="text/javascript">
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+
+</script>
+@*for Tree search and Grand Total*@
+<script type="text/x-kendo-tmpl" id="row-template">
+    # var isGrandTotal = ITEM_EDESC && ITEM_EDESC.toLowerCase().includes("grand total"); #
+    <tr class="#= isGrandTotal ? 'grand-total-row' : '' #">
+        <td>#= ITEM_EDESC #</td>
+        <td>#= ITEM_CODE #</td>
+        <td>#= INDEX_MU_CODE #</td>
+        <td style="text-align:right;">#= kendo.toString(OPEN_QTY, "n2") #</td>
+        <td style="text-align:right;">#= kendo.toString(OPEN_AMT, "n2") #</td>
+        <!-- Add other fields similarly -->
+    </tr>
+</script>
+
+
+<script type="text/x-kendo-template" id="toolbar-template1">
+    <div class="toolbar" style="display: flex; justify-content: flex-end; align-items: center; gap: 0;">
+        <div style="position: relative; display: inline-block;">
+            <input type="text" id="treelist-global-search" placeholder="Search..." style="width: 250px; padding-right: 30px;" class="k-textbox" />
+            <span class="k-icon k-i-search" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none;"></span>
+        </div>
+
+        <button class="k-button k-button-icontext k-grid-excel" style="margin-right: 5px;">
+            <span class="k-icon k-i-excel"></span>
+            Export to Excel
+        </button>
+    </div>
+</script>
+<script>
+
+    var reportConfig = GetReportSetting("NetSalesReport");
+    function getDateFormat(date) {
+        return kendo.format("{0:" + reportConfig.dateFormat + "}", date);
+    }
+
+    $(".applydp").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    })
+
+    $("#loadAdvancedFilters").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    });
+
+    $(document).ready(function () {
+
+        function getReportUrl(reportName) {
+            return window.location.protocol + "//" + window.location.host + "/api/SalesHome/Get" + reportName;
+        }
+
+        var reportName = $("#reportSelector").val();
+        var urltest = getReportUrl(reportName);
+
+        DateFilter.init(function () {
+            consolidate.init(function () {
+                runGridBinding(reportName, urltest);
+            });
+        });
+
+        fileMailSender.init();
+
+        $("#RunQuery").click(function (evt) {
+            evt.preventDefault();
+            reportName = $("#reportSelector").val();
+            urltest = getReportUrl(reportName);
+            KendoGridRefresh(reportName, urltest);
+        });
+
+        $("#reportSelector").change(function () {
+            reportName = $(this).val();
+            urltest = getReportUrl(reportName);
+            runGridBinding(reportName, urltest);
+        });
+
+        // Trigger refresh when applying date or advanced filters
+        $(".applydp, #loadAdvancedFilters").on("click", function (evt) {
+            evt.preventDefault();
+            $("#RunQuery").trigger("click");
+        });
+
+        function runGridBinding(reportName, url) {
+            clearGrid();
+            /* KendoGridTree();*/
+            switch (reportName) {
+                case "CustomerwiseOrderTracking":
+                    BindCustomerwiseOrderTrackingGrid(url);
+                    break;
+                case "GroupProductwiseOrderPending":
+                    BindGroupProductwiseOrderPendingGrid(url);
+                    break;
+            }
+        }
+
+       function KendoGridRefresh(reportName, readUrl) {
+            runGridBinding(reportName, readUrl);
+       }
+       function clearGrid() {
+            var gridElement = $("#grid");
+
+            // Check if a Kendo Grid exists and destroy it
+            var kendoGrid = gridElement.data("kendoGrid");
+            if (kendoGrid) {
+                kendoGrid.destroy();
+            }
+
+            // Check if a Kendo TreeList exists and destroy it
+            var kendoTreeList = gridElement.data("kendoTreeList");
+            if (kendoTreeList) {
+                kendoTreeList.destroy();
+            }
+
+            // Finally, empty the grid container
+            gridElement.empty();
+        }
+
+       function BindGroupProductwiseOrderPendingGrid(readurl) {
+        var companyName = '@workingContent.CurrentUserinformation.company_name';
+        var fromADdate = $("#FromDateVoucher").val();
+        var toADdate = $("#ToDateVoucher").val();
+        var fromBSdate = $("#fromInputDateVoucher").val();
+        var toBSdate = $("#toInputDateVoucher").val();
+        var branches = ReportFilter.getBranchs();
+        let grandTotalAppendedFlag = false;
+       const requestData = {
+        company_name: companyName,
+        fromADdate,
+        toADdate,
+        fromBSdate,
+        toBSdate,
+        branches,
+    };
+    $.ajax({
+        url: urltest,
+        method: "POST",
+        contentType: "application/json",
+        data: JSON.stringify(requestData),
+        success: function (response) {
+            console.log("TreeList Data:", response);
+            const grandRow = response.find(x =>
+                x.CUSTOMER_EDESC && x.CUSTOMER_EDESC.toLowerCase().includes("grand total")
+            );
+
+            response = response.filter(x =>
+                !(x.CUSTOMER_EDESC && x.CUSTOMER_EDESC.toLowerCase().includes("grand total"))
+            );
+
+            const grandRowData = grandRow;
+
+            // Define columns
+            var columns = [
+                { field: "ITEM_EDESC", title: "Group >>> Product", width: 300, locked: true },
+                {
+                    field: "ITEM_CODE",
+                    title: "Code",
+                    width: 80,
+                    template: function (dataItem) {
+                        if (dataItem.GROUP_SKU_FLAG === 'G') {
+                            return "";
+                        } else {
+                            return dataItem.ITEM_CODE;
+                        }
+                    }
+                },
+                {
+                    field: "UNIT", // Assuming "UNIT" field is named MU_CODE in your data
+                    title: "Unit",
+                    width: 80,
+                    template: function (dataItem) {
+                        let unitValue = dataItem.UNIT;
+                        let groupFlag = dataItem.GROUP_SKU_FLAG;
+
+                        // 1. Replace "None" with a blank string
+                        if (unitValue === "None") {
+                            unitValue = "";
+                        }
+
+                        // 2. Only show the value if GROUP_SKU_FLAG is 'I'
+                        if (groupFlag === 'I') {
+                            return unitValue;
+                        } else {
+                            // Otherwise, display blank for any other flag value
+                            return "";
+                        }
+                    },
+                },
+               /* { field: "UNIT", title: "Unit", width: 80 },*/
+                { field: "ORDER_QTY", title: "Order Quantity", width: 130, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                {
+                    field: "DUE_QTY",
+                    title: "Pending Quantity",
+                    width: 130,
+                    attributes: { style: "text-align:right;" },
+                    template: function (dataItem) {
+                        return kendo.format("{0:N2}", Math.abs(dataItem.DUE_QTY || 0));
+                    }
+                }
+            ];
+
+            const $grid = $("#grid");
+            const existingTreeList = $grid.data("kendoTreeList");
+            if (existingTreeList) {
+                existingTreeList.destroy();
+                $grid.empty();
+            }
+
+            $grid.kendoTreeList({
+                dataSource: new kendo.data.TreeListDataSource({
+                    data: response,
+                    schema: {
+                        model: {
+                            id: "MASTER_ITEM_CODE",
+                            parentId: "PRE_ITEM_CODE",
+                            fields: {
+                                ITEM_CODE: { type: "string" },
+                                ITEM_EDESC: { type: "string" },
+                                MASTER_ITEM_CODE: { type: "string" },
+                                PRE_ITEM_CODE: { type: "string" },
+                                UNIT: { type: "string" },
+                            }
+                        }
+                    }
+                }),
+                toolbar: ["excel"],
+                excel: {
+                    fileName: "Group Productwise Order Pending.xlsx",
+                    allPages: true,
+                    filterable: true
+                },
+                excelExport: function (e) {
+                    const sheet = e.workbook.sheets[0];
+                    const customRows = [];
+                    const totalColumns = sheet.columns.length;
+
+                    // 1. Company Name (Matches Screenshot A1)
+                    customRows.push({
+                        cells: [{
+                            value: "Company Name :- " + companyName,
+                            bold: true,
+                            colSpan: totalColumns
+                        }]
+                    });
+
+                    // 2. Branch Name (Matches Screenshot A2 - Using your branchName variable)
+                     var branchName = @Html.Raw(Json.Encode(workingContent.CurrentUserinformation.branch_name));
+                    customRows.push({
+                        cells: [{
+                            value: "Branch Name :- " + branchName,
+                            bold: true,
+                            colSpan: totalColumns
+                        }]
+                    });
+
+                    // 3. Report Name (Matches Screenshot A3)
+                    customRows.push({
+                        cells: [{
+                            value: "Report Name :- Group Productwise Order Pending",
+                            bold: true,
+                            colSpan: totalColumns
+                        }]
+                    });
+
+                    // 4. Date Range (Matches Screenshot A4)
+                    customRows.push({
+                        cells: [{
+                            value: "Date Range: " + fromADdate + " (" + fromBSdate + ") to " + toADdate + " (" + toBSdate + ")",
+                            bold: true,
+                            colSpan: totalColumns
+                        }]
+                    });
+
+                    // 5. Blank spacer row to match the gray/empty row 5
+                    customRows.push({
+                        cells: [{ value: "", colSpan: totalColumns }]
+                    });
+
+                    // Insert all custom rows at the top of the spreadsheet
+                    Array.prototype.unshift.apply(sheet.rows, customRows);
+
+                    // ✅ Re-add your Grand Total logic at the end
+                    if (grandRowData) {
+                        const grandTotalRow = { cells: [] };
+
+                        // Item Name Column
+                        grandTotalRow.cells.push({ value: "Grand Total", bold: true });
+
+                        // Item Code Column (Blank)
+                        grandTotalRow.cells.push({});
+
+                        // Remaining Columns (Unit, Order Qty, Pending Qty)
+                        columns.slice(2).forEach(col => {
+                            let rawValue = grandRowData[col.field];
+                            grandTotalRow.cells.push({
+                                value: rawValue || 0,
+                                type: "number",
+                                format: col.format ? "#,##0.00" : undefined, // Native Excel formatting
+                                bold: true
+                            });
+                        });
+
+                        sheet.rows.push(grandTotalRow);
+                    }
+                },
+                //excelExport: function (e) {
+                //    const sheet = e.workbook.sheets[0];
+                //    const customRows = [];
+
+                //    // Add company name
+                //    customRows.push({
+                //        cells: [{
+                //            value: companyName,
+                //            bold: true,
+                //            colSpan: sheet.columns.length
+                //        }]
+                //    });
+
+                //    // Add branch info
+                //    branches.forEach(branch => {
+                //        customRows.push({
+                //            cells: [{
+                //                value: branch.Company + " :- " + branch.Branches.join(', '),
+                //                colSpan: sheet.columns.length
+                //            }]
+                //        });
+                //    });
+
+                //    // Add date info
+                //    customRows.push({
+                //        cells: [{
+                //            value: "From: " + fromADdate + " (" + fromBSdate + ") To: " + toADdate + " (" + toBSdate + ")",
+                //            colSpan: sheet.columns.length
+                //        }]
+                //    });
+
+                //    customRows.push({
+                //        cells: [{ value: "", colSpan: sheet.columns.length }]
+                //    });
+
+                //    // Add custom rows at top
+                //    Array.prototype.unshift.apply(sheet.rows, customRows);
+
+                //    // ✅ Add Grand Total row at bottom of sheet manually
+                //    if (grandRowData) {
+                //        const grandTotalRow = {
+                //            cells: []
+                //        };
+
+                //        // Push Grand Total label
+                //        grandTotalRow.cells.push({
+                //            value: "Grand Total",
+                //            bold: true
+                //        });
+
+                //        // Push blank for next column (Item Code)
+                //        grandTotalRow.cells.push({});
+
+                //        // Push rest of the values based on columns
+                //        columns.slice(2).forEach(col => {
+                //            let rawValue = grandRowData[col.field];
+                //            let formattedValue = rawValue;
+
+                //            if (col.format) {
+                //                formattedValue = kendo.format(col.format, rawValue || 0);
+                //            }
+
+                //            grandTotalRow.cells.push({
+                //                value: formattedValue,
+                //                type: "number",
+                //                format: col.format,
+                //                bold: true
+                //            });
+                //        });
+
+                //        // Append Grand Total row at the end
+                //        sheet.rows.push(grandTotalRow);
+                //    }
+                //},
+
+
+                height: 450,
+                columns: columns,
+                filterable: true,
+                sortable: true,
+                reorderable: true,
+                editable: "inline",
+                resizable: true,
+                pageable: {
+                    pageSizes: [10, 20, 50],
+                    buttonCount: 5,
+                    refresh: true
+                },
+                dataBound: function () {
+                    const treeList = $("#grid").data("kendoTreeList");
+
+                    // Remove any existing grand total rows first to prevent duplicates
+                    $("#grid .k-grid-content-locked table tbody tr:contains('Grand Total')").remove();
+                    $("#grid .k-grid-content table tfoot").remove();
+
+                    // Only proceed if there's visible data
+                    const visibleData = treeList.dataSource.view();
+                    const hasVisibleData = visibleData && visibleData.length > 0;
+
+                    if (grandRowData && hasVisibleData) {
+                        // LOCKED content (first column)
+                        var $lockedRow = $('<tr>', {
+                            role: 'row',
+                            class: 'k-alt grand-total-row',
+                            style: 'height: 26px;'
+                        });
+
+                        var $lockedCell = $('<td>', {
+                            role: 'gridcell',
+                            style: 'white-space: nowrap; font-weight: bold;'
+                        }).append(
+                            $('<span>', {
+                                class: 'k-icon k-i-none'
+                            })
+                        ).append('Grand Total');
+
+                        $lockedRow.append($lockedCell);
+                        $("#grid .k-grid-content-locked table tbody").append($lockedRow);
+
+                        // NON-LOCKED content (remaining columns)
+                        var $unlockedRow = $('<tr>', {
+                            role: 'row',
+                            class: 'k-alt grand-total-row',
+                            style: 'height: 26px;'
+                        });
+
+                        columns.slice(1).forEach(col => {
+                            const val = grandRowData[col.field];
+                            const formatted = col.format
+                                ? kendo.format(col.format, val || 0)
+                                : (val || "");
+
+                            const $cell = $('<td>', {
+                                role: 'gridcell',
+                                style: 'text-align: right; white-space: nowrap; font-weight: bold;'
+                            }).text(formatted);
+
+                            $unlockedRow.append($cell);
+                        });
+
+                        let tfoot = $("<tfoot>");
+                        tfoot.append($unlockedRow);
+                        $("#grid .k-grid-content table").append(tfoot);
+                    }
+                },
+
+
+
+            });
+
+            // Remove custom Excel click handler to prevent double download
+            // Kendo's built-in Excel export will handle this automatically
+
+            // Add search functionality to the toolbar
+            const toolbar = $("#grid").closest(".k-grid").find(".k-grid-toolbar");
+            if (toolbar.length > 0) {
+                toolbar.append(
+                    '<div style="float: right; margin-left: 10px; position: relative;">' +
+                    '<input type="text" id="treelist-global-search" placeholder="Search..." style="width: 250px; padding: 5px 30px 5px 10px;" class="k-textbox" />' +
+                    '<span class="k-icon k-i-search" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none;"></span>' +
+                    '</div>'
+                );
+            }
+
+            // Function to filter tree data while maintaining parent-child relationships
+            function filterTreeWithParents(data, searchTerm) {
+                if (!searchTerm.trim()) return data;
+
+                const filteredData = [];
+                const addedIds = new Set();
+
+                // Helper function to add parent chain
+                function addParentChain(itemId, data) {
+                    const item = data.find(d => d.MASTER_ITEM_CODE === itemId);
+                    if (!item || addedIds.has(itemId)) return;
+
+                    // Skip grand total items
+                    if (item.ITEM_EDESC && item.ITEM_EDESC.toLowerCase().includes('grand total')) {
+                        return;
+                    }
+
+                    // Add parent first if it exists
+                    if (item.PRE_ITEM_CODE) {
+                        addParentChain(item.PRE_ITEM_CODE, data);
+                    }
+
+                    // Then add current item
+                    if (!addedIds.has(itemId)) {
+                        filteredData.push(item);
+                        addedIds.add(itemId);
+                    }
+                }
+
+                // Helper function to add all children of a parent
+                function addAllChildren(parentId, data) {
+                    const children = data.filter(d => d.PRE_ITEM_CODE === parentId);
+                    children.forEach(child => {
+                        if (!child.ITEM_EDESC || !child.ITEM_EDESC.toLowerCase().includes('grand total')) {
+                            if (!addedIds.has(child.MASTER_ITEM_CODE)) {
+                                filteredData.push(child);
+                                addedIds.add(child.MASTER_ITEM_CODE);
+                            }
+                            // Recursively add children of children
+                            addAllChildren(child.MASTER_ITEM_CODE, data);
+                        }
+                    });
+                }
+
+                // First pass: find all matching items (both parents and children)
+                const matchingItems = [];
+                data.forEach(item => {
+                    // Skip any grand total items
+                    if (item.ITEM_EDESC && item.ITEM_EDESC.toLowerCase().includes('grand total')) {
+                        return;
+                    }
+
+                    const matchesSearch =
+                        (item.CUSTOMER_EDESC && item.CUSTOMER_EDESC.toLowerCase().includes(searchTerm)) ||
+                        (item.CUSTOMER_CODE && item.CUSTOMER_CODE.toLowerCase().includes(searchTerm)) ||
+                        (item.ITEM_EDESC && item.ITEM_EDESC.toLowerCase().includes(searchTerm)) ||
+                        (item.ITEM_CODE && item.ITEM_CODE.toLowerCase().includes(searchTerm)) ||
+                        (item.GROUP_SKU_FLAG && item.GROUP_SKU_FLAG.toLowerCase().includes(searchTerm));
+
+                    if (matchesSearch) {
+                        matchingItems.push(item);
+                    }
+                });
+
+                // Second pass: add matching items and their parent chains
+                matchingItems.forEach(item => {
+                    // Add the item and its parent chain
+                    addParentChain(item.MASTER_ITEM_CODE, data);
+
+                    // If this is a parent node (no PRE_CUSTOMER_CODE), also add all its children
+                    if (!item.PRE_ITEM_CODE) {
+                        addAllChildren(item.MASTER_ITEM_CODE, data);
+                    }
+                });
+
+                // Sort to maintain proper parent-child order
+                return filteredData.sort((a, b) => {
+                    // Parents first (no PRE_CUSTOMER_CODE)
+                    if (!a.PRE_ITEM_CODE && b.PRE_ITEM_CODE) return -1;
+                    if (a.PRE_ITEM_CODE && !b.PRE_ITEM_CODE) return 1;
+
+                    // Within same level, maintain original order
+                    const aIndex = data.findIndex(d => d.MASTER_ITEM_CODE === a.MASTER_ITEM_CODE);
+                    const bIndex = data.findIndex(d => d.MASTER_ITEM_CODE === b.MASTER_ITEM_CODE);
+                    return aIndex - bIndex;
+                });
+            }
+
+            // Debounced search to prevent page hanging
+            let searchTimeout;
+            $("#treelist-global-search").off("input").on("input", function () {
+                const searchValue = $(this).val().toLowerCase();
+                const treeList = $("#grid").data("kendoTreeList");
+
+                // Clear previous timeout
+                clearTimeout(searchTimeout);
+
+                // Debounce search by 300ms to prevent excessive calls
+                searchTimeout = setTimeout(function() {
+                    if (treeList) {
+                        if (!searchValue.trim()) {
+                            // If search is empty, show all data
+                            treeList.dataSource.data(response);
+                        } else {
+                            // Filter data with the implemented function
+                            const filteredData = filterTreeWithParents(response, searchValue);
+                            treeList.dataSource.data(filteredData);
+
+                            // Expand all parent nodes after filtering to show children
+                            setTimeout(function() {
+                                const dataSource = treeList.dataSource;
+                                const view = dataSource.view();
+
+                                // Find all parent nodes (items without PRE_CUSTOMER_CODE) and expand them
+                                view.forEach(function(item) {
+                                    if (!item.PRE_ITEM_CODE) {
+                                        treeList.expand(treeList.tbody.find("tr[data-uid='" + item.uid + "']"));
+                                    }
+                                });
+                            }, 50); // Small delay to ensure data is loaded
+                        }
+                        // No need for flag anymore since we handle duplicates in dataBound
+                    }
+                }, 300);
+            });
+
+        },
+        error: function (err) {
+            console.error("Failed to load data:", err);
+            alert("Failed to load data. Please check console for details.");
+        }
+    });
+        }
+
+
+       function BindCustomerwiseOrderTrackingGrid(readurl) {
+    var companyName = '@workingContent.CurrentUserinformation.company_name';
+    var fromADdate = $("#FromDateVoucher").val();
+    var toADdate = $("#ToDateVoucher").val();
+    var fromBSdate = $("#fromInputDateVoucher").val();
+    var toBSdate = $("#toInputDateVoucher").val();
+    var branches = ReportFilter.getBranchs();
+
+    const requestData = {
+        company_name: companyName,
+        fromADdate,
+        toADdate,
+        fromBSdate,
+        toBSdate,
+        branches,
+    };
+
+    // Define fields and titles for numeric columns (used for aggregation and grand totals)
+    const monthFields = [
+        "QUANTITY",
+        "SECOND_QUANTITY",
+       // "UNIT_PRICE",
+        "TOTAL_PRICE",
+        "CHALAN_QTY",
+        "CHALAN_ALT_QTY",
+        "SALES_QTY",
+        "SALES_ALT_QTY",
+        "SALES_VALUE",
+        "DUE_QTY"
+    ];
+    const monthTitles = [
+        "Qty", "Alt Qty", "Total Amount",
+        "Chalan Qty", "Chalan Alt Qty", "Sales Qty", "Sales Alt Qty", "Sales Amount",
+        "Pending Quantity"
+    ];
+
+    $.ajax({
+        url: readurl,
+        method: "POST",
+        contentType: "application/json",
+        data: JSON.stringify(requestData),
+        success: function (response) {
+            const rawData = response || [];
+
+            // Use Maps for O(1) lookups and avoid repeated object spreads
+            const regionMap = new Map();
+
+            // Pre-init date parser helper (avoid kendo/date ops in hot loop)
+            const toDate = (v) => {
+                if (!v) return null;
+                const d = new Date(v);
+                return isNaN(d.getTime()) ? null : d;
+            };
+
+            for (let i = 0; i < rawData.length; i++) {
+                const item = rawData[i];
+
+                // Normalize once (Dates as Date objects for faster Kendo formatting)
+                const orderDate = toDate(item.ORDER_DATE);
+                const chalanDate = toDate(item.CHALAN_DATE);
+                const salesDate = toDate(item.SALES_DATE);
+
+                // Get or create region (parent)
+                let regionNode = regionMap.get(item.CUSTOMER_EDESC);
+                if (!regionNode) {
+                    const parentId = `region_parent_${String(item.CUSTOMER_EDESC || '').replace(/\s+/g, '_')}`;
+                    const totals = {};
+                    for (let f = 0; f < monthFields.length; f++) totals[monthFields[f]] = 0;
+                    regionNode = {
+                        ...totals,
+                        CUSTOMER_EDESC: item.CUSTOMER_EDESC,
+                        ORDER_NO: item.CUSTOMER_EDESC,
+                        MASTER_REGION_CODE: parentId,
+                        PRE_REGION_CODE: "",
+                        isParent: true,
+                        hasChildren: true,
+                        products: new Map()
+                    };
+                    regionMap.set(item.CUSTOMER_EDESC, regionNode);
+                }
+
+                // Composite key without formatting/parsing in loop
+                const productKey = [
+                    item.ORDER_NO || "",
+                    item.ORDER_DATE || "",
+                    item.MITI || "",
+                    item.EMPLOYEE_CODE || "",
+                    item.ITEM_CODE || "",
+                    item.MU_CODE || ""
+                ].join('|');
+
+                let existing = regionNode.products.get(productKey);
+                if (!existing) {
+                    // Create a lightweight child object, avoid heavy spreading
+                    existing = {
+                        CUSTOMER_EDESC: item.CUSTOMER_EDESC,
+                        ORDER_NO: item.ORDER_NO,
+                        ORDER_DATE: orderDate,
+                        MITI: item.MITI,
+                        EMPLOYEE_CODE: item.EMPLOYEE_CODE,
+                        EMPLOYEE_EDESC: item.EMPLOYEE_EDESC,
+                        ITEM_CODE: item.ITEM_CODE,
+                        ITEM_EDESC: item.ITEM_EDESC,
+                        MU_CODE: item.MU_CODE,
+                        CHALAN_DATE: chalanDate,
+                        CHALAN_NO: item.CHALAN_NO,
+                        SALES_DATE: salesDate,
+                        SALES_NO: item.SALES_NO,
+                        REFERENCE_NO: item.REFERENCE_NO,
+                        REFERENCE_SERIAL_NO: item.REFERENCE_SERIAL_NO,
+                        MASTER_REGION_CODE: `${String(item.CUSTOMER_EDESC || '').replace(/\s+/g, '_')}_${String(item.ORDER_NO || '').replace(/\W/g,'_')}_${item.ITEM_CODE || ''}_${item.EMPLOYEE_CODE || ''}`,
+                        PRE_REGION_CODE: `region_parent_${String(item.CUSTOMER_EDESC || '').replace(/\s+/g, '_')}`,
+                        isParent: false
+                    };
+                    // Initialize numeric fields
+                    for (let f = 0; f < monthFields.length; f++) {
+                        const fld = monthFields[f];
+                        existing[fld] = Number(item[fld]) || 0;
+                    }
+                    regionNode.products.set(productKey, existing);
+                } else {
+                    // Aggregate duplicates into the same child
+                    for (let f = 0; f < monthFields.length; f++) {
+                        const fld = monthFields[f];
+                        existing[fld] = (existing[fld] || 0) + (Number(item[fld]) || 0);
+                    }
+                }
+
+                // Update parent totals (simple sum of raw rows for quick parent view)
+                for (let f = 0; f < monthFields.length; f++) {
+                    const fld = monthFields[f];
+                    regionNode[fld] = (regionNode[fld] || 0) + (Number(item[fld]) || 0);
+                }
+            }
+
+            // Flatten to TreeList data (parents + merged children)
+            const transformedData = [];
+            regionMap.forEach(region => {
+                const parentNode = { ...region, products: undefined };
+                transformedData.push(parentNode);
+                region.products.forEach(child => transformedData.push(child));
+            });
+
+            // Compute grand totals from merged children only
+            const grandTotals = {};
+            for (let f = 0; f < monthFields.length; f++) grandTotals[monthFields[f]] = 0;
+            regionMap.forEach(region => {
+                region.products.forEach(child => {
+                    for (let f = 0; f < monthFields.length; f++) {
+                        const fld = monthFields[f];
+                        grandTotals[fld] += (fld === 'DUE_QTY') ? Math.abs(child[fld] || 0) : (child[fld] || 0);
+                    }
+                });
+            });
+
+            // --- Column Definition ---
+            const columns = [
+                {
+                    field: "ORDER_NO",
+                    title: "Customer >>> Order No",
+                    width: 300,
+                    //locked: true,
+                    template: function (dataItem) {
+                        return dataItem.isParent ? `<b>${dataItem.CUSTOMER_EDESC}</b>` : `&nbsp;&nbsp;&nbsp;&nbsp; ${dataItem.ORDER_NO}`;
+                    },
+                },
+                // FIX APPLIED HERE: Use a function template to prevent "ORDER_DATE is not defined"
+                {
+                    field: "ORDER_DATE",
+                    title: "Date",
+                    template: function(dataItem) {
+                        return dataItem.ORDER_DATE
+                            ? kendo.toString(kendo.parseDate(dataItem.ORDER_DATE), 'yyyy-MM-dd')
+                            : '';
+                    },
+                    width: "100px"
+                },
+                {
+                    field: "MITI",
+                    title: "Miti",
+                    width: "95px",
+                },
+                {
+                    field: "EMPLOYEE_EDESC",
+                    title: "Employee Name",
+                    width: "200px",
+                },
+
+                {
+                    field: "ITEM_EDESC",
+                    title: "Item Name",
+                    width: "240px",
+                },
+                // MU_CODE (Unit): Show only if GROUP_SKU_FLAG is 'I' and replace "None"
+                {
+                    field: "MU_CODE",
+                    title: "Unit",
+                    width: 80,
+                    //template: function (dataItem) {
+                    //    let unitValue = dataItem.MU_CODE;
+                    //    let groupFlag = dataItem.GROUP_SKU_FLAG;
+
+                    //    if (unitValue === "None") {
+                    //        unitValue = "";
+                    //    }
+
+                    //    if (groupFlag === 'I') {
+                    //        return unitValue;
+                    //    } else {
+                    //        return "";
+                    //    }
+                    //},
+                },
+                // --- Manually Added Numeric Columns with Templates ---
+                {
+                    field: "QUANTITY",
+                    title: "Qty",
+                    width: 130,
+                    attributes: { style: "text-align:right;" },
+                    template: function (dataItem) {
+                        return kendo.format("{0:N2}", dataItem.QUANTITY || 0);
+                    }
+                },
+                {
+                    field: "SECOND_QUANTITY",
+                    title: "Alt Qty",
+                    width: 130,
+                    attributes: { style: "text-align:right;" },
+                    template: function (dataItem) {
+                        return kendo.format("{0:N2}", dataItem.SECOND_QUANTITY || 0);
+                    }
+                },
+                {
+                    field: "UNIT_PRICE",
+                    title: "Rate",
+                    width: 130,
+                    attributes: { style: "text-align:right;" },
+                    template: function (dataItem) {
+                        return kendo.format("{0:N2}", dataItem.UNIT_PRICE || 0);
+                    }
+                },
+                {
+                    field: "TOTAL_PRICE",
+                    title: "Amount",
+                    width: 130,
+                    attributes: { style: "text-align:right;" },
+                    template: function (dataItem) {
+                        return kendo.format("{0:N2}", dataItem.TOTAL_PRICE || 0);
+                    }
+                },
+                {
+                    field: "DUE_QTY",
+                    title: "Pending Qty",
+                    width: 130,
+                    attributes: { style: "text-align:right;" },
+                    template: function (dataItem) {
+                        return kendo.format("{0:N2}", Math.abs(dataItem.DUE_QTY || 0));
+                    }
+                },
+                {
+                    field: "CHALAN_DATE",
+                    title: "Chalan Date",
+                    template: function (dataItem) {
+                        return dataItem.CHALAN_DATE
+                            ? kendo.toString(kendo.parseDate(dataItem.CHALAN_DATE), 'yyyy-MM-dd')
+                            : '';
+                    },
+                    width: "110px",
+                },
+                {
+                    field: "CHALAN_NO",
+                    title: "Chalan No",
+                    width: "140px",
+                },
+                {
+                    field: "CHALAN_QTY",
+                    title: "Chalan Qty",
+                    width: 130,
+                    attributes: { style: "text-align:right;" },
+                    template: function (dataItem) {
+                        return kendo.format("{0:N2}", dataItem.CHALAN_QTY || 0);
+                    }
+                },
+                {
+                    field: "CHALAN_ALT_QTY",
+                    title: "Chalan Alt Qty",
+                    width: 130,
+                    attributes: { style: "text-align:right;" },
+                    template: function (dataItem) {
+                        return kendo.format("{0:N2}", dataItem.CHALAN_ALT_QTY || 0);
+                    }
+                },
+                {
+                    field: "SALES_DATE",
+                    title: "Sales Date",
+                    template: function (dataItem) {
+                        return dataItem.SALES_DATE
+                            ? kendo.toString(kendo.parseDate(dataItem.SALES_DATE), 'yyyy-MM-dd')
+                            : '';
+                    },
+                    width: "95px",
+                },
+                {
+                    field: "SALES_NO",
+                    title: "Sales No",
+                    width: "140px",
+                },
+                {
+                    field: "SALES_QTY",
+                    title: "Sales Qty",
+                    width: 130,
+                    attributes: { style: "text-align:right;" },
+                    template: function (dataItem) {
+                        return kendo.format("{0:N2}", dataItem.SALES_QTY || 0);
+                    }
+                },
+                {
+                    field: "SALES_ALT_QTY",
+                    title: "Sales Alt Qty",
+                    width: 130,
+                    attributes: { style: "text-align:right;" },
+                    template: function (dataItem) {
+                        return kendo.format("{0:N2}", dataItem.SALES_ALT_QTY || 0);
+                    }
+                },
+                {
+                    field: "SALES_VALUE",
+                    title: "Sales Amount",
+                    width: 130,
+                    attributes: { style: "text-align:right;" },
+                    template: function (dataItem) {
+                        return kendo.format("{0:N2}", dataItem.SALES_VALUE || 0);
+                    }
+                },
+
+            ];
+            // --- End Column Definition ---
+
+            const $grid = $("#grid");
+            const existingTreeList = $grid.data("kendoTreeList");
+            if (existingTreeList) {
+                existingTreeList.destroy();
+                $grid.empty();
+            }
+
+            $grid.kendoTreeList({
+                dataSource: new kendo.data.TreeListDataSource({
+                    data: transformedData,
+                    schema: {
+                        model: {
+                            id: "MASTER_REGION_CODE",
+                            parentId: "PRE_REGION_CODE",
+                            fields: {
+                                MASTER_REGION_CODE: { type: "string" },
+                                PRE_REGION_CODE: { type: "string" },
+                                // Define all numeric fields for schema validation and default values
+                                QUANTITY: { type: "number", defaultValue: 0 },
+                                SECOND_QUANTITY: { type: "number", defaultValue: 0 },
+                                UNIT_PRICE: { type: "number", defaultValue: 0 },
+                                TOTAL_PRICE: { type: "number", defaultValue: 0 },
+                                CHALAN_QTY: { type: "number", defaultValue: 0 },
+                                CHALAN_ALT_QTY: { type: "number", defaultValue: 0 },
+                                SALES_QTY: { type: "number", defaultValue: 0 },
+                                SALES_ALT_QTY: { type: "number", defaultValue: 0 },
+                                SALES_VALUE: { type: "number", defaultValue: 0 },
+                                DUE_QTY: { type: "number", defaultValue: 0 }
+                            }
+                        }
+                    },
+                    aggregate: []
+                }),
+                dataBound: function (e) {
+                    const treeList = this;
+
+                    // Remove existing footer if any
+                    treeList.element.find(".k-grid-footer").remove();
+
+                    // Create footer wrapper with proper structure (hidden scrollbar, synced programmatically)
+                    const footerWrapper = $('<div class="k-grid-footer"><div class="k-grid-footer-wrap" style="overflow: hidden;"><table><tbody></tbody></table></div></div>');
+                    const footerRow = $("<tr class='k-footer-template'/>");
+
+                    // Get header cells to match exact column structure
+                    const headerCells = treeList.thead.find("th");
+
+                    // Create individual cells for each column (no colspan to avoid misalignment)
+                    // Column 1: ORDER_NO - show "Grand Total"
+                    footerRow.append(`<td style="text-align:left; padding-left:10px;"><b>Grand Total</b></td>`);
+
+                    // Columns 2-6: ORDER_DATE, MITI, EMPLOYEE_EDESC, ITEM_EDESC, MU_CODE (empty)
+                    for (let i = 1; i < 6; i++) {
+                        footerRow.append(`<td></td>`);
+                    }
+
+                    // Column 7: QUANTITY
+                    footerRow.append(`<td style="text-align:right; padding-right:10px;"><b>${kendo.format("{0:N2}", grandTotals["QUANTITY"] || 0)}</b></td>`);
+
+                    // Column 8: SECOND_QUANTITY
+                    footerRow.append(`<td style="text-align:right; padding-right:10px;"><b>${kendo.format("{0:N2}", grandTotals["SECOND_QUANTITY"] || 0)}</b></td>`);
+
+                    // Column 9: UNIT_PRICE
+                 //   footerRow.append(`<td style="text-align:right; padding-right:10px;"><b>${kendo.format("{0:N2}", grandTotals["UNIT_PRICE"] || 0)}</b></td>`);
+
+                    // Column 10: TOTAL_PRICE
+                    footerRow.append(`<td style="text-align:right; padding-right:10px;"><b>${kendo.format("{0:N2}", grandTotals["TOTAL_PRICE"] || 0)}</b></td>`);
+
+                    // Column 11: DUE_QTY (Pending Qty)
+                    footerRow.append(`<td style="text-align:right; padding-right:10px;"><b>${kendo.format("{0:N2}", grandTotals["DUE_QTY"] || 0)}</b></td>`);
+
+                    // Columns 12-13: CHALAN_DATE, CHALAN_NO (empty)
+                    footerRow.append(`<td></td><td></td>`);
+
+                    // Column 14: CHALAN_QTY
+                    footerRow.append(`<td style="text-align:right; padding-right:10px;"><b>${kendo.format("{0:N2}", grandTotals["CHALAN_QTY"] || 0)}</b></td>`);
+
+                    // Column 15: CHALAN_ALT_QTY
+                    footerRow.append(`<td style="text-align:right; padding-right:10px;"><b>${kendo.format("{0:N2}", grandTotals["CHALAN_ALT_QTY"] || 0)}</b></td>`);
+
+                    // Columns 16-17: SALES_DATE, SALES_NO (empty)
+                    footerRow.append(`<td></td><td></td>`);
+
+                    // Column 18: SALES_QTY
+                    footerRow.append(`<td style="text-align:right; padding-right:10px;"><b>${kendo.format("{0:N2}", grandTotals["SALES_QTY"] || 0)}</b></td>`);
+
+                    // Column 19: SALES_ALT_QTY
+                    footerRow.append(`<td style="text-align:right; padding-right:10px;"><b>${kendo.format("{0:N2}", grandTotals["SALES_ALT_QTY"] || 0)}</b></td>`);
+
+                    // Column 20: SALES_VALUE
+                    footerRow.append(`<td style="text-align:right; padding-right:10px;"><b>${kendo.format("{0:N2}", grandTotals["SALES_VALUE"] || 0)}</b></td>`);
+
+                    // Append footer row and add to grid
+                    footerWrapper.find("tbody").append(footerRow);
+                    treeList.element.append(footerWrapper);
+
+                    // Sync footer column widths with header cells exactly
+                    const footerCells = footerWrapper.find("td");
+
+                    footerCells.each(function(index) {
+                        if (index < headerCells.length) {
+                            const width = $(headerCells[index]).outerWidth();
+                            $(this).css({
+                                'width': width + 'px',
+                                'min-width': width + 'px',
+                                'max-width': width + 'px',
+                                'box-sizing': 'border-box'
+                            });
+                        }
+                    });
+
+                    // Sync the footer table width with content table
+                    const contentTable = treeList.tbody.closest('table');
+                    footerWrapper.find('table').css('width', contentTable.width() + 'px');
+
+                    // Synchronize horizontal scrolling - move footer content when grid scrolls
+                    const contentWrap = treeList.element.find(".k-treelist-content, .k-grid-content");
+                    const footerTable = footerWrapper.find("table");
+
+                    // Remove any existing scroll handlers to prevent duplicates
+                    contentWrap.off("scroll.footerSync");
+
+                    // Sync footer position when content scrolls (using CSS transform for smooth scrolling)
+                    contentWrap.on("scroll.footerSync", function() {
+                        const scrollLeft = $(this).scrollLeft();
+                        footerTable.css('transform', 'translateX(' + (-scrollLeft) + 'px)');
+                    });
+                },
+                toolbar: ["excel"],
+                excel: {
+                    fileName: "CustomerwiseOrderTracking.xlsx",
+                    allPages: true,
+                    filterable: true
+                },
+                             excelExport: function (e) {
+    const sheet = e.workbook.sheets[0];
+    const customRows = [];
+
+    // Get total columns to span the header across
+    const totalColumns = e.sender.columns.length;
+
+    // 1. Company Name Row
+    customRows.push({
+        cells: [{
+            value: "Company Name :- " + companyName,
+            bold: true,
+            colSpan: totalColumns
+        }]
+    });
+
+    // 2. Branch Name Row (using your workingContent variable)
+    var branchName = @Html.Raw(Json.Encode(workingContent.CurrentUserinformation.branch_name));
+    customRows.push({
+        cells: [{
+            value: "Branch Name :- " + branchName,
+            bold: true,
+            colSpan: totalColumns
+        }]
+    });
+
+    // 3. Report Name Row
+    customRows.push({
+        cells: [{
+            value: "Report Name :- Customerwise Order Tracking",
+            bold: true,
+            colSpan: totalColumns
+        }]
+    });
+
+    // 4. Date Range Row
+    customRows.push({
+        cells: [{
+            value: "Date Range: " + fromADdate + " (" + fromBSdate + ") to " + toADdate + " (" + toBSdate + ")",
+            bold: true,
+            colSpan: totalColumns
+        }]
+    });
+
+    // 5. Empty spacer row to match the image structure
+    customRows.push({
+        cells: [{ value: "", colSpan: totalColumns }]
+    });
+
+    // Prepend the header rows to the start of the sheet
+    Array.prototype.unshift.apply(sheet.rows, customRows);
+
+    // --- Start of Existing Grand Total Logic ---
+    const currentData = this.dataSource.data();
+    const currentGrandTotals = {};
+    monthFields.forEach(field => {
+        currentGrandTotals[field] = 0;
+    });
+
+    currentData.forEach(item => {
+        if (!item.isParent) {
+            monthFields.forEach(field => {
+                currentGrandTotals[field] += (field === "DUE_QTY" ? Math.abs(item[field] || 0) : (item[field] || 0));
+            });
+        }
+    });
+
+    const grandTotalRow = { cells: [] };
+    // Adjust ColSpan for "Grand Total" label to align with your column structure
+    grandTotalRow.cells.push({ value: "Grand Total", bold: true, colSpan: 6 });
+
+    monthFields.forEach(field => {
+        grandTotalRow.cells.push({
+            value: currentGrandTotals[field],
+            type: "number",
+            format: "#,##0.00",
+            bold: true
+        });
+    });
+    sheet.rows.push(grandTotalRow);
+},
+                //excelExport: function (e) {
+                //    const sheet = e.workbook.sheets[0];
+                //    const customRows = [];
+
+                //    // ... (Excel header rows logic)
+
+                //    const currentData = this.dataSource.data();
+                //    const currentGrandTotals = {};
+                //    monthFields.forEach(field => {
+                //        currentGrandTotals[field] = 0;
+                //    });
+                //    currentData.forEach(item => {
+                //        if (!item.isParent) {
+                //            monthFields.forEach(field => {
+                //                currentGrandTotals[field] += (field === "DUE_QTY" ? Math.abs(item[field] || 0) : (item[field] || 0));
+                //            });
+                //        }
+                //    });
+
+                //    // Add grand total row at the end
+                //    const grandTotalRow = { cells: [] };
+                //    grandTotalRow.cells.push({ value: "Grand Total", bold: true, colSpan: 7 });
+
+                //    monthFields.forEach(field => {
+                //        grandTotalRow.cells.push({
+                //            value: currentGrandTotals[field],
+                //            type: "number",
+                //            format: "{0:N2}",
+                //            bold: true
+                //        });
+                //    });
+                //    sheet.rows.push(grandTotalRow);
+                //},
+                height: 450,
+                columns: columns,
+                filterable: {
+                    mode: "row",
+                    multi: true,
+                    search: true,
+                    extra: false
+                },
+                sortable: true,
+                reorderable: true,
+                editable: false,
+                resizable: true,
+            });
+
+            // Add search functionality to the toolbar
+            const toolbar = $("#grid").closest(".k-grid").find(".k-grid-toolbar");
+            if (toolbar.length > 0) {
+                toolbar.append(
+                    '<div style="float: right; margin-left: 10px; position: relative;">' +
+                    '<input type="text" id="treelist-global-search" placeholder="Search..." style="width: 250px; padding: 5px 30px 5px 10px;" class="k-textbox" />' +
+                    '<span class="k-icon k-i-search" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none;"></span>' +
+                    '</div>'
+                );
+            }
+
+            // Debounced search
+            let searchTimeout;
+            $("#treelist-global-search").off("input").on("input", function () {
+                const searchValue = $(this).val().toLowerCase();
+                const treeList = $("#grid").data("kendoTreeList");
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(function() {
+                    if (treeList) {
+                        if (!searchValue.trim()) {
+                            treeList.dataSource.data(transformedData);
+                        } else {
+                            // Assuming filterTreeWithParentsOptimized is defined elsewhere
+                            const filteredData = filterTreeWithParentsOptimized(transformedData, searchValue);
+                            treeList.dataSource.data(filteredData);
+                        }
+                    }
+                }, 300);
+            });
+        },
+        error: function (err) {
+            console.error("Failed to load data:", err);
+            alert("Failed to load data. Please check console for details.");
+        }
+    });
+}
+        var companyName = @Html.Raw(Json.Encode(workingContent.CurrentUserinformation.company_name));
+        var branchName = @Html.Raw(Json.Encode(workingContent.CurrentUserinformation.branch_name));
+
+        const REPORT_DISPLAY_NAMES = {
+            "CustomerwiseOrderTracking": "Customerwise Order Tracking",
+            "GroupProductwiseOrderPending": "Group Productwise Order Pending",
+        };
+
+        UniversalGridPrint.init({
+            reportName: function() {
+                const value = $("#reportSelector").val();
+                return REPORT_DISPLAY_NAMES[value] || value;
+            },
+            companyName: companyName,
+            branchName: branchName
+        });
+    });
+
+
+</script>
+
+

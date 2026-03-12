@@ -1,0 +1,196 @@
+﻿    <script src="~/Content/MainTheme/tableExport/jspdf/jspdf.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/2.4.0/jszip.min.js"></script>
+    <script src="~/Content/MainTheme/tableExport/jquery.base64.js"></script>
+    <script src="~/Content/MainTheme/tableExport/tableExport.js"></script>
+
+<style>
+    .search {
+        padding: 5px 0;
+        width: 230px;
+        /*height: 30px;*/
+        position: relative;
+        top: -3px;
+        left: -2px;
+        float: left;
+        line-height: 22px;
+    }
+
+        .search input {
+            position: absolute;
+            width: 200px;
+            float: Left;
+            /*margin-left: 199px;*/
+            margin-left: -1px !important;
+            -webkit-transition: all 0.7s ease-in-out;
+            -moz-transition: all 0.7s ease-in-out;
+            -o-transition: all 0.7s ease-in-out;
+            transition: all 0.7s ease-in-out;
+            height: 26px !important;
+            line-height: 18px;
+            padding: 0 2px 0 2px;
+            background-color: transparent;
+            color: black;
+            border-radius: 1px;
+            border: solid 1px #c5c5c5 !important;
+            border-right: 0px !important;
+        }
+
+        /*.search:hover input {
+            width: 200px;
+            margin-left:0px;
+            border-left: solid 1px #c5c5c5 !important;
+            border: 1px solid #c5c5c5;
+            height: 26px;
+            margin-left: -1px !important;
+            width: 200px;
+            
+        }*/
+
+    .search-btn {
+        background-color: transparent;
+        /*background-color: white;*/
+        height: 17px;
+        position: absolute;
+        right: 0;
+        top: 4px;
+        border-radius: 1px;
+        padding:4px 8px 5px !important;
+    }
+
+        .search-btn:hover {
+            background-color: transparent;
+            color: black;
+            border: solid 1px #c5c5c5;
+            border-left: none;
+        }
+            .search-btn:hover .search-btn {
+                border-left: solid #ddd 1px !important;
+                padding: 4px 11px 5px !important;
+            }
+
+            .k-header a.k-button {
+                float: right;
+                margin: 2px !important;
+            }
+
+    .search-btn:hover input .form-control, input .form-control:hover {
+        border-color: #c5c5c5 !important;
+    }
+
+    .btn-group {
+        margin-right: 0px !important;
+    }
+
+    .page-toolbar .btn-icon-only {
+        margin: 2px 1px !important;
+    }
+
+    .page-toolbar .btn-group > .btn:first-child {
+        margin-left: 2px !important;
+    }
+    #downImage {
+        -moz-transition: transform 1s;
+        -webkit-transition: transform 1s;
+        transition: transform 1s;
+    }
+
+    .flip {
+        transform: rotate(-180deg);
+    }
+    #downImage {
+        color: hsl(0, 2%, 47%)
+    }
+    .k-grid-toolbar .k-button, .k-header .k-button {
+        padding: 2px 7px !important;
+    }
+    .k-grid-toolbar .k-button-icontext {
+        padding-right: 7px !important;
+    }
+</style>
+
+
+<script type="text/x-kendo-template" id="toolbar-template">
+    <div class="k-header k-grid-toolbar">
+
+        <a class="k-button k-button-icontext k-grid-excel" href="javascript:">
+            <i class="fa fa-file-excel-o"></i>
+        </a>
+        @*<a class="k-button k-button-icontext k-grid-pdf" style="float:right;" href="javascript:">
+            <i class="fa fa-file-pdf-o"></i>
+        </a>*@
+        <a class="k-button k-button-icontext docDownload" href="javascript:" style="float:right;">
+            <i class="fa fa-file-word-o"></i>
+        </a>
+      
+
+      
+    </div>
+</script>
+
+<script>
+    //$("#operationContent").on("click", ".docDownload", function () {
+    //    $("table[role='grid']").tableExport({ type: 'doc', tableName: 'exported.doc', escape: 'false' });
+    //})
+    $("#operationContent").on("click", ".k-grid-pdf", function () {
+       // printGrid();
+    })
+</script>
+
+<script>
+    //function printGrid() {
+    //    var gridElement = $('#grid'),
+    //        printableContent = '',
+    //        win = window.open('', '', 'width=800, height=500'),
+    //        doc = win.document.open();
+
+    //    var htmlStart =
+    //        '<!DOCTYPE html>' +
+    //        '<html>' +
+    //        '<head>' +
+    //        '<meta charset="utf-8" />' +
+    //        '<title>Kendo UI Grid</title>' +
+    //        '<link href="http://cdn.kendostatic.com/2019.2.61/styles/kendo.common.min.css" rel="stylesheet" /> ' +
+    //        '<style>' +
+    //        'html { font: 11pt sans-serif; }' +
+    //        '.k-grid { border-top-width: 0; }' +
+    //        '.k-grid, .k-grid-content { height: auto !important; }' +
+    //        '.k-grid-content { overflow: visible !important; }' +
+    //        'div.k-grid table { table-layout: auto; width: 100% !important; }' +
+    //        '.k-grid .k-grid-header th { border-top: 1px solid; }' +
+    //        '.k-grid-toolbar, .k-grid-pager > .k-link { display: none; }' +
+    //        '</style>' +
+    //        '</head>' +
+    //        '<body>';
+
+    //    var htmlEnd =
+    //        '</body>' +
+    //        '</html>';
+
+    //    var gridHeader = gridElement.children('.k-grid-header');
+    //    if (gridHeader[0]) {
+    //        var thead = gridHeader.find('thead').clone().addClass('k-grid-header');
+    //        printableContent = gridElement
+    //            .clone()
+    //            .children('.k-grid-header').remove()
+    //            .end()
+    //            .children('.k-grid-content')
+    //            .find('table')
+    //            .first()
+    //            .children('tbody').before(thead)
+    //            .end()
+    //            .end()
+    //            .end()
+    //            .end()[0].outerHTML;
+    //    } else {
+    //        printableContent = gridElement.clone()[0].outerHTML;
+    //    }
+
+    //    doc.write(htmlStart + printableContent + htmlEnd);
+    //    doc.close();
+    //    win.print();
+    //}
+    //function pdfExport(evt)
+    //{
+    
+//}
+</script>

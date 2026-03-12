@@ -1,0 +1,264 @@
+﻿
+@using NeoErp.Core.Models;
+@{
+    var myAreaName = string.Empty;
+    object areaObj;
+    if (ViewContext.RouteData.Values.TryGetValue("area", out areaObj))
+    {
+        myAreaName = areaObj.ToString();
+    }
+    var actionPageId = "PendingVoucher";
+}
+<style>
+    .slimScrollBar {
+        border-radius: 5px !important;
+        background-color: #333 !important;
+    }
+
+    .slimScrollDiv, #customerMultiSelect {
+        height: auto !important;
+    }
+
+    ul.dropdown-menu.custom {
+        margin-top: 8px !important;
+        border: none;
+        box-shadow: none !important;
+    }
+
+    .dropdown-menu.custom:before {
+        left: 58px !important;
+    }
+
+    .download-btn {
+        margin: 0px !important;
+        padding-top: -2px !important;
+        padding-left: 0px;
+        padding-right: 0px;
+        margin-top: -5px !important;
+        margin-left: 5px !important;
+    }
+
+    .dropdown-menu.custom {
+        left: -27px !important;
+        top: 20px !important;
+    }
+
+    .dropdown > .dropdown-menu:before, .dropdown-toggle > .dropdown-menu:before, .btn-group > .dropdown-menu:before {
+        position: absolute;
+        top: -8px;
+        left: 30px;
+        right: auto;
+        display: inline-block !important;
+        border-right: 8px solid transparent;
+        border-bottom: 8px solid #e0e0e0;
+        border-left: 8px solid transparent;
+        content: '';
+    }
+
+    i.icon-arrow-down {
+        color: #acacac;
+    }
+
+    .btn-group-custom button.btn {
+        padding: 7px 7px !important;
+        float: left;
+    }
+
+    .dropdown-menu.custom {
+        left: -55px !important;
+    }
+</style>
+
+
+<div class="portlet portlet-sortable  light bordered" id="PendingVoucher">
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="icon-bar-chart font-green-haze"></i>
+            <span class="caption-subject bold uppercase font-green-haze custom-modal">Pending Vouchers</span>
+        </div>
+        <div class="tools">
+            <a href="javascript:;" class="collapse">
+            </a>
+            <div class="btn-group">
+                <a class="btn dropdown-toggle download-btn" data-title="Download" data-toggle="dropdown" href="#">
+                    <i class="icon-arrow-down Thirdcustom"></i>
+                </a>
+                <ul class="dropdown-menu custom">
+                    <div class="btn-group-custom">
+                        <button type="button" data-id="SalesChartBranchWiseFiscalYearRetailOutletKLTower_HEPLChart" class="export-pdf btn default red-stripe"><i class="fa fa-file-pdf-o"></i>PDF</button>
+                        <button type="button" data-id="SalesChartBranchWiseFiscalYearRetailOutletKLTower_HEPLChart" class="export-img btn default blue-stripe"><i class="fa fa-image-o"></i>Image</button>
+                        <button type="button" data-id="SalesChartBranchWiseFiscalYearRetailOutletKLTower_HEPLChart" class="export-svg btn default green-stripe">SVG</button>
+                    </div>
+                </ul>
+            </div>
+            <a href="javascript:;" class="remove">
+            </a>
+        </div>
+    </div>
+    <div class="portlet-body">
+        <div class="k-content wide">
+            <div id="pendingVouchergrid"></div>
+            <script type="text/x-kendo-template" id="toolbar-template">
+                <div class="k-header k-grid-toolbar">
+
+                    <a class="k-button k-button-icontext k-grid-excel" href="javascript:">
+                        <i class="fa fa-file-excel-o"></i>
+                    </a>
+                </div>
+            </script>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            BindGrid();
+        });
+        function BindGrid()
+        {
+            var readurl = window.location.protocol + "//" + window.location.host + "/api/SalesDashboard/GetPendingVoucher";
+            var dataSource = new kendo.data.DataSource({
+                type: "json",
+                transport: {
+                    read: {
+                        url: readurl, // <-- Get data from here.
+                        dataType: "json", // <-- The default was "jsonp".
+                        type: "POST",
+                        //contentType: "application/json; charset=utf-8"
+                    },
+                    parameterMap: function (options, type) {
+                    
+                        //var paramMap = $.extend(options, ReportFilter.filterAdditionalData());
+                        //delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        //delete paramMap.$format; // <-- remove format parameter.
+                        //return paramMap;
+                    }
+                },
+                group: {
+                    field: "BranchName",
+                    dir: "asc"
+                },
+                error: function (e) {
+                    displayPopupNotification("Sorry error occured while processing data", "error");
+                },
+                serverFiltering: false,
+                //serverGrouping: true,
+               // serverAggregates: true,
+                //aggregate: [
+                      
+                //          { field: "PendingVoucherCount", aggregate: "sum" }   
+                //],
+                schema: {
+                  //  data: "SalesRegisters", // records are returned in the "data" field of the response
+                    //total: "total", // total number of records is in the "total" field of the response
+                 //   aggregates: "AggregationResult",
+                   
+                },
+                serverPaging: false,
+                //serverSorting: true,
+                pageSize: 100,
+            });
+            var grid = $("#pendingVouchergrid").kendoGrid({
+                dataSource: dataSource,
+                toolbar: kendo.template($("#toolbar-template").html()),
+                excel: {
+                    fileName: "Pending Voucher",
+                    //proxyURL: "//demos.telerik.com/kendo-ui/service/export",
+                    allPages: true
+                },
+
+                excelExport: function(e){
+                    var rows = e.workbook.sheets[0].rows;
+                    rows.unshift({
+                        height:20,
+                        cells:[{
+                            value:"Pending Vouchers",
+                            background:"#3fd5c0",
+                            textAlign:"center",
+                            colSpan:4,
+                            fontSize:15,
+                        }]
+
+                    });
+                },
+                //pdf: {
+                //    allPages: true,
+                //    avoidLinks: true,
+                //    paperSize: "auto",
+                //    margin: { top: "2cm", left: "1cm", right: "1cm", bottom: "1cm" },
+                //    landscape: true,
+                //    repeatHeaders: true,
+                //    width: "500px",
+
+                //    scale: 0.8
+                //},
+                height: 350,
+                sortable: true,
+                reorderable: true,
+                groupable: true,
+                resizable: true,
+                filterable: {   
+                    extra: false,   
+                    operators: {   
+                        number: {
+
+                            eq: "Is equal to",
+                            neq: "Is not equal to",
+                            gte: "is greater than or equal to	",
+                            gt: "is greater than",
+                            lte: "is less than or equal",
+                            lt: "is less than",
+                        },
+                        string: {
+
+                            eq: "Is equal to",
+                            neq: "Is not equal to",
+                            startswith: "Starts with	",
+                            contains: "Contains",
+                            doesnotcontain: "Does not contain",
+                            endswith: "Ends with",
+                        },
+                        date: {
+
+                            eq: "Is equal to",
+                            neq: "Is not equal to",
+                            gte: "Is after or equal to",
+                            gt: "Is after",
+                            lte: "Is before or equal to",
+                            lt: "Is before",
+                        }
+
+                    }
+                },
+                columnMenu: true,
+                //Wordwrapmenu function calling 
+                columnMenuInit: function (e) {
+                    wordwrapmenu(e);
+                },
+                pageable: true,
+                //  autoBind: true,
+                scrollable: {
+                    virtual: true
+                },
+               
+                columns: [
+                    {
+                        field: "VoucherType",
+                        title: "Voucher Type",
+                    },
+                              {
+                                  field: "BranchName",
+                                  title: "Branch Name",
+                              },
+                              {
+                                  field: "PendingVoucherCount",
+                                  title: "Pending Voucher",
+                                 
+                              }
+                          
+                ]
+
+            });
+        }
+    </script>
+</div>
+

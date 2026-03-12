@@ -1,0 +1,99 @@
+﻿@{
+    Layout = null;
+}
+@using NeoERP.QuotationManagement.Service.Models
+@model List<Company>
+
+<link href="@Styles.Url("~/Areas/NeoERP.QuotationManagement/Content/quotationSetup.css")" rel="stylesheet" />
+
+
+<div class="col-md-12 bodyController" ng-controller="quotationSetup">
+    <div class="portlet light form-fit bordered bottomspance">
+        <div class="portlet box green-box main">
+            <div class="portlet-title">
+                <div class="caption">
+                    <a class="btn-back pull-left" data-toggle="tooltip" data-placement="top" title="Back" href="javascript:history.back();">
+                        <i class="fa fa-arrow-circle-left"></i>
+                    </a>
+                    <i class="fa fa-gift font-white-haze"></i>
+                    <span class="caption-subject font-white-haze bold uppercase">Quotation Setup</span>
+                </div>
+            </div> 
+        </div>
+
+        <div class="portlet-body light bg-inverse" ng-show="tablePanel">
+            <div class="row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
+                <div class="col-md-3" style="flex: 1;">
+                    <div class="topsearch" style="display: block;">
+                        <input class="k-textbox txtSearchString" type="text" id="itemtxtSearchString" ng-model="txtSearchString" name="search" placeholder="Search...." style="width: 35%;" />
+                    </div>
+                </div>
+                <div class="col-md-4" style="flex: none;">
+                    <div class="actions text-right">
+                        <a class="btn dark-green btn-sm addcolor" id="createbtn" ng-disabled="treenodeselected" ng-click="AddButtonClickEvent()" data-loading-text="<i class='fa fa-spinner fa-spin'></i> Processing..." href="javascript:;" style="margin-left: 0;">
+                            <i class="fa fa-plus"></i> NEW
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div id="kGrid"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function dateSet(date) {
+        var month = date.getMonth() + 1;
+        var day = date.getDate();
+        date = date.getFullYear() + '/' +
+            (('' + month).length < 2 ? '0' : '') + month + '/' +
+            (('' + day).length < 2 ? '0' : '') + day;
+        return date;
+    }
+    function setNepaliDateFromEnglish() {
+        var engDate = $("#englishdatedocument").val();
+        var formattedDate = moment(engDate, 'M/D/YYYY').format('DD-MMM-YYYY');
+        $("#englishdatedocument").val(formattedDate);
+        var formattedEngDate = moment(engDate, 'M/D/YYYY').format('YYYY-MM-DD');
+        var nepaliDate = AD2BS(formattedEngDate);
+        $("#nepaliDate").val(nepaliDate);
+    }
+    function formatValidDate() {
+        var engDate = $("#validDt").val();
+        var formattedDate = moment(engDate, 'M/D/YYYY').format('DD-MMM-YYYY');
+        $("#validDt").val(formattedDate);
+
+        var issueDt = moment($("#englishdatedocument").val(), 'DD-MMM-YYYY');
+        var validUntilDt = moment(engDate, 'M/D/YYYY');
+
+        if (validUntilDt.isBefore(issueDt)) {
+            displayPopupNotification("To be Deliver Date cannot be greater than  Date/Miti date.","error");
+        }
+    }
+    //function showMessage(message) {
+    //    var popMessageElement = $(".popContainer .popContent .popMessage");
+    //    popMessageElement.text(message);
+    //    $(".popContainer").show();
+    //}
+
+    function ConvertNepToEng(e) {
+        var date = BS2AD($("#nepaliDate").val());
+        var FormattedEngDate = moment(date).format('DD-MMM-YYYY');
+        $("#englishdatedocument").val(FormattedEngDate);
+    }
+    $(".nepali-calendar").nepaliDatePicker({
+        //  ndpEnglishInput: 'englishdatedocument',
+        npdMonth: true,
+        onFocus: true,
+        npdYear: true,
+        npdYearCount: 10,
+        altFormat: "dd-MMM-YYYY",
+        dateFormat: "dd-MMM-YYYY",
+        onChange: function (evt) {
+            var nepaliDate = $("#nepaliDate").val(); // Get the Nepali date value
+            var engDate = BS2AD(nepaliDate); // Convert Nepali date to English date
+            var formattedEngDate = moment(engDate).format('DD-MMM-YYYY'); // Format the English date
+            $("#englishdatedocument").val(formattedEngDate); // Update the English date input field
+        }
+    });
+</script>

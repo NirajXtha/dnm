@@ -1,0 +1,358 @@
+﻿@model NeoErp.Models.QueryBuilder.NotificationBuilderModel
+
+<style>
+    hr.style-three {
+        border: 0;
+        border-bottom: 1px dashed #ccc;
+        background: #999;
+    }
+
+    #gauge-container {
+        width: 404px;
+        height: 404px;
+        text-align: center;
+        margin: 0 auto 30px auto;
+    }
+
+    #gauge {
+        display: inline-block;
+        width: 230px;
+        height: 130px;
+        margin: 0 auto;
+    }
+</style>
+
+<style>
+    .form-wizard .steps {
+        padding: 0 0 !important;
+        margin-bottom: 0 !important;
+        background-color: #fff;
+        background-image: none;
+        filter: none;
+        border: 0px;
+        box-shadow: none;
+    }
+
+    .minicolors-theme-default .minicolors-input {
+        height: 20px;
+        width: 100% !important;
+        display: inline-block;
+        padding-left: 26px;
+    }
+
+    .form-control {
+        /* border-radius: 4px !important; */
+        height: 100% !important;
+    }
+
+    .minicolors-theme-default .minicolors-input {
+        height: 31px !important;
+    }
+
+    .minicolors-theme-default.minicolors {
+        width: auto;
+        display: block !important;
+    }
+
+    .control-label {
+        padding-left: 0px;
+    }
+    .NotificationForm input .form-control
+    {
+        height:30px;
+    }
+</style>
+<div class="main-contain-box clearfix">
+    <div class="portlet light bordered1">
+
+        <form data-ajax="true" id="NotificationForm" method="post" novalidate="novalidate">
+            <div class="portlet light bordered">
+                <div class="portlet-title">
+                    <div class="caption font-red-sunglo">
+                        <i class="icon-settings font-red-sunglo"></i>
+                        <span class="caption-subject bold uppercase">Notification Query Builder</span>
+                    </div>
+                </div>
+                <div class="portlet-body form">
+                    <div class="form-body">
+                        @Html.HiddenFor(x => x.NotificationId)
+                        <div class="row">
+                            <div class="col-md-5">
+                                <div>
+                                    Sql Query
+                                    @Html.TextAreaFor(x => x.SqlQuery, new { @class = "form-control", @rows = "5", @cols = "50", required = "required" })
+                                    @*<textarea rows="5" cols="50" class="form-control" data-bind="value: sqlQuery"></textarea>*@
+                                </div>
+                            </div>
+                            <div class="col-md-7">
+                                <div class="col-md-4">
+                                    @Html.LabelFor(x => x.NotificationName, new { @class = "control-label" })
+                                    @Html.TextBoxFor(x => x.NotificationName, new { @class = "form-control", required = "required" })
+                                </div>
+                                <div class="col-md-4">
+                                    @Html.LabelFor(x => x.NotificationResult, new { @class = "control-label" })
+                                    @Html.DropDownListFor(x => x.NotificationResult, new List<SelectListItem>
+                                        ()
+                                        {
+                                        new SelectListItem {Text="Scaler",Value="Scalar" },
+                                        new SelectListItem {Text="True",Value="True" },
+                                        new SelectListItem {Text="False",Value="False" },
+                                        }, new { @class = "form-control" })
+                                </div>
+                                <div class="col-md-4">
+                                    @Html.LabelFor(x => x.NotificationType, new { @class = "control-label" })
+                                    @Html.DropDownListFor(x => x.NotificationType, new List<SelectListItem>
+                                        ()
+                                        {
+                                        new SelectListItem {Text="Alert",Value="Alert" },
+                                        new SelectListItem {Text="Notification",Value="Notification" },
+                                        }, new { @class = "form-control" })
+                                </div>
+                                <div class="col-md-4" style="padding:0px;">
+                                    <label class="control-label" style="padding-left:15px">Notification Condition</label>
+                                    <div class="col-md-6">
+                                        @Html.LabelFor(x => x.MinResult, new { @class = "control-label" })
+                                        @Html.TextBoxFor(x => x.MinResult, new { @class = "form-control numbersvalidation" })
+                                    </div>
+                                    <div class="col-md-6">
+                                        @Html.LabelFor(x => x.MaxResult, new { @class = "control-label" })
+                                        @Html.TextBoxFor(x => x.MaxResult, new { @class = "form-control numbersvalidation" })
+                                    </div>
+                                </div>
+                                <div class="col-md-8" style="padding:0px; margin-top:25px">
+                                    <div class="col-md-6">
+                                        @Html.LabelFor(x => x.AppendText, new { @class = "control-label" })
+                                        @Html.TextBoxFor(x => x.AppendText, new { @class = "form-control" })
+                                    </div>
+                                    <div class="col-md-6">
+                                        @Html.LabelFor(x => x.AppendPosition, new { @class = "control-label" })
+                                        @Html.DropDownListFor(x => x.AppendPosition, new List<SelectListItem>
+                                            ()
+                                            {
+                                            new SelectListItem {Text="Begin",Value="begin" },
+                                            new SelectListItem {Text="End",Value="end" },
+                                            }, new { @class = "form-control" })
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-5">
+                                @Html.LabelFor(x => x.NotificationTemplate, new { @class = "control-label" })
+                                @Html.TextAreaFor(x => x.NotificationTemplate, new { @class = "form-control", @rows = "5", @cols = "50" })
+                                Use <span class="text-danger"> #notificationname# & #value# </span> for custom template
+                            </div>
+                            <div class="col-md-7">
+                                <div class="col-md-4">
+                                    @Html.LabelFor(x => x.ModuleCode, new { @class = "control-label" })
+                                    @Html.DropDownListFor(x => x.ModuleCode, new List<SelectListItem>
+                                        ()
+                                        {
+                                        new SelectListItem {Text="BI Tool",Value="01" },
+                                        new SelectListItem {Text="Distribution",Value="02" },
+                                        new SelectListItem {Text="Document Template",Value="03" },
+                                        new SelectListItem {Text="LOC",Value="04" },
+                                        new SelectListItem {Text="Planning",Value="05" },
+                                        new SelectListItem {Text="POS",Value="06" },
+                                        new SelectListItem {Text="Transaction",Value="07" },
+                                        }, new { @class = "form-control" })
+                                </div>
+                                <div class="col-md-4">
+                                    @Html.LabelFor(x => x.Color, new { @class = "control-label" })
+                                    @Html.HiddenFor(x => x.Color, new { @class = "form-control", @id = "colorField" })
+                                </div>
+                                <div class="col-md-4">
+                                    @Html.LabelFor(x => x.Icon, new { @class = "control-label" })
+                                    @Html.TextBoxFor(x => x.Icon, new { @class = "form-control", @id = "iconField" })
+                                </div>
+                                <div class="col-md-12">
+                                    @Html.LabelFor(x => x.Users, new { @class = "control-label" })
+                                    @Html.TextBoxFor(x => x.Users)
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-offset-9 col-md-3">
+                                <button type="button" class="btn btn-danger" id="btnCancel" style="display:none;">
+                                    Cancel
+                                    <i class="fa fa-close"></i>
+                                </button>
+                                <button type="submit" class="btn green button-submit">
+                                    Submit
+                                    <i class="fa fa-check"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<link href="@Styles.Url("~/Content/MainTheme/assets/global/plugins/jquery-minicolors/jquery.minicolors.css")" rel="stylesheet" />
+<link href="@Styles.Url("~/Content/MainTheme/fontawesome-iconpicker-1.0.0/dist/css/fontawesome-iconpicker.css")" rel="stylesheet" />
+
+<script src="@Styles.Url("~/Content/MainTheme/fontawesome-iconpicker-1.0.0/dist/js/fontawesome-iconpicker.js")"></script>
+<script src="@Scripts.Url("~/Content/MainTheme/assets/global/plugins/jquery-minicolors/jquery.minicolors.min.js")"></script>
+
+<script type="text/javascript">
+
+    function SuccessMessage() {
+            displayPopupNotification("Notification saved", "success");
+        }
+
+    function FailMessage() {
+            displayPopupNotification("Something went wrong!!!", "error");
+        }
+
+    function validateNumber(event) {
+        var key = window.event ? event.keyCode : event.which;
+
+        if (event.keyCode === 8 || event.keyCode === 127 || event.keyCode === 46) {
+            return true;
+        }
+        else if (key < 48 || key > 57) {
+            return false;
+        }
+        else return true;
+    }
+
+    $("#colorField").minicolors();
+    $(".minicolors-swatch-color").css('height', '33px');
+    $(".minicolors-swatch-color").css('border', '1px solid #e5e5e5');
+    $("#colorField").minicolors('value', '#3d76cc');
+
+    $('#iconField').iconpicker();
+
+    $('#iconField').keypress(function (e) {
+            $(this).select();
+            if (e.keyCode === 8 || e.keyCode === 46) { // backspace (8) / delete (46)
+                return true;
+            }
+            else {
+                return false;
+            }
+    });
+
+    $('#iconField').keyup(function (e) {
+            $(this).select();
+        });
+
+    $('.numbersvalidation').keypress(validateNumber);
+
+    $(document).ready(function () {
+            $("#iconField").on('focus click', function () { $(this).select(); }); //select all the text in textfield
+
+            //$('#NotificationTemplate').summernote({
+            //    height: 300,
+            //    codemirror: { theme: 'monokai' },
+            //    toolbar: [
+            //               ["style", ["style"]],
+            //               ["font", ["bold", "underline", "clear"]],
+            //               ["fontname", ["fontname"]],
+            //               ["color", ["color"]],
+            //               ["view", ["codeview", "fullscreen"]],
+            //                ['table', ['table']],
+            //               ["para", ["paragraph", "ol", "ul"]],
+            //    ],
+            //});
+
+            //for user multiselect
+            var autoCompletedataSource = new kendo.data.DataSource({
+                transport: {
+                    read: {
+                        url: window.location.protocol + "//" + window.location.host + "/Main/GetLoginUserList",
+                        dataType: "json",
+                        contentType: "application/json; charset=utf-8"
+                    }
+                }
+            });
+
+            $('#Users').kendoMultiSelect({
+                dataSource: autoCompletedataSource,
+                dataTextField: "login_edesc",
+                dataValueField: "id",
+                height: 600,
+                headerTemplate: '<div class="col-md-offset-4"><strong>Users...</strong></div>',
+                placeholder: "Select Users...",
+                autoClose: false,
+                autoBind: true,
+            });
+
+            $('#Users_listbox').slimScroll({
+                railVisible: true,
+                alwaysVisible: true
+
+            });
+        });
+</script>
+
+<script type="text/javascript">
+    $("#NotificationForm").submit(function (e) {
+            if (validateForm()) {
+                var url = window.location.protocol + "//" + window.location.host + "/API/QueryBuilder/BuildNotification";
+                var data = objectifyForm($("#NotificationForm").serializeArray());
+
+                var users = $("#Users").data("kendoMultiSelect") != null ? $("#Users").data("kendoMultiSelect").value() : [];
+                data.Users = users.join();
+
+                $.ajax({
+                    type: "POST",
+                    url: url,
+                    data: data,
+                    success: function (data) {
+                        SuccessMessage();
+                        $("#NotificationForm").find("input, textarea").val("");
+                        try {
+                            $('#grid').data('kendoGrid').dataSource.read();
+                            $("#Users").data("kendoMultiSelect").value('');
+                            $("#editForm").hide();
+                        }
+                        catch (ex) {console.log(ex) }
+                    },
+                    error: function (ex) {
+                        FailMessage();
+                    }
+                });
+            }
+            else {
+                displayPopupNotification("Input fileds are not valid, Please review form and Retry.", "warning");
+            }
+            //e.preventDefault(); // avoid to execute the actual submit of the form.
+        });
+
+    $("#NotificationResult").change(function (e) {
+            var value = $(this).val();
+            if (value == 'Scalar')
+                $("#MinResult,#MaxResult").prop('disabled', false);
+            else
+                $("#MinResult,#MaxResult").prop('disabled', true);
+        });
+
+    function validateForm() {
+            if (!$("#NotificationForm").valid())
+                return false;
+            if ($("#NotificationResult").val() == 'Scalar') {
+                if ($("#MinResult").val() == "") {
+                    $("#MinResult").focus();
+                    return false;
+                }
+                if ($("#MaxResult").val() == "") {
+                    $("#MaxResult").focus();
+                    return false;
+                }
+            }
+            return true;
+        }
+
+    function objectifyForm(formArray) {//serialize data function
+
+            var returnArray = {};
+            for (var i = 0; i < formArray.length; i++) {
+                returnArray[formArray[i]['name']] = formArray[i]['value'];
+            }
+            return returnArray;
+        }
+
+</script>

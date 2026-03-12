@@ -1,0 +1,94 @@
+﻿
+
+<script>
+
+    $(document).ready(function () {
+        var urltest = window.location.protocol + "//" + window.location.host + "/Api/GlobalSetup/GlobalSetup";
+      dataSource = new kendo.data.DataSource({
+      transport: {
+         read:
+         {
+             url: urltest,
+             dataType: "json",
+             type: "POST",
+             contentType: "application/json; charset=utf-8",
+         },
+         destroy:
+         {
+             url: window.location.protocol + "//" + window.location.host + "/GlobalSetup/DeleteID",
+             type: "POST",
+             dataType: "json",
+         },
+         create:
+         {
+             url: window.location.protocol + "//" + window.location.host + "/GlobalSetup/GlobalSetup",
+            type:"POST"
+         },
+         update:
+         {
+             url: window.location.protocol + "//" + window.location.host + "/GlobalSetup/GlobalSetup",
+            type: "POST",
+            parameterMap: function (options, operation) {
+               if (operation !== "read" && options.models) {
+                  return {
+                     models: kendo.stringify(options.models)
+                  };
+               }
+            }
+         },
+      },
+      pageSize: 10,
+      schema:
+      {
+         model:
+         {
+             id: "fiscalYear",
+            fields: {
+                fiscalYear: { editable: true, nullable: false, type: "string", validation: {required: true } },
+                dbName: { editable: true, nullable: false, type: "string", validation: {required: true } },
+            }
+         }
+      }
+   });
+   $("#grid1").kendoGrid({
+       dataSource: dataSource,
+       editable: "inline",
+       pageable: true,
+      toolbar: ["create"],
+      
+      columns: [
+      {
+          field: "fiscalYear",
+          title: "Fiscal Year",
+      },
+      {
+          field: "dbName",
+          title: "Database Name",
+      },
+      {
+         command: ["edit",
+         {
+            name: "destroy",
+            text: "remove",
+         }
+         ],
+      }
+      ],
+      editable: "popup",
+      height: "450px",
+   }).data("kendoGrid");
+    });
+
+
+</script>
+<div class="main-content">
+    <h4 class="modal-title">Global Database Setup</h4>
+    <div id="grid1"></div>
+</div>
+  <style>
+      h4.modal-title {
+    margin-left: 500px;
+    /* font-weight: bold; */
+    font-size: 30px;
+}
+  </style>

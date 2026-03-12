@@ -1,0 +1,670 @@
+﻿@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    Layout = null;
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+<style>
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+        // width: 183px !important;
+    }
+
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+         font-size:11px;
+    }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    a.k-button.k-button-icontext.k-grid-excel {
+        float: right;
+    }
+
+    .bootbox-form {
+        padding: 3px !important;
+    }
+
+    .bootbox-input.bootbox-input-text.form-control {
+        height: 27px !important;
+    }
+    .col-space {
+      margin-bottom:10px;
+    }
+    .modal-title span.fa{
+        padding-right:5px;
+
+    }
+    .description
+    {
+        font-size:12px;
+    }
+</style>
+<script>
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+</script>
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+
+        </ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+
+                <div class="actions">
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                    </div>
+                    @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                        {
+                            ShowCustomerFilter = true,
+                            // ShowEmployeeFilter = true
+                        })
+                    </div>
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                        <i class="icon-control-play"></i>
+                    </a>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "VisitSummaryReportAll")
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div id="grid"></div>
+                        @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="imageModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-custom1 modal-lg">
+            <div class="modal-content">
+                <form id="favform" action="" name="favform">
+                    <div class="modal-header">
+                        <button type="button" class="close right-dismis" data-dismiss="modal" aria-hidden="true"></button>
+                        <h4 class="modal-title"><span class="fa fa-image"></span><span class="header-title-dist"></span></h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row clearfix">
+                            <div id="visitImage">
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE CONTENT-->
+</div>
+
+<script src="@Scripts.Url("~/JS/reportFilter.js")"></script>
+
+<script src="@Scripts.Url("~/JS/DateFilter.js?V5")" type="text/javascript"></script>
+
+<script>
+    
+    function getDateFormat(date) {
+        var test = new Date(date);
+        if (test.getFullYear() == '1970')
+            return '-';
+        return kendo.format("{0:" + reportConfig.dateFormat + "}", new Date(date));
+    }
+    function getTimeFormat(date) {
+        var test = new Date(date);
+        if (test.getFullYear() == '1970')
+            return '-';
+        return kendo.format("{0:hh:mm tt}", moment(date)._d)
+    }
+    function ExportToExcel(e) {
+        var SheetRow = [];//array to store the rows
+        SheetRow.push({ //Header
+            cells: [
+                { value: "Customer Name", background: "#A9A7A6", },
+                { value: "Customer Type", background: "#A9A7A6", },
+                { value: "Assign Route", background: "#A9A7A6", },
+                { value: "Assign To", background: "#A9A7A6", },
+                { value: "Visit Type", background: "#A9A7A6", },
+                { value: "Visited By", background: "#A9A7A6", },
+                { value: "Date", background: "#A9A7A6", },
+                { value: "Time", background: "#A9A7A6", },
+                { value: "Distance(KM)", background: "#A9A7A6", },
+                { value: "Remarks", background: "#A9A7A6", },
+            ]
+        });
+        WriteData(e.data);
+
+        //recursive function to write the grouped/ungrouped data
+        function WriteData(array) {
+            array.forEach(function (row, index) {
+                if (typeof (row.items) != "undefined") { //if array contains nested items, write a row with group field and enter recursion
+                    Mvalue = row.value;
+                    MField = row.field;
+                    if (MField == "Visit_Date") {
+                        Mvalue = getDateFormat(Mvalue);
+                        MField="Date"
+                    }
+                    else if (MField == "ASSIGN_DATE") {
+                        Mvalue = getDateFormat(Mvalue);
+                        MField = "Assign Date"
+                    }
+                    else if (row.field == "Visit_Time") {
+                        Mvalue = getTimeFormat(Mvalue);
+                        MField = "Visit Time"
+                    }
+                    SheetRow.push({
+                        cells: [{
+                            value: MField + " : " + Mvalue,
+                            background: "#E1E1E1",
+                            colSpan: 10,//to span the total number of columns
+                            fontSize: 12,
+                        }]
+                    });
+                    WriteData(row.items);
+                }
+                else {
+                    var dist = differenceDownload(row.CUST_LAT, row.CUST_LONG, row.VISIT_LAT, row.VISIT_LONG, 'K', row.Visit_Type);
+                    var distColor = dist < 0.3 ? "#008000" : "#ff0000";
+                    SheetRow.push({ //Header
+                        cells: [
+                            { value: row.CUSTOMER_NAME },
+                            { value: customerType(row.CUSTOMER_TYPE) },
+                            { value: (row.Assigned_ROUTE !== null && row.Assigned_ROUTE != '-') ? row.Assigned_ROUTE_NAME + '(' + row.Assigned_ROUTE + ')' : '-' },
+                            { value: row.Assigned_Employee },
+                            { value: row.Visit_Type },
+                            { value: row.VISIT_BY },
+                            { value: getDateFormat(row.ASSIGN_DATE) },
+                            { value: getTimeFormat(row.Visit_Time) },
+                            { value: dist, color: distColor },
+                            { value: row.REMARKS },
+                        ]
+                    });
+                }
+            });
+        }
+        //initializing a workbook with above prepared rows
+        var Workbook = new kendo.ooxml.Workbook({
+            sheets: [{
+                columns: [
+                    @for(int i=0;i<10; i++)
+                    {
+                        <text>{ autoWidth: true },</text>
+                    }
+                ],
+                rows: SheetRow,
+            }]
+        });
+        //finally saving the excel sheet
+        kendo.saveAs({
+            dataURI: Workbook.toDataURL(),
+            fileName: "Visit Summary Report.xlsx"
+        });
+    }
+
+    $(".applydp").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+        $(this).closest("#applydp").modal('hide');
+    });
+
+    $("#loadAdvancedFilters").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    });
+
+    $("#RunQuery").click(function (evt) {
+        evt.preventDefault();
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/Distribution/GetVisitSummaryReportAll";
+        KendoGridRefresh(urltest);
+    });
+
+
+    $("#Savefavriote").on("click", function () {
+        bootbox.prompt({
+            title: '<span class="fa fa-save"></span> Save Report',
+            placeholder: 'Enter Favroite Name to save',
+            buttons: {
+                confirm: {
+                    label: 'Save'
+                }
+            },
+            callback: function (value) {
+
+                SaveReportConfigSetting({
+                    gridName:"grid",
+                    reportName: value,
+                    isFavroite: true,
+                    virtualPath: window.location.hash,
+                });
+            }
+        });
+
+    });
+
+
+
+    function BindGrid(readurl) {
+
+        var companyName = ('@workingContent.CurrentUserinformation.company_name');
+        var fromADdate = $("#FromDateVoucher").val()
+        var toADdate = $("#ToDateVoucher").val();
+        var fromBSdate = $("#fromInputDateVoucher").val();
+        var toBSdate = $("#toInputDateVoucher").val();
+
+
+        var branches = ReportFilter.getBranchs();
+        reportConfig = GetReportSetting("VisitSummaryReportAll");
+
+        var dataSource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: {
+                    url: readurl, // <-- Get data from here.
+                    dataType: "json", // <-- The default was "jsonp".
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8"
+                },
+                parameterMap: function (options, type) {
+
+                    var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+                    delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                    delete paramMap.$format; // <-- remove format parameter.
+                    return paramMap;
+                }
+            },
+
+            error: function (e) {
+                displayPopupNotification("Sorry error occured while processing data", "error");
+            },
+            //serverFiltering: false,
+            //serverAggregates: true,
+            schema: {
+                data: "VisitSummaryViewModel", // records are returned in the "data" field of the response
+                total: "total", // total number of records is in the "total" field of the response
+                aggregates: "AggregationResult",
+            },
+            model: {
+                fields: {
+                    ASSIGN_DATE: { type: "date" },
+                    Visit_Date: {type:"date"}
+                }
+            },
+            group: { field: "MITI", dir: "desc" },
+            sort: { field: "Visit_Time", dir: "desc" },
+            //serverPaging: true,
+            //serverSorting: false,
+            pageSize: reportConfig.defaultPageSize,
+        });
+
+
+        var grid = $("#grid").kendoGrid({
+            dataSource: dataSource,
+            toolbar: kendo.template($("#toolbar-template").html()),
+            excel: {
+                fileName: "Visit Summary Report",
+                allPages: true,
+            },
+            excelExport: function (e) {
+
+                ExportToExcel(e);
+                e.preventDefault();
+            },
+
+            pdf: {
+                fileName: "Received Schedule",
+                allPages: true,
+                avoidLinks: true,
+                pageSize: "auto",
+                margin: {
+                    top: "2m",
+                    right: "1m",
+                    left: "1m",
+                    buttom: "1m",
+                },
+
+                landscape: true,
+                repeatHeaders: true,
+                scale: 0.8,
+            },
+            height: 550,
+            sortable: true,
+            reorderable: true,
+            groupable: true,
+            resizable: true,
+            filterable: {
+                extra: false,
+                operators: {
+                    number: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "is greater than or equal to	",
+                        gt: "is greater than",
+                        lte: "is less than or equal",
+                        lt: "is less than",
+                    },
+                    string: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        startswith: "Starts with	",
+                        contains: "Contains",
+                        doesnotcontain: "Does not contain",
+                        endswith: "Ends with",
+                    },
+                    date: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "Is after or equal to",
+                        gt: "Is after",
+                        lte: "Is before or equal to",
+                        lt: "Is before",
+                    }
+                }
+            },
+            columnMenu: true,
+            columnMenuInit: function (e) {
+                wordwrapmenu(e);
+                checkboxItem = $(e.container).find('input[type="checkbox"]');
+            },
+            columnShow: function (e) {
+                if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                    SaveReportSetting('VisitSummaryReportAll', 'grid');
+            },
+            columnHide: function (e) {
+                if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                    SaveReportSetting('VisitSummaryReportAll', 'grid');
+            },
+            pageable: {
+                refresh: true,
+                pageSizes: reportConfig.itemPerPage,
+                buttonCount: 5
+            },
+            dataBound: function (o) {
+                var grid = o.sender;
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.length;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    displayPopupNotification("No Data Found Given Date Filter.", "info");
+                }
+                else {
+                    var g = $("#grid").data("kendoGrid");
+                    for (var i = 0; i < g.columns.length; i++) {
+                        g.showColumn(i);
+                    }
+                    $("div.k-group-indicator").each(function (i, v) {
+                        g.hideColumn($(v).data("field"));
+                    });
+                }
+
+                UpdateReportUsingSetting("VisitSummaryReportAll", "grid");
+                $('div').removeClass('.k-header k-grid-toolbar');
+
+                $(".images").on("click", function () {
+                    var grid = $("#grid").data("kendoGrid");
+                    var dataItem = grid.dataItem($(this).closest("tr"));
+                    getImage(dataItem);
+                });
+
+            },
+            columns: [
+
+                {
+                    field: "CUSTOMER_NAME",
+                    title: "Customer Name",
+                    width: "170px"
+                },
+                {
+                    field: "MITI",
+                    title: "Miti",
+                    width: "78px",
+                    groupHeaderTemplate: "#=(value) #",
+
+                },
+                {
+                    field: "CUSTOMER_TYPE",
+                    title: "Cust Type",
+                    template: "#= customerType(CUSTOMER_TYPE) #",
+                    groupHeaderTemplate: "Customer Type : #= customerType(value) #",
+                    width: "107px"
+                },
+                {
+                    field: "Assigned_Employee",
+                    title: "Assign To",
+                    width: "105px"
+
+                },
+                {
+                    field: "Visit_Type",
+                    title: "Visit Type",
+                    width: "75px"
+                },
+                {
+                    field: "VISIT_BY",
+                    title: "Visited By",
+                    width: "107px"
+                },
+                {
+                    field: "Visit_Date",
+                    title: "Date",
+                    template: "#= getDateFormat(Visit_Date) #",
+                    groupHeaderTemplate: "#= getDateFormat(value) #",
+                    width: "80px",
+                    hidden: true,
+                },
+                {
+                    field: "Visit_Time",
+                    title: "Time",
+                    template: "#= getTimeFormat(Visit_Time)#",
+                    groupHeaderTemplate: "Time : #= getTimeFormat(value) #",
+                    width: "78px"
+                },
+                {
+                    title: "Distance (KM)",
+                    template: "#= difference(CUST_LAT,CUST_LONG,VISIT_LAT,VISIT_LONG,'K',Visit_Type) #",
+                    width: "100px"
+                },
+                {
+                    field: "REMARKS",
+                    title: "Remarks",
+                    width: "140px"
+                },
+                {
+                    title: "Action",
+                    template: '<a class="fa fa-image images" style="color:orange;"><span class="sr-only"></span> </a>',
+                    width: "100px"
+                },
+            ]
+        });
+    }
+
+    function getImage(e) {
+        var distributor = "",reseller = "";
+        if (e.CUSTOMER_TYPE == "R")
+            reseller = e.CUSTOMER_CODE;
+        else
+            distributor = e.CUSTOMER_CODE;
+        var filter = ReportFilter.filterAdditionalData();
+        filter.ReportFilters.FromDate = moment(e.ASSIGN_DATE).format('DD-MMM-YYYY');
+        filter.ReportFilters.ToDate = moment(e.ASSIGN_DATE).format('DD-MMM-YYYY');
+        filter.ReportFilters.SalesPersonFilter.push(e.Assigned_To);
+
+        var url = window.location.protocol + "//" + window.location.host + "/api/Report/GetVisiterList?Distributor=" + distributor + "&Reseller=" + reseller;
+        $.ajax({
+            type: "POST",
+            url: url,
+            data: filter,
+            success: function (response) {
+                if (response.length == 0) {
+                    $(".header-title-dist").html(e.CUSTOMER_NAME);
+                    $("#visitImage").html('<h4 style="color: red; font-weight: 600; text-align:center;"> No Image Found !!! </h4>');
+                    $("#imageModal").modal();
+                    return ;
+                }
+                var html = '';
+                var localUrl = window.location.protocol + "//" + window.location.host + "/Areas/NeoErp.Distribution/Images/EntityImages/";
+                response.forEach(function (e) {
+                    
+                    var Date = moment(e.UPLOAD_DATE).format('DD-MMM-YYYY');
+                    var Time = moment(e.UPLOAD_DATE).format('hh:mm:ss A');
+                    if (e.IMAGE_DESC == undefined || e.IMAGE_DESC == null)
+                        e.IMAGE_DESC = "";
+                    html += '<div class="col-xs-6 col-sm-3 col-md-3 col-lg-3 col-space">';
+                    html += '<div class="col-space">';
+                    html += '<a class="fancybox" href="' + localUrl + e.IMAGE_NAME+'"';
+                    html += 'data-fancybox="group_'+e.ENTITY_NAME+'"';
+                    html += 'data-caption="Name: '+e.ENTITY_NAME+'<br>Description: '+e.IMAGE_DESC+'<br>Category: '+e.CATEGORY_EDESC+'<br>Date: '+Date+'" >';
+                    html += '<img src="' + localUrl + e.IMAGE_NAME + '" class="img-responsive img-thumbnail" style="width:200px;height:150px;margin: 0 auto;" /></a >';
+                    html += '</div>';
+
+                    html += '<div class="description"><strong>Name:</strong> ' + e.ENTITY_NAME + '<br><strong>Description:</strong> ' + e.IMAGE_DESC + '<br><strong>Category:</strong> ' + e.CATEGORY_EDESC + '<br><strong>Date:</strong> ' + Date + '"</div>'
+                    html += '</div>';
+                });
+                $("#visitImage").html(html);
+                $(".header-title-dist").html(response[0].ENTITY_NAME);
+                $("#imageModal").modal();
+            },
+            error: function (err) {
+            }
+        })
+    }
+
+    function differenceDownload($lat1, $lon1, $lat2, $lon2, $unit, $visit_type) {
+        if ($visit_type != null && $visit_type != "" && $visit_type == "VISIT") {
+            var $theta = $lon1 - $lon2;
+            $dist = Math.sin(deg2rad($lat1)) * Math.sin(deg2rad($lat2)) + Math.cos(deg2rad($lat1)) * Math.cos(deg2rad($lat2)) * Math.cos(deg2rad($theta));
+            $dist = Math.acos($dist);
+            $dist = rad2deg($dist);
+            $miles = $dist * 60 * 1.1515;
+
+            var final = 0;
+            if ($unit == "K") {
+                final = ($miles * 1.609344);
+            } else if ($unit == "N") {
+                final = ($miles * 0.8684);
+            } else {
+                final = $miles;
+            }
+
+            final = final.toFixed(2);
+        }
+        else
+            final = '-';
+        return final;
+
+    }
+
+    function difference($lat1, $lon1, $lat2, $lon2, $unit, $visit_type) {
+        if ($visit_type != null && $visit_type != "" && $visit_type == "VISIT") {
+            var $theta = $lon1 - $lon2;
+            $dist = Math.sin(deg2rad($lat1)) * Math.sin(deg2rad($lat2)) + Math.cos(deg2rad($lat1)) * Math.cos(deg2rad($lat2)) * Math.cos(deg2rad($theta));
+            $dist = Math.acos($dist);
+            $dist = rad2deg($dist);
+            $miles = $dist * 60 * 1.1515;
+
+            var final = 0;
+            if ($unit == "K") {
+                final = ($miles * 1.609344);
+            } else if ($unit == "N") {
+                final = ($miles * 0.8684);
+            } else {
+                final = $miles;
+            }
+
+            final = final.toFixed(2);
+            if (final < 0.3)
+                final = '<span style="color:green">' + final + ' KM</span>';
+            else
+                final = '<span style="color:red">' + final + ' KM</span>';
+        }
+        else
+            final = '-';
+        return final;
+
+    }
+
+    function customerType(value) {
+        if (value == "D")
+            return "Distributor";
+        else if (value == "R")
+            return "Reseller";
+        else if (value == "P")
+            return "Dealer";
+        else
+            return "-";
+    }
+
+    function deg2rad(deg) {
+        return deg * (Math.PI / 180)
+    }
+    function rad2deg(rad) {
+        return rad * (180 / Math.PI)
+    }
+
+    function KendoGridRefresh(readUrl) {
+        $('#grid').val('');
+        $('#grid').html('');
+        BindGrid(readUrl)
+    }
+
+    $(document).ready(function () {
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/Distribution/GetVisitSummaryReportAll"
+
+        DateFilter.init(function () {
+            consolidate.init(function () {
+                BindGrid(urltest);
+            });
+        });
+    });
+</script>
+<script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js")"></script>

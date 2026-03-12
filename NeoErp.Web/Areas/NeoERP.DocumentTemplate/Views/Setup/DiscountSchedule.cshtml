@@ -1,0 +1,274 @@
+@{
+    ViewBag.Title = "Discount Schedule";
+    Layout = null;
+}
+<style>
+    .k-grid { border: 1px solid #ddd; border-radius: 4px; overflow: hidden; }
+    .k-grid .k-grid-content { max-height: 400px; overflow-y: auto; }
+    .k-grid .k-pager-wrap { border-top: 1px solid #ddd; background: #f9f9f9; }
+    .rate-grid-container { min-height: 450px; max-height: 600px; overflow: hidden; }
+    .tree-container { min-height: 450px; max-height: 600px; overflow-y: auto; }
+    .selector-btn { width: 44px; text-align: center; padding-left: 0; padding-right: 0; }
+    /* Remove grey box/shadow under the English Effective Date Kendo DatePicker */
+    #discountEffectiveEnglishDate + .k-picker-wrap,
+    .k-datepicker .k-picker-wrap {
+        box-shadow: none !important;
+        background: transparent !important;
+    }
+    #discountEffectiveEnglishDate,
+    .k-datepicker .k-input-inner {
+        box-shadow: none !important;
+        background: transparent !important;
+    }
+    /* Ensure no extra bottom spacing renders as a grey bar */
+    .k-datepicker {
+        background: transparent !important;
+    }
+</style>
+<div class="row" ng-controller="DiscountScheduleCtrl">
+    <div class="col-md-12">
+        <div class="portlet light bordered">
+            <div class="portlet-title">
+                <div class="caption font-dark">
+                    <i class="icon-settings font-dark"></i>
+                    <span class="caption-subject bold uppercase">Discount Schedule</span>
+                </div>
+                <div class="actions">
+                    <div class="btn-group">
+                        <button type="button" class="btn green btn-sm" ng-click="saveDiscountSchedule()">
+                            <i class="fa fa-save"></i> Save
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div class="row" style="margin-bottom: 15px;">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">Effective Date</label>
+                            <div>
+                                <div class="col-xs-6 col-sm-6 col-md-6 nopadding-left pl-1">
+                                    <input kendo-date-picker k-ng-model="discountSchedule.effectiveDate" k-options="monthSelectorOptionsSingle" data-toggle="tooltip"
+                                           class="form-control" id="discountEffectiveEnglishDate" />
+                                </div>
+                                <div class="col-xs-6 col-sm-6 col-md-6 nopadding-left pl-1" style="display: inline-block; vertical-align: top;">
+                                    <input type="text" id="discountNepaliDate" class="nepali-calendar form-control"
+                                           data-checkfor="discountEffectiveEnglishDate" onchange="DiscountConvertNepToEng(this)"
+                                           data-toggle="tooltip" title="Select date" style="width: 100%; height: 25px" />
+                                    <i class="fa fa-calendar form-control-feedback calendar-icon-2" data-toggle="tooltip" title="Select date" style="top:5px !important;" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label class="control-label">Currency</label>
+                            <select class="form-control" ng-model="discountSchedule.currencyCode" ng-options="currency.CURRENCY_CODE as currency.CURRENCY_EDESC for currency in currencyList">
+                                <option value="">Select Currency</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label class="control-label">Exchange Rate</label>
+                            <input type="number" class="form-control" ng-model="discountSchedule.exchangeRate" step="0.01" />
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label class="control-label">Charge Code</label>
+                            <select class="form-control" ng-model="discountSchedule.chargeCode" ng-options="c.CHARGE_CODE as c.CHARGE_EDESC for c in chargeCodeList">
+                                <option value="">Select Charge Code</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">Document Type</label>
+                            <select class="form-control" ng-model="discountSchedule.documentCode" ng-options="doc.FORM_CODE as doc.FORM_EDESC for doc in documentList">
+                                <option value="">Select Document</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row" style="margin-bottom: 15px;">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">Party Type</label>
+                            <div style="margin-top: 8px;">
+                                <label class="radio-inline" style="margin-right: 15px;">
+                                    <input type="radio" ng-model="discountSchedule.partyType" value="customer" ng-change="onPartyTypeChange()" /> Customer
+                                </label>
+                                <label class="radio-inline" style="margin-right: 15px;">
+                                    <input type="radio" ng-model="discountSchedule.partyType" value="dealer" ng-change="onPartyTypeChange()" /> Dealer
+                                </label>
+                                <label class="radio-inline">
+                                    <input type="radio" ng-model="discountSchedule.partyType" value="supplier" ng-change="onPartyTypeChange()" /> Supplier
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">
+                                <span ng-if="discountSchedule.partyType === 'customer'">Customer</span>
+                                <span ng-if="discountSchedule.partyType === 'dealer'">Dealer</span>
+                                <span ng-if="discountSchedule.partyType === 'supplier'">Supplier</span>
+                            </label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" ng-model="discountSchedule.partyName" readonly
+                                       placeholder="Select {{discountSchedule.partyType === 'customer' ? 'Customer' : discountSchedule.partyType === 'dealer' ? 'Dealer' : 'Supplier'}}" />
+                                <span class="input-group-btn">
+                                    <button class="btn blue selector-btn" type="button"
+                                            ng-click="discountSchedule.partyType === 'customer' ? openCustomerModal() : discountSchedule.partyType === 'dealer' ? openDealerModal() : openSupplierModal()"
+                                            title="Select {{discountSchedule.partyType === 'customer' ? 'customers' : discountSchedule.partyType === 'dealer' ? 'dealers' : 'suppliers'}}">
+                                        <i class="fa fa-users"></i>
+                                    </button>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label">Items</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="Select Items" ng-model="itemsSummary" readonly />
+                                <span class="input-group-btn">
+                                    <button class="btn blue selector-btn" type="button" ng-click="openItemModal()" title="Select items">
+                                        <i class="fa fa-cubes"></i>
+                                    </button>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label class="control-label">Option</label>
+                            <div style="margin-top: 8px;">
+                                <div class="radio">
+                                    <label style="margin-right: 10px;">
+                                        <input type="radio" ng-model="discountSchedule.optionType" value="percentage" /> As per %
+                                    </label>
+                                    <label>
+                                        <input type="radio" ng-model="discountSchedule.optionType" value="value" /> As per Value
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Discount Grid -->
+                <div class="row">
+                    <div class="col-sm-4">
+                        <div class="portlet light bordered">
+                            <div class="portlet-title">
+                                <div class="caption">
+                                    <span class="caption-subject" ng-if="discountSchedule.partyType === 'customer'">Selected Customers</span>
+                                    <span class="caption-subject" ng-if="discountSchedule.partyType === 'dealer'">Selected Dealers</span>
+                                    <span class="caption-subject" ng-if="discountSchedule.partyType === 'supplier'">Selected Suppliers</span>
+                                </div>
+                            </div>
+                            <div class="portlet-body" style="padding:10px;">
+                                <div class="form-group" style="margin-bottom:8px;">
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" class="form-control" placeholder="Search selected tree"
+                                               ng-model="selectedTreeSearch" ng-change="applySelectedTreeSearch()" />
+                                        <span class="input-group-btn">
+                                            <button class="btn btn-default" type="button" title="Select all"
+                                                    ng-click="selectAllSelectedTree()">
+                                                <i class="fa fa-check-square-o"></i>
+                                            </button>
+                                            <button class="btn btn-default" type="button" title="Clear all"
+                                                    ng-click="clearAllSelectedTree()">
+                                                <i class="fa fa-square-o"></i>
+                                            </button>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="tree-container">
+                                    <div ng-if="discountSchedule.partyType === 'customer'" id="selectedCustomersTree"></div>
+                                    <div ng-if="discountSchedule.partyType === 'dealer'" id="selectedDealersTree"></div>
+                                    <div ng-if="discountSchedule.partyType === 'supplier'" id="selectedSuppliersTree"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-8">
+                        <div class="portlet light bordered">
+                            <div class="portlet-title">
+                                <div class="caption"><span class="caption-subject">Discounts</span></div>
+                            </div>
+                            <div class="portlet-body" style="padding:10px;">
+                                <div class="form-group" style="margin-bottom:8px;">
+                                    <input type="text" class="form-control input-sm" placeholder="Search discounts (code or description)"
+                                           ng-model="discountGridSearch" ng-change="applyDiscountGridSearch()" />
+                                </div>
+                                <div class="rate-grid-container">
+                                    <div id="discountGrid"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @Html.Partial("~/Areas/NeoERP.DocumentTemplate/Views/Shared/PartialView/_PartyItemSelector.cshtml")
+
+    <script src="~/Areas/NeoERP.DocumentTemplate/js/shared/PartyItemSelector.js"></script>
+    <script src="~/Areas/NeoERP.DocumentTemplate/js/controller/SetupCtrl/DiscountScheduleCtrl.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $(".nepali-calendar").nepaliDatePicker({
+                npdMonth: true,
+                onFocus: true,
+                npdYear: true,
+                npdYearCount: 10,
+                altFormat: "dd-MMM-YYYY",
+                dateFormat: "dd-MMM-YYYY",
+                onChange: function () { DiscountConvertNepToEng(); }
+            });
+
+            try {
+                var dp = $("#discountEffectiveEnglishDate").data("kendoDatePicker");
+                if (!dp && window.kendo && kendo.ui && kendo.ui.DatePicker) {
+                    $("#discountEffectiveEnglishDate").kendoDatePicker({ format: "dd-MMM-yyyy" });
+                }
+            } catch (e) { }
+
+            setTimeout(function(){
+                var today = new Date();
+                var formattedEngDate = moment(today).format('DD-MMM-YYYY');
+                $("#discountEffectiveEnglishDate").val(formattedEngDate);
+                var datePicker = $("#discountEffectiveEnglishDate").data("kendoDatePicker");
+                if (datePicker) { datePicker.value(today); }
+                var formattedEngDateForNep = moment(today).format('YYYY-MM-DD');
+                var nepaliDate = AD2BS(formattedEngDateForNep);
+                $("#discountNepaliDate").val(nepaliDate);
+                var scope = angular.element($("[ng-controller='DiscountScheduleCtrl']")).scope();
+                if (scope) {
+                    scope.$apply(function () { scope.discountSchedule.effectiveDate = today; });
+                }
+            }, 100);
+        });
+
+        function DiscountConvertNepToEng() {
+            var nepaliDate = $("#discountNepaliDate").val();
+            if (nepaliDate) {
+                var engDate = BS2AD(nepaliDate);
+                var formattedEngDate = moment(engDate).format('DD-MMM-YYYY');
+                $("#discountEffectiveEnglishDate").val(formattedEngDate);
+                var datePicker = $("#discountEffectiveEnglishDate").data("kendoDatePicker");
+                if (datePicker) { datePicker.value(new Date(engDate)); }
+                var scope = angular.element($("[ng-controller='DiscountScheduleCtrl']")).scope();
+                if (scope) {
+                    scope.$apply(function () { scope.discountSchedule.effectiveDate = new Date(engDate); });
+                }
+            }
+        }
+    </script>
+</div>

@@ -1,0 +1,844 @@
+
+@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    Layout = null;
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+<style>
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+        // width: 183px !important;
+    }
+
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+         font-size:11px;
+    }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+/*    a.k-button.k-button-icontext.k-grid-excel {
+        display: none;
+        float: right;
+    }*/
+
+    .bootbox-form {
+        padding: 3px !important;
+    }
+
+    .bootbox-input.bootbox-input-text.form-control {
+        height: 27px !important;
+    }
+</style>
+<style type="text/css">
+    #spDetailLocationMap {
+        width: 100%;
+        height: 450px;
+        background-color: grey;
+    }
+
+    #legend {
+        font-family: Arial, sans-serif;
+        background: #fff;
+        display: inline-flex;
+    }
+
+        #legend h3 {
+            margin-top: 0;
+        }
+
+        #legend img {
+            vertical-align: middle;
+        }
+</style>
+<script>
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+</script>
+
+<head>
+    <link href="@Styles.Url("https://unpkg.com/leaflet@1.9.4/dist/leaflet.css")" rel="stylesheet" />
+</head>
+
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb"></ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+
+                <div class="actions">
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                    </div>
+                    @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+                    <div class="btn-group">
+                        <select id="typeFilter" class="form-control input-sm">
+                            <option value="ALL" selected>All</option>
+                            <option value="DRIVER">Driver</option>
+                            <option value="TRANSPORTER">Transporter</option>
+                        </select>
+                    </div>
+                    <div class="btn-group">
+                        <select id="statusFilter" class="form-control input-sm">
+                            <option value="ALL" selected>All Status</option>
+                            <option value="">Pending</option>
+                        </select>
+                    </div>
+                    <div class="btn-group" style="display: none;">
+                        @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                        {
+                            ShowItemBrandFilter = true,
+                        })
+                    </div>
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                        <i class="icon-control-play"></i>
+                    </a>
+                    <div class="btn-group" style="display: none;">
+                        @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "AttendanceReport")
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!--MODAL-->
+    <div id="mapModal" class="modal fade" role="dialog">
+        <div class="modal-dialog" style="width:65%;height:80%">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Location Details</h4>
+                </div>
+                <div class="modal-body">
+                    @*<div style="display: flex; flex-wrap: wrap; align-items: center; margin-bottom: 10px;">
+
+                        <div style="display: flex; align-items: center; margin-right: 10px;">
+                            <img src="http://maps.google.com/mapfiles/ms/icons/green-dot.png" alt="Start/End" style="width: 20px; height: 20px; margin-right: 5px;">
+                            <span>Check in</span>
+                        </div><div style="display: flex; align-items: center; margin-right: 10px;">
+                            <img src="http://maps.google.com/mapfiles/ms/icons/red-dot.png" alt="Start/End" style="width: 20px; height: 20px; margin-right: 5px;">
+                            <span>Check out</span>
+                        </div>
+
+
+                    </div>*@
+                    <div id="spDetailLocationMap"></div>
+                    <div id="legend"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--END MODAl-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div id="grid">
+                        </div>
+                        <script type="text/x-kendo-template" id="template">
+                            <div class="details" style="width:75%"></div>
+                        </script>
+                        @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+
+<script src="@Scripts.Url("~/JS/reportFilter.js")"></script>
+<script src="@Scripts.Url("~/JS/DateFilter.js")" type="text/javascript"></script>
+
+<script>
+    var map = null;
+    var markerAtn = null;
+    var markerEod = null;
+    async function loadLeaflet() {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+            script.type = "text/javascript";
+            script.async = true;
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+        });
+    }
+
+    
+    var expandedDetailRowDistributor = "";
+
+    function getDateFormat(date) {
+        var test = new Date(date);
+        if (test.getFullYear() == '1970')
+            return '-';
+        return kendo.format("{0:" + reportConfig.dateFormat + "}", new Date(date));
+    }
+    function getTimeFormat(date) {
+        var test = new Date(date);
+        if (test.getFullYear() == '1970')
+            return '-';
+        return kendo.format("{0:hh:mm tt}", moment(date)._d)
+    }
+    //function ExportToExcel(e) {
+    //    var SheetRow = [];//array to store the rows
+    //    SheetRow.push({ //Header
+    //        cells: [
+    //            { value: "Customer Name", background: "#A9A7A6", },
+    //            { value: "Customer Type", background: "#A9A7A6", },
+    //            { value: "Assign Route", background: "#A9A7A6", },
+    //            { value: "Assign To", background: "#A9A7A6", },
+    //            { value: "Visit Type", background: "#A9A7A6", },
+    //            { value: "Visited By", background: "#A9A7A6", },
+    //            { value: "Date", background: "#A9A7A6", },
+    //            { value: "Time", background: "#A9A7A6", },
+    //            { value: "Distance(KM)", background: "#A9A7A6", },
+    //            { value: "Remarks", background: "#A9A7A6", },
+    //        ]
+    //    });
+    //    WriteData(e.data);
+
+    //    //recursive function to write the grouped/ungrouped data
+    //    function WriteData(array) {
+    //        array.forEach(function (row, index) {
+    //            if (typeof (row.items) != "undefined") { //if array contains nested items, write a row with group field and enter recursion
+    //                Mvalue = row.value;
+    //                MField = row.field;
+    //                if (MField == "Visit_Date") {
+    //                    Mvalue = getDateFormat(Mvalue);
+    //                    MField="Date"
+    //                }
+    //                else if (MField == "ASSIGN_DATE") {
+    //                    Mvalue = getDateFormat(Mvalue);
+    //                    MField = "Assign Date"
+    //                }
+    //                else if (row.field == "Visit_Time") {
+    //                    Mvalue = getTimeFormat(Mvalue);
+    //                    MField = "Visit Time"
+    //                }
+    //                SheetRow.push({
+    //                    cells: [{
+    //                        value: MField + " : " + Mvalue,
+    //                        background: "#E1E1E1",
+    //                        colSpan: 10,//to span the total number of columns
+    //                        fontSize: 12,
+    //                    }]
+    //                });
+    //                WriteData(row.items);
+    //            }
+    //            else {
+    //                var dist = differenceDownload(row.CUST_LAT, row.CUST_LONG, row.VISIT_LAT, row.VISIT_LONG, 'K', row.Visit_Type);
+    //                var distColor = dist < 0.3 ? "#008000" : "#ff0000";
+    //                SheetRow.push({ //Header
+    //                    cells: [
+    //                        { value: row.CUSTOMER_NAME },
+    //                        { value: customerType(row.CUSTOMER_TYPE) },
+    //                        { value: (row.Assigned_ROUTE !== null && row.Assigned_ROUTE != '-') ? row.Assigned_ROUTE_NAME + '(' + row.Assigned_ROUTE + ')' : '-' },
+    //                        { value: row.Assigned_Employee },
+    //                        { value: row.Visit_Type },
+    //                        { value: row.VISIT_BY },
+    //                        { value: getDateFormat(row.ASSIGN_DATE) },
+    //                        { value: getTimeFormat(row.Visit_Time) },
+    //                        { value: dist, color: distColor },
+    //                        { value: row.REMARKS },
+    //                    ]
+    //                });
+    //            }
+    //        });
+    //    }
+    //    //initializing a workbook with above prepared rows
+    //    var Workbook = new kendo.ooxml.Workbook({
+    //        sheets: [{
+    //            columns: [
+    //            ],
+    //            rows: SheetRow,
+    //        }]
+    //    });
+    //    //finally saving the excel sheet
+    //    kendo.saveAs({
+    //        dataURI: Workbook.toDataURL(),
+    //        fileName: "Attendance Report.xlsx"
+    //    });
+    //}
+
+    $(".applydp").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+        $(this).closest("#applydp").modal('hide');
+    });
+
+    $("#loadAdvancedFilters").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    });
+
+    $("#RunQuery").click(function (evt) {
+        evt.preventDefault();
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/Report/GetDeliveryReport";
+        KendoGridRefresh(urltest);
+    });
+
+    $("#typeFilter").on("change", function () {
+        var url = window.location.protocol + "//" + window.location.host + "/api/Report/GetDeliveryReport"
+        KendoGridRefresh(url);
+    });
+    $("#statusFilter").on("change", function () {
+        var url = window.location.protocol + "//" + window.location.host + "/api/Report/GetDeliveryReport"
+        KendoGridRefresh(url);
+    });
+
+    function loadStatusFilter() {
+        $.ajax({
+            url: window.location.protocol + "//" + window.location.host + "/api/Report/GetAllDeliveryStatusFilter",
+            type: "GET",
+            success: function (res) {
+
+                $("#statusFilter").empty();
+                $("#statusFilter").append('<option value="ALL">All Status</option>');
+                $("#statusFilter").append('<option value="">Pending</option>');
+                console.log(res);
+                $.each(res, function (i, v) {
+                    $("#statusFilter").append(
+                        `<option value="${v.status_code}">${v.status_name}</option>`
+                    );
+                });
+            }
+        });
+    }
+
+    function BindGrid(readurl) {
+        var branches = ReportFilter.getBranchs();
+        reportConfig = GetReportSetting("AttendanceReport");
+        var grid = $("#grid").kendoGrid({
+            dataSource: new kendo.data.DataSource({
+                type: "json",
+                transport: {
+                    read: {
+                        url: readurl + "?Type=" + encodeURIComponent($("#typeFilter").val()) + "&status=" + encodeURIComponent($("#statusFilter").val()),
+                        dataType: "json",
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8"
+                    },
+                    parameterMap: function (options, type) {
+                        var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+                    }
+                },
+
+                error: function (e) {
+                    displayPopupNotification("Sorry error occured while processing data", "error");
+                },
+                model: {
+                    fields: {
+                        REFERENCE_NO: { type: "string" },
+                        DRIVER_MOBILE_NO: { type: "number" },
+                        RECEIVER_NUMBER: { type: "number" },
+                    }
+                },
+                pageSize: reportConfig.defaultPageSize,
+            }),
+            toolbar: kendo.template($("#toolbar-template").html()),
+            excel: {
+                fileName: "Delivery Report",
+                allPages: true,
+            },
+            excelExport: function (e) {
+                var sheet = e.workbook.sheets[0];
+
+                // Fields to ignore
+                var ignoreCols = ["SIGNATURE", "IMG0", "IMG1", "IMG2", "IMG3"];
+
+                // Get visible grid columns
+                var gridColumns = e.sender.columns;
+
+                sheet.rows.forEach(function (row) {
+                    if (row.type === "header") {
+                        // Keep only headers whose corresponding field is NOT in ignoreCols
+                        row.cells = row.cells.filter(function (cell, idx) {
+                            var field = gridColumns[idx] ? gridColumns[idx].field : null;
+                            return ignoreCols.indexOf(field) === -1;
+                        });
+                    }
+                    if (row.type === "data") {
+                        // Keep only data cells that map to non-ignored fields
+                        row.cells = row.cells.filter(function (cell, idx) {
+                            var field = gridColumns[idx] ? gridColumns[idx].field : null;
+                            return ignoreCols.indexOf(field) === -1;
+                        });
+                    }
+                });
+
+                // Format DeliveredDate (CREATED_DATE)
+                sheet.rows.forEach(function (row) {
+                    if (row.type === "data") {
+                        if (row.cells[0] && row.cells[0].value) {
+                            row.cells[0].value = kendo.toString(new Date(row.cells[0].value), "yyyy-MM-dd HH:mm:ss");
+                        }
+                        //[6, 8].forEach(function (colIndex) {
+                        //    if (row.cells[colIndex] && row.cells[colIndex].value) {
+                        //        row.cells[colIndex].value = kendo.toString(new Date(row.cells[colIndex].value), "hh:mm tt");
+                        //    }
+                        //});
+                    }
+                });
+            },
+            height: 550,
+            sortable: true,
+            reorderable: true,
+            groupable: true,
+            resizable: true,
+            filterable: {
+                extra: false,
+                operators: {
+                    number: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "is greater than or equal to   ",
+                        gt: "is greater than",
+                        lte: "is less than or equal",
+                        lt: "is less than",
+                    },
+                    string: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        startswith: "Starts with    ",
+                        contains: "Contains",
+                        doesnotcontain: "Does not contain",
+                        endswith: "Ends with",
+                    },
+                    date: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "Is after or equal to",
+                        gt: "Is after",
+                        lte: "Is before or equal to",
+                        lt: "Is before",
+                    }
+                }
+            },
+            columnMenu: true,
+            columnMenuInit: function (e) {
+                wordwrapmenu(e);
+                checkboxItem = $(e.container).find('input[type="checkbox"]');
+            },
+            columnShow: function (e) {
+                if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                    SaveReportSetting('AttendanceReport', 'grid');
+            },
+            columnHide: function (e) {
+                if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                    SaveReportSetting('AttendanceReport', 'grid');
+            },
+            pageable: {
+                refresh: true,
+                pageSizes: reportConfig.itemPerPage,
+                buttonCount: 5
+            },
+            dataBound: function (o) {
+                var grid = o.sender;
+                console.log(grid.dataSource);
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.length;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    displayPopupNotification("No Data Found Given Date Filter.", "info");
+                }
+                else {
+                    var g = $("#grid").data("kendoGrid");
+                    for (var i = 0; i < g.columns.length; i++) {
+                        g.showColumn(i);
+                    }
+                    $("div.k-group-indicator").each(function (i, v) {
+                        g.hideColumn($(v).data("field"));
+                    });
+                }
+
+                UpdateReportUsingSetting("AttendanceReport", "grid");
+                $('div').removeClass('.k-header k-grid-toolbar');
+
+                $(".fancybox").fancybox({
+                    afterShow: function () {
+                        var click = 0;
+                        var toolbar = this.$content.parent().parent().parent().find(".fancybox-toolbar");
+                        var imageDiv = this.$content.find(".fancybox-image");
+                        toolbar.prepend('<button data-fancybox-rotate="" class="fancybox-button" id="rotate_button" title="rotate"><span class="fa fa-undo"></span></button>')
+                            .on('click', '#rotate_button', function () {
+                                var n = 90 * ++click;
+                                imageDiv.css({ '-ms-transform': 'rotate(' + -n + 'deg)', '-webkit-transform': 'rotate(' + -n + 'deg)', 'transform': 'rotate(' + -n + 'deg)' });
+                            });
+                    }
+                });
+            },
+            detailTemplate: kendo.template($("#template").html()),
+            //detailInit: detailInit,
+            columns: [
+                //{
+                //    field: "TRANSACTION_NO",
+                //    title: "Transaction No",
+
+                //},
+                {
+                    field: "CREATED_DATE",
+                    title: "Delivered Date",
+                    width: '150px',
+                    template: "#= kendo.toString(new Date(CREATED_DATE), 'yyyy-MM-dd HH:mm:ss') #" 
+                },
+                {
+                    field: "REFERENCE_NO",
+                    title: "Sales Order No",
+                    width: '150px'
+
+                },
+                {
+                    field: "VOUCHER_NO",
+                    title: "Chalan No",
+                    width: '150px'
+                },
+                {
+                    field: "BILL_NO",
+                    title: "Sales Invoice No",
+                    width: '150px'
+                },
+                {
+                    field: "CUSTOMER_NAME",
+                    title: "Customer Name",
+                    width: '150px'
+                },
+                {
+                    field: "DRIVER_NAME",
+                    title: "Driver's Name",
+                    width: '130px'
+
+                },
+                {
+                    field: "DRIVER_MOBILE_NO",
+                    title: "Driver's No",
+                    width: '130px'
+
+                },
+                {
+                    field: "TRANSPORT_NAME",
+                    title: "Transport Name",
+                    width: '130px'
+
+                },
+                {
+                    field: "BILTY_NUMBER",
+                    title: "Bilty Number",
+                    width: '130px'
+
+                },
+                {
+                    field: "RECEIVER_NAME",
+                    title: "Receiver's Name",
+                    width: '150px'
+                },
+                {
+                    field: "RECEIVER_NUMBER",
+                    title: "Receiver's No",
+                    width: '150px'
+                },
+                {
+                    field: "REMARKS",
+                    title: "Remarks",
+                    width: "150px" 
+                },
+                {
+                    field: "STATUS",
+                    title: "Status",
+                    width: "120px" 
+                },
+                //{
+                //    field: "QUANTITY",
+                //    title: "Quantity",
+                //},
+                {
+                    field: "SIGNATURE",
+                    title: "Signature",
+                    width: "85px",
+                    template: function (data) {
+                        var imgUrl = window.location.protocol + "//" + window.location.host + '/Areas/NeoErp.Distribution/Images/DriverImages/' + data.SIGNATURE;
+
+                        // Check if SIGNATURE is empty and set to "nophoto" if so
+                        if (_.isEmpty(data.SIGNATURE)) {
+                            imgUrl = window.location.protocol + "//" + window.location.host + "/images/nophoto.png";
+                        }
+                        return '<a class="fancybox" href="' + imgUrl + '" data-fancybox="group_' + data.ATT_DATE + data.SP_CODE + '" data-caption="' + data.FULL_NAME + '">' +
+                            '<img src="' + imgUrl + '" class="img-responsive img-thumbnail" style="width:63px;height:35px;margin: 0 auto;" />' +
+                            '</a>';
+                    },
+                },
+                {
+                    field: "IMG0",
+                    title: "Image 1",
+                    width: "85px",
+                    template: function (data) {
+                        var imgUrl = window.location.protocol + "//" + window.location.host + '/Areas/NeoErp.Distribution/Images/DriverImages/' + data.IMG0;
+
+                        // Check if SIGNATURE is empty and set to "nophoto" if so
+                        if (_.isEmpty(data.IMG0)) {
+                            imgUrl = window.location.protocol + "//" + window.location.host + "/images/nophoto.png";
+                        }
+                        return '<a class="fancybox" href="' + imgUrl + '" data-fancybox="group_' + data.ATT_DATE + data.SP_CODE + '" data-caption="' + data.FULL_NAME + '">' +
+                            '<img src="' + imgUrl + '" class="img-responsive img-thumbnail" style="width:63px;height:35px;margin: 0 auto;" />' +
+                            '</a>';
+                    },
+                },{
+                    field: "IMG1",
+                    title: "Image 2",
+                    width: "85px",
+                    template: function (data) {
+                        var imgUrl = window.location.protocol + "//" + window.location.host + '/Areas/NeoErp.Distribution/Images/DriverImages/' + data.IMG1;
+
+                        // Check if SIGNATURE is empty and set to "nophoto" if so
+                        if (_.isEmpty(data.IMG1)) {
+                            imgUrl = window.location.protocol + "//" + window.location.host + "/images/nophoto.png";
+                        }
+                        return '<a class="fancybox" href="' + imgUrl + '" data-fancybox="group_' + data.ATT_DATE + data.SP_CODE + '" data-caption="' + data.FULL_NAME + '">' +
+                            '<img src="' + imgUrl + '" class="img-responsive img-thumbnail" style="width:63px;height:35px;margin: 0 auto;" />' +
+                            '</a>';
+                    },
+                },{
+                    field: "IMG2",
+                    title: "Image 3",
+                    width: "85px",
+                    template: function (data) {
+                        var imgUrl = window.location.protocol + "//" + window.location.host + '/Areas/NeoErp.Distribution/Images/DriverImages/' + data.IMG2;
+
+                        // Check if SIGNATURE is empty and set to "nophoto" if so
+                        if (_.isEmpty(data.IMG2)) {
+                            imgUrl = window.location.protocol + "//" + window.location.host + "/images/nophoto.png";
+                        }
+                        return '<a class="fancybox" href="' + imgUrl + '" data-fancybox="group_' + data.ATT_DATE + data.SP_CODE + '" data-caption="' + data.FULL_NAME + '">' +
+                            '<img src="' + imgUrl + '" class="img-responsive img-thumbnail" style="width:63px;height:35px;margin: 0 auto;" />' +
+                            '</a>';
+                    },
+                },{
+                    field: "IMG3",
+                    title: "Image 4",
+                    width: "85px",
+                    template: function (data) {
+                        var imgUrl = window.location.protocol + "//" + window.location.host + '/Areas/NeoErp.Distribution/Images/DriverImages/' + data.IMG3;
+
+                        // Check if SIGNATURE is empty and set to "nophoto" if so
+                        if (_.isEmpty(data.IMG3)) {
+                            imgUrl = window.location.protocol + "//" + window.location.host + "/images/nophoto.png";
+                        }
+                        return '<a class="fancybox" href="' + imgUrl + '" data-fancybox="group_' + data.ATT_DATE + data.SP_CODE + '" data-caption="' + data.FULL_NAME + '">' +
+                            '<img src="' + imgUrl + '" class="img-responsive img-thumbnail" style="width:63px;height:35px;margin: 0 auto;" />' +
+                            '</a>';
+                    },
+                },
+                {
+                    command: {
+                        text: "View Details",
+                        click: function (e) {
+                            e.preventDefault();
+                            var dataItem = this.dataItem($(e.currentTarget).closest("tr"));
+                            console.log("Data Item:", dataItem);
+                            var uluru = [Number(dataItem.LATITUDE), Number(dataItem.LONGITUDE)]; // Default location
+
+                            if (map) {
+                                map.remove();
+                                if (markerAtn) {
+                                    //console.log("remove att marker");
+                                    map.removeLayer(markerAtn);
+                                }
+
+                                if (markerEod) {
+                                    //console.log("removed eod marker");
+                                    map.removeLayer(markerEod);
+                                }
+                            }
+
+                            map = L.map('spDetailLocationMap').setView(uluru, 16);
+
+                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                maxZoom: 19,
+                                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                            }).addTo(map);
+
+                            // Set marker positions based on dataItem
+                            if (dataItem.LATITUDE) {
+                                var AtnLocation = [Number(dataItem.LATITUDE), Number(dataItem.LONGITUDE)];
+                                markerAtn = L.marker(AtnLocation, {
+                                    icon: L.icon({
+                                        iconUrl: "http://maps.google.com/mapfiles/ms/icons/green-dot.png",
+                                        iconSize: [25, 41],
+                                        iconAnchor: [12, 20]
+                                    }),
+                                    title: 'Delivered Here'
+                                }).addTo(map);
+                            } else {
+                                console.log("No ATN_LOCATION found");
+                            }
+
+                            
+
+                            // Center the map on the ATN marker or EOD marker if ATN is not available
+                            if (dataItem.ATN_LOCATION) {
+                                map.setView(AtnLocation, 12);
+                            } else if (dataItem.EOD_LOCATION) {
+                                map.setView(EodLocation, 12);
+                            }
+
+                            $("#mapModal").modal('show');
+                        },
+                    },
+                    title: "Actions",
+                },
+            ]
+        });
+    };
+
+    function KendoGridRefresh(readUrl) {
+        $('#grid').data("kendoGrid").destroy();
+        $('#grid').val('');
+        $('#grid').html('');
+        BindGrid(readUrl)
+    }
+    function detailInit(e) {
+        var detailRow = e.detailRow;
+        var Rowdata = e.data;
+        recordCount = 0;
+        debugger;
+
+        //  var companyCode = Rowdata.COMPANY_CODE;
+        // var companyCode = ReportFilter.getCompanyFilter().join("','");
+
+
+        detailRow.find(".details").kendoGrid({
+            dataSource: new kendo.data.DataSource({
+                type: "json",
+                batch: true,
+                transport: {
+                    read: {
+                        url: window.location.protocol + "//" + window.location.host + "/" + "api/Report/GetRoutename?spcode=" + Rowdata.SP_CODE,
+                        dataType: "json", // <-- The default was "jsonp".
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8"
+                    },
+                    parameterMap: function (options, type) {
+
+                        var report = $.extend({}, true, ReportFilter.filterAdditionalData());
+                        report.ReportFilters.FromDate = moment(Rowdata.ATT_DATE).format('YYYY-MMM-DD');
+                        report.ReportFilters.ToDate = moment(Rowdata.ATT_DATE).format('YYYY-MMM-DD');
+
+                        var paramMap = JSON.stringify(report);
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+                    }
+                },
+                error: function (e) {
+                    displayPopupNotification("Sorry error occured while processing data", "error");
+                },
+                //serverFiltering: false,
+                //serverGrouping: false,
+                //serverAggregates: false,
+                //serverPaging: false,
+
+                pageSize: 100,
+                pageable: true,
+            }),
+            sortable: true,
+            pageable: false,
+            sortable: true,
+            reorderable: true,
+            resizable: true,
+            scrollable: {
+                virtual: true
+            },
+            columns: [
+                {
+                    field: "FILENAME",
+                    title: "Name",
+                    width: "170px"
+                },
+                {
+                    field: "EMAIL",
+                    title: "EMAIL",
+                    width: "170px"
+                },
+
+                {
+                    field: "CONTACT_NO",
+                    title: "Contact No",
+                    width: "170px"
+                },
+                {
+                    field: "ATT_DATE",
+                    title: "Assign Date",
+
+                    template: "#= getDateFormat(ATT_DATE) #",
+                    width: "90px"
+                }
+            ]
+
+        });
+
+
+    };
+
+    $(document).ready(function () {
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/Report/GetDeliveryReport"
+        //  BindGrid(urltest);
+        DateFilter.init(function () {
+            consolidate.init(function () {
+                loadLeaflet();
+                BindGrid(urltest);
+                //map.invalidateSize();
+                $("#mapModal").modal('hide');
+            });
+        });
+        loadStatusFilter();
+        $('#mapModal').on('shown.bs.modal', function () {
+            map.invalidateSize();
+        });
+    });
+
+</script>
+<script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js")"></script>

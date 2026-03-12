@@ -1,0 +1,1066 @@
+﻿
+
+@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+<style>
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+    }
+    /*test*/
+    .k-grid-header th.k-header > .k-link {
+        display: block;
+        min-height: 18px;
+        line-height: 30px;
+        margin: -0.5em -0.6em -0.4em -0.6em;
+        padding: .5em .6em .4em .6em;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+         font-size:11px;
+    }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-content-locked {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .k-grid-header {
+        font-size: 11px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+
+    .grand-total-row {
+        background-color: #f9f9f9;
+        font-weight: bold;
+        border-top: 2px solid #ccc;
+    }
+    /* .k-list-container {
+        max-height: 200px !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+    }
+
+    div.k-list-container {
+        max-height: 200px !important;
+        overflow-y: auto !important;
+        overflow-x: hidden;
+    }*/
+    #filterModalPopup .k-list-container {
+        max-height: 200px !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+    }
+
+    .k-state-focused .k-input, .k-menu .k-popup {
+        width: auto !important;
+    }
+</style>
+<style>
+    #filterModalPopup .k-list-container::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    #filterModalPopup .k-list-container::-webkit-scrollbar-thumb {
+        background-color: #999;
+        border-radius: 4px;
+    }
+
+    #filterModalPopup .k-list-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+
+    #filterModalPopup .k-list-container {
+        scrollbar-width: thin;
+        scrollbar-color: #999 #f1f1f1;
+    }
+</style>
+
+
+<div class="page-content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+        </ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+                <div class="actions">
+                    <div class="btn-group">
+                        <div class="btn-group">
+                            <div class="portlet-title">
+                                <div class="actions pull-right">
+
+                                    <button type="submit" ng-click="AddEditOption()" class="btn btn-circle btn-icon-only btn-default" data-placement="left" onclick="showFilterModal()"> <i style="font-size: 10px;">Filter</i></button>
+                                </div>
+                            </div>
+                            <div class="container-fluid">
+
+                                <div class="modal fade" id="filterModalPopup" tabindex="-1" role="dialog" aria-labelledby="filterModalPopupLabel">
+                                    <div class="modal-dialog modal-lg" role="document">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h4 class="modal-title" id="filterModalPopupLabel">Report Filters</h4>
+                                            </div>
+                                            <div class="modal-body">
+                                                <!-- We'll inject .filters here -->
+                                                <div id="popupFilterContainer">
+                                                    <div class="row">
+                                                        <div class="col-md-12">
+                                                            <div class="portlet light bordered">
+                                                                <div class="portlet-title">
+                                                                    <div class="caption">Advance Options</div>
+                                                                </div>
+
+                                                                <div class="row">
+
+                                                                    <div class="row">
+                                                                        <div class="col-md-3">
+                                                                            <label for="multiUnit">MultiUnit</label>
+                                                                            <input id="multiUnit" name="multiUnit" style="width: 100%;" />
+                                                                        </div>
+
+                                                                        <div class="col-md-3">
+                                                                            <label for="valuationMethod">Valuation Method</label>
+                                                                            <input id="valuationMethod" name="valuationMethod" style="width: 100%;" />
+                                                                        </div>
+
+                                                                        @*<div class="col-md-3">
+                                                                <label for="item">Item</label>
+                                                                <input id="item" name="item" style="width: 100%;" />
+                                                            </div>*@
+                                                                        <script>
+                                                                            $(document).ready(function () {
+                                                                                // MultiUnit and ValuationMethod can stay here
+                                                                                $("#multiUnit").kendoDropDownList({
+                                                                                    optionLabel: "Select Unit...",
+                                                                                    dataSource: ["Unit Index", "Carton", "Kg", "Liter", "Pair", "Pieces"],
+                                                                                    value: "Pieces"
+                                                                                });
+
+                                                                                $("#valuationMethod").kendoDropDownList({
+                                                                                    optionLabel: "Select Method...",
+                                                                                    dataSource: ["Average", "Wt.Average", "FIFO", "As Per Tran"],
+                                                                                    value: "FIFO"
+                                                                                });
+
+                                                                                // Initialize #item dropdown only when the modal is shown
+
+                                                                                //$('#filterModalPopup').on('shown.bs.modal', function () {
+                                                                                //    setTimeout(function () {
+                                                                                //        if ($("#item").data("kendoDropDownList")) {
+                                                                                //            $("#item").data("kendoDropDownList").destroy();
+                                                                                //            $("#item").closest(".k-widget").remove();
+                                                                                //            $("#item").replaceWith('<input id="item" name="item" style="width: 100%;" />');
+                                                                                //        }
+
+                                                                                //        setTimeout(() => {
+                                                                                //            $("#item").kendoDropDownList({
+                                                                                //                optionLabel: "Select Item...",
+                                                                                //                dataTextField: "ITEM_EDESC",
+                                                                                //                dataValueField: "ITEM_CODE",
+                                                                                //                filter: "contains",
+                                                                                //                popup: {
+                                                                                //                    height: 300,          // ✅ bigger height
+                                                                                //                    width: 700,
+                                                                                //                    appendTo: "#filterModalPopup"
+                                                                                //                },
+                                                                                //                dataSource: {
+                                                                                //                    transport: {
+                                                                                //                        read: {
+                                                                                //                            url: window.location.protocol + "//" + window.location.host + "/api/SalesHome/GetAllItems",
+                                                                                //                            dataType: "json",
+                                                                                //                            type: "POST"
+                                                                                //                        }
+                                                                                //                    }
+                                                                                //                }
+                                                                                //            });
+                                                                                //        }, 50);
+                                                                                //    }, 300);
+                                                                                //});
+
+
+
+
+
+
+
+
+
+                                                                            });
+                                                                        </script>
+
+
+                                                                        <!--<div class="row">
+                                                            <!-- Purchase Options -->
+                                                                        <!--<div class="form-group col-md-3 mt-2">
+                                                            <label><strong>Purchase:</strong></label><br />
+                                                            <div class="form-check form-check-inline">
+                                                                <input class="form-check-input" type="radio" name="purchaseOption" id="purchaseInvoice" value="Purchase Invoice">
+                                                                <label class="form-check-label" for="purchaseInvoice">Purchase Invoice</label>
+                                                            </div>
+                                                            <div class="form-check form-check-inline">
+                                                                <input class="form-check-input" type="radio" name="purchaseOption" id="purchaseMRR" value="Purchase MRR" checked>
+                                                                <label class="form-check-label" for="purchaseMRR">Purchase MRR</label>
+                                                            </div>
+                                                        </div>-->
+                                                                        <!-- Sales Options -->
+                                                                        <!--<div class="form-group col-md-3 mt-2">
+                                                                <label><strong>Sales:</strong></label><br />
+                                                                <div class="form-check form-check-inline">
+                                                                    <input class="form-check-input" type="radio" name="salesOption" id="salesChalan" value="Sales Chalan" checked>
+                                                                    <label class="form-check-label" for="salesChalan">Sales Chalan</label>
+                                                                </div>
+                                                                <div class="form-check form-check-inline">
+                                                                    <input class="form-check-input" type="radio" name="salesOption" id="salesInvoice" value="Sales Invoice">
+                                                                    <label class="form-check-label" for="salesInvoice">Sales Invoice</label>
+                                                                </div>
+                                                            </div>
+                                                        </div-->
+                                                                        @*>*@
+
+
+
+
+                                                                    </div>
+
+
+                                                                    <div class="portlet-body">
+                                                                        <div class="row">
+                                                                            <!-- Purchase Options -->
+                                                                            <div class="form-group col-md-3 mt-2">
+                                                                                <label><strong>Purchase:</strong></label><br />
+                                                                                <div class="form-check form-check-inline">
+                                                                                    <input class="form-check-input" type="radio" name="purchaseOption" id="purchaseInvoice" value="Purchase Invoice">
+                                                                                    <label class="form-check-label" for="purchaseInvoice">Purchase Invoice</label>
+                                                                                </div>
+                                                                                <div class="form-check form-check-inline">
+                                                                                    <input class="form-check-input" type="radio" name="purchaseOption" id="purchaseMRR" value="Purchase MRR" checked>
+                                                                                    <label class="form-check-label" for="purchaseMRR">Purchase MRR</label>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            <!-- Sales Options -->
+                                                                            <div class="form-group col-md-3 mt-2">
+                                                                                <label><strong>Sales:</strong></label><br />
+                                                                                <div class="form-check form-check-inline">
+                                                                                    <input class="form-check-input" type="radio" name="salesOption" id="salesChalan" value="Sales Chalan" checked>
+                                                                                    <label class="form-check-label" for="salesChalan">Sales Chalan</label>
+                                                                                </div>
+                                                                                <div class="form-check form-check-inline">
+                                                                                    <input class="form-check-input" type="radio" name="salesOption" id="salesInvoice" value="Sales Invoice">
+                                                                                    <label class="form-check-label" for="salesInvoice">Sales Invoice</label>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div class="form-inline" style="display:flex;gap:15px;">
+
+                                                                        <label><input type="checkbox" id="togglePanColUnit" /> Hide Unit</label>
+                                                                        <label><input type="checkbox" id="togglePanColumn" /> Show Qty Only</label>
+                                                                        <div class="form-group">
+                                                                            <button class="btn btn-green" id="show_rep">Apply</button>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                            </div>
+
+
+
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                    </div>
+                    <div class="btn-group" style="display: none;">
+                        @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+                    </div>
+                    <div class="btn-group" style="display: none;">
+                        @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                   {
+                       ShowSupplierFilter = true,
+                       ShowPurchaseDocumentFilter = true,
+                       //ShowAreaFilter = true,
+                       //ShowProductFilter = true,
+                       //ShowCategoryFilter = true,
+                       //ShowCompanyFilter = true,
+                       //ShowBranchFilter = true
+                   })
+                    </div>
+
+                    @Html.Partial("~/Views/Shared/Controls/_reportFilterSettings.cshtml", new ReportFilterSettingsModel()
+               {
+                   ShowAmountFigureFilter = true,
+                   ShowAmountFilter = true,
+                   ShowAmountRoundUpFilter = true,
+                   ShowRangeAmountFilter = true,
+
+               })
+
+                    @Html.Partial("~/Views/Shared/Controls/ComposeMail.cshtml")
+                    <a id="PrintReport" class="k-grid-print" style="cursor: pointer;">
+                        <div class="btn btn-circle btn-icon-only btn-default" data-placement="left" data-html="true"
+                             data-container="body" data-toggle="tooltip" title="Print Report">
+                            <i class="fa fa-print"></i>
+                        </div>
+                    </a>
+
+                    <a data-toggle="modal" id="RunQuery" href="#">
+                        <div class="btn btn-circle btn-icon-only btn-default" data-placement="left" data-html="true" data-container="body" data-toggle="tooltip" title="Refresh">
+                            <i class="icon-control-play"></i>
+                        </div>
+                    </a>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "GroupwiseStockSummary")
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+
+
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div id="grid" class="table-grid"></div>
+                        <div id="grandTotalContainer" style="margin-top:15px; font-weight:bold; text-align:right;"></div>
+
+                        @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+</div>
+<!-- REQUIRED Kendo Scripts -->
+
+
+<script src="@Scripts.Url("~/JS/DateFilter.js?V5")" type="text/javascript"></script>
+<script src="@Scripts.Url("~/JS/dynamicReport.js?V2")" type="text/javascript"></script>
+<script src="~/JS/UniversalGridPrint.js"></script>
+<script type="text/javascript">
+    var fileMailSender = new ManualEmailSender({
+        GridName: "grid",
+        GridRefreshTriggerName: "Runquery",
+        reportName: "DateWiseSalesDetails",
+    });
+</script>
+<script type="text/javascript">
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+
+</script>
+<script type="text/x-kendo-tmpl" id="row-template">
+    # var isGrandTotal = ITEM_EDESC && ITEM_EDESC.toLowerCase().includes("grand total"); #
+    <tr class="#= isGrandTotal ? 'grand-total-row' : '' #">
+        <td>#= ITEM_EDESC #</td>
+        <td>#= ITEM_CODE #</td>
+        <td>#= INDEX_MU_CODE #</td>
+        <td style="text-align:right;">#= kendo.toString(OPEN_QTY, "n2") #</td>
+        <td style="text-align:right;">#= kendo.toString(OPEN_AMT, "n2") #</td>
+        <!-- Add other fields similarly -->
+    </tr>
+</script>
+
+<script type="text/x-kendo-template" id="toolbar-template1">
+    <div class="toolbar" style="display: flex; justify-content: flex-end; align-items: center; gap: 0;">
+        <div style="position: relative; display: inline-block;">
+            <input type="text" id="treelist-global-search" placeholder="Search..." style="width: 250px; padding-right: 30px;" class="k-textbox" />
+            <span class="k-icon k-i-search" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none;"></span>
+        </div>
+
+        <button class="k-button k-button-icontext k-grid-excel" style="margin-left: 5px;">
+            <span class="k-icon k-i-excel"></span>
+            Export to Excel
+        </button>
+    </div>
+</script>
+
+
+<script>
+    // Define global URL
+    var urltest = window.location.protocol + "//" + window.location.host + "/api/SalesHome/GetGroupwiseStockSummaryReport";
+
+    // Function to show modal
+    function showFilterModal() {
+        $('#filterModalPopup').modal('show');
+    }
+
+    // On dropdown change (if needed)
+    $('#reportType').first().on('change', function () {
+        handleReportSelection($(this).val());
+    });
+
+    // On "Apply" button click inside modal
+    $(document).ready(function () {
+        $("#show_rep").on("click", function (e) {
+            e.preventDefault(); // prevent form submit if any
+            // Get selected values from dropdowns
+            var multiUnit = $("#multiUnit").data("kendoDropDownList")?.value() || "";
+            var valuationMethod = $("#valuationMethod").data("kendoDropDownList")?.value() || "";
+            // Get selected radio button values
+            var purchaseOption = $("input[name='purchaseOption']:checked").val() || "";
+            var salesOption = $("input[name='salesOption']:checked").val() || "";
+            //Get checkbox states
+            var hideUnit = $("#togglePanColUnit").is(":checked");
+            var hideAmount = $("#togglePanColumn").is(":checked");
+            // Store globally if needed
+            window.reportFilters = {
+                multiUnit,
+                valuationMethod,
+                purchaseOption,
+                salesOption,
+                hideUnit,
+                hideAmount
+            };
+            $('#filterModalPopup').modal('hide');
+            BindGrid(urltest, window.reportFilters);
+            // Optional logging
+            console.log("Filters applied:", window.reportFilters);
+            //BindGrid(urltest);
+        });
+    });
+</script>
+<script>
+    var reportConfig = GetReportSetting("MonthwiseCustProdNetSales");
+    function getDateFormat(date) {
+        return kendo.format("{0:" + reportConfig.dateFormat + "}", date);
+    }
+
+    $(".applydp").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    })
+
+    $("#loadAdvancedFilters").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    });
+
+    $(document).ready(function () {
+        DateFilter.init(function () {
+            consolidate.init(function () {
+                BindGrid(urltest);
+            });
+        });
+
+        fileMailSender.init();
+
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/SalesHome/GetGroupwiseStockSummaryReport";
+
+        $("#RunQuery").click(function (evt) {
+            evt.preventDefault();
+            urltest = window.location.protocol + "//" + window.location.host + "/api/SalesHome/GetGroupwiseStockSummaryReport";
+            KendoGridRefresh(urltest);
+        });
+
+    });
+
+    function KendoGridRefresh(readUrl) {
+        $('#grid').data("kendoTreeList").destroy();
+        $('#grid').val('');
+        $('#grid').html('');
+        BindGrid(readUrl)
+    }
+
+    //let grandTotalAppendedFlag = false;
+    function BindGrid(urltest, filters = {}) {
+    $('#filterModalPopup').modal('hide');
+
+    var companyName = '@workingContent.CurrentUserinformation.company_name';
+    var fromADdate = $("#FromDateVoucher").val();
+    var toADdate = $("#ToDateVoucher").val();
+    var fromBSdate = $("#fromInputDateVoucher").val();
+    var toBSdate = $("#toInputDateVoucher").val();
+    var branches = ReportFilter.getBranchs();
+    let grandTotalAppendedFlag = false;
+    const {
+        multiUnit = "",
+        valuationMethod = "",
+        purchaseOption = "",
+        salesOption = "",
+        hideUnit = false,
+        hideAmount = false
+    } = filters;
+
+    const requestData = {
+        company_name: companyName,
+        fromADdate,
+        toADdate,
+        fromBSdate,
+        toBSdate,
+        branches,
+        multiUnit,
+        valuationMethod,
+        purchaseOption,
+        salesOption
+    };
+
+    $.ajax({
+        url: urltest,
+        method: "POST",
+        contentType: "application/json",
+        data: JSON.stringify(requestData),
+        success: function (response) {
+            console.log("TreeList Data:", response);
+
+            response.forEach(item => {
+                const qty = parseFloat(item.CLOSING_QTY) || 0;
+                const amt = parseFloat(item.CLOSING_AMT) || 0;
+                item.RATE = qty !== 0 ? amt / qty : 0;
+
+                item.PUR_REMARK = "";
+
+                // Optional: Only compare if fields exist
+                if (item.PUR_ITEM_CODE && item.PUR_QUANTITY != null && item.PUR_CALC_QUANTITY != null) {
+                    const purQty = parseFloat(item.PUR_QUANTITY) || 0;
+                    const calcQty = parseFloat(item.PUR_CALC_QUANTITY) || 0;
+                    const diff = purQty - calcQty;
+
+                    if (diff > 0) {
+                        item.PUR_REMARK = "excess";
+                    } else if (diff < 0) {
+                        item.PUR_REMARK = "short";
+                    }
+                }
+            });
+
+
+            const grandRow = response.find(x =>
+                x.ITEM_EDESC && x.ITEM_EDESC.toLowerCase().includes("grand total")
+            );
+
+            response = response.filter(x =>
+                !(x.ITEM_EDESC && x.ITEM_EDESC.toLowerCase().includes("grand total"))
+            );
+
+            const grandRowData = grandRow;
+
+            // Define columns
+            var columns = [
+                { field: "ITEM_EDESC", title: "Chart of Item", width: 300, locked: true },
+                { field: "ITEM_CODE", title: "Item Code", width: 80 },
+                {
+                    field: "INDEX_MU_CODE",
+                    title: "Unit",
+                    width: 80,
+                    template: function (dataItem) {
+                        return dataItem.INDEX_MU_CODE && dataItem.INDEX_MU_CODE !== "None" ? dataItem.INDEX_MU_CODE : "";
+                    }
+                },
+                { field: "OPEN_QTY", title: "Opening Stock Qty", width: 130, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                { field: "OPEN_AMT", title: "Opening Stock Amt", width: 130, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                { field: "PURCHASE_QTY", title: "Purchase GRN Qty", width: 130, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                { field: "PURCHASE_AMT", title: "Purchase GRN Amt", width: 130, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                { field: "PRO_REC_QTY", title: "Production Receipt Qty", width: 140, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                { field: "PRO_REC_AMT", title: "Production Receipt Amt", width: 140, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                { field: "SALES_RET_QTY", title: "Sales Return COGS Qty", width: 150, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                { field: "SALES_RET_AMT", title: "Sales Return COGS Amt", width: 150, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                { field: "SR_AMT", title: "Sales Return Invoice Amt", width: 120, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                { field: "CIR_QTY", title: "Goods Return Qty", width: 120, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                { field: "CIR_AMT", title: "Godds Return Amt", width: 120, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                { field: "PRO_ISS_QTY", title: "Production Issue Qty", width: 140, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                { field: "PRO_ISS_AMT", title: "Production Issue Amt", width: 140, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                { field: "SALES_QTY", title: "Sales COGS Qty", width: 130, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                { field: "SALES_AMT", title: "Sales COGS Amt", width: 130, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                { field: "SI_AMT", title: "Sales Invoice Amt", width: 120, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                { field: "DN_AMT", title: "Debit Note Sales Amt", width: 120, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                { field: "CN_AMT", title: "Credit Note Sales Amt", width: 120, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                { field: "STK_TRANS_QTY", title: "Branch Transfer Qty", width: 140, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                { field: "STK_TRANS_AMT", title: "Branch Transfer Amt", width: 140, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                { field: "PURCHASE_RET_QTY", title: "Purchase Return Qty", width: 150, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                { field: "PURCHASE_RET_AMT", title: "Purchase Return Amt", width: 150, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                { field: "GOODS_ISS_QTY", title: "Goods Issue Qty", width: 150, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                { field: "GOODS_ISS_AMT", title: "Goods Issue Amt", width: 150, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                { field: "STK_REC_QTY", title: "Branch Receipt Qty", width: 130, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                { field: "STK_REC_AMT", title: "Branch Receipt Amt", width: 130, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                { field: "SALES_NET_AMT", title: "Net Sales Amt", width: 150, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                { field: "SRE_AMT", title: "SRE Amt", width: 120, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                { field: "CLOSING_QTY", title: "Closing Qty", width: 130, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                { field: "CLOSING_AMT", title: "Closing Amt", width: 130, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                { field: "RATE", title: "Rate", width: 120, format: "{0:N2}", attributes: { style: "text-align:right;" } },
+                { field: "PUR_REMARK", title: "Diff In Quantity", width: 120 }
+
+            ];
+
+            // Auto-hide columns with all zero/empty values
+            const alwaysKeepFields = ["ITEM_EDESC", "ITEM_CODE", "INDEX_MU_CODE", "CLOSING_QTY", "CLOSING_AMT", "RATE"];
+            const allZeroColumns = [];
+            columns.forEach(col => {
+                const field = col.field;
+                if (!field || alwaysKeepFields.includes(field)) return;
+
+                const isAllZero = response.every(item => {
+                    const val = parseFloat(item[field]) || 0;
+                    return val === 0;
+                });
+
+                if (isAllZero) {
+                    allZeroColumns.push(field);
+                }
+            });
+            columns = columns.filter(col => !allZeroColumns.includes(col.field));
+
+            const $grid = $("#grid");
+            const existingTreeList = $grid.data("kendoTreeList");
+            if (existingTreeList) {
+                existingTreeList.destroy();
+                $grid.empty();
+            }
+
+            $grid.kendoTreeList({
+                dataSource: new kendo.data.TreeListDataSource({
+                    data: response,
+                    schema: {
+                        model: {
+                            id: "MASTER_ITEM_CODE",
+                            parentId: "PRE_ITEM_CODE",
+                            fields: {
+                                ITEM_EDESC: { type: "string" },
+                                MASTER_ITEM_CODE: { type: "string" },
+                                PRE_ITEM_CODE: { type: "string" }
+                            }
+                        }
+                    }
+                }),
+                rowTemplate: kendo.template($("#row-template").html()),
+                toolbar: kendo.template($("#toolbar-template1").html()),
+                //excel: {
+                //    fileName: "GroupwiseStockSummary.xlsx",
+                //    allPages: true,
+                //    filterable: true
+                //},
+                //excelExport: function (e) {
+                //    const sheet = e.workbook.sheets[0];
+                //    const customRows = [];
+
+                //    // Add company name
+                //    customRows.push({
+                //        cells: [{
+                //            value: companyName,
+                //            bold: true,
+                //            colSpan: sheet.columns.length
+                //        }]
+                //    });
+
+                //    // Add branch info
+                //    branches.forEach(branch => {
+                //        customRows.push({
+                //            cells: [{
+                //                value: branch.Company + " :- " + branch.Branches.join(', '),
+                //                colSpan: sheet.columns.length
+                //            }]
+                //        });
+                //    });
+
+                //    // Add date info
+                //    customRows.push({
+                //        cells: [{
+                //            value: "From: " + fromADdate + " (" + fromBSdate + ") To: " + toADdate + " (" + toBSdate + ")",
+                //            colSpan: sheet.columns.length
+                //        }]
+                //    });
+
+                //    customRows.push({
+                //        cells: [{ value: "", colSpan: sheet.columns.length }]
+                //    });
+
+                //    // Add custom rows at top
+                //    Array.prototype.unshift.apply(sheet.rows, customRows);
+
+                //    // ✅ Add Grand Total row at bottom of sheet manually
+                //    if (grandRowData) {
+                //        const grandTotalRow = {
+                //            cells: []
+                //        };
+
+                //        // Push Grand Total label
+                //        grandTotalRow.cells.push({
+                //            value: "Grand Total",
+                //            bold: true
+                //        });
+
+                //        // Push blank for next column (Item Code)
+                //        grandTotalRow.cells.push({});
+
+                //        // Push rest of the values based on columns
+                //        columns.slice(2).forEach(col => {
+                //            let rawValue = grandRowData[col.field];
+                //            let formattedValue = rawValue;
+
+                //            if (col.format) {
+                //                formattedValue = kendo.format(col.format, rawValue || 0);
+                //            }
+
+                //            grandTotalRow.cells.push({
+                //                value: formattedValue,
+                //                type: "number",
+                //                format: col.format,
+                //                bold: true
+                //            });
+                //        });
+
+                //        // Append Grand Total row at the end
+                //        sheet.rows.push(grandTotalRow);
+                //    }
+                //},
+
+
+                excel: {
+                    fileName: "GroupwiseStockSummary.xlsx",
+                    allPages: true,
+                    filterable: true
+                },
+                excelExport: function (e) {
+                    const sheet = e.workbook.sheets[0];
+                    const customRows = [];
+
+                    customRows.push({
+                        cells: [{ value: companyName, bold: true, colSpan: sheet.columns.length }]
+                    });
+
+                    branches.forEach(branch => {
+                        customRows.push({
+                            cells: [{
+                                value: branch.Company + " :- " + branch.Branches.join(', '),
+                                colSpan: sheet.columns.length
+                            }]
+                        });
+                    });
+
+                    customRows.push({
+                        cells: [{
+                            value: "From: " + fromADdate + " (" + fromBSdate + ") To: " + toADdate + " (" + toBSdate + ")",
+                            colSpan: sheet.columns.length
+                        }]
+                    });
+
+                    sheet.rows = customRows.concat(sheet.rows);
+                },
+                height: 450,
+                columns: columns,
+                filterable: {
+                    mode: "row",
+                    multi: true,
+                    search: true,
+                    extra: false
+                },
+                sortable: true,
+                reorderable: true,
+                editable: "inline",
+                resizable: true,
+                pageable: {
+                    pageSizes: [10, 20, 50],
+                    buttonCount: 5,
+                    refresh: true
+                },
+                dataBound: function () {
+                    const treeList = $("#grid").data("kendoTreeList");
+
+                    // Only proceed if there's visible data and grand total hasn't been added yet
+                    const visibleData = treeList.dataSource.view();
+                    const hasVisibleData = visibleData && visibleData.length > 0;
+
+                    if (grandRowData && hasVisibleData && !grandTotalAppendedFlag) {
+                        // LOCKED content (first column)
+                        var $lockedRow = $('<tr>', {
+                            role: 'row',
+                            class: 'k-alt',
+                            style: 'height: 26px;'
+                        });
+
+                        var $lockedCell = $('<td>', {
+                            role: 'gridcell',
+                            style: 'white-space: nowrap;'
+                        }).append(
+                            $('<span>', {
+                                class: 'k-icon k-i-none'
+                            })
+                        ).append('Grand Total');
+
+                        $lockedRow.append($lockedCell);
+                        $("#grid .k-grid-content-locked table tbody").append($lockedRow);
+
+                        // NON-LOCKED content (remaining columns)
+                        var $unlockedRow = $('<tr>', {
+                            role: 'row',
+                            class: 'k-alt',
+                            style: 'height: 26px;'
+                        });
+
+                        columns.slice(1).forEach(col => {
+                            const val = grandRowData[col.field];
+                            const formatted = col.format
+                                ? kendo.format(col.format, val || 0)
+                                : (val || "");
+
+                            const $cell = $('<td>', {
+                                role: 'gridcell',
+                                style: 'text-align: right; white-space: nowrap;'
+                            }).text(formatted);
+
+                            $unlockedRow.append($cell);
+                        });
+
+                        let tfoot = $("<tfoot>");
+                        tfoot.append($unlockedRow);
+                        $("#grid .k-grid-content table").append(tfoot);
+
+                        grandTotalAppendedFlag = true;
+                    }
+                },
+
+                //dataBound: function () {
+
+                //    if (grandRowData && !grandTotalAppendedFlag) {
+                //        // LOCKED content (first column)
+                //        var $lockedRow = $('<tr>', {
+                //            role: 'row',
+                //            class: 'k-alt',
+                //            style: 'height: 26px;'
+                //        });
+
+                //        var $lockedCell = $('<td>', {
+                //            role: 'gridcell',
+                //            style: 'white-space: nowrap;'
+                //        }).append(
+                //            $('<span>', {
+                //                class: 'k-icon k-i-none'
+                //            })
+                //        ).append('Grand Total');
+
+                //        $lockedRow.append($lockedCell);
+                //        $("#grid .k-grid-content-locked table tbody").append($lockedRow);
+
+                //        // NON-LOCKED content (remaining columns)
+                //        var $unlockedRow = $('<tr>', {
+                //            role: 'row',
+                //            class: 'k-alt',
+                //            style: 'height: 26px;'
+                //        });
+
+                //        // Loop through non-locked columns (skip ITEM_EDESC)
+                //        columns.slice(1).forEach(col => {
+                //            const val = grandRowData[col.field];
+                //            const formatted = col.format
+                //                ? kendo.format(col.format, val || 0)
+                //                : (val || "");
+
+                //            const $cell = $('<td>', {
+                //                role: 'gridcell',
+                //                style: 'text-align: right; white-space: nowrap;'
+                //            }).text(formatted);
+
+                //            $unlockedRow.append($cell);
+                //        });
+
+                //        let tfoot = $("<tfoot>");
+                //        tfoot.append($unlockedRow);
+                //        $("#grid .k-grid-content table").append(tfoot);
+
+                //        grandTotalAppendedFlag = true
+                //    }
+                //}
+
+            });
+
+            setTimeout(function () {
+                $(".k-grid-excel").off("click").on("click", function () {
+                    const treeList = $("#grid").data("kendoTreeList");
+                    if (treeList) {
+                        $(".k-grid-excel").prop("disabled", true).text("Exporting...");
+                        treeList.one("excelExport", function () {
+                            $(".k-grid-excel").prop("disabled", false).text("Export to Excel");
+                        });
+                        treeList.saveAsExcel();
+                    }
+                });
+            }, 200);
+
+            // for Graand Total
+            rowTemplate: kendo.template(function (dataItem) {
+                const isGrandTotal = dataItem.ITEM_EDESC && dataItem.ITEM_EDESC.toLowerCase().includes("grand total");
+                const rowClass = isGrandTotal ? "grand-total-row" : "";
+                return `<tr class="${rowClass}" data-uid="${dataItem.uid}"></tr>`;
+            });
+
+            $("#togglePanColumn").prop("checked", hideAmount);
+            toggleAmountColumns("#grid", "#togglePanColumn");
+
+            $("#togglePanColUnit").prop("checked", hideUnit);
+            toggleUnitColumn("#grid", "#togglePanColUnit");
+
+            //$("#treelist-global-search").off("input").on("input", function () {
+            //    const searchValue = $(this).val().toLowerCase();
+            //    const treeList = $("#grid").data("kendoTreeList");
+            //    if (treeList) {
+            //        const filteredData = filterTreeWithParents(response, searchValue);
+            //        treeList.dataSource.data(filteredData);
+            //    }
+            //});
+            $("#treelist-global-search").off("input").on("input", function () {
+                const searchValue = $(this).val().toLowerCase();
+                const treeList = $("#grid").data("kendoTreeList");
+                if (treeList) {
+                    const filteredData = filterTreeWithParents(response, searchValue);
+                    treeList.dataSource.data(filteredData);
+                    grandTotalAppendedFlag = false; // <-- Reset flag on search
+                }
+            });
+
+        },
+        error: function (err) {
+            console.error("Failed to load data:", err);
+            alert("Failed to load data. Please check console for details.");
+        }
+    });
+        var companyName = @Html.Raw(Json.Encode(workingContent.CurrentUserinformation.company_name));
+         var branchName = @Html.Raw(Json.Encode(workingContent.CurrentUserinformation.branch_name));
+
+        UniversalGridPrint.init({
+            reportName: "Groupwise Stock Summary",
+            companyName: companyName,
+            branchName: branchName
+        });
+
+
+}
+
+
+
+
+    function toggleAmountColumns(gridId, checkboxId) {
+        const grid = $(gridId).data("kendoTreeList");
+        const isChecked = $(checkboxId).is(":checked");
+        if (!grid) return;
+
+        const columns = [
+            "OPEN_AMT", "PURCHASE_AMT", "PRO_REC_AMT", "SALES_RET_AMT", "SR_AMT",
+            "CIR_AMT", "PRO_ISS_AMT", "SALES_AMT", "SI_AMT", "DN_AMT", "CN_AMT",
+            "STK_TRANS_AMT", "PURCHASE_RET_AMT", "GOODS_ISS_AMT", "STK_REC_AMT",
+            "SALES_NET_AMT", "SRE_AMT", "CLOSING_AMT"
+        ];
+
+        columns.forEach(col => {
+            isChecked ? grid.hideColumn(col) : grid.showColumn(col);
+        });
+    }
+
+    function toggleUnitColumn(gridId, checkboxId) {
+        const grid = $(gridId).data("kendoTreeList");
+        const isChecked = $(checkboxId).is(":checked");
+        if (!grid) return;
+        isChecked ? grid.hideColumn("INDEX_MU_CODE") : grid.showColumn("INDEX_MU_CODE");
+    }
+
+
+    function filterTreeWithParents(data, searchTerm) {
+    if (!searchTerm) return data;
+
+       const lookup = {};
+      data.forEach(item => {
+         lookup[item.MASTER_ITEM_CODE] = item;
+    });
+
+    const matchedIds = new Set();
+
+    function findMatches(item) {
+    const match = Object.values(item).some(val =>
+    val && typeof val === "string" && val.toLowerCase().includes(searchTerm)
+    );
+
+    if (match) {
+    let current = item;
+    // Add current item and all its parents to the matched set
+    while (current) {
+    matchedIds.add(current.MASTER_ITEM_CODE);
+    current = lookup[current.PRE_ITEM_CODE];
+    }
+    }
+    }
+
+    data.forEach(findMatches);
+
+    return data.filter(d => matchedIds.has(d.MASTER_ITEM_CODE));
+    }   function filterTreeWithParents(data, searchTerm) {
+    if (!searchTerm) return data;
+
+    const lookup = {};
+    data.forEach(item => {
+    lookup[item.MASTER_ITEM_CODE] = item;
+    });
+
+    const matchedIds = new Set();
+
+    function findMatches(item) {
+    const match = Object.values(item).some(val =>
+    val && typeof val === "string" && val.toLowerCase().includes(searchTerm)
+    );
+
+    if (match) {
+    let current = item;
+    // Add current item and all its parents to the matched set
+    while (current) {
+    matchedIds.add(current.MASTER_ITEM_CODE);
+    current = lookup[current.PRE_ITEM_CODE];
+    }
+    }
+    }
+
+    data.forEach(findMatches);
+
+    return data.filter(d => matchedIds.has(d.MASTER_ITEM_CODE));
+    }
+</script>

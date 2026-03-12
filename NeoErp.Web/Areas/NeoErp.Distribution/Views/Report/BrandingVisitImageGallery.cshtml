@@ -1,0 +1,183 @@
+﻿@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+
+<style>
+    #exampleModal .colgap {
+        margin-left: 0px !important;
+    }
+
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+    }
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    a.k-button.k-button-icontext.k-grid-excel {
+        float: right;
+    }
+
+    .bootbox-form {
+        padding: 3px !important;
+    }
+
+    .bootbox-input.bootbox-input-text.form-control {
+        height: 27px !important;
+    }
+
+    #spDetailLocationMap {
+        width: 100%;
+        height: 450px;
+        background-color: grey;
+    }
+
+    #legend {
+        font-family: Arial, sans-serif;
+        background: #fff;
+        display: inline-flex;
+    }
+
+        #legend h3 {
+            margin-top: 0;
+        }
+
+        #legend img {
+            vertical-align: middle;
+        }
+
+    .description {
+        font-size: 12px;
+    }
+
+    .col-space {
+        margin-bottom: 10px;
+    }
+    .caption
+    {
+        padding-bottom:10px;
+    }
+</style>
+
+<div class="content">
+    <div class="page-bar">
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+                <div class="actions">
+                    <div class="btn-group">
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-circle btn-icon-only btn-default" data-toggle="modal" title="Generate Query" data-target="#exampleModal">
+                                <i class="fa fa-filter"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div ng-controller="BrandingVisitImageGalleryCtrl">
+    <div class="portlet portlet-sortable light bordered">
+        <div class="portlet-title ui-sortable-handle">
+            <div class="caption">
+                <i class="icon-bar-chart fontgreen"></i>
+                <span class="caption-subject bold uppercase fontgreen custom-modal ng-binding">Visit Gallery</span>
+            </div>
+        </div>
+        <div class="portlet-body">
+            <div class="clearfix" ng-repeat="value in imageLists" style="margin-top:10px;">
+                <div class="caption">
+                    <i class="fa fa-file-image-o fontgreen"></i>
+                    <span class="caption-subject bold uppercase fontgreen custom-modal">{{ value[0].ENTITY_NAME }}</span>
+                </div>
+                <div class="row">
+                    <div class="col-md-2 col-space " ng-repeat="img in value">
+                        <div class="col-space">
+                            <a class="fancybox" href="{{url}}{{img.IMAGE_NAME}}"
+                               data-fancybox="group_{{img.ENTITY_NAME}}"
+                               data-caption="Name: {{img.ENTITY_NAME}}<br>Description: {{img.IMAGE_DESC}}<br>Category: {{img.CATEGORY_EDESC}} <br>Date: {{img.Date}} <br>Time: {{img.Time}}">
+
+                                <img src="{{url}}{{img.IMAGE_NAME}}" class="img-responsive img-thumbnail" style="width:200px;height:150px;margin: 0 auto;" />
+                            </a>
+                        </div>
+                        <div class="description "><strong>Name:</strong> {{img.ENTITY_NAME}}<br><strong>Description:</strong> {{img.IMAGE_DESC}}<br><strong>Category:</strong> {{img.CATEGORY_EDESC}}<br><strong>Date:</strong> {{img.Date}}</div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog customwith" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">×</button>
+                    <h4 class="modal-title"><span class="fa fa-filter"></span>Filter Category</h4>
+                </div>
+                <div class="modal-body form-horizontal">
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                        {
+                            ShowDistributionFilter = true,
+                            ShowResellerFilter = true,
+                            ShowSalesPersonFilter = true,
+                            IsPopUp = false,
+                        })
+                    </div>
+                    <div class="">
+                        @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", true)
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-dafault" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-green" ng-click="applyAdvanceFilter()">Apply</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="@Scripts.Url("~/JS/reportFilter.js?v9")"></script>
+<script src="@Scripts.Url("~/JS/DashboardChartFilter/DateFilter.js?v2")" type="text/javascript"></script>
+<script>
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+
+    $(document).ready(function () {
+        DateFilter.init(function () {
+        });
+        $('#exampleModal').modal('show');
+        $("#DistributorMultiSelect").data("kendoMultiSelect").options.maxSelectedItems = 1;
+        $("#ResellerMultiSelect").data("kendoMultiSelect").options.maxSelectedItems = 1;
+    })
+</script>
+<script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js")"></script>

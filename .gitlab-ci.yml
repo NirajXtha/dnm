@@ -1,0 +1,83 @@
+# .gitlab-ci.yml
+stages:
+  - build
+
+variables:
+  NUGET_PACKAGES_DIRECTORY: ".nuget/packages"
+
+build-and-publish:
+  stage: build
+  tags:
+    - windows
+  
+  cache:
+    key:
+      files:
+        - "**/packages.config"
+        - "**/*.csproj"
+      prefix: "nuget-windows"
+    paths:
+      - .nuget/packages/
+      - "**/packages/"
+
+  artifacts:
+    name: "NeoErp.Distribution-v${CI_PIPELINE_IID}"
+    paths:
+      - publish/
+    expire_in: 30 days
+
+  script:
+    - nuget restore (Get-Item **/*.sln).FullName
+    - |
+      $sln = (Get-Item **/*.sln).FullName
+      msbuild $sln `
+        /p:Configuration=Release `
+        /p:Platform="Any CPU" `
+        /p:VisualStudioVersion=17.0 `
+        /m `
+        /verbosity:minimal
+    - |
+      $src  = "$env:CI_PROJECT_DIR\NeoErp.Web\Areas\NeoErp.Distribution"
+      $dest = "$env:CI_PROJECT_DIR\publish"
+
+      New-Item -ItemType Directory -Path $dest -Force | Out-Null
+
+      $folders = @("Views","Content","Scripts","Images","fonts","js","Areas","App_Start")
+      foreach ($folder in $folders) {
+        $from = Join-Path $src $folder
+        $to   = Join-Path $dest $folder
+        if (Test-Path $from) {
+          Write-Host "Copying folder: $folder"
+          Copy-Item -Path $from -Destination $to -Recurse -Force
+        }
+      }
+
+      $binSrc  = Join-Path $src "bin\Release"
+      $binDest = Join-Path $dest "bin"
+      New-Item -ItemType Directory -Path $binDest -Force | Out-Null
+
+      Get-ChildItem -Path $binSrc -File |
+        Where-Object { $_.Name -match '^NeoErp\.Distribution' } |
+        ForEach-Object {
+          Write-Host "Copying DLL: $($_.Name)"
+          Copy-Item -Path $_.FullName -Destination $binDest -Force
+        }
+
+      $rootFiles = @(
+        "Web.config","Description.txt","ProductCondition.xml",
+        "GiftItemCategory.xml","DependencyRegistrar.cs",
+        "DistributionAreaRegistration.cs","DistributionPlugin.cs","packages.config"
+      )
+      foreach ($file in $rootFiles) {
+        $from = Join-Path $src $file
+        if (Test-Path $from) {
+          Write-Host "Copying file: $file"
+          Copy-Item -Path $from -Destination $dest -Force
+        }
+      }
+
+      Write-Host "`n── publish folder contents ──"
+      Get-ChildItem -Path $dest -Recurse | Select-Object FullName
+
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "master"'

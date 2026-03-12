@@ -1,0 +1,661 @@
+﻿@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+@{
+    ViewBag.Title = "Production Register Page";
+}
+<style>
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+         font-size:11px;
+    }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+</style>
+<div class="page-content">
+
+
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+            @*<li>
+                    <i class="fa fa-home"></i>
+                    <a href="/sales/SalesHome/Dashboard">Home</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>*@
+            @*<li>
+                    <a href="#/Production/ProductionRegister">Production Register</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>*@
+            @*<li>
+                    <a href="sales/saleshome/dashboard/Dashboard">Organiser</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>*@
+
+        </ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+                <div class="actions">
+                    <div class="btn-group" data-toggle="tooltip" data-placement="bottom">
+                        @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                    </div>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+                    </div>
+                    <div class="btn-group" data-toggle="tooltip" title="Click for Advanced Filter!" data-placement="bottom">
+                        @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                   {
+                       ShowSupplierFilter = false,
+                       ShowProductFilter = true,
+                       ShowCategoryFilter = false,
+                       //ShowPurchaseDocumentFilter = true,
+                       ShowLocationFilter = true,
+                       //ShowCompanyFilter = true,
+                       //ShowBranchFilter = true
+                   })
+                    </div>
+
+
+
+                    @Html.Partial("~/Views/Shared/Controls/_reportFilterSettings.cshtml", new ReportFilterSettingsModel()
+               {
+                   ShowAmountFigureFilter = true,
+                   ShowAmountFilter = true,
+                   ShowAmountRoundUpFilter = true,
+                   ShowRangeAmountFilter = true,
+                   ShowQuantityFigureFilter = true,
+                   ShowQuantityRoundUpFilter = true,
+                   ShowQuantityFilter = true,
+                   ShowRangeQuantityFilter = true,
+                   ShowRangeRateFilter = true
+
+               })
+
+                    @Html.Partial("~/Views/Shared/Controls/ComposeMail.cshtml")
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="javsascript:;">
+                        <i class="icon-control-play"></i>
+                    </a>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "ProductionRegister")
+                    </div>
+
+                    @*<button id="test">test</button>*@
+
+                </div>
+
+                @*@Html.Partial("~/Views/Shared/Controls/DateField.cshtml",true)*@
+
+                @*<button type="button" class="btn btn-fit-height grey-salt dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" data-delay="1000" data-close-others="true">
+                        Actions <i class="fa fa-angle-down"></i>
+                    </button>
+                    <ul class="dropdown-menu pull-right" role="menu">
+                        <li>
+                            <a href="#">Action</a>
+                        </li>
+                        <li>
+                            <a href="#">Another action</a>
+                        </li>
+                        <li>
+                            <a href="#">Something else here</a>
+                        </li>
+                        <li class="divider">
+                        </li>
+                        <li>
+                            <a href="#">Separated link</a>
+                        </li>
+                    </ul>*@
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+
+
+                <div class="portlet-body form">
+                    <div class="row">
+
+
+                        <div id="grid"></div>
+                        @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+<script src="@Scripts.Url("~/JS/DateFilter.js?V5")" type="text/javascript"></script>
+<script src="@Scripts.Url("~/JS/dynamicReport.js?V2")" type="text/javascript"></script>
+<script type="text/javascript">
+
+    var fileMailSender = new ManualEmailSender({
+        GridName: "grid",
+        GridRefreshTriggerName: "RunQuery",
+        reportName: "ProductionRegister",
+    });
+</script>
+<script type="text/javascript">
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+
+</script>
+<script>
+
+    var reportConfig = GetReportSetting("ProductionRegister");
+    function getDateFormat(date) {
+        return kendo.format("{0:" + reportConfig.dateFormat + "}", date);
+    }
+
+    $(".applydp").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    })
+
+    $("#loadAdvancedFilters").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    });
+
+
+    $(document).ready(function () {
+
+
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/Production/GetProductionRegister"
+
+         DateFilter.init(function () {
+                  consolidate.init(function () {
+                    BindGrid(urltest);
+                });
+            });
+
+        $("#RunQuery").click(function (evt) {
+            evt.preventDefault();
+            urltest = window.location.protocol + "//" + window.location.host + "/api/Production/GetProductionRegister";
+            KendoGridRefresh(urltest);
+        });
+
+        fileMailSender.init();
+        //BindGrid(urltest);
+    });
+
+    function ExportToExcel(e) {
+
+        //Report header details
+        var companyName = ('@workingContent.CurrentUserinformation.company_name');
+        var fromADdate = $("#FromDateVoucher").val()
+        var toADdate = $("#ToDateVoucher").val();
+        var fromBSdate = $("#fromInputDateVoucher").val();
+        var toBSdate = $("#toInputDateVoucher").val();
+        var branches = ReportFilter.getBranchs();
+
+        //create a footer row to display totals
+        var footer = [];
+        footer.push({ value: "Total", colSpan: 13, textAlign: "center", bold: true, })
+        var footerTemp = e.workbook.sheets[0].rows[e.workbook.sheets[0].rows.length - 1].cells;
+        for (var i = 0; i < footerTemp.length; i++) {
+            if (typeof (footerTemp[i].value) == "undefined" && i > 13)
+                footer.push({ value: "", });
+            else if (typeof (footerTemp[i].value) != "undefined" && footerTemp[i].value != "Total")
+                footer.push({ value: $(footerTemp[i].value).text(), textAlign: "right", bold: true });
+        }
+
+        var SheetRow = [];
+
+        //Pushing the head row
+        SheetRow.push({
+            cells: [
+                   { value: "MrrNo", background: "#A9A7A6", },
+                   { value: "Date", background: "#A9A7A6", },
+                   { value: "Miti", background: "#A9A7A6", },
+                   { value: "From Location", background: "#A9A7A6", },
+                   { value: "From Budget", background: "#A9A7A6", },
+                   { value: "To Location", background: "#A9A7A6", },
+                   { value: "Item", background: "#A9A7A6", },
+                   { value: "Item Group", background: "#A9A7A6", },
+                   { value: "ItemcSub Group", background: "#A9A7A6", },
+                   { value: "MuCode", background: "#A9A7A6", },
+                   { value: "Quantity", background: "#A9A7A6", },
+                   { value: "Unit Price", background: "#A9A7A6", },
+                   { value: "Total Price", background: "#A9A7A6", },
+                   { value: "Calc Quantity", background: "#A9A7A6", },
+                   { value: "Calc Unit Price", background: "#A9A7A6", },
+                   { value: "Calc Total Price", background: "#A9A7A6", },
+                   { value: "Remarks", background: "#A9A7A6", },
+                   { value: "Company", background: "#A9A7A6", },
+                   { value: "Branch", background: "#A9A7A6", },
+                   { value: "CurrencyCode", background: "#A9A7A6", },
+
+
+                   { value: "Exchange Rate", background: "#A9A7A6", },
+                   { value: "Tracking No", background: "#A9A7A6", },
+                   { value: "Batch No", background: "#A9A7A6", },
+                   { value: "Lot No", background: "#A9A7A6", },
+                   { value: "Roll Qty", background: "#A9A7A6", },
+                   { value: "Start Time", background: "#A9A7A6", },
+                   { value: "End Time", background: "#A9A7A6", },
+                   { value: "Total Hours", background: "#A9A7A6", },
+                   { value: "Resource Name", background: "#A9A7A6", },
+
+            ],
+        });
+
+        WriteData(e.data);
+
+        //recursive function to write the grouped/ungrouped data
+        function WriteData(array) {
+            array.forEach(function (row, index) {
+                if (typeof (row.items) != "undefined") { //if array contains nested items, write a row with group field and enter recursion
+                    SheetRow.push({
+                        cells: [{
+                            value: row.field + " : " + row.value,
+                            background: "#E1E1E1",
+                            colSpan: footerTemp.length,//to span the total number of columns
+                            fontSize: 12,
+                        }]
+                    });
+                    WriteData(row.items);
+                }
+                else { //if array contains no nested items write the row to excelsheet
+                    SheetRow.push({
+                        cells: [{
+                            value: row.MrrNo,
+                        }, {
+                                value: getDateFormat(row.MrrDate),
+                            }, {
+                                value: row.Miti,
+                            }, {
+                                value: row.FromLocation,
+                            }, {
+                                value: row.FromBudget,
+                            }, {
+                                value: row.ToLocation,
+                            }, {
+                                value: row.Item,
+                            }, {
+                                value: row.ItemGroup,
+                            }, {
+                                value: row.ItemSubGroup,
+                            }, {
+                                value: row.MuCode,
+                            }, {
+                                value: row.Quantity,
+                            }, {
+                                value: row.UnitPrice,
+                            }, {
+                                value: row.TotalPrice,
+                            }, {
+                                value: row.CalcQuantity,
+                            }, {
+                                value: row.CalcUnitPrice,
+                            }, {
+                                value: row.CalcTotalPrice,
+                            }, {
+                                value: row.Remarks,
+                            }, {
+                                value: row.Company,
+                            }, {
+                                value: row.Branch,
+                            }, {
+                                value: row.CurrencyCode,
+                            }, {
+                                value: row.ExchangeRate,
+                            }, {
+                                value: row.TrackingNo,
+                            }, {
+                                value: row.BatchNo,
+                            }, {
+                                value: row.LotNo,
+                            }, {
+                                value: row.RollQty,
+                            }, {
+                                value: row.StartTime,
+                            }, {
+                                value: row.EndTime,
+                            }, {
+                                value: row.TotalHours,
+                            }, {
+                                value: row.ResourceName,
+                            }]
+                    });
+                }
+            });
+        }
+
+        //push the footer variable containing total values
+        SheetRow.push({
+            cells: footer,
+        });
+
+        //pushing Report header details
+        SheetRow.unshift({
+            cells: [{ value: "Production Register".split('').join(' '), colSpan: footerTemp.length }]
+        });
+        //SheetRow.unshift({
+        //    cells: [{ value: "From :- " + fromADdate + "(" + fromBSdate + ")" + "\t To :- " + toADdate + "(" + toBSdate + ")", colSpan: footerTemp.length }]
+        //});
+        //for (var companyCount = 0; companyCount < branches.length; companyCount++) {
+        //    SheetRow.unshift({
+        //        cells: [{ value: branches[companyCount].Company + " :- " + branches[companyCount].Branches.join(','), colSpan: footerTemp.length }]
+        //    });
+        //}
+        //SheetRow.unshift({
+        //    cells: [{ value: companyName.split('').join(' '), colSpan: footerTemp.length }]
+        //});
+        var filterText = $("#AdvanceFilter").attr('data-original-title');
+        if (filterText.indexOf('|') < 0) {
+            filterText = $((filterText).replace(/<strong>/g, "|")).text().replace('|', '').split('|').reverse();;
+            $.each(filterText, function (k, item) {
+                SheetRow.unshift({
+                    cells: [{ value: item, colSpan: footerTemp.length }]
+                });
+            });
+        }
+        if (filterText.toString().indexOf('Date Range') < 0) {
+            SheetRow.unshift({
+                cells: [{ value: "From :- " + fromADdate + "(" + fromBSdate + ")" + "\t To :- " + toADdate + "(" + toBSdate + ")", colSpan: footerTemp.length }]
+            });
+        }
+        for (var companyCount = 0; companyCount < branches.length; companyCount++) {
+            SheetRow.unshift({
+                cells: [{ value: branches[companyCount].Company + " :- " + branches[companyCount].Branches.join(','), colSpan: footerTemp.length }]
+            });
+        }
+        SheetRow.unshift({
+            cells: [{ value: companyName.split('').join(' '), colSpan: footerTemp.length }]
+        });
+        //initializing a workbook
+        var Workbook = new kendo.ooxml.Workbook({
+            sheets: [{
+                columns: [
+                    { width: 110 },
+                    @for (int i = 0; i <33; i++)
+                    {
+                        <text>{ autoWidth: true },</text>
+                    }
+                ],
+                rows: SheetRow
+            }]
+        });
+
+        //finally saving the excel sheet
+        kendo.saveAs({
+            dataURI: Workbook.toDataURL(),
+            fileName: "Production Register.xlsx"
+        });
+    }
+
+    function BindGrid(readurl) {
+    var companyName = '@Html.Raw(HttpUtility.JavaScriptStringEncode(workingContent.CurrentUserinformation.company_name))';
+    var fromADdate = $("#FromDateVoucher").val();
+    var toADdate = $("#ToDateVoucher").val();
+    var fromBSdate = $("#fromInputDateVoucher").val();
+    var toBSdate = $("#toInputDateVoucher").val();
+    var branches = ReportFilter.getBranchs();
+    var reportConfig = GetReportSetting("ProductionRegister");
+
+    var dataSource = new kendo.data.DataSource({
+        type: "json",
+        transport: {
+            read: {
+                url: readurl,
+                dataType: "json",
+                type: "POST",
+                contentType: "application/json; charset=utf-8"
+            },
+            parameterMap: function (options, type) {
+                var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+                return paramMap;
+            }
+        },
+        error: function (e) {
+            displayPopupNotification("Sorry error occured while processing data", "error");
+        },
+        serverFiltering: false,
+        serverAggregates: false,
+        schema: {
+            aggregates: "AggregationResult",
+            model: {
+                fields: {
+                    MrrNo: { type: "string" },
+                    MrrDate: { type: "date" },
+                    Miti: { type: "string" },
+                    FromLocation: { type: "string" },
+                    FromBudget: { type: "string" },
+                    ToLocation: { type: "string" },
+                    SerialNo: { type: "string" },
+                    Item: { type: "string" },
+                    ItemGroup: { type: "string" },
+                    ItemSubGroup: { type: "string" },
+                    MuCode: { type: "string" },
+                    Quantity: { type: "number" },
+                    UnitPrice: { type: "number" },
+                    TotalPrice: { type: "number" },
+                    CalcQuantity: { type: "number" },
+                    CalcUnitPrice: { type: "number" },
+                    CalcTotalPrice: { type: "number" },
+                    Remarks: { type: "string" },
+                    FormCode: { type: "string" },
+                    CompanyCode: { type: "string" },
+                    Company: { type: "string" },
+                    BranchCode: { type: "string" },
+                    Branch: { type: "string" },
+                    CurrencyCode: { type: "string" },
+                    ExchangeRate: { type: "number" },
+                    TrackingNo: { type: "string" },
+                    BatchNo: { type: "string" },
+                    LotNo: { type: "string" },
+                    RollQty: { type: "string" },
+                    DivisionCode: { type: "string" },
+                    ResourceCode: { type: "string" },
+                    StartTime: { type: "string" },
+                    EndTime: { type: "string" },
+                    TotalHours: { type: "string" },
+                    ResourceName: { type: "string" }
+                }
+            }
+        },
+        aggregate: [
+            { field: "Quantity", aggregate: "sum" },
+            { field: "TotalPrice", aggregate: "sum" },
+            { field: "CalcQuantity", aggregate: "sum" },
+            { field: "CalcTotalPrice", aggregate: "sum" }
+        ],
+        serverPaging: false,
+        pageSize: reportConfig.defaultPageSize
+    });
+
+    var grid = $("#grid").kendoGrid({
+        dataSource: dataSource,
+        toolbar: kendo.template($("#toolbar-template").html()),
+        excel: {
+            fileName: "Production Register",
+            allPages: true
+        },
+        excelExport: function (e) {
+            ExportToExcel(e);
+            e.preventDefault();
+        },
+        pdf: {
+            allPages: true,
+            avoidLinks: true,
+            paperSize: "A4",
+            margin: { top: "2cm", left: "1cm", right: "1cm", bottom: "1cm" },
+            landscape: true,
+            repeatHeaders: true,
+            width: "500px",
+            scale: 0.8
+        },
+        height: window.innerHeight - 50,
+        sortable: true,
+        reorderable: true,
+        groupable: true,
+        resizable: true,
+        filterable: {
+            extra: false,
+            operators: {
+                number: {
+                    eq: "Is equal to",
+                    neq: "Is not equal to",
+                    gte: "Is greater than or equal to",
+                    gt: "Is greater than",
+                    lte: "Is less than or equal to",
+                    lt: "Is less than"
+                },
+                string: {
+                    eq: "Is equal to",
+                    neq: "Is not equal to",
+                    startswith: "Starts with",
+                    contains: "Contains",
+                    doesnotcontain: "Does not contain",
+                    endswith: "Ends with"
+                },
+                date: {
+                    eq: "Is equal to",
+                    neq: "Is not equal to",
+                    gte: "Is after or equal to",
+                    gt: "Is after",
+                    lte: "Is before or equal to",
+                    lt: "Is before"
+                }
+            }
+        },
+        columnMenu: true,
+        columnMenuInit: function (e) {
+            wordwrapmenu(e);
+            checkboxItem = $(e.container).find('input[type="checkbox"]');
+        },
+        pageable: {
+            refresh: true,
+            pageSizes: reportConfig.itemPerPage,
+            buttonCount: 5
+        },
+        scrollable: {
+            virtual: true
+        },
+        dataBound: function (o) {
+            var grid = o.sender;
+            if (grid.dataSource.total() == 0) {
+                var colCount = grid.columns.length;
+                $(o.sender.wrapper)
+                    .find('tbody')
+                    .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+            }
+            UpdateReportUsingSetting("ProductionRegister", "grid");
+        },
+        columns: [
+            { field: "MrrNo", title: "Mrr No", width: "70px" },
+            { field: "MrrDate", title: "Date", width: "70px", format: "{0:" + reportConfig.dateFormat + "}" },
+            { field: "Miti", title: "Miti", width: "70px" },
+            { field: "FromLocation", title: "From Location", width: "90px" },
+            { field: "FromBudget", title: "From Budget", width: "90px" },
+            { field: "ToLocation", title: "To Location", width: "100px" },
+            { field: "SerialNo", title: "Serial No", width: "100px" },
+            { field: "Item", title: "Item", width: "100px" },
+            { field: "ItemGroup", title: "Item Group", width: "100px" },
+            { field: "ItemSubGroup", title: "Item SubGroup", width: "100px" },
+            { field: "MuCode", title: "Mu Code", width: "100px", footerTemplate: "Total" },
+            {
+                field: "Quantity", title: "Qty", width: "70px",
+                attributes: { style: "text-align: right;" },
+                aggregates: ["sum"],
+                format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter") + "}",
+                footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("QuantityRoundUpFilter"))#</span>'
+            },
+            {
+                field: "UnitPrice", title: "Unit Price", width: "70px",
+                attributes: { style: "text-align:right;" },
+                format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter") + "}"
+            },
+            {
+                field: "TotalPrice", title: "Total Price", width: "70px",
+                attributes: { style: "text-align:right;" },
+                format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter") + "}"
+            },
+            {
+                field: "CalcQuantity", title: "Calc Qty", width: "70px",
+                attributes: { style: "text-align: right;" },
+                aggregates: ["sum"],
+                format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter") + "}",
+                footerTemplate: '<span style="float:right">#= kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("QuantityRoundUpFilter"))#</span>'
+            },
+            {
+                field: "CalcUnitPrice", title: "Calc Unit Price", width: "70px",
+                attributes: { style: "text-align:right;" },
+                format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter") + "}"
+            },
+            {
+                field: "CalcTotalPrice", title: "Calc Total Price", width: "70px",
+                attributes: { style: "text-align:right;" },
+                format: "{0:n" + ReportFilter.parseDecimalPlace("AmountRoundUpFilter") + "}"
+            },
+            { field: "Remarks", title: "Remarks", width: "80px" },
+            { field: "FormCode", title: "Form Code", width: "100px" },
+            { field: "Company", title: "Company", width: "70px" },
+            { field: "Branch", title: "Branch", width: "70px" },
+            { field: "CurrencyCode", title: "Currency Code", width: "100px" },
+            { field: "ExchangeRate", title: "Exchange Rate" },
+            { field: "TrackingNo", title: "Tracking No", width: "100px" },
+            { field: "BatchNo", title: "Batch No", width: "100px" },
+            { field: "LotNo", title: "Lot No", width: "100px" },
+            { field: "RollQty", title: "Roll Qty", width: "100px" },
+            { field: "DivisionCode", title: "Division", width: "100px" },
+            { field: "ResourceCode", title: "Resource Code", width: "100px" },
+            { field: "ResourceName", title: "Resource Name", width: "100px" },
+            { field: "StartTime", title: "Start Time", width: "100px" },
+            { field: "EndTime", title: "End Time", width: "100px" },
+            { field: "TotalHours", title: "Total Hours", width: "100px" }
+        ]
+    });
+
+    // Initialize Print after Grid definition
+    UniversalGridPrint.init({
+        reportName: function () {
+            return "ProductionRegister";
+        },
+        companyName: '@Html.Raw(HttpUtility.JavaScriptStringEncode(workingContent.CurrentUserinformation.company_name))',
+        branchName: '@Html.Raw(HttpUtility.JavaScriptStringEncode(workingContent.CurrentUserinformation.branch_name))'
+    });
+}
+
+    function KendoGridRefresh(readUrl) {
+        $('#grid').val('');
+        $('#grid').html('');
+        BindGrid(readUrl)
+    }
+</script>

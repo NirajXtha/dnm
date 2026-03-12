@@ -1,0 +1,178 @@
+﻿@model string
+
+
+
+<a  data-toggle="modal" data-target="#reportModal" title="Report Config" id="reportConfig">
+    <div class="pull-right btn btn-circle btn-icon-only btn-default">
+        <i class="fa fa-cog"></i>
+    </div>
+</a>
+
+<div class="modal fade" id="reportModal" tabindex="-1" role="dialog" aria-labelledby="ModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-custom">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                <h4 class="modal-title"><span class="fa fa-cog"></span>
+Report Setting Config</h4>
+            </div>
+            <div class="modal-body form-horizontal">
+             
+                     
+                        <input type="hidden" value="@Model" id="reportName" name="reportName" />
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label class="control-label col-md-4 col-sm-4 defaultPageSize" for="defaultPageSize">Default Page Size</label>
+                            <div class="col-md-8 col-sm-8">
+                                <input type="number" class="form-control" id="defaultPageSize" name="defaultPageSize" placeholder="Eg: 100" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                         
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label class="control-label col-sm-4" for="defaultPageSize">Items Per Page</label>
+                            <div class="col-md-8 col-sm-8">
+                                <input type="text" class="form-control" id="itemsPerPage" name="itemsPerPage" placeholder="Eg: 100,500,1000,5000" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                         
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label class="control-label col-md-4 col-sm-4" for="dateFormat">Date Format</label>
+                            <div class="col-md-8 col-sm-8">
+                                @{
+                                var date = DateTime.Now;
+                                List<SelectListItem>
+                                    dateFormat = new List<SelectListItem>
+                                        ();
+                                        dateFormat.Add(new SelectListItem { Text = date.ToString("dd-MM-yyyy"), Value = "dd-MM-yyyy" });
+                                        dateFormat.Add(new SelectListItem { Text = date.ToString("dd-MMM-yyyy"), Value = "dd-MMM-yyyy", Selected = true });
+                                        dateFormat.Add(new SelectListItem { Text = date.ToString("dd/MM/yyyy"), Value = "dd/MM/yyyy" });
+
+                                        }
+
+                                        @Html.DropDownList("dateFormat", dateFormat, new { @class = "form-control" })
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label class="control-label col-sm-4" for="dateFormat">Themes</label>
+                                    <div class="col-md-8 col-sm-8">
+                                        @{
+                                        List<SelectListItem>
+                                            themes = new List<SelectListItem>
+                                                ();
+                                                themes.Add(new SelectListItem { Text = "Default", Value = "kendo.default.min.css",Selected = true });
+                                                themes.Add(new SelectListItem { Text = "Black", Value = "kendo.black.min.css" });
+                                                themes.Add(new SelectListItem { Text = "Blueopal", Value = "kendo.blueopal.min.css" });
+                                                themes.Add(new SelectListItem { Text = "Bootstrap", Value = "kendo.bootstrap.min.css" });
+                                                themes.Add(new SelectListItem { Text = "Moonlight", Value = "kendo.moonlight.min.css" });
+                                                themes.Add(new SelectListItem { Text = "Sliver", Value = "kendo.silver.min.css" });
+                                                themes.Add(new SelectListItem { Text = "Uniform", Value = "kendo.uniform.min.css" });
+                                                themes.Add(new SelectListItem { Text = "Material", Value = "kendo.material.min.css" });
+                                                themes.Add(new SelectListItem { Text = "Metro", Value = "kendo.metro.min.css" });
+
+
+                                                }
+
+                                                @Html.DropDownList("themes", themes, new { @class = "form-control" })
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                  
+
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-green" data-dismiss="modal" id="reportSettingApply">Apply</button>
+            </div>
+        </div>
+        <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+</div>
+
+
+<script>
+
+    $('#reportModal').on('show.bs.modal', function () {
+        $(this).find('.modal-body').css({
+            'max-height': '100%'
+        });
+    });
+
+
+    $("#reportConfig").on("click", function () {
+        var reportConfig = GetReportSetting($("#reportName").val());
+        $("#defaultPageSize").val(reportConfig.defaultPageSize);
+        $("#itemsPerPage").val(reportConfig.itemPerPage.slice(0, reportConfig.itemPerPage.length - 1).join());
+        $("#dateFormat").val(reportConfig.dateFormat);
+        _.isEmpty(reportConfig.theme) == true ? "" : $("#themes").val(reportConfig.theme);
+
+    });
+
+    $("#reportSettingApply").on("click", function () {
+        var reportName = $("#reportName").val();
+        var defaultPageSize = $("#defaultPageSize").val() == "" ? 100 : $("#defaultPageSize").val();
+        var itemPerPage = $("#itemsPerPage").val();
+        debugger;
+        var flag = true;
+        if (itemPerPage != "") {
+
+            var temp = itemPerPage.split(',');
+            $.each(temp, function (i, obj) {
+                if (!$.isNumeric(obj)) {
+                    flag = false;                   
+                    $('#reportModal').modal('show');
+                    $("#itemsPerPage").focus();
+                     displayPopupNotification("Invalid Format", "error");                    
+                }
+            });
+        }
+        if (flag == false)
+            return;
+        var dateFormat = $("#dateFormat option:selected").val();
+        var themes = $("#themes option:selected").val();
+        var value = {
+            reportName: reportName,
+            defaultPageSize: defaultPageSize,
+            itemPerPage: itemPerPage,
+            dateFormat: dateFormat,
+            theme: themes
+        }
+
+        $.ajax({
+            type: 'POST',
+            data: value,
+            dataType: "json",
+            url: window.location.protocol + "//" + window.location.host + "/Home/SaveReportConfigSetting",
+            success: function (data) {
+                displayPopupNotification("Setting Saved", "success");
+
+                var selectedTheme = '<link href="' + window.location.protocol + "//" + window.location.host+'/Content/Kendo/styles/' + themes + '" rel="stylesheet" tag="kendoTheme" />';
+                $("#operationContent").find("link[tag='kendoTheme']").remove();
+                $("#operationContent").append(selectedTheme);
+
+                $("#RunQuery").trigger("click");
+            }
+        });   
+
+
+        
+        
+    });
+
+</script>

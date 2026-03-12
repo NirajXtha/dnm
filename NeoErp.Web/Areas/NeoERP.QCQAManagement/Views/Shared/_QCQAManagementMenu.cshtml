@@ -1,0 +1,929 @@
+﻿@{
+	Layout = null;
+	var myAreaName = string.Empty;
+	object areaObj;
+	if (ViewContext.RouteData.Values.TryGetValue("area", out areaObj))
+	{
+		myAreaName = areaObj.ToString();
+	}
+}
+<style>
+	.form_tree {
+		margin-top: 30px;
+	}
+
+		.form_tree .k-group.k-treeview-lines, .form_tree #formTreeView {
+			max-height: 1500px !important;
+			height: auto !important;
+			overflow-x: hidden;
+		}
+
+	.page-sidebar.navbar-collapse {
+		margin-top: 2px;
+	}
+
+	.page-sidebar .form_tree .k-treeview-lines li span {
+		font-size: 12px !important;
+	}
+
+
+	.container-2 {
+		width: 300px;
+		vertical-align: middle;
+		white-space: nowrap;
+		position: relative;
+	}
+
+		.container-2 input.Tree_search {
+			width: 17px;
+			height: 24px;
+			border: none;
+			font-size: 12px;
+			float: left;
+			color: #262626;
+			padding-left: 26px;
+			-webkit-border-radius: 5px;
+			-moz-border-radius: 5px;
+			border-radius: 5px;
+			color: #fff;
+			border: solid #ddd 1px;
+			margin-left: 10px;
+			color: #2e2e2e;
+			-webkit-transition: width .55s ease;
+			-moz-transition: width .55s ease;
+			-ms-transition: width .55s ease;
+			-o-transition: width .55s ease;
+			transition: width .55s ease;
+		}
+
+			.container-2 input.Tree_search::-webkit-input-placeholder {
+				color: #65737e;
+			}
+
+			.container-2 input.Tree_search:-moz-placeholder { /* Firefox 18- */
+				color: #65737e;
+			}
+
+			.container-2 input.Tree_search::-moz-placeholder { /* Firefox 19+ */
+				color: #65737e;
+			}
+
+			.container-2 input.Tree_search:-ms-input-placeholder {
+				color: #65737e;
+			}
+
+		.container-2 .icon {
+			position: absolute;
+			top: 50%;
+			margin-left: 18px;
+			margin-top: 7px;
+			z-index: 1;
+			color: #999;
+		}
+
+		.container-2 input.Tree_search:focus, .container-2 input.Tree_search:active {
+			outline: none;
+			width: 300px;
+		}
+
+		.container-2:hover input.Tree_search {
+			width: 222px;
+		}
+
+		.container-2:hover .icon {
+			color: #93a2ad;
+		}
+
+	#formContextMenu {
+		font-size: 11px !important;
+	}
+</style>
+
+<style>
+	.page-sidebar-menu .nav-item {
+		margin: 6px 8px;
+		border-radius: 8px;
+	}
+
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-entries {
+		background-color: #f6fbff;
+		border-left: 3px solid #b3e5fc;
+		border-bottom: 2px solid #b3e5fc;
+	}
+
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-update {
+		background-color: #f9fff6;
+		border-left: 3px solid #c5e1a5;
+		border-bottom: 2px solid #c5e1a5;
+	}
+
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-master-setup {
+		background-color: #fffaf6;
+		border-left: 3px solid #ffcc80;
+		border-bottom: 2px solid #ffcc80;
+	}
+
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-verification {
+		background-color: #f6f7ff;
+		border-left: 3px solid #b39ddb;
+		border-bottom: 2px solid #b39ddb;
+	}
+
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-document-manager,
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-document-finder {
+		background-color: #f6fffb;
+		border-left: 3px solid #80cbc4;
+		border-bottom: 2px solid #80cbc4;
+	}
+
+	.page-sidebar-menu .nav-item > .sub-menu {
+		background: transparent !important;
+	}
+
+	/* per-block hover colors (expanded only) */
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-entries > .nav-link:hover,
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-entries .sub-menu .nav-link:hover {
+		background-color: #b3e5fc !important;
+		color: #1f2937 !important;
+	}
+
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-entries .sub-menu li.active > .nav-link {
+		background-color: #b3e5fc !important;
+		color: #1f2937 !important;
+	}
+
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-entries .sub-menu .nav-link:hover .title {
+		color: #1f2937 !important;
+	}
+
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-update > .nav-link:hover,
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-update .sub-menu .nav-link:hover {
+		background-color: #c5e1a5 !important;
+		color: #1f2937 !important;
+	}
+
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-update .sub-menu li.active > .nav-link {
+		background-color: #c5e1a5 !important;
+		color: #1f2937 !important;
+	}
+
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-update .sub-menu .nav-link:hover .title {
+		color: #1f2937 !important;
+	}
+
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-master-setup > .nav-link:hover,
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-master-setup .sub-menu .nav-link:hover {
+		background-color: #ffcc80 !important;
+		color: #1f2937 !important;
+	}
+
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-master-setup .sub-menu li.active > .nav-link {
+		background-color: #ffcc80 !important;
+		color: #1f2937 !important;
+	}
+
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-master-setup .sub-menu .nav-link:hover .title {
+		color: #1f2937 !important;
+	}
+
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-verification > .nav-link:hover,
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-verification .sub-menu .nav-link:hover {
+		background-color: #b39ddb !important;
+		color: #1f2937 !important;
+	}
+
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-verification .sub-menu li.active > .nav-link {
+		background-color: #b39ddb !important;
+		color: #1f2937 !important;
+	}
+
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-verification .sub-menu .nav-link:hover .title {
+		color: #1f2937 !important;
+	}
+
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-document-manager > .nav-link:hover,
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-document-manager .sub-menu .nav-link:hover,
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-document-finder > .nav-link:hover,
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-document-finder .sub-menu .nav-link:hover {
+		background-color: #80cbc4 !important;
+		color: #1f2937 !important;
+	}
+
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-document-manager .sub-menu li.active > .nav-link,
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-document-finder .sub-menu li.active > .nav-link {
+		background-color: #80cbc4 !important;
+		color: #1f2937 !important;
+	}
+
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-document-manager .sub-menu .nav-link:hover .title,
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-document-finder .sub-menu .nav-link:hover .title {
+		color: #1f2937 !important;
+	}
+
+	/* keep header color as block color when item is open/active (override theme green) */
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-entries.open > .nav-link,
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-entries.active > .nav-link,
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-entries > .nav-link:focus {
+		background-color: #b3e5fc !important;
+		color: #1f2937 !important;
+	}
+
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-update.open > .nav-link,
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-update.active > .nav-link,
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-update > .nav-link:focus {
+		background-color: #c5e1a5 !important;
+		color: #1f2937 !important;
+	}
+
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-master-setup.open > .nav-link,
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-master-setup.active > .nav-link,
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-master-setup > .nav-link:focus {
+		background-color: #ffcc80 !important;
+		color: #1f2937 !important;
+	}
+
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-verification.open > .nav-link,
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-verification.active > .nav-link,
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-verification > .nav-link:focus {
+		background-color: #b39ddb !important;
+		color: #1f2937 !important;
+	}
+
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-document-manager.open > .nav-link,
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-document-manager.active > .nav-link,
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-document-manager > .nav-link:focus,
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-document-finder.open > .nav-link,
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-document-finder.active > .nav-link,
+	.page-sidebar-menu:not(.page-sidebar-menu-closed) .nav-item.block-document-finder > .nav-link:focus {
+		background-color: #80cbc4 !important;
+		color: #1f2937 !important;
+	}
+
+	.page-sidebar-menu.page-sidebar-menu-closed .nav-item.block-entries,
+	.page-sidebar-menu.page-sidebar-menu-closed .nav-item.block-update,
+	.page-sidebar-menu.page-sidebar-menu-closed .nav-item.block-master-setup,
+	.page-sidebar-menu.page-sidebar-menu-closed .nav-item.block-verification,
+	.page-sidebar-menu.page-sidebar-menu-closed .nav-item.block-document-manager,
+	.page-sidebar-menu.page-sidebar-menu-closed .nav-item.block-document-finder {
+		background-color: transparent !important;
+		border-left: none !important;
+		border-bottom: none !important;
+	}
+
+	.page-sidebar-menu.page-sidebar-menu-closed .nav-item {
+		margin: 0 !important;
+		border-radius: 0 !important;
+		box-shadow: none !important;
+	}
+
+		.page-sidebar-menu.page-sidebar-menu-closed .nav-item > .nav-link {
+			background: transparent !important;
+		}
+
+	#mymenuarea.highlight {
+		background-color: #c5c5c5 !important;
+	}
+</style>
+
+<input type="hidden" value="normal" class="menudraf" />
+<div>
+	<div class="page-sidebar navbar-collapse collapse" style=" height: 500px !important; overflow-y: auto !important;">
+		<ul class="page-sidebar-menu page-sidebar-menu-light" data-keep-expanded="true" data-auto-scroll="true" data-slide-speed="200">
+			<li class="sidebar-search-wrapper">
+				<form class="sidebar-search" action="" method="POST">
+					<a href="javascript:;" class="remove">
+						<i class="icon-close"></i>
+					</a>
+					<div class="input-group search-input">
+						<a href="#search">
+							<input type="text" class="form-control swith" placeholder="Search..." ng-model="searchText1">
+							<span class="input-group-btn search-icon">
+								<i class="icon-magnifier"></i>
+							</span>
+						</a>
+					</div>
+				</form>
+			</li>
+
+			@* {{menuList | json}}*@
+			<!--<li class="nav-item" ng-class="{'block-entries': abc.formName=='Entries', 'block-update': abc.formName=='Update', 'block-master-setup': abc.formName=='Master Setup', 'block-verification': abc.formName=='Verification', 'block-document-manager': abc.formName=='Document Manager', 'block-document-finder': abc.formName=='Document Finder'}" ng-repeat="abc in menuList| filter:searchText1" ng-include="'categoryTree'">
+		<a href="javascript:;" class="nav-link nav-toggle">
+			<i class="{{abc.iconPath}}" aria-hidden="true"></i>
+			<span class="title">{{abc.formName}}</span>
+			<span class="selected"></span>
+		</a>
+	</li>
+
+	<li class="nav-item" ng-repeat="cf in CustomMenu" ng-include="'categoryTree'">
+		<a href="javascript:;" class="nav-link nav-toggle">
+			<i class="{{cf.iconPath}}" aria-hidden="true"></i>
+			<span class="selected"></span>
+		</a>
+	</li>-->
+
+			<li class="nav-item ng-scope block-master-setup open">
+				<!-- ngIf: abc.groupSkuFlag=='G' && abc.urlForSetup==null --><a href="" class="nav-link nav-toggle ng-scope activeNav">
+					<i class="fa fa-cogs" aria-hidden="true"></i>
+					<span class="title ng-binding"> Master Setup</span>
+					<span class="selected"></span>
+					<span class="arrow open"></span>
+				</a><!-- end ngIf: abc.groupSkuFlag=='G' && abc.urlForSetup==null -->
+				<ul class="sub-menu ng-scope" style="display: block;">
+					<li class="start ng-scope">
+						<ul class="sub-menu ng-scope" style="display:none;">
+						</ul><!-- end ngIf: abc.formName -->
+
+
+						<a href="/QCQAManagement/Home/Index#!QCQA/ParameterSetup" class="nav-toggle ng-scope" id="mymenuarea">
+							<span style="display:none" class="ng-binding">/QCQAManagement/Home/Index#!QCQA/ParameterSetup &amp;   &amp; fa fa-edit &amp;  Parameter Setup</span>
+							<i class="fa fa-edit" aria-hidden="true"></i>
+							<span class="title ng-binding">1. Incoming RM Parameter Setup </span>
+						</a>
+						<a href="/QCQAManagement/Home/Index#!QCQA/ProductSetup" class="nav-toggle ng-scope" id="mymenuarea">
+							<span style="display:none" class="ng-binding">/QCQAManagement/Home/Index#!QCQA/ProductSetup &amp;   &amp; fa fa-edit &amp;  Product Setup</span>
+							<i class="fa fa-edit" aria-hidden="true"></i>
+							<span class="title ng-binding">2. Product Setup </span>
+						</a>
+						<a href="/QCQAManagement/Home/Index#!QCQA/ParameterInspectionSetup" class="nav-toggle ng-scope" id="mymenuarea">
+							<span style="display:none" class="ng-binding">/QCQAManagement/Home/Index#!QCQA/ParameterInspectionSetup &amp;   &amp; fa fa-edit &amp;  Parameter Inspection Setup</span>
+							<i class="fa fa-edit" aria-hidden="true"></i>
+							<span class="title ng-binding">3. Parameter Inspection Setup </span>
+						</a>
+						<a href="/QCQAManagement/Home/Index#!QCQA/FinishedGoodsSetup" class="nav-toggle ng-scope" id="mymenuarea">
+							<span style="display:none" class="ng-binding">/QCQAManagement/Home/Index#!QCQA/FinishedGoodsSetup &amp;   &amp; fa fa-edit &amp;  Finished Goods Setup</span>
+							<i class="fa fa-edit" aria-hidden="true"></i>
+							<span class="title ng-binding">4. Finished Goods Setup </span>
+						</a>
+						<a href="/QCQAManagement/Home/Index#!QCQA/InternalInspectionSetup" class="nav-toggle ng-scope" id="mymenuarea">
+							<span style="display:none" class="ng-binding">/QCQAManagement/Home/Index#!QCQA/InternalInspectionSetup &amp;   &amp; fa fa-edit &amp;  Finished Goods Setup</span>
+							<i class="fa fa-edit" aria-hidden="true"></i>
+							<span class="title ng-binding">5. Internal Inspection Setup </span>
+						</a>
+				</ul><!-- end ngIf: abc.formName -->
+				<!-- ngIf: abc.groupSkuFlag=='I' -->
+				<!-- ngIf: abc.groupSkuFlag=='G' && abc.urlForSetup!=null -->
+
+			</li>
+
+			<li class="nav-item block-document-finder open">
+
+				<a href="" class="nav-link nav-toggle ng-scope activeNav">
+					<i class="fa fa-exclamation-circle" aria-hidden="true"></i>
+					<span class="title ng-binding"> Form Entry </span>
+					<span class="selected"></span>
+					<span class="arrow open"></span>
+				</a>
+
+				<ul class="sub-menu" style="display: block;">
+
+					<li class="start ng-scope">
+
+						<ul class="sub-menu ng-scope"></ul>
+						<a href="/QCQAManagement/Home/Index#!QCQA/RawMaterial" class="nav-toggle ng-scope" id="mymenuarea">
+							<span style="display:none" class="ng-binding">/QCQAManagement/Home/Index#!QCQA/RawMaterial &amp;   &amp; fa fa-edit &amp;  Raw Material Testing</span>
+							<i class="fa fa-edit" aria-hidden="true"></i>
+							<span class="title ng-binding">1. Daily Raw Material Testing </span>
+						</a>
+						<a href="/QCQAManagement/Home/Index#!QCQA/IncomingMaterialDirect" class="nav-toggle ng-scope" id="mymenuarea">
+							<span style="display:none" class="ng-binding">/QCQAManagement/Home/Index#!QCQA/IncomingMaterialDirect &amp;   &amp; fa fa-edit &amp;  Incoming Material(Sample)</span>
+							<i class="fa fa-edit" aria-hidden="true"></i>
+							<span class="title ng-binding">2. Incoming Raw Materials Inspection(Sample) </span>
+						</a>
+						<a href="/QCQAManagement/Home/Index#!QCQA/IncomingMaterial" class="nav-toggle ng-scope" id="mymenuarea">
+							<span style="display:none" class="ng-binding">/QCQAManagement/Home/Index#!QCQA/IncomingMaterial &amp;   &amp; fa fa-edit &amp;  Incoming Material(QC)</span>
+							<i class="fa fa-edit" aria-hidden="true"></i>
+							<span class="title ng-binding">3. Incoming Raw Materials Inspection(QC) </span>
+						</a>
+						<a href="/QCQAManagement/Home/Index#!QCQA/OnSiteInspection" class="nav-toggle ng-scope" id="mymenuarea">
+							<span style="display:none" class="ng-binding">/QCQAManagement/Home/Index#!QCQA/OnSiteInspection &amp;   &amp; fa fa-edit &amp;  Onsite Inspection Form</span>
+							<i class="fa fa-edit" aria-hidden="true"></i>
+							<span class="title ng-binding">4. Onsite Inspection Form </span>
+						</a>
+						<a href="/QCQAManagement/Home/Index#!QCQA/InternalInspection" class="nav-toggle ng-scope" id="mymenuarea">
+							<span style="display:none" class="ng-binding">/QCQAManagement/Home/Index#!QCQA/InternalInspection &amp;   &amp; fa fa-edit &amp;  Internal Inspection Form</span>
+							<i class="fa fa-edit" aria-hidden="true"></i>
+							<span class="title ng-binding">5. Internal Inspection Form </span>
+						</a>
+						<a href="/QCQAManagement/Home/Index#!QCQA/HandOverInspection" class="nav-toggle ng-scope" id="mymenuarea">
+							<span style="display:none" class="ng-binding">/QCQAManagement/Home/Index#!QCQA/HandOverInspection &amp;   &amp; fa fa-edit &amp;  Handover Inspection Report</span>
+							<i class="fa fa-edit" aria-hidden="true"></i>
+							<span class="title ng-binding">6. Handover Inspection Report </span>
+						</a>
+						<a href="/QCQAManagement/Home/Index#!QCQA/PreDispatchInspection" class="nav-toggle ng-scope" id="mymenuarea">
+							<span style="display:none" class="ng-binding">/QCQAManagement/Home/Index#!QCQA/PreDispatchInspection &amp;   &amp; fa fa-edit &amp;  Product Setup</span>
+							<i class="fa fa-edit" aria-hidden="true"></i>
+							<span class="title ng-binding">7. Pre Dispatch Inspection Report </span>
+						</a>
+						<a href="/QCQAManagement/Home/Index#!QCQA/FinishedGoodsInspection" class="nav-toggle ng-scope" id="mymenuarea">
+							<span style="display:none" class="ng-binding">/QCQAManagement/Home/Index#!QCQA/FinishedGoodsInspection &amp;   &amp; fa fa-edit &amp;  Product Setup</span>
+							<i class="fa fa-edit" aria-hidden="true"></i>
+							<span class="title ng-binding">8. Received Finished Goods Inspection Report </span>
+						</a>
+						<a href="/QCQAManagement/Home/Index#!QCQA/DailyWastage" class="nav-toggle ng-scope" id="mymenuarea">
+							<span style="display:none" class="ng-binding">/QCQAManagement/Home/Index#!QCQA/DailyWastage &amp;   &amp; fa fa-edit &amp;  Daily Wastage Report</span>
+							<i class="fa fa-edit" aria-hidden="true"></i>
+							<span class="title ng-binding">9. Daily Wastage Record </span>
+						</a>
+						<a href="/QCQAManagement/Home/Index#!QCQA/SanitationHygiene" class="nav-toggle ng-scope" id="mymenuarea">
+							<span style="display:none" class="ng-binding">/QCQAManagement/Home/Index#!QCQA/SanitationHygiene &amp;   &amp; fa fa-edit &amp;  Sanitation Hygiene</span>
+							<i class="fa fa-edit" aria-hidden="true"></i>
+							<span class="title ng-binding">10. Sanitation & Hygiene Form</span>
+						</a>
+					</li>
+
+				</ul><!-- end ngIf: abc.formName -->
+			</li>
+
+			@*<li class="nav-item ng-scope block-verification open" ng-class="{'block-entries': abc.formName=='Entries', 'block-update': abc.formName=='Update', 'block-master-setup': abc.formName=='Master Setup', 'block-verification': abc.formName=='Verification', 'block-document-manager': abc.formName=='Document Manager', 'block-document-finder': abc.formName=='Document Finder'}" ng-repeat="abc in menuList| filter:searchText1" ng-include="'categoryTree'">*@
+			<li class="nav-item block-verification open">
+				<a href="" class="nav-link nav-toggle ng-scope activeNav">
+					<i class="fa fa-user-plus" aria-hidden="true"></i>
+					<span class="title ng-binding"> Report</span>
+					<span class="selected"></span>
+					<span class="arrow open"></span>
+				</a><!-- end ngIf: abc.groupSkuFlag=='G' && abc.urlForSetup==null -->
+				<ul class="sub-menu ng-scope" style="display: block;">
+					<li class="start ng-scope">
+						<ul class="sub-menu ng-scope" style="display:none;">
+						</ul><!-- end ngIf: abc.formName -->
+						<a href="/QCQAManagement/Home/Index#!QCQA/SanitationHygieneReport" class="nav-toggle ng-scope" id="mymenuarea">
+							<span style="display:none" class="ng-binding">/QCQAManagement/Home/Index#!QCQA/SanitationHygieneReport &amp;   &amp; fa fa-edit &amp;  Sanitation Report</span>
+							<i class="fa fa-edit" aria-hidden="true"></i>
+							<span class="title ng-binding">1. Sanitation Report </span>
+						</a>
+					</li><!-- end ngRepeat: abc in abc.Items| filter:searchText1 --><!-- ngInclude: 'categoryTree' -->
+				</ul><!-- end ngIf: abc.formName -->
+			</li>
+			@model List<NeoERP.QCQAManagement.Service.Models.SubMenu>
+			<li class="nav-item block-document-finder open">
+				<a href="" class="nav-link nav-toggle ng-scope activeNav">
+					<i class="fa fa-user-plus" aria-hidden="true"></i>
+					<span class="title ng-binding">QC Document Finder</span>
+					<span class="selected"></span>
+					<span class="arrow open"></span>
+				</a><!-- end ngIf: abc.groupSkuFlag=='G' && abc.urlForSetup==null -->
+				<ul class="sub-menu ng-scope" style="display: block;">
+					<li class="start ng-scope">
+						<ul class="sub-menu ng-scope" style="display:none;">
+						</ul><!-- end ngIf: abc.formName -->
+						@foreach (var item in Model)
+						{
+							<a href="/QCQAManagement/Home/Index#!QCQA/QCQADocumentFinder?formcode= @item.FORM_CODE" class="nav-toggle ng-scope" id="mymenuarea">
+								<span style="display:none" class="ng-binding">/QCQAManagement/api/Home/Index#!QCQA/QCQADocumentFinder &amp;   &amp; fa fa-edit &amp;  Sanitation Report</span>
+								<i class="fa fa-edit" aria-hidden="true"></i>
+								<span class="title ng-binding">(@item.FORM_CODE) @item.FORM_EDESC</span>
+							</a>
+						}
+					</li><!-- end ngRepeat: abc in abc.Items| filter:searchText1 --><!-- ngInclude: 'categoryTree' -->
+				</ul><!-- end ngIf: abc.formName -->
+			</li>
+
+			<!--<li class="nav-item block-verification open">
+				<a href="" class="nav-link nav-toggle ng-scope activeNav">
+					<i class="fa fa-user-plus" aria-hidden="true"></i>
+					<span class="title ng-binding">Verification</span>
+					<span class="selected"></span>
+					<span class="arrow open"></span>
+				</a>--><!-- end ngIf: abc.groupSkuFlag=='G' && abc.urlForSetup==null -->
+				<!--<ul class="sub-menu ng-scope" style="display: block;">
+					<li class="start ng-scope">
+						<ul class="sub-menu ng-scope" style="display:none;">
+						</ul>--><!-- end ngIf: abc.formName -->
+						<!--<a href="javascript:;" class="nav-link nav-toggle">
+							<i class="/QCQAManagement/Home/Index#!QCQA/ParameterSetup" aria-hidden="true"></i>
+							<span class="title">Check(All)</span>
+							<span class="selected"></span>
+						</a>
+					</li>--><!-- end ngRepeat: abc in abc.Items| filter:searchText1 --><!-- ngInclude: 'categoryTree' -->
+					<!--<li class="start ng-scope">
+						<ul class="sub-menu ng-scope" style="display:none;">
+						</ul>--><!-- end ngIf: abc.formName -->
+						<!--<a href="javascript:;" class="nav-link nav-toggle">
+							<i class="/QCQAManagement/Home/Index#!QCQA/ParameterSetup" aria-hidden="true"></i>
+							<span class="title">UnCheck(All)</span>
+							<span class="selected"></span>
+						</a>
+					</li>
+					<li class="start ng-scope">
+						<ul class="sub-menu ng-scope" style="display:none;">
+						</ul>--><!-- end ngIf: abc.formName -->
+						<!--<a href="javascript:;" class="nav-link nav-toggle">
+							<i class="/QCQAManagement/Home/Index#!QCQA/ParameterSetup" aria-hidden="true"></i>
+							<span class="title">Authorize(All)</span>
+							<span class="selected"></span>
+						</a>
+					</li>--><!-- end ngRepeat: abc in abc.Items| filter:searchText1 --><!-- ngInclude: 'categoryTree' -->
+					<!--<li class="start ng-scope">
+						<ul class="sub-menu ng-scope" style="display:none;">
+						</ul>--><!-- end ngIf: abc.formName -->
+						<!--<a href="javascript:;" class="nav-link nav-toggle">
+							<i class="/QCQAManagement/Home/Index#!QCQA/ParameterSetup" aria-hidden="true"></i>
+							<span class="title">UnAuthorize(All)</span>
+							<span class="selected"></span>
+						</a>
+					</li>
+					<li class="start ng-scope">
+						<ul class="sub-menu ng-scope" style="display:none;">
+						</ul>--><!-- end ngIf: abc.formName -->
+						<!--<a href="javascript:;" class="nav-link nav-toggle">
+							<i class="/QCQAManagement/Home/Index#!QCQA/ParameterSetup" aria-hidden="true"></i>
+							<span class="title">Post(All)</span>
+							<span class="selected"></span>
+						</a>
+					</li>--><!-- end ngRepeat: abc in abc.Items| filter:searchText1 --><!-- ngInclude: 'categoryTree' -->
+					<!--<li class="start ng-scope">
+						<ul class="sub-menu ng-scope" style="display:none;">
+						</ul>--><!-- end ngIf: abc.formName -->
+						<!--<a href="javascript:;" class="nav-link nav-toggle">
+							<i class="/QCQAManagement/Home/Index#!QCQA/ParameterSetup" aria-hidden="true"></i>
+							<span class="title">UnPost(All)</span>
+							<span class="selected"></span>
+						</a>
+					</li>
+				</ul>--><!-- end ngIf: abc.formName -->
+			<!--</li>-->
+
+
+
+
+			@*<li class="nav-item" ng-class="ng-scope block-master-setup open" ng-include="'categoryTree'">
+			<a href="javascript:;" class="nav-link nav-toggle">
+				<i class="/QCQAManagement/Home/Index#!QCQA/ParameterSetup" aria-hidden="true"></i>
+				<span class="title">Parameter Setup</span>
+				<span class="selected"></span>
+			</a>
+		</li>*@
+			@*<li class="nav-item ng-scope block-master-setup open">
+			<a href="/QCQAManagement/Home/Index#!QCQA/QCQASetup" class="nav-link nav-toggle">
+				<i class="fa fa-list" aria-hidden="true"></i>
+				<span class="title ng-binding">
+					Parameter Setup
+				</span>
+			</a>
+		</li>*@
+			@*<li class="start ng-scope">
+			<a href="/QCQAManagement/Home/Index#!QCQA/ProductSetup" class="nav-link nav-toggle ng-scope">
+				<i class="fa fa-list" aria-hidden="true"></i>
+				<span class="title ng-binding">
+					Product Setup
+				</span>
+			</a>
+		</li>
+		<li class="start ng-scope">
+			<a href="/QCQAManagement/Home/Index#!QCQA/ParameterInspectionSetup" class="nav-link nav-toggle ng-scope">
+				<i class="fa fa-list" aria-hidden="true"></i>
+				<span class="title ng-binding">
+					Parameter Inspection Setup
+				</span>
+			</a>
+		</li>*@
+			@*<li class="start ng-scope">
+			<a href="/QCQAManagement/Home/Index#!QCQA/FinishedGoodsSetup" class="nav-link nav-toggle ng-scope">
+				<i class="fa fa-list" aria-hidden="true"></i>
+				<span class="title ng-binding">
+					Finished Goods Setup
+				</span>
+			</a>
+		</li>*@
+			@*<li class="start ng-scope">
+			<a href="/QCQAManagement/Home/Index#!QCQA/OnSiteInspection" class="nav-link nav-toggle ng-scope">
+				<i class="fa fa-list" aria-hidden="true"></i>
+				<span class="title ng-binding">
+					Onsite Inspection Form
+				</span>
+			</a>
+		</li>
+		<li class="start ng-scope">
+			<a href="/QCQAManagement/Home/Index#!QCQA/InternalInspection" class="nav-link nav-toggle ng-scope">
+				<i class="fa fa-list" aria-hidden="true"></i>
+				<span class="title ng-binding">
+					Internal Inspection Form
+				</span>
+			</a>
+		</li>
+		<li class="start ng-scope">
+			<a href="/QCQAManagement/Home/Index#!QCQA/SanitationHygiene" class="nav-link nav-toggle ng-scope">
+				<i class="fa fa-list" aria-hidden="true"></i>
+				<span class="title ng-binding">
+					Sanitation Hygiene
+				</span>
+			</a>
+		</li>
+		<li class="start ng-scope">
+			<a href="/QCQAManagement/Home/Index#!QCQA/SanitationHygieneReport" class="nav-link nav-toggle ng-scope">
+				<i class="fa fa-list" aria-hidden="true"></i>
+				<span class="title ng-binding">
+					Sanitation Report
+				</span>
+			</a>
+		</li>
+		<li class="start ng-scope">
+			<a href="/QCQAManagement/Home/Index#!QCQA/IncomingMaterialDirect" class="nav-link nav-toggle ng-scope">
+				<i class="fa fa-list" aria-hidden="true"></i>
+				<span class="title ng-binding">
+					Incoming Raw Materials Inspection(Sample)
+				</span>
+			</a>
+		</li>
+		<li class="start ng-scope">
+			<a href="/QCQAManagement/Home/Index#!QCQA/IncomingMaterial" class="nav-link nav-toggle ng-scope">
+				<i class="fa fa-list" aria-hidden="true"></i>
+				<span class="title ng-binding">
+					Incoming Raw Materials Inspection(QC)
+				</span>
+			</a>
+		</li>
+		<li class="start ng-scope">
+			<a href="/QCQAManagement/Home/Index#!QCQA/RawMaterial" class="nav-link nav-toggle ng-scope">
+				<i class="fa fa-list" aria-hidden="true"></i>
+				<span class="title ng-binding">
+					Raw Material Testing
+				</span>
+			</a>
+		</li>
+		<li class="start ng-scope">
+			<a href="/QCQAManagement/Home/Index#!QCQA/DailyWastage" class="nav-link nav-toggle ng-scope">
+				<i class="fa fa-list" aria-hidden="true"></i>
+				<span class="title ng-binding">
+					Daily Wastage Report
+				</span>
+			</a>
+		</li>
+		<li class="start ng-scope">
+			<a href="/QCQAManagement/Home/Index#!QCQA/HandOverInspection" class="nav-link nav-toggle ng-scope">
+				<i class="fa fa-list" aria-hidden="true"></i>
+				<span class="title ng-binding">
+					Handover Inspection Report
+				</span>
+			</a>
+		</li>
+		<li class="start ng-scope">
+			<a href="/QCQAManagement/Home/Index#!QCQA/PreDispatchInspection" class="nav-link nav-toggle ng-scope">
+				<i class="fa fa-list" aria-hidden="true"></i>
+				<span class="title ng-binding">
+					Pre Dispatch Inspection Report
+				</span>
+			</a>
+		</li>
+		<li class="start ng-scope">
+			<a href="/QCQAManagement/Home/Index#!QCQA/FinishedGoodsInspection" class="nav-link nav-toggle ng-scope">
+				<i class="fa fa-list" aria-hidden="true"></i>
+				<span class="title ng-binding">
+					Finished Goods Inspection Report
+				</span>
+			</a>
+		</li>*@
+
+			@*<li class="nav-item">
+			<a href="/QCQAManagement/Home/Index#!QCQA/QCQASetup" class="nav-link nav-toggle">
+				<i class="fa fa-building" aria-hidden="true"></i>
+				<span class="title ng-binding">
+					Sample Format for QC Inspection
+				</span>
+			</a>
+		</li>
+		<li class="start ng-scope">
+			<a href="/QCQAManagement/Home/Index#!QCQA/QCQANumberSetup" class="nav-link nav-toggle ng-scope">
+				<i class="fa fa-list" aria-hidden="true"></i>
+				<span class="title ng-binding">
+					QC Number Setup
+				</span>
+			</a>
+		</li>*@
+			@*<li class="start ng-scope">
+		<a href="/QCQAManagement/Home/Index#!QCQA/ParameterSetup" class="nav-link nav-toggle ng-scope">*@
+			@*
+		<li class="start ng-scope">
+			<a href="/QCQAManagement/Home/Index#!QCQA/QuotationSetup" class="nav-link nav-toggle ng-scope">
+				<i class="fa fa-list" aria-hidden="true"></i>
+				<span class="title ng-binding">
+					Sample Format for Defect Analysis
+				</span>
+			</a>
+		</li>
+		<li class="start ng-scope">
+			<a href="/QCQAManagement/Home/Index#!QM/SummaryReport" class="nav-link nav-toggle ng-scope">
+				<i class="fa fa-registered" aria-hidden="true"></i>
+				<span class="title ng-binding">Summary Report</span>
+			</a>
+		</li>*@
+			@*<li class="start ng-scope">
+			<a href="/QCQAManagement/Home/Index#!QCQA/LabTesting" class="nav-link nav-toggle ng-scope">
+				<i class="fa fa-list" aria-hidden="true"></i>
+				<span class="title ng-binding">
+					Lab Testing Report
+				</span>
+			</a>
+		</li>*@
+			@*<li class="start ng-scope">
+			<a href="/QCQAManagement/Home/Index#!QCQA/OnSiteInspection" class="nav-link nav-toggle ng-scope">
+				<i class="fa fa-list" aria-hidden="true"></i>
+				<span class="title ng-binding">
+					OnSite Inspection Form
+				</span>
+			</a>
+		</li>*@
+			@*<li class="start ng-scope">
+			<a href="/QCQAManagement/Home/Index#!QCQA/GlobalAgroProducts" class="nav-link nav-toggle ng-scope">
+				<i class="fa fa-list" aria-hidden="true"></i>
+				<span class="title ng-binding">
+					Global Agro Products
+				</span>
+			</a>
+		</li>*@
+		</ul>
+	</div>
+</div>
+<script type="text/javascript">
+	//$('.fa-edit').click(function () {
+	//	alert(2);
+	//});
+	//$('.title .ng-binding').click(function () {
+	//	alert(3);
+	//});
+	//$('#mymenuarea').find('.fa .fa-edit').on('click', function (e) {
+	//	e.preventDefault;
+	//	alert(1);
+	//	$(this).parent().parent().addClass('active123')
+	//	$(this).addClass('hello');
+	//});
+
+	$('.ng-binding').click(function (e) {
+		e.preventDefault;
+		//$(".ng-binding").removeClass("highlight");
+		//$(this).addClass("highlight");
+		$(".ng-binding").parent('#mymenuarea').removeClass("highlight"); // remove from all
+		$(this).parent('#mymenuarea').addClass('highlight');
+		/*$(this).parent('#mymenuarea').css("background-color", "grey");*/
+		//$(this).parent('#mymenuarea').addClass('active');
+		/*$(this).parent().parent().addClass('active');*/
+	})
+
+	//$(".page-sidebar-menu > li").on('click', function () {
+	//	if (!$(this).hasClass('nav-item')) {
+	//		alert(4);
+	//		$('.page-sidebar-menu').find('li').removeClass('active');
+	//		$(this).addClass('active');
+	//	}
+	//});
+
+
+	//$(".sub-menu > li").on('click', function () {
+	//	$('.page-sidebar-menu').find('li').removeClass('active');
+	//	$(this).parent().parent().addClass('active')
+	//	$(this).addClass('active');
+	//});
+	//$(".page-sidebar-menu > li").on('click', function () {
+	//	if (!$(this).hasClass('nav-item')) {
+	//		$('.page-sidebar-menu').find('li').removeClass('active');
+	//		$(this).addClass('active');
+	//	}
+	//});
+</script>
+@*<script type="text/ng-template" id="categoryTree">
+		<a href="{{abc.urlForSetup}}" class="nav-link nav-toggle" ng-if="abc.groupSkuFlag=='G' && abc.urlForSetup==null">
+			<i class="{{abc.iconPath}}" aria-hidden="true"></i>
+			<span class="title"> {{ abc.formName }}</span>
+			<span class="selected"></span>
+			<span class="arrow"></span>
+		</a>
+		<ul class="sub-menu" ng-if="abc.formName" style="display:none;">
+			<li class="start" ng-repeat="abc in abc.Items| filter:searchText1" ng-include="'categoryTree'">
+			</li>
+		</ul>
+		<a href="{{abc.urlForSetup}}" class="nav-link nav-toggle" id="mymenuarea_{{25000 | randomize}}" ng-mousedown="Menuclick($event)" ng-if="abc.groupSkuFlag=='I'">
+			<span style="display:none">{{abc.urlForSetup}} &  {{abc.formId}} & {{abc.iconPath}} &  {{ abc.formName }}</span>
+			<i class="{{abc.iconPath}}" aria-hidden="true"></i>
+			<span class="title"> {{ abc.formName }} </span>
+		</a>
+		<a href="{{abc.urlForSetup}}" class="nav-link nav-toggle" id="mymenuarea_{{25000 | randomize}}" ng-mousedown="Menuclick($event)" ng-if="abc.groupSkuFlag=='G' && abc.urlForSetup!=null">
+			<span style="display:none">{{abc.urlForSetup}} &  {{abc.formId}} & {{abc.iconPath}} &  {{ abc.formName }}</span>
+			<i class="{{abc.iconPath}}" aria-hidden="true"></i>
+			<span class="title"> {{ abc.formName }}</span>
+		</a>
+
+	</script>*@
+@*<script>
+		$("#AddToFolder").click(function () {
+			var MenuId = window.menutarget;
+			var WebDesktopManagement = {};
+			WebDesktopManagement = {
+				FORM_CODE: "",
+				HREF: $($($(MenuId)[0]).find("span")[0]).text().split("&")[0],
+				COLOR: "#929292",
+				ICON_PATH: $($($(MenuId)[0]).find("span")[0]).text().split("&")[2],
+				FORM_TYPE: "",
+				ABBR: "",
+				FORM_DESC: "",
+				PREV_FOLDER_NAME: "Menu",
+				NEW_FOLDER_NAME: "Menu",
+				FUNCTION_LINK: "",
+				TEMPLATE_CODE: "",
+				MENU_EDESC: $($($(MenuId)[0]).find("span")[0]).text().split("&")[3],
+				MENU_NO: "",
+				SideBarMenu: true
+			};
+			$.ajax({
+				type: "POST",
+				url: "/Template/AddMenuFolderTemplate",
+				data: { webDesktopManagement: WebDesktopManagement },// now data come in this function
+				dataType: "html",
+				success: function (response) {
+
+					$("#FolderTemplate").html("");
+					$("#FolderTemplate").html(response);
+					window.menutarget = "";
+					RESET();
+				},
+				error: function (response) {
+				}
+			});
+		});
+		$(function () {
+			$(".page-sidebar-menu1").slimScroll({
+				position: 'left',
+				alwaysVisible: false,
+				height: window.innerHeight - 35,
+			});
+			$(".sub-menu > li").on('click', function () {
+				$('.page-sidebar-menu').find('li').removeClass('active');
+				$(this).parent().parent().addClass('active')
+				$(this).addClass('active');
+			});
+			$(".page-sidebar-menu > li").on('click', function () {
+				if (!$(this).hasClass('nav-item')) {
+					$('.page-sidebar-menu').find('li').removeClass('active');
+					$(this).addClass('active');
+				}
+			});
+			$('a[href="#search"]').on('click', function (event) {
+
+				event.preventDefault();
+				$('#search').addClass('open');
+				$('#search > form > input[type="search"]').focus();
+			});
+			$('#search, #search button.search-close').on('click keyup', function (event) {
+				if (event.target == this || event.target.className == 'search-close' || event.keyCode == 27) {
+					$(this).removeClass('open');
+				}
+			});
+			$('form').submit(function (event) {
+				event.preventDefault();
+				return false;
+			})
+		});
+	</script>
+	<script>
+		(function () {
+			var $sidebar = $('.page-sidebar-menu');
+
+			function disableHoverBehavior() {
+				// remove title attributes (save them)
+				$sidebar.find('[title]').each(function () {
+					var $el = $(this);
+					if (!$el.data('savedTitle')) $el.data('savedTitle', $el.attr('title'));
+					$el.removeAttr('title');
+				});
+				// hide any existing tooltip/popover elements that might be present
+				$('.sidebar-hover, .page-sidebar-hover, .menu-tooltip, .menu-popover, .tooltip, [role="tooltip"]').hide();
+			}
+
+			function enableHoverBehavior() {
+				// restore titles
+				$sidebar.find('[data-savedTitle]').each(function () {
+					var $el = $(this);
+					$el.attr('title', $el.data('savedTitle'));
+					$el.removeData('savedTitle');
+				});
+			}
+
+			function update() {
+				if ($sidebar.hasClass('page-sidebar-menu-closed') || $sidebar.closest('.page-sidebar').hasClass('page-sidebar-closed')) {
+					disableHoverBehavior();
+				} else {
+					enableHoverBehavior();
+				}
+			}
+
+			// run once on ready
+			$(document).ready(function () {
+				setTimeout(update, 50); // small delay to allow initial classes to settle
+			});
+
+			// watch clicks on common toggler(s) and re-run after toggle
+			$(document).on('click', '.sidebar-toggler, .sidebar-collapse, .menu-toggler, .page-header .menu-toggler', function () {
+				setTimeout(update, 50);
+			});
+
+			// MutationObserver to detect class changes on the sidebar element (robust)
+			var sidebarNode = $sidebar.get(0);
+			if (sidebarNode && window.MutationObserver) {
+				var obs = new MutationObserver(function (mutations) {
+					mutations.forEach(function (m) {
+						if (m.attributeName === 'class') update();
+					});
+				});
+				obs.observe(sidebarNode, { attributes: true, attributeFilter: ['class'] });
+			}
+		})();
+	</script>*@

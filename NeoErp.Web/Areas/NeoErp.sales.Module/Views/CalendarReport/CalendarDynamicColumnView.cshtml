@@ -1,0 +1,153 @@
+﻿
+@using NeoErp.Sales.Modules.Services.Models.CalendarReport
+@model IEnumerable<CalendarColumnRange>
+
+<!-- BEGIN PAGE CONTENT-->
+<div class="col-md-12">
+    <div class="portlet light bordered">
+
+        <div class="portlet-body form">
+            <div class="row">
+                <div id="calendar-treelist"></div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+
+    td[role]{
+        padding:0px 5px 0px 5px !important;
+
+
+
+    }
+    .border-head{
+        border-right:solid #c5c5c5 1px;
+        line-height:25px !important;
+
+    }
+
+
+    td[role] tr th
+    {
+        white-space: nowrap !important;
+
+      text-overflow: ellipsis !important;
+              overflow:hidden !important;
+
+    }
+
+
+    .mySpan{
+        font-size:9px;
+        //color:#4343a2;
+        text-align:center !important;
+        display:block !important;
+
+
+    }
+
+
+
+</style>
+
+
+<!-- END PAGE CONTENT-->
+
+<script type="text/javascript">
+
+    function myCustomFunction(arrey, header) {
+        var result = $.grep(arrey, function (e) { return e.ColumnRangeNameSecond === header; });
+
+        var value = "";
+        if (result.length == 0) {
+            //value = "-";
+            value = "<table><tr><th class='border-head'><span class='mySpan'>-</span></th>" + "<th><span class='mySpan'>-</span></th></tr></table>";
+        }
+        else if (result.length == 1) {
+            //value = "<span style='font-size:9px;color:blue;'>" + result[0].SubColumnFirst + "</span> | " + "<span style='font-size:9px;color:red;'>" + result[0].SubColumnSecond + "</span>";
+            value = "<table><tr><th class='border-head'><span class='pull-left mySpan'>" + result[0].SubColumnFirst + "</span></th>" + "<th><span class='pull-right mySpan'>" + result[0].SubColumnSecond + "</span></th></tr></table>";
+        }
+        return value;
+    }
+
+    $(document).ready(function () {
+        var service = window.location.protocol + "//" + window.location.host + "/api/CalendarReport/GetCalendarReport";
+        BindGrid(service);
+    });
+
+    function BindGrid(serviceUrl) {
+        var dataSource = new kendo.data.TreeListDataSource({
+            transport: {
+                read: {
+                    url: serviceUrl,
+                    dataType: "json",
+                    type: "POST",
+                    data: function (paramData) {
+                        var treeList = $("#calendar-treelist").data("kendoTreeList");
+                        var dataSource = treeList.dataSource;
+                        if (paramData.id) {
+                            var parentNode = dataSource.get(data.id);
+                            return $.extend(calendar.filters(), data.id);
+                        }
+                        return calendar.filters();
+                    }
+                },
+                schema: {
+                    model: {
+                        id: "Id",
+                        parentId: "ParentId",
+                        fields: {
+                            ParentId: { field: "ParentId", type: "number", nullable: false },
+                            Id: { field: "Id", type: "number", nullable: false },
+                        },
+                    }
+                }
+            }
+        });
+
+        $("#calendar-treelist").kendoTreeList({
+            dataSource: dataSource,
+            height: 540,
+            autoBind: false,
+            columns: [
+                 {
+                     field: "Description",
+                     title: "Description",
+                     width: 280,
+                 },
+                @foreach (var item in Model.Select(q=>q.SecondHorizontalPeriod).Distinct())
+                {
+                <text>
+                    {
+                        headerTemplate: '<div>' + '@item' + '<p><span class="pull-left" style="font-size:9px;color:\\#00004d;">Amt</span> | <span class="pull-right" style="font-size:9px;color:\\#331a00;">Qty</span></p></div>',
+                        format: "{0:n}",
+                        template: " #= kendo.format('{0:n}', myCustomFunction(RangeColumnData,'@item') )#",
+                        attributes: {
+                            style: "text-align: center;"
+                        },
+                        width: 120
+                    },
+                    </text>
+                }
+                {
+                    field: "NetAmount",
+                    title: "Total",
+                    format: "{0:n}",
+                    attributes: {
+                        style: "text-align: right;"
+                    },
+                    width: 90
+                }
+            ],
+            columnMenu: {
+                columns: true
+            },
+            resizable: false
+        });
+
+    }
+
+</script>

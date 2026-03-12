@@ -1,0 +1,427 @@
+﻿@using PagedList;
+@using PagedList.Mvc
+@using NeoErp.Models.LogServiceModel
+@model IPagedList<NeoErp.Models.FileNames>
+
+@{
+    ViewBag.Title = "Log View";
+    var DbModel = (IPagedList<LogServiceViewModel>)ViewBag.Result;
+
+}
+<link href="@Styles.Url("~/Content/MainTheme/NotifyBar/css/jquery.notifyBar.css")" rel="stylesheet" />
+<script src="@Scripts.Url("~/Content/MainTheme/NotifyBar/jquery.notifyBar.js")">
+</script>
+
+<style>
+    table.dataTable thead .sorting:after,
+    table.dataTable thead .sorting:before,
+    table.dataTable thead .sorting_asc:after,
+    table.dataTable thead .sorting_asc:before,
+    table.dataTable thead .sorting_asc_disabled:after,
+    table.dataTable thead .sorting_asc_disabled:before,
+    table.dataTable thead .sorting_desc:after,
+    table.dataTable thead .sorting_desc:before,
+    table.dataTable thead .sorting_desc_disabled:after,
+    table.dataTable thead .sorting_desc_disabled:before {
+        bottom: .5em;
+    }
+</style>
+
+<script>
+    $(document).ready(function () {
+        $('#dtLogFromFile').DataTable();
+        var dbTable = $('#dtLogFromDataBase').DataTable();
+
+
+        $('#dtLogFromDataBase tbody').on('click', 'tr', function () {
+            var name = $('td', this).eq().text();
+            var data = dbTable.row(this).data()[1];
+           // alert(data);
+            $("#logDate").val(dbTable.row(this).data()[1]);
+            $("#logMessage").val(dbTable.row(this).data()[5]);
+            $('#detailsLogViewer').modal("show");
+        });
+        $('.dataTables_length').addClass('bs-select');
+
+
+        $("#btnDeleteLogInBulk").on('click', function () {
+            var result = confirm("Are you sure you want to delete all log??");
+            if (result) {
+                $.ajax({
+                    url: 'DeleteAllLog',
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.Status == true) {
+                            DisplayBarNotificationMessage(response.Message);
+                            location.reload(true);
+                        }
+                    }
+                });
+            }
+        })
+
+        $("#btnDeleteLogInFilter").on('click', function () {
+            $("#logClearFilterDialog").modal("show");
+        })
+
+        var todayDate = kendo.toString(kendo.parseDate(new Date()), 'MM/dd/yyyy');
+        //$("#StartDate").data("kendoDatePicker").value(todayDate);
+
+        $("#fromDate").kendoDatePicker({
+            format: "MM/dd/yyyy",
+            value: new Date()
+        });
+        $("#toDate").kendoDatePicker({
+            format: "MM/dd/yyyy",
+            value: new Date()
+        });
+
+
+        //$("#deleteLogWithFilter").on('click', function () {
+        //    var fromDate = $("#fromDate").val();
+        //    var toDate = $("#toDate").val();
+        //    var subModule = $("#LogSubModule").val();
+        //    var module = $("#LogModule").val();
+        //    $.ajax({
+        //        url: 'DeleteLog',
+        //        dataType:'json',
+        //        data: { fromDate: fromDate, toDate: toDate, module: module, subModule: subModule },
+        //        success: function (response) {
+        //            if (response.Status == true) {
+        //                alert(JSON.stringify(response.Message));
+        //                $("#logClearFilterDialog").modal("toggle");
+        //                location.reload(true);
+        //            }
+        //        }, error: function (errResponse) {
+        //            alert(JSON.stringify(errResponse));
+        //        }
+        //    });
+        //});
+
+
+        $("#deleteLogWithFilter").on('click', function () {
+            // e.preventDefault();
+            var fromDate = $("#fromDate").val();
+            var toDate = $("#toDate").val();
+            var subModule = $("#LogSubModule").val();
+            var module = $("#LogModule").val();
+            $.ajax({
+                url: 'DeleteLog',
+                dataType: 'json',
+                data: { fromDate: fromDate, toDate: toDate, module: module, subModule: subModule },
+                success: function (response) {
+                    if (response.Status == true) {
+                      //  alert(JSON.stringify(response.Message));
+                        DisplayBarNotificationMessage(response.Message);
+                        $("#logClearFilterDialog").modal("toggle");
+                        location.reload(true);
+                    }
+                }, error: function (errResponse) {
+                    DisplayBarNotificationMessage(JSON.stringify(errResponse));
+                }
+            });
+        });
+
+
+    });
+    
+</script>
+
+<div class="page-content-wrapper" id="operationContent">
+    <div class="page-content full-width" style="min-height:310px">
+
+        <div class="page-bar bargap">
+            <ul class="page-breadcrumb">
+                <li>
+                    <i class="fa fa-pencil-square-o"></i>
+
+                    <a href="~/Home/Index">Log Viewer</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>
+            </ul>
+            <div class="page-toolbar">
+                <div class="btn-group pull-right">
+
+                    <div class="actions">
+                        <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                            <i class="icon-control-play"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="divList">
+            <div class="row">
+                <div class="col-md-12">
+                    <!-- BEGIN EXAMPLE TABLE PORTLET-->
+                    <div class="portlet box grey-cascade">
+                        <div class="portlet-title">
+                            <div class="caption menutitle">
+                                <i class="fa fa-pencil-square-o" aria-hidden="true"></i>
+                                View Log From File
+                            </div>
+                            <div class="tools">
+                                <a href="javascript:;" class="collapse">
+                                </a>
+                                <a href="#portlet-config" data-toggle="modal" class="config">
+                                </a>
+                                <a href="javascript:;" class="reload" ng-click="ReloadGrid()">
+                                </a>
+                                <a href="javascript:;" class="remove">
+                                </a>
+                            </div>
+                        </div>
+                        <div class="portlet-body menu-controle">
+                            <div class="tblresponsive">
+                                <table class="table table-hover table-bordered datatable menucontrole-table" id="dtLogFromFile">
+                                    <thead>
+                                        <tr>
+                                            <th><b>SN</b></th>
+                                            <th><b>@Html.ActionLink("FileName", "LogView", new { sortOn = "FileName", orderBy = ViewBag.OrderBy, pSortOn = ViewBag.SortOn, keyword = ViewBag.Keyword })</b></th>
+                                            @*<th><b>Created Date</b></th>*@
+                                            <th><b>@Html.ActionLink("CreatedDate", "LogView" ,new{sortOn = "CreatedDate" , orderBy=ViewBag.OrderBy,pSortOn=ViewBag.SortOn,keyword=ViewBag.Keyword }) </b></th>
+                                            <th><b>Action</b></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in Model)
+                                        {
+                                        <tr>
+                                            <td>
+                                                &nbsp;@Html.DisplayFor(modelItem => item.FileId)
+                                            </td>
+                                            <td>
+                                                &nbsp; @Html.DisplayFor(modelItem => item.FileName)
+                                            </td>
+                                            <td>
+                                                &nbsp; @item.CreatedDate.ToShortDateString()
+                                            </td>
+                                            <td>
+                                                &nbsp; @Html.ActionLink("Download", "Download", new { id = item.FileId, isLog = true })
+
+                                            </td>
+                                        </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                                <div class="pagedList">
+                                    @Html.PagedListPager(Model, page => Url.Action("LogView", new
+                                    {
+                                    page,
+                                    sortOn = ViewBag.SortOn,
+                                    orderBy = ViewBag.OrderBy,
+                                    pSortOn =
+                                    ViewBag.SortOn,
+                                    keyword = ViewBag.Keyword
+                                    }),
+                                    PagedListRenderOptions.ClassicPlusFirstAndLast)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- END EXAMPLE TABLE PORTLET-->
+
+
+
+                </div>
+            </div>
+        </div>
+
+        <hr />
+
+        <div class="row">
+
+            <div class="col-md-10"><h2>View Log From Database</h2></div>
+
+            <div class="col-md-2">
+                <button type="button" id="btnDeleteLogInBulk" class="btn btn-success">Clear All</button>
+                <button type="button" id="btnDeleteLogInFilter" class="btn btn-success">Clear With</button>
+            </div>
+
+        </div>
+
+        <div class="divList">
+            <div class="row">
+                <div class="col-md-12">
+                    <!-- BEGIN EXAMPLE TABLE PORTLET-->
+                    <div class="portlet box grey-cascade">
+                        <div class="portlet-title">
+                            <div class="caption menutitle">
+                                <i class="fa fa-pencil-square-o" aria-hidden="true"></i>
+                                View Log From File
+                            </div>
+                            <div class="tools">
+                                <a href="javascript:;" class="collapse">
+                                </a>
+                                <a href="#portlet-config" data-toggle="modal" class="config">
+                                </a>
+                                <a href="javascript:;" class="reload" ng-click="ReloadGrid()">
+                                </a>
+                                <a href="javascript:;" class="remove">
+                                </a>
+                            </div>
+                        </div>
+                        <div class="portlet-body menu-controle">
+                            <div class="tblresponsive">
+                                <table class="table table-hover table-bordered datatable menucontrole-table" id="dtLogFromDataBase">
+                                    <thead>
+                                        <tr>
+                                            <th><b>ID</b></th>
+                                            <th><b>Date</b></th>
+                                            <th><b>Level</b></th>
+                                            <th><b>Thread</b></th>
+                                            <th><b>Logger</b></th>
+                                            <th><b>Message</b></th>
+                                            <th><b>User</b></th>
+                                            <th><b>Company</b></th>
+                                            <th><b>Branch</b></th>
+                                            <th><b>Type</b></th>
+                                            <th><b>Module</b></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in DbModel)
+                                        {
+                                            <tr>
+                                                <td>@item.LOG_ID</td>
+                                                <td>@item.LOG_DATE</td>
+                                                <td>@item.LOG_LEVEL</td>
+                                                <td>@item.LOG_THREAD</td>
+                                                <td>@item.LOG_LOGGER</td>
+                                                <td>@item.LOG_MESSAGE</td>
+                                                <td>@item.LOG_USER</td>
+                                                <td>@item.LOG_COMPANY</td>
+                                                <td>@item.LOG_BRANCH</td>
+                                                <td>@item.LOG_TYPECODE</td>
+                                                <td>@item.LOG_MODULE </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- END EXAMPLE TABLE PORTLET-->
+
+
+
+                </div>
+            </div>
+        </div>
+
+
+
+
+        <div class="modal fade" id="detailsLogViewer" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">�</button>
+                        <h3 class="modal-title">Details Log View</h3>
+
+                    </div>
+                    <div class="modal-body">
+
+                        <div class="row dataTable">
+                            <div class="col-md-4">
+                                <label class="control-label">Date</label>
+                            </div>
+                            <div class="col-md-8">
+                                <input type="text" class="form-control" maxlength="50" id="logDate" name="logDate" style="border:none !important;">
+                                @*<span class="form-control" id="logDate" name="logDate" />*@
+                            </div>
+                        </div>
+
+                        <br>
+
+                        <div class="row dataTable">
+                            <div class="col-md-4">
+                                <label class="control-label">Log Message</label>
+                            </div>
+                            <div class="col-md-8">
+                                <input type="text" class="form-control" maxlength="30" id="logMessage" name="logMessage" style="border:none !important;">
+                                @*<span class="form-control" id="logMessage" name="logMessage" />*@
+                            </div>
+                        </div>
+                        <br>
+                    </div>
+                    <div class="modal-footer">
+                        <!--<button type="button" class="btn btn-default " data-dismiss="modal">Apply!</button>-->
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="logClearFilterDialog" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form id="filterForLogDelete">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">�</button>
+                            <h3 class="modal-title">Delete Log Of: </h3>
+
+                        </div>
+                        <div class="modal-body">
+
+                            <div class="row dataTable">
+
+                                <div class="col-md-4">
+                                    <label class="control-label">From:</label>
+                                </div>
+                                <div class="col-md-8">
+                                    <input type="text" class="form-control" id="fromDate" name="fromDate" />
+                                </div>
+                            </div>
+
+                            <br>
+
+                            <div class="row dataTable">
+                                <div class="col-md-4">
+                                    <label class="control-label">To:</label>
+                                </div>
+                                <div class="col-md-8">
+                                    <input type="text" class="form-control" id="toDate" name="toDate" />
+                                </div>
+                            </div>
+
+                            <br />
+
+                            <div class="row dataTable">
+                                <div class="col-md-4">
+                                    <label class="control-label">Module:</label>
+                                </div>
+                                <div class="col-md-8">
+                                    @*<input type="text" class="form-control" maxlength="30" id="logMessage" name="logMessage">*@
+                                    @Html.DropDownList("LogModule", null, new { @class = "form-control" })
+                                </div>
+                            </div>
+                            <br>
+                            <div class="row dataTable">
+                                <div class="col-md-4">
+                                    <lable class="control-label">Sub Module:</lable>
+                                </div>
+                                <div class="col-md-8">
+                                    @*<input type="text" class="form-control" id="txtModuleType" name="txtModuleType" />*@
+                                    @Html.DropDownList("LogSubModule", null, new { @class = "form-control" })
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" id="deleteLogWithFilter" name="deleteLogWithFilter">Apply</button>
+                            <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+</div>
+
+
+

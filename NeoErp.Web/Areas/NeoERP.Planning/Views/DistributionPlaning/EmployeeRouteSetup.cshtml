@@ -1,0 +1,155 @@
+﻿@{
+    ViewBag.Title = "Sales Person Route Plan";
+    Layout = null;
+    string routecode = ViewBag.routecode;
+}
+<style>
+    .multiselectCell {
+        height: 70px;
+    }
+
+    #generateplan input, .k-multiselect-wrap.k-floatwrap, #planSetupForm .k-dropdown-wrap {
+        height: 70px !important;
+    }
+
+    .k-grid-header th.k-header, .k-filter-row th {
+        text-align: center;
+    }
+    /*checkbox*/
+    .TriSea-technologies-Switch > input[type="checkbox"] {
+        display: none;
+    }
+
+    .TriSea-technologies-Switch > label {
+        cursor: pointer;
+        height: 0px;
+        position: relative;
+        width: 40px;
+    }
+
+        .TriSea-technologies-Switch > label::before {
+            background: rgb(0, 0, 0);
+            box-shadow: inset 0px 0px 10px rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            content: '';
+            height: 16px;
+            margin-top: -8px;
+            position: absolute;
+            opacity: 0.3;
+            transition: all 0.4s ease-in-out;
+            width: 40px;
+        }
+
+        .TriSea-technologies-Switch > label::after {
+            background: rgb(255, 255, 255);
+            border-radius: 16px;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.3);
+            content: '';
+            height: 24px;
+            left: -4px;
+            margin-top: -8px;
+            position: absolute;
+            top: -4px;
+            transition: all 0.3s ease-in-out;
+            width: 24px;
+        }
+
+    .TriSea-technologies-Switch > input[type="checkbox"]:checked + label::before {
+        background: inherit;
+        opacity: 0.5;
+    }
+
+    .TriSea-technologies-Switch > input[type="checkbox"]:checked + label::after {
+        background: inherit;
+        left: 20px;
+    }
+</style>
+<div class="common">
+    <div class="portlet light bordered">
+        <div class="portlet-title">
+            <div class="caption">
+                <i class="icon-speech font-green-haze"></i>
+                <span class="caption-subject font-green-haze bold uppercase"> Sales Person Route Plan </span>
+                <span class="caption-helper"></span>
+            </div>
+            <div class="actions pull-right">
+                <button type="button" ng-click="cancelEmployeeRoutePlan()" class="btn btn-circle btn-default btn-sm"><i class="fa fa-times"></i> Cancel</button>
+                <button type="submit" ng-click="SaveEmployeeRoutePlan()" class="btn btn-circle btn-green btn-sm"><i class="fa fa-save"></i> Save</button>
+            </div>
+        </div>
+        <div class="portlet-body">
+            <div class="route_plan">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="routes" class="col-md-3" style="padding-left:0px;">Select Route plan</label>
+                        <div class="col-md-4" style="padding-left:0px;">
+                            <select id="routes"
+                                    kendo-drop-down-list style="width: 100%"
+                                    k-options="routesOptions"></select>
+                        </div>    
+                        <div class="col-md-4" style="padding-left:0px;">
+                            <select id="groups" k-ng-model="selectedEmpGroup"
+                                    kendo-drop-down-list style="width: 100%"
+                                    k-options="empGroupOptions"></select>
+                        </div>  
+                    </div>   
+                    <div class="col-md-6"  ng-if="planSelected">
+                        <div class="col-md-8">
+                            <label for="customday" class="col-md-3 col-md-offset-6">Freq In Days</label>
+                            <div class="col-md-3">
+                                <input type="number" id="customday" name="customday" min="1" ng-model="customfrequencyday" class="form-control input-sm" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            @*<label for="frequencyWiseUserAssign" ng-if="planSelected">
+                                Auto-fill Frequency
+                                <input type="radio" name="frequencyWiseUserAssign" id="frequencyWiseUserAssign_no" value="no" ng-model="frequencyWiseUserAssign" /> No
+                                <input type="radio" name="frequencyWiseUserAssign" id="frequencyWiseUserAssign_yes" value="yes" ng-model="frequencyWiseUserAssign" /> Yes
+                            </label>*@
+                            <label for="frequencyWiseUserAssign">Auto-fill Frequency</label>
+                            <div class="TriSea-technologies-Switch pull-right">
+                                <input id="frequencyWiseUserAssign" name="frequencyWiseUserAssign" type="checkbox"  ng-model="frequencyWiseUserAssign" value="yes" />
+                                <label for="frequencyWiseUserAssign" class="label-primary"></label>
+                            </div>
+                            
+                        </div>                        
+                    </div>                 
+                </div>
+                <div class="clearfix"></div>
+                <div class="row">
+                    <div>
+                        <div class="col-md-12" style="border-bottom:solid 1px #eeeeee" ng-if="planSelected">
+                            <label>
+                                You choosed :
+                                Plan:<strong> {{routePlanDetail.planname}} </strong>,
+                                Start Date : <strong>{{routePlanDetail.startdate |date}} ({{routePlanDetail.nstartdate}})</strong>,
+                                End Date: <strong>{{routePlanDetail.enddate |date}} ({{routePlanDetail.nenddate}})</strong> ,
+                                Frequency:<strong> {{routePlanDetail.freequency}} </strong> ,
+                            </label>                            
+                        </div>
+                    </div>
+                    <div class="row" ng-if="planSelected">
+                        <div class="">
+                            <div class="col-md-10">
+                                <a href="javascript:void(0);" id="addRouteInPlan" name="addRouteInPlan" ng-click="toogleAddRouteInPlan()" class="col-md-2 pull-left">Add Route In Plan :</a>
+                                <select kendo-multi-select k-options="selectRouteToAddInPlan" k-ng-model="selectedRouteIdsToAddInPlan" ng-show="addRouteInPlan" class="col-md-offset-2" style="height:30px !important" id="selectRouteToAddInPlan" name="selectRouteToAddInPlan"></select>
+                            </div>
+                            <div class="col-md-2">
+                                <button id="saveRouteInPlan" name="saveRouteInPlan" ng-show="addRouteInPlan" ng-click="SaveRouteInPlan()" class="btn btn-circle btn-primary btn-sm"> Save </button>
+                                <button id="cancelRouteInPlan" name="cancelRouteInPlan" ng-show="addRouteInPlan" ng-click="cancelSaveRouteInPlan()" class="btn btn-circle btn-default btn-sm"> X </button>
+                            </div>                            
+                        </div>
+                    </div>
+                    <div>
+                        <form id="employeeDataForm" name="employeeDataForm" action="/Planning/DistributionPlaning/SaveEmployeeRoutePlanData" method="POST">
+                            <input type="hidden" id="planCode" name="planCode" value="{{routePlanDetail.plancode}}" ng-model="routePlanDetail.plancode" />
+                            <div id="gridSection">
+                                <kendo-grid options="employeeRouteGrid" id="employeeGrid" k-rebind="employeeRouteGrid"></kendo-grid>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

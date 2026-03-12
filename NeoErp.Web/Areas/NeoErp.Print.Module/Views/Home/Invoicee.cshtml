@@ -1,0 +1,1556 @@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewBag.FileName</title>
+    <style>
+        /* Import professional fonts */
+        @@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', 'Arial', sans-serif;
+            font-size: 9.5pt;
+            background: #f0f0f0;
+            line-height: 1.5;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Filter Sidebar */
+        .filter-sidebar {
+            width: 320px;
+            background: #fff;
+            border-right: 1px solid #ddd;
+            padding: 20px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .filter-sidebar h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .filter-item {
+            margin-bottom: 20px;
+        }
+
+        .filter-item label {
+            display: block;
+            font-size: 11px;
+            font-weight: 500;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .filter-input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .autocomplete-container {
+            position: relative;
+        }
+
+        .autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ccc;
+            border-top: none;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .autocomplete-dropdown.show {
+            display: block;
+        }
+
+        .autocomplete-item {
+            padding: 8px 10px;
+            cursor: pointer;
+            font-size: 11px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .autocomplete-item:hover {
+            background: #f5f5f5;
+        }
+
+        .autocomplete-item.group {
+            background: #e3f2fd;
+            font-weight: 500;
+        }
+
+        .autocomplete-loading {
+            padding: 10px;
+            text-align: center;
+            font-size: 11px;
+            color: #999;
+        }
+
+        .filter-btn {
+            width: 100%;
+            padding: 10px;
+            background: #46a930;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .filter-btn:hover {
+            background: #3d8f28;
+        }
+
+        /* Main content wrapper */
+        .content-wrapper {
+            margin-left: 320px;
+            flex: 1;
+            background: #f0f0f0;
+        }
+
+        /* A4 Page Container - Always visible */
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            background: white;
+            margin: 10mm auto;
+            padding: 15mm 20mm;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .a4-container {
+            max-width: 210mm;
+            margin: 0 auto;
+        }
+
+        /* Hide filter sidebar when printing */
+        @@media print {
+            .filter-sidebar {
+                display: none;
+            }
+            
+            .content-wrapper {
+                margin-left: 0;
+            }
+            
+            body {
+                background: white;
+            }
+            
+            .page {
+                margin: 0;
+                box-shadow: none;
+            }
+        }
+
+        /* Header Section */
+        .header {
+            text-align: center;
+            margin-bottom: 5px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #333;
+            position: relative;
+        }
+
+        .header h1 {
+            font-family: 'Roboto', sans-serif;
+            font-size: 20pt;
+            font-weight: 700;
+            color: #000;
+            margin-bottom: 6px;
+            letter-spacing: 0.3px;
+        }
+
+        .header h3 {
+            font-family: 'Inter', sans-serif;
+            font-size: 10pt;
+            font-weight: 400;
+            color: #333;
+            margin: 2px 0;
+            line-height: 1.5;
+        }
+
+        /* Master Data Section */
+        .master-data {
+            margin: 0px 0;
+            padding: 8px 0;
+        }
+
+        .master-columns {
+            display: flex;
+            width: 100%;
+            gap: 30px;
+        }
+
+        .master-column {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .master-row {
+            display: flex;
+            margin-bottom: 2px;
+            font-size: 9.5pt;
+            align-items: flex-start;
+        }
+
+        .master-label {
+            font-weight: 600;
+            color: #000;
+            width: 140px;
+            flex-shrink: 0;
+        }
+
+        .master-value {
+            flex: 1;
+            color: #000;
+            font-weight: 400;
+        }
+
+        /* Table Styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 9pt;
+            border: 1px solid #ccc;
+        }
+
+        th {
+            background-color: white;
+            border: 1px solid #ccc;
+            padding: 5px 6px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 9pt;
+            color: #000;
+            text-transform: uppercase;
+            letter-spacing: 0.2px;
+        }
+
+        td {
+            border: 1px solid #ccc;
+            padding: 4px 6px;
+            color: #000;
+            font-size: 9pt;
+        }
+
+        td[style*="text-align:right"], td[style*="text-align: right"] {
+            text-align: right !important;
+            font-family: 'Roboto', monospace;
+        }
+
+        /* Empty row styling - keep vertical borders, hide horizontal borders */
+        tr.empty-row td {
+            border-top: none;
+            border-bottom: none;
+        }
+
+        /* Footer Section */
+        tfoot td {
+            /*border: none;*/
+            border-bottom: 1px solid #ccc;
+            padding: 6px;
+            font-size: 9pt;
+            font-weight: 600;
+        }
+
+        tfoot tr:last-child td {
+            
+            font-weight: 700;
+            font-size: 10pt;
+            color: #000;
+        }
+
+        /* Print Button */
+        .print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 10pt;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+            z-index: 1000;
+        }
+
+        .print-btn:hover {
+            background: #45a049;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            transform: translateY(-1px);
+        }
+
+        /* Loading & Error States */
+        .loading {
+            text-align: center;
+            padding: 30px;
+            font-size: 11pt;
+            color: #666;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .error {
+            background-color: #ffebee;
+            padding: 15px;
+            border-left: 4px solid #f44336;
+            margin: 15px;
+            font-size: 10pt;
+            color: #c62828;
+            border-radius: 4px;
+        }
+
+        /* Page Break Styling */
+        .page-break {
+            page-break-before: always;
+            break-before: page;
+        }
+
+        /* Print Styles */
+        @@media print {
+            body {
+                background: white;
+                margin: 0;
+                padding: 0;
+            }
+
+            .page {
+                width: 100%;
+                min-height: auto;
+                margin: 0 0 10mm 0;
+                padding: 15mm 20mm;
+                box-shadow: none;
+                page-break-after: always;
+            }
+
+            .page:last-child {
+                page-break-after: auto;
+            }
+
+            .a4-container {
+                max-width: 100%;
+            }
+
+            .print-btn {
+                display: none;
+            }
+
+            /* Ensure page breaks work correctly */
+            .page-break {
+                page-break-before: always;
+                break-before: page;
+            }
+
+            /* Prevent content from breaking across pages */
+            table {
+                page-break-inside: auto;
+            }
+
+            tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+
+            thead {
+                display: table-header-group;
+            }
+
+            tfoot {
+                display: table-footer-group;
+            }
+        }
+
+        /* Screen-specific styles */
+        @@media screen {
+            body {
+                padding: 20px 0;
+                background: #f5f5f5;
+            }
+
+            /* Show A4 page shadow and margin on screen */
+            .page:not(:last-child) {
+                margin-bottom: 20mm;
+            }
+        }
+
+        /* Additional professional touches */
+        .footer-section {
+            margin-top: 20px;
+            padding-top: 12px;
+            border-top: 2px solid #ccc;
+        }
+
+        .footer-section strong {
+            color: #000;
+            font-weight: 600;
+        }
+
+        .footer-section div {
+            margin-bottom: 8px;
+            font-size: 9pt;
+            color: #000;
+            line-height: 1.5;
+        }
+
+        /* Sub-ledger styling */
+        .sub-ledger-item {
+            font-size: 8pt;
+            font-style: italic;
+            color: #666;
+            padding-left: 10px;
+        }
+
+        /* Copy Label Styling */
+        .copy-label {
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', sans-serif;
+            font-size: 11pt;
+            font-weight: 700;
+            color: #333;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Filter Sidebar -->
+    <div class="filter-sidebar">
+        <h4>Filters</h4>
+        <div id="filterContainer">
+            <!-- Filters will be dynamically inserted here -->
+        </div>
+        <button class="filter-btn" onclick="applyFilters()">Apply Filters</button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content-wrapper">
+        <button class='print-btn' onclick='handlePrint()'>Print</button>
+
+        <div class="a4-container">
+            <div id="loading" class="loading">Loading sales preview...</div>
+            <div id="content" style="display: none;"></div>
+            <div id="error" class="error" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // ========================================
+        // DEBUG: Confirm Invoice.cshtml is loading
+        // ========================================
+        console.log('%c=== INVOICE.CSHTML LOADED ===', 'background: #00ff00; color: #000; font-size: 20px; font-weight: bold; padding: 5px;');
+        console.log('%cThis page should NOT be loading core.js!', 'background: #ffff00; color: #000; font-size: 14px; padding: 3px;');
+        console.log('Layout should be NULL (no main layout scripts should load)');
+        console.log('If you see core.js error AFTER this message, check browser cache or _ViewStart.cshtml');
+        
+        // Get parameters from ViewBag
+        const formCode = '@ViewBag.FormCode';
+        const companyCode = '@ViewBag.CompanyCode';
+        const mainFieldValue = '@ViewBag.MainFieldValue';
+        const activePatternId = parseInt('@ViewBag.ActivePatternId') || 0;
+
+        console.log('=== Sales Preview Debug ===');
+        console.log('Form Code:', formCode);
+        console.log('Company Code:', companyCode);
+        console.log('Main Field Value:', mainFieldValue);
+        console.log('Active Pattern ID:', activePatternId);
+
+        // ===== DYNAMIC FILTER SYSTEM =====
+        let sqlQuery = '';
+        let filterState = {}; // Store filter states { CUSTOMER_CODE: { code: '', codes: [], isGroup: false } }
+        let debounceTimers = {};
+        let printCountFlag = false; // Store print count flag from API response
+
+        // Debounce helper
+        function debounce(func, delay) {
+            return function(...args) {
+                const context = this;
+                clearTimeout(debounceTimers[args[0]]);
+                debounceTimers[args[0]] = setTimeout(() => func.apply(context, args), delay);
+            };
+        }
+
+        // Initialize filters on page load
+        async function initializeFilters() {
+            console.log('🔵 Step 1: Starting initializeFilters...');
+            try {
+                console.log('🔵 Step 2: Fetching pattern data...');
+                // First, get SQL query from the pattern
+                const patternResponse = await fetch(`/Print/Home/GetAllPatterns?formCode=${formCode}&patternId=${activePatternId || ''}`, {
+                    method: 'POST'
+                });
+                console.log('🔵 Step 3: Pattern response received:', patternResponse.status);
+                
+                const patternData = await patternResponse.json();
+                console.log('🔵 Step 4: Pattern data parsed:', patternData);
+                
+                if (patternData.success && patternData.data && patternData.data.PatternDetail) {
+                    sqlQuery = patternData.data.PatternDetail.SQL_QUERY || '';
+                    console.log('🔵 Step 5: SQL Query extracted:', sqlQuery.substring(0, 100) + '...');
+                    
+                    console.log('🔵 Step 6: Fetching placeholders...');
+                    // Extract placeholders
+                    const placeholderResponse = await fetch(`/Print/Home/GetQueryPlaceholders?sqlQuery=${encodeURIComponent(sqlQuery)}`);
+                    console.log('🔵 Step 7: Placeholder response received:', placeholderResponse.status);
+                    
+                    const placeholderData = await placeholderResponse.json();
+                    console.log('🔵 Step 8: Placeholder data parsed:', placeholderData);
+                    
+                    if (placeholderData.success && placeholderData.placeholders && placeholderData.placeholders.length > 0) {
+                        console.log('🔵 Step 9: Rendering filters with', placeholderData.placeholders.length, 'placeholders');
+                        renderFilters(placeholderData.placeholders);
+                        console.log('✅ Filters initialized successfully!');
+                    } else {
+                        console.log('ℹ️ No placeholders found in SQL query');
+                    }
+                } else {
+                    console.log('⚠️ Pattern data not found or invalid');
+                }
+            } catch (error) {
+                console.error('❌ ERROR in initializeFilters:', error);
+                console.error('Error name:', error.name);
+                console.error('Error message:', error.message);
+                console.error('Error stack:', error.stack);
+                console.error('⚠️ THIS MIGHT BE THE CORE.JS ERROR!');
+            }
+        }
+
+        // Render filter inputs
+        function renderFilters(placeholders) {
+            const container = document.getElementById('filterContainer');
+            container.innerHTML = '';
+
+            placeholders.forEach(placeholder => {
+                const filterItem = document.createElement('div');
+                filterItem.className = 'filter-item';
+                
+                const label = document.createElement('label');
+                label.textContent = placeholder.Field.replace(/_/g, ' ');
+                
+                const autocompleteContainer = document.createElement('div');
+                autocompleteContainer.className = 'autocomplete-container';
+                
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'filter-input';
+                input.placeholder = 'Type to search...';
+                input.dataset.field = placeholder.Field;
+                input.dataset.entityType = placeholder.EntityType;
+                
+                const dropdown = document.createElement('div');
+                dropdown.className = 'autocomplete-dropdown';
+                dropdown.id = `dropdown-${placeholder.Field}`;
+                
+                // Bind autocomplete
+                input.addEventListener('input', debounce((e) => {
+                    handleAutocomplete(e.target);
+                }, 300));
+                
+                input.addEventListener('focus', (e) => {
+                    if (e.target.value) {
+                        handleAutocomplete(e.target);
+                    }
+                });
+                
+                autocompleteContainer.appendChild(input);
+                autocompleteContainer.appendChild(dropdown);
+                
+                filterItem.appendChild(label);
+                filterItem.appendChild(autocompleteContainer);
+                
+                container.appendChild(filterItem);
+            });
+        }
+
+        // Handle autocomplete search
+        async function handleAutocomplete(input) {
+            const dropdown = document.getElementById(`dropdown-${input.dataset.field}`);
+            const searchTerm = input.value.trim();
+            const entityType = input.dataset.entityType;
+            
+            if (!searchTerm) {
+                dropdown.classList.remove('show');
+                return;
+            }
+            
+            dropdown.innerHTML = '<div class="autocomplete-loading">Searching...</div>';
+            dropdown.classList.add('show');
+            
+            try {
+                const url = `/Print/Home/SearchEntity?entityType=${entityType}&searchTerm=${encodeURIComponent(searchTerm)}&pageNumber=1&pageSize=100`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.success && data.data && data.data.length > 0) {
+                    renderAutocompleteResults(dropdown, data.data, input.dataset.field);
+                } else {
+                    dropdown.innerHTML = '<div class="autocomplete-item">No results found</div>';
+                }
+            } catch (error) {
+                console.error('Autocomplete error:', error);
+                dropdown.innerHTML = '<div class="autocomplete-item">Error loading results</div>';
+            }
+        }
+
+        // Render autocomplete results
+        function renderAutocompleteResults(dropdown, items, field) {
+            dropdown.innerHTML = '';
+            
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'autocomplete-item' + (item.IsGroup ? ' group' : '');
+                div.textContent = `${item.Code} - ${item.Description}` + (item.IsGroup ? ' (Group)' : '');
+                div.dataset.code = item.Code;
+                div.dataset.description = item.Description;
+                div.dataset.isGroup = item.IsGroup;
+                div.dataset.masterCode = item.MasterCode;
+                
+                div.addEventListener('click', async () => {
+                    await selectFilter(field, item);
+                    dropdown.classList.remove('show');
+                });
+                
+                dropdown.appendChild(div);
+            });
+        }
+
+        // Select filter item
+        async function selectFilter(field, item) {
+            const input = document.querySelector(`input[data-field="${field}"]`);
+            input.value = `${item.Code} - ${item.Description}`;
+            
+            if (item.IsGroup) {
+                // Get all children codes
+                try {
+                    const url = `/Print/Home/GetEntityChildren?entityType=${input.dataset.entityType}&masterCode=${encodeURIComponent(item.MasterCode)}`;
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    
+                    if (data.success && data.codes) {
+                        filterState[field] = {
+                            code: '',
+                            codes: data.codes,
+                            isGroup: true
+                        };
+                    }
+                } catch (error) {
+                    console.error('Error getting children:', error);
+                }
+            } else {
+                // Individual selection
+                filterState[field] = {
+                    code: item.Code,
+                    codes: [],
+                    isGroup: false
+                };
+            }
+        }
+
+        // Apply filters and reload preview
+        function applyFilters() {
+            loadPreview();
+        }
+
+        // Load preview with filters
+        function loadPreview() {
+            // Build filters JSON
+            const filters = JSON.stringify(filterState);
+            
+            console.log('🚀 Building API URL with parameters:');
+            console.log('  - formCode:', formCode);
+            console.log('  - companyCode:', companyCode);
+            console.log('  - mainFieldValue:', mainFieldValue);
+            console.log('  - activePatternId:', activePatternId, '(type:', typeof activePatternId + ')');
+            console.log('  - filters:', filters);
+            
+            // Build API URL with filters
+            const apiUrl = '/Print/Home/GetPreviewDataApi?formCode=' + encodeURIComponent(formCode) +
+                '&companyCode=' + encodeURIComponent(companyCode) +
+                '&mainFieldValue=' + encodeURIComponent(mainFieldValue) +
+                '&activePatternId=' + encodeURIComponent(activePatternId) +
+                '&filters=' + encodeURIComponent(filters);
+
+            console.log('📡 Full API URL:', apiUrl);
+            console.log('Fetching data from API...');
+
+        fetch(apiUrl)
+            .then(response => {
+                console.log('Response received:', response);
+                console.log('Response status:', response.status);
+                console.log('Response OK:', response.ok);
+                return response.json();
+            })
+            .then(result => {
+                console.log('=== API Response ===');
+                console.log('Full result:', result);
+                console.log('Success:', result.success);
+
+                document.getElementById('loading').style.display = 'none';
+
+                if (result.success) {
+                    console.log('=== Preview Data Received ===');
+                    console.log('Full Data Object:', result.data);
+                    console.log('FileName:', result.data.FileName);
+                    console.log('HeadFields:', result.data.HeadFields);
+                    console.log('HeadFields Length:', result.data.HeadFields ? result.data.HeadFields.length : 0);
+                    console.log('MasterFields:', result.data.MasterFields);
+                    console.log('MasterFields Length:', result.data.MasterFields ? result.data.MasterFields.length : 0);
+                    console.log('ChildFields:', result.data.ChildFields);
+                    console.log('ChildFields Length:', result.data.ChildFields ? result.data.ChildFields.length : 0);
+                    console.log('QueryData:', result.data.QueryData);
+                    console.log('QueryData Length:', result.data.QueryData ? result.data.QueryData.length : 0);
+
+                    if (result.data.QueryData && result.data.QueryData.length > 0) {
+                        console.log('First Row Data:', result.data.QueryData[0]);
+                        console.log('First Row Keys:', Object.keys(result.data.QueryData[0]));
+                    }
+
+                    renderPreview(result.data);
+                } else {
+                    console.error('API returned success=false');
+                    console.error('Error message:', result.message);
+                    throw new Error(result.message || 'Failed to load preview data');
+                }
+            })
+            .catch(error => {
+                console.error('=== ERROR ===');
+                console.error('Error type:', error.name);
+                console.error('Error message:', error.message);
+                console.error('Full error:', error);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').innerHTML = '<h3>Error Loading Preview</h3><p>' + error.message + '</p>';
+            });
+        }
+
+        function renderPreview(data) {
+
+            
+
+            console.log('=== Starting renderPreview ===');
+            const contentDiv = document.getElementById('content');
+            const formType = data.FormType || 'OT'; // Store form type, default to OT
+            console.log('Form Type:', formType);
+            
+            // Store print count flag globally
+            printCountFlag = data.PRINT_COUNT_FLAG || false;
+
+            console.log('Print Count Flag:', printCountFlag);
+            
+            // Get ITEM_COUNT from data
+            const itemsPerPage = data.ITEM_COUNT || 15;
+            console.log('Items per page:', itemsPerPage);
+            
+            // Calculate total pages needed
+            const totalItems = (data.QueryData && data.QueryData.length) || 0;
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            console.log('Total items:', totalItems, 'Total pages:', totalPages);
+            
+            let html = '';
+            
+            // Helper function to render copy label based on print count and copy index
+            const renderCopyLabel = (copyIndex) => {
+                
+
+                if (!data.PRINT_COUNT_FLAG) {
+                    return ''; // Don't show label if print count tracking is disabled
+                }
+
+                
+                const printCount = data.PRINT_COUNT || 0;
+                let mainLabel = '';
+                let subLabel = '';
+                
+                if (printCount === 1) {
+                    // First print
+                    if (copyIndex === 0) {
+                        mainLabel = 'Tax Invoice';
+                        subLabel = 'Customer Copy';
+                    } else {
+                        mainLabel = 'Invoice';
+                        subLabel = 'Office Copy';
+                    }
+                } else {
+                    // Subsequent prints (2, 3, 4, ...)
+                    const copyNumber = printCount - 1;
+                    mainLabel = 'Invoice';
+                    if (copyIndex === 0) {
+                        subLabel = 'Copy of original(' + copyNumber + ')';
+                    } else {
+                        subLabel = 'Copy of original(' + copyNumber + ')';
+                    }
+
+                    
+
+                }
+                
+                if (mainLabel) {
+                    return '<div class="copy-label">' + mainLabel + '<br><span style="font-size: 7pt; margin: 0; padding: 0;">' + subLabel + '</span></div>';
+                }
+                return '';
+
+
+
+            };
+            
+            // Helper function to render header
+            const renderHeader = () => {
+                let headerHtml = '<div class="header">';
+                // Add Logo - Positioned Absolute Left
+                headerHtml += '<img src="/Areas/NeoErp.Print.Module/Content/logo.png" style="position: absolute; left: 0; top: 0; height: 60px; max-width: 150px; object-fit: contain;" alt="Logo" />';
+                
+                console.log('Rendering head fields...');
+                if (data.HeadFields && data.HeadFields.length > 0) {
+                    console.log('Processing', data.HeadFields.length, 'head fields');
+                    data.HeadFields.forEach(headField => {
+                        let value = '';
+                        if (headField.DEFAULT_VAL !== null && headField.DEFAULT_VAL !== undefined) {
+                            value = headField.DEFAULT_VAL;
+                        } else if (data.QueryData && data.QueryData.length > 0) {
+                            const firstRow = data.QueryData[0];
+                            const fieldKey = headField.FIELD.toUpperCase();
+                            if (firstRow[fieldKey] !== undefined && firstRow[fieldKey] !== null) {
+                                value = firstRow[fieldKey];
+                            }
+                        }
+                        if (value) {
+                            const fieldName = headField.FIELD.toUpperCase();
+                            if (fieldName === 'COMPANY_CODE') {
+                                // Render COMPANY_CODE with bigger font
+                                headerHtml += '<h3 style="font-size: 14pt; font-weight: 700;">' + formatDateValue(value, headField.FIELD) + '</h3>';
+                            } else {
+                                headerHtml += '<h3>' + formatDateValue(value, headField.FIELD) + '</h3>';
+                            }
+                        }
+                    });
+                }
+                headerHtml += '</div>';
+                return headerHtml;
+            };
+            
+            // Helper function to render master fields
+            const renderMasterFields = () => {
+                let masterHtml = '';
+                console.log('Rendering master fields...');
+                if (data.MasterFields && data.MasterFields.length > 0) {
+                    console.log('Processing', data.MasterFields.length, 'master fields');
+                    const totalFields = data.MasterFields.length;
+                    let splitIndex;
+                    if (totalFields <= 2) {
+                        splitIndex = totalFields;
+                    } else {
+                        splitIndex = Math.ceil(totalFields / 2);
+                    }
+                    
+                    masterHtml += '<div class="master-data">';
+                    masterHtml += '<div class="master-columns">';
+                    
+                    const renderMasterRow = (masterField) => {
+                        let value = '';
+                        if (masterField.DEFAULT_VAL !== null && masterField.DEFAULT_VAL !== undefined) {
+                            value = masterField.DEFAULT_VAL;
+                        } else if (data.QueryData && data.QueryData.length > 0) {
+                            const firstRow = data.QueryData[0];
+                            const fieldKey = masterField.FIELD.toUpperCase();
+                            if (firstRow[fieldKey] !== undefined && firstRow[fieldKey] !== null) {
+                                value = firstRow[fieldKey];
+                            }
+                        }
+                        return '<div class="master-row">' +
+                            '<div class="master-label">' + escapeHtml(masterField.LABEL || masterField.FIELD) + ':</div>' +
+                            '<div class="master-value">' + (value ? formatDateValue(value, masterField.FIELD) : '&nbsp;') + '</div>' +
+                            '</div>';
+                    };
+                    
+                    masterHtml += '<div class="master-column">';
+                    for (let i = 0; i < splitIndex; i++) {
+                        masterHtml += renderMasterRow(data.MasterFields[i]);
+                    }
+                    masterHtml += '</div>';
+                    
+                    masterHtml += '<div class="master-column">';
+                    for (let i = splitIndex; i < totalFields; i++) {
+                        masterHtml += renderMasterRow(data.MasterFields[i]);
+                    }
+                    masterHtml += '</div>';
+                    
+                    masterHtml += '</div></div>';
+                }
+                return masterHtml;
+            };
+            
+            // Helper function to render table header
+            const renderTableHeader = () => {
+                let headerHtml = '<table><thead><tr>';
+                headerHtml += '<th style="width:40px;text-align:center;">SN</th>';
+                
+                let displayFields = [];
+                if (formType === 'JV') {
+                    displayFields = data.ChildFields.filter(field => {
+                        const fieldUpper = field.FIELD.toUpperCase();
+                        return fieldUpper !== 'TRANSACTION_TYPE' && fieldUpper !== 'AMOUNT';
+                    });
+                    displayFields.forEach(childField => {
+                        headerHtml += '<th>' + escapeHtml(childField.LABEL || childField.FIELD) + '</th>';
+                    });
+                    headerHtml += '<th style="text-align:right;">DR Amount</th>';
+                    headerHtml += '<th style="text-align:right;">CR Amount</th>';
+                } else {
+                    displayFields = data.ChildFields;
+                    displayFields.forEach(childField => {
+                        headerHtml += '<th>' + escapeHtml(childField.LABEL || childField.FIELD) + '</th>';
+                    });
+                }
+                headerHtml += '</tr></thead><tbody>';
+                return { html: headerHtml, displayFields: displayFields };
+            };
+            
+            // Helper function to render a single row
+            const renderRow = (row, rowIndex, displayFields) => {
+                let rowHtml = '<tr>';
+                rowHtml += '<td style="text-align:center;vertical-align:top;">' + (rowIndex + 1) + '</td>';
+                
+                if (formType === 'JV') {
+                    displayFields.forEach(childField => {
+                        const fieldKey = childField.FIELD.toUpperCase();
+                        let value = '';
+                        if (childField.DEFAULT_VAL !== null && childField.DEFAULT_VAL !== undefined) {
+                            value = childField.DEFAULT_VAL;
+                        } else if (row[fieldKey] !== undefined && row[fieldKey] !== null) {
+                            value = row[fieldKey];
+                        }
+                        
+                        if (fieldKey === 'ACC_CODE' && data.SubLedgerData && data.SubLedgerData.length > 0) {
+                            const serialNo = rowIndex + 1;
+                            const subLedgerGroup = data.SubLedgerData.find(group => group.SerialNo === serialNo);
+                            if (subLedgerGroup && subLedgerGroup.Items && subLedgerGroup.Items.length > 0) {
+                                rowHtml += '<td style="vertical-align:top;">' + (value ? escapeHtml(value) : '&nbsp;') + '<br>';
+                                subLedgerGroup.Items.forEach(item => {
+                                    rowHtml += '<div style="display:flex;padding-left:10px;font-size:8pt;font-style:italic;line-height:1.3;">';
+                                    rowHtml += '<span style="width:70%;padding-right:5px;">' + escapeHtml(item.sub_edesc) + '</span>';
+                                    rowHtml += '<span style="width:30%;text-align:right;">' + (item.amount ? formatNumber(item.amount) : '') + '</span>';
+                                    rowHtml += '</div>';
+                                });
+                                rowHtml += '</td>';
+                            } else {
+                                rowHtml += '<td style="vertical-align:top;">' + (value ? escapeHtml(value) : '&nbsp;') + '</td>';
+                            }
+                        } else {
+                            const isNumeric = fieldKey.includes('PRICE') || fieldKey.includes('AMOUNT') ||
+                                fieldKey.includes('TOTAL') || fieldKey.includes('QTY') ||
+                                fieldKey.includes('QUANTITY') || fieldKey.includes('RATE');
+                            const alignment = isNumeric ? ' style="text-align:right;vertical-align:top;"' : ' style="vertical-align:top;"';
+                            let displayValue = value;
+                            if (isNumeric && value) {
+                                displayValue = formatNumber(value);
+                            } else {
+                                displayValue = formatDateValue(value, childField.FIELD);
+                            }
+                            rowHtml += '<td' + alignment + '>' + displayValue + '</td>';
+                        }
+                    });
+                    
+                    const transactionType = row['TRANSACTION_TYPE'] || '';
+                    const amount = parseFloat(row['AMOUNT']) || 0;
+                    const drAmount = transactionType === 'DR' ? formatNumber(amount) : '';
+                    const crAmount = transactionType === 'CR' ? formatNumber(amount) : '';
+                    rowHtml += '<td style="text-align:right;vertical-align:top;">' + drAmount + '</td>';
+                    rowHtml += '<td style="text-align:right;vertical-align:top;">' + crAmount + '</td>';
+                } else {
+                    displayFields.forEach(childField => {
+                        const fieldKey = childField.FIELD.toUpperCase();
+                        let value = '';
+                        if (childField.DEFAULT_VAL !== null && childField.DEFAULT_VAL !== undefined) {
+                            value = childField.DEFAULT_VAL;
+                        } else if (row[fieldKey] !== undefined && row[fieldKey] !== null) {
+                            value = row[fieldKey];
+                        }
+                        
+                        const isNumeric = fieldKey.includes('PRICE') || fieldKey.includes('AMOUNT') ||
+                            fieldKey.includes('TOTAL') || fieldKey.includes('QTY') ||
+                            fieldKey.includes('QUANTITY') || fieldKey.includes('RATE');
+                        const alignment = isNumeric ? ' style="text-align:right;"' : '';
+                        let displayValue = value;
+                        if (isNumeric && value) {
+                            displayValue = formatNumber(value);
+                        } else {
+                            displayValue = formatDateValue(value, childField.FIELD);
+                        }
+                        rowHtml += '<td' + alignment + '>' + displayValue + '</td>';
+                    });
+                }
+                rowHtml += '</tr>';
+                return rowHtml;
+            };
+            
+            // Helper function to render totals and footer (only for last page)
+            const renderTotalsAndFooter = (displayFields) => {
+                let footerHtml = '';
+                
+                if (formType === 'JV') {
+                    let drTotal = 0;
+                    let crTotal = 0;
+                    if (data.QueryData && data.QueryData.length > 0) {
+                        data.QueryData.forEach(row => {
+                            const transactionType = row['TRANSACTION_TYPE'] || '';
+                            const amount = parseFloat(row['AMOUNT']) || 0;
+                            if (transactionType === 'DR') {
+                                drTotal += amount;
+                            } else if (transactionType === 'CR') {
+                                crTotal += amount;
+                            }
+                        });
+                    }
+                    footerHtml += '<tfoot><tr>';
+                    footerHtml += '<td colspan="' + displayFields.length + '"></td>';
+                    footerHtml += '<td style="text-align:right;font-weight:bold;border-top:1px solid #333;">Total</td>';
+                    footerHtml += '<td style="text-align:right;font-weight:bold;border-top:1px solid #333;">' + formatNumber(drTotal) + '</td>';
+                    footerHtml += '<td style="text-align:right;font-weight:bold;border-top:1px solid #333;">' + formatNumber(crTotal) + '</td>';
+                    footerHtml += '</tr></tfoot>';
+                } else {
+                    const totalColumns = {};
+                    let totalColIndex = -1;
+                    data.ChildFields.forEach((childField, index) => {
+                        const fieldUpper = childField.FIELD.toUpperCase();
+                        if (fieldUpper.includes('TOTAL') || fieldUpper.includes('PRICE') || fieldUpper.includes('AMOUNT')) {
+                            totalColumns[index] = { field: childField.FIELD, label: childField.LABEL, total: 0 };
+                            totalColIndex = index;
+                        }
+                    });
+                    
+                    if (Object.keys(totalColumns).length > 0 && data.QueryData && data.QueryData.length > 0) {
+                        data.QueryData.forEach(row => {
+                            Object.keys(totalColumns).forEach(colIndex => {
+                                const fieldKey = totalColumns[colIndex].field.toUpperCase();
+                                if (row[fieldKey] !== undefined && row[fieldKey] !== null) {
+                                    const numValue = parseFloat(row[fieldKey]) || 0;
+                                    totalColumns[colIndex].total += numValue;
+                                }
+                            });
+                        });
+                        
+                        footerHtml += '<tfoot><tr>';
+                        footerHtml += '<td colspan="' + (data.ChildFields.length - 2) + '"></td>';
+                        footerHtml += '<td colspan="2" style="text-align:right;font-weight:bold;border-top:1px solid #333;">Total</td>';
+                        footerHtml += '<td style="text-align:right;font-weight:bold;border-top:1px solid #333;">' + formatNumber(totalColumns[totalColIndex].total) + '</td>';
+                        footerHtml += '</tr>';
+                        
+                        if (data.ChargeData && data.ChargeData.length > 0) {
+                            let runningTotal = totalColumns[totalColIndex]?.total || 0;
+                            data.ChargeData.forEach(charge => {
+                                const chargeName = charge.CHARGE_EDESC || 'Charge';
+                                const chargeType = charge.CHARGE_TYPE_FLAG;
+                                const chargeAmount = parseFloat(charge.AMOUNT) || 0;
+                                if (chargeType === 'D') {
+                                    runningTotal -= chargeAmount;
+                                } else {
+                                    runningTotal += chargeAmount;
+                                }
+                                footerHtml += '<tr>';
+                                footerHtml += '<td colspan="' + (data.ChildFields.length - 2) + '"></td>';
+                                footerHtml += '<td colspan="2" style="text-align:right;border-top:1px solid #ccc;">' + escapeHtml(chargeName) + '</td>';
+                                footerHtml += '<td style="text-align:right;border-top:1px solid #ccc;">' + formatNumber(chargeAmount) + '</td>';
+                                footerHtml += '</tr>';
+                            });
+                            footerHtml += '<tr>';
+                            footerHtml += '<td colspan="' + (data.ChildFields.length - 2) + '"></td>';
+                            footerHtml += '<td colspan="2" style="text-align:right;font-weight:bold;border-top:3px solid #333;">Grand Total</td>';
+                            footerHtml += '<td style="text-align:right;font-weight:bold;border-top:3px solid #333;">' + formatNumber(runningTotal) + '</td>';
+                            footerHtml += '</tr>';
+                        }
+                        footerHtml += '</tfoot>';
+                    }
+                }
+                
+                footerHtml += '</table>';
+                
+                // Footer fields section
+                console.log('Rendering footer fields...');
+                if (data.FooterFields && data.FooterFields.length > 0) {
+                    console.log('Processing', data.FooterFields.length, 'footer fields');
+                    footerHtml += '<div style="margin-top:20px;border-top:2px solid #333;padding-top:10px;">';
+                    data.FooterFields.forEach(footerField => {
+                        let value = '';
+                        if (footerField.DEFAULT_VAL !== null && footerField.DEFAULT_VAL !== undefined) {
+                            value = footerField.DEFAULT_VAL;
+                        } else if (data.QueryData && data.QueryData.length > 0) {
+                            const firstRow = data.QueryData[0];
+                            const fieldKey = footerField.FIELD.toUpperCase();
+                            if (firstRow[fieldKey] !== undefined && firstRow[fieldKey] !== null) {
+                                value = firstRow[fieldKey];
+                            }
+                        }
+                        
+                        const fieldUpper = footerField.FIELD.toUpperCase();
+                        if (fieldUpper === 'AMOUNT_IN_WORDS') {
+                            let grandTotal = 0;
+                            if (formType === 'JV') {
+                                if (data.QueryData && data.QueryData.length > 0) {
+                                    data.QueryData.forEach(row => {
+                                        const transactionType = row['TRANSACTION_TYPE'] || '';
+                                        const amount = parseFloat(row['AMOUNT']) || 0;
+                                        if (transactionType === 'DR') {
+                                            grandTotal += amount;
+                                        }
+                                    });
+                                }
+                            } else {
+                                if (data.ChildFields && data.ChildFields.length > 0) {
+                                    const totalColumns = {};
+                                    let totalColIndex = -1;
+                                    data.ChildFields.forEach((childField, index) => {
+                                        const fieldUpper = childField.FIELD.toUpperCase();
+                                        if (fieldUpper.includes('TOTAL') || fieldUpper.includes('PRICE') || fieldUpper.includes('AMOUNT')) {
+                                            totalColumns[index] = { field: childField.FIELD, total: 0 };
+                                            totalColIndex = index;
+                                        }
+                                    });
+                                    if (Object.keys(totalColumns).length > 0 && data.QueryData && data.QueryData.length > 0) {
+                                        data.QueryData.forEach(row => {
+                                            Object.keys(totalColumns).forEach(colIndex => {
+                                                const fieldKey = totalColumns[colIndex].field.toUpperCase();
+                                                if (row[fieldKey] !== undefined && row[fieldKey] !== null) {
+                                                    const numValue = parseFloat(row[fieldKey]) || 0;
+                                                    totalColumns[colIndex].total += numValue;
+                                                }
+                                            });
+                                        });
+                                        grandTotal = totalColumns[totalColIndex].total;
+                                        if (data.ChargeData && data.ChargeData.length > 0) {
+                                            data.ChargeData.forEach(charge => {
+                                                const chargeType = charge.CHARGE_TYPE_FLAG;
+                                                const chargeAmount = parseFloat(charge.AMOUNT) || 0;
+                                                if (chargeType === 'D') {
+                                                    grandTotal -= chargeAmount;
+                                                } else {
+                                                    grandTotal += chargeAmount;
+                                                }
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                            const amountInWords = numberToWords(grandTotal);
+                            footerHtml += '<div style="margin-bottom:10px;">';
+                            footerHtml += '<strong>' + escapeHtml(footerField.LABEL || footerField.FIELD) + ':</strong> ';
+                            footerHtml += '<span style="font-style:italic;">' + escapeHtml(amountInWords) + '</span>';
+                            footerHtml += '</div>';
+                        } else if (fieldUpper === 'TERMS_CONDITION') {
+                            if (value) {
+                                footerHtml += '<div style="margin-bottom:10px;">';
+                                footerHtml += '<strong>' + escapeHtml(footerField.LABEL || 'Terms and Conditions') + ':</strong>';
+                                footerHtml += '<div style="margin-left:20px;margin-top:5px;white-space:pre-line;">';
+                                footerHtml += escapeHtml(value);
+                                footerHtml += '</div></div>';
+                            }
+                        } else {
+                            if (value) {
+                                footerHtml += '<div style="margin-bottom:10px;">';
+                                footerHtml += '<strong>' + escapeHtml(footerField.LABEL || footerField.FIELD) + ':</strong> ';
+                                footerHtml += escapeHtml(value);
+                                footerHtml += '</div>';
+                            }
+                        }
+                    });
+                    footerHtml += '</div>';
+                }
+                return footerHtml;
+            };
+            
+            // Calculate page chunks properly
+            const pages = [];
+            let currentIdx = 0;
+            const limitLast = itemsPerPage; // 15
+            const limitNonLast = itemsPerPage + 10; // 25
+            
+            // Safety for 0 items
+            if (totalItems === 0) {
+                pages.push({ start: 0, end: 0, isLast: true });
+            } else {
+                while (currentIdx < totalItems) {
+                    const remaining = totalItems - currentIdx;
+                    
+                    // Check if we can fit remaining in a Last Page
+                    if (remaining <= limitLast) {
+                        pages.push({ start: currentIdx, end: totalItems, isLast: true });
+                        currentIdx = totalItems;
+                    } else {
+                        // Must be a Non-Last Page
+                        let chunkSize = limitNonLast;
+                        
+                        // CRITICAL: Ensure we don't leave 0 items for the last page
+                        // If the currently proposed chunk would consume ALL remaining items,
+                        // we must reduce it to leave exactly 1 item for the next (footer) page.
+                        // We know remaining > limitLast (otherwise we'd be in the if block), so remaining is at least 16.
+                        if (chunkSize >= remaining) {
+                            chunkSize = remaining - 1;
+                        }
+                        
+                        const end = Math.min(currentIdx + chunkSize, totalItems);
+                        pages.push({ start: currentIdx, end: end, isLast: false });
+                        currentIdx = end;
+                    }
+                }
+                
+                // Edge case handling (if logic above failed to produce a last page for some reason)
+                if (pages.length > 0 && !pages[pages.length - 1].isLast) {
+                     // If we are here, it means we have items on previous pages but need a footer page.
+                     // The logic above (remaining - chunkSize === 0 restriction) should prevent this
+                     // for normal cases (e.g., 25 items -> 24 on Pg1, 1 on Pg2).
+                     // But if we ever fall here with currentIdx == totalItems, we might need an empty page 
+                     // OR we should have pushed an item. The logic above handles the "push 1 item" case.
+                     // If we strictly need 1 item on last page, the loop above should have handled it.
+                     // This block is a fallback for safety, ensuring ISLAST is true for the final page.
+                     pages.push({ start: totalItems, end: totalItems, isLast: true });
+                }
+            }
+            
+            // Determine how many copies to render
+
+            var numCopies = '';
+
+            if (data.PRINT_COUNT == 1) {
+                 numCopies = data.PRINT_COUNT_FLAG ? 3 : 1;
+            } else {
+                 numCopies = 1;
+            }
+            //alert(data.PRINT_COUNT);
+
+            //const numCopies = data.PRINT_COUNT_FLAG ? 3 : 1;
+
+            
+            
+            // Loop through each copy
+            for (let copyIndex = 0; copyIndex < numCopies; copyIndex++) {
+                // Add page break before each copy (except the first one)
+                if (copyIndex > 0) {
+                    html += '<div style="page-break-before:always;"></div>';
+                }
+                
+                // Render pages for this copy
+                console.log('Rendering child fields...');
+                if (data.ChildFields && data.ChildFields.length > 0 && data.QueryData && data.QueryData.length > 0) { // Ensure QueryData exists for rendering rows
+                    for (let pageIdx = 0; pageIdx < pages.length; pageIdx++) {
+                        const pageInfo = pages[pageIdx];
+                        
+                        // Add page break after first page (within the same copy)
+                        if (pageIdx > 0) {
+                            html += '<div style="page-break-before:always;"></div>';
+                        }
+                        
+                        // Render header, copy label, and master on each page
+                        html += renderHeader();
+                        html += renderCopyLabel(copyIndex); // Add copy label with index
+                        html += renderMasterFields();
+                        
+                        // Render table header
+                        const tableHeader = renderTableHeader();
+                        html += tableHeader.html;
+                        
+                        // Render rows for this page
+                        for (let i = pageInfo.start; i < pageInfo.end; i++) {
+                            html += renderRow(data.QueryData[i], i, tableHeader.displayFields);
+                        }
+                        
+                        // Only add empty rows on the last page (to fill to itemsPerPage)
+                        if (pageInfo.isLast) {
+                            const rowsRendered = pageInfo.end - pageInfo.start;
+                            const emptyRowsNeeded = itemsPerPage - rowsRendered;
+                            
+                            for (let i = 0; i < emptyRowsNeeded; i++) {
+                                html += '<tr class="empty-row">';
+                                html += '<td style="text-align:center;">&nbsp;</td>'; // Blank SN
+                                // Add empty cells for each column
+                                const totalCols = formType === 'JV' ? (tableHeader.displayFields.length + 2) : tableHeader.displayFields.length;
+                                for (let col = 0; col < totalCols; col++) {
+                                    html += '<td>&nbsp;</td>';
+                                }
+                                html += '</tr>';
+                            }
+                        }
+                        
+                        html += '</tbody>';
+                        
+                        // Only render totals and footer on last page
+                        if (pageInfo.isLast) {
+                            html += renderTotalsAndFooter(tableHeader.displayFields);
+                        } else {
+                            html += '</table>';
+                        }
+                    }
+                } else {
+                    // No data case - render once with message
+                    html += renderHeader();
+                    html += renderCopyLabel(copyIndex); // Add copy label with index
+                    html += renderMasterFields();
+                    html += '<table><thead><tr><th style="width:40px;text-align:center;">SN</th>';
+                    if (data.ChildFields && data.ChildFields.length > 0) {
+                        data.ChildFields.forEach(childField => {
+                            html += '<th>' + escapeHtml(childField.LABEL || childField.FIELD) + '</th>';
+                        });
+                    }
+                    html += '</tr></thead><tbody>';
+                    const totalCols = (data.ChildFields ? data.ChildFields.length : 0) + 1;
+                    html += '<tr><td colspan="' + totalCols + '" style="text-align:center;color:#999;">No data available</td></tr>';
+                    html += '</tbody></table>';
+                }
+            }
+            
+            contentDiv.innerHTML = html;
+            contentDiv.style.display = 'block';
+        }
+
+        // Convert number to words (for AMOUNT_IN_WORDS)
+        function numberToWords(num) {
+            if (num === 0 || num === null || num === undefined) return 'Zero';
+            
+            const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+            const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+            const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+            
+            function convertLessThanThousand(n) {
+                if (n === 0) return '';
+                
+                let result = '';
+                
+                if (n >= 100) {
+                    result += ones[Math.floor(n / 100)] + ' Hundred ';
+                    n %= 100;
+                }
+                
+                if (n >= 10 && n <= 19) {
+                    result += teens[n - 10] + ' ';
+                } else if (n >= 20 || n > 0) {
+                    result += tens[Math.floor(n / 10)] + ' ';
+                    n %= 10;
+                    result += ones[n] + ' ';
+                }
+                
+                return result.trim();
+            }
+            
+            // Handle negative numbers
+            let isNegative = false;
+            if (num < 0) {
+                isNegative = true;
+                num = Math.abs(num);
+            }
+            
+            // Split into integer and decimal parts
+            const integerPart = Math.floor(num);
+            const decimalPart = Math.round((num - integerPart) * 100);
+            
+            let result = '';
+            
+            if (integerPart === 0) {
+                result = 'Zero';
+            } else {
+                const billion = Math.floor(integerPart / 1000000000);
+                const million = Math.floor((integerPart % 1000000000) / 1000000);
+                const thousand = Math.floor((integerPart % 1000000) / 1000);
+                const remainder = integerPart % 1000;
+                
+                if (billion > 0) {
+                    result += convertLessThanThousand(billion) + ' Billion ';
+                }
+                if (million > 0) {
+                    result += convertLessThanThousand(million) + ' Million ';
+                }
+                if (thousand > 0) {
+                    result += convertLessThanThousand(thousand) + ' Thousand ';
+                }
+                if (remainder > 0) {
+                    result += convertLessThanThousand(remainder);
+                }
+            }
+            
+            result = result.trim();
+            
+            // Add decimal part
+            if (decimalPart > 0) {
+                result += ' and ' + convertLessThanThousand(decimalPart) + ' Paisa';
+            }
+            
+            if (isNegative) {
+                result = 'Negative ' + result;
+            }
+            
+            return result + ' Only';
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Convert English date to Nepali date (BS)
+        function convertToNepaliDate(englishDateStr) {
+            try {
+                // Parse the English date
+                const date = new Date(englishDateStr);
+                if (isNaN(date.getTime())) {
+                    return ''; // Invalid date
+                }
+
+                // Calculate approximate Nepali date (this is simplified)
+                const year = date.getFullYear();
+                const month = date.getMonth() + 1;
+                const day = date.getDate();
+
+                // Rough conversion: Add 56-57 years for Nepali year
+                let nepYear = year + 56;
+                let nepMonth = month + 8;
+                let nepDay = day + 16;
+
+                // Adjust for month overflow
+                if (nepMonth > 12) {
+                    nepMonth -= 12;
+                    nepYear += 1;
+                }
+
+                // Adjust for day overflow (simplified - assumes 30 days per month)
+                if (nepDay > 30) {
+                    nepDay -= 30;
+                    nepMonth += 1;
+                    if (nepMonth > 12) {
+                        nepMonth = 1;
+                        nepYear += 1;
+                    }
+                }
+
+                // Format as YYYY-MM-DD
+                return nepYear + '-' + String(nepMonth).padStart(2, '0') + '-' + String(nepDay).padStart(2, '0');
+            } catch (e) {
+                return '';
+            }
+        }
+
+        // Format number with commas and 2 decimal places
+        function formatNumber(value) {
+            if (value === undefined || value === null || value === '') return '';
+            const num = parseFloat(value);
+            if (isNaN(num)) return value;
+            return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        // Check if a value is a date and format it with Nepali date
+        function formatDateValue(value, fieldName) {
+            // Check if this is likely a date field
+            if (!fieldName || !fieldName.toUpperCase().includes('DATE')) {
+                return escapeHtml(value);
+            }
+
+            try {
+                // Try to parse as date
+                const dateStr = String(value);
+                const date = new Date(dateStr);
+
+                if (isNaN(date.getTime())) {
+                    return escapeHtml(value);
+                }
+
+                // Get Nepali date
+                const nepDate = convertToNepaliDate(dateStr);
+
+                if (nepDate) {
+                    return escapeHtml(value) + '/' + escapeHtml(nepDate);
+                }
+
+                return escapeHtml(value);
+            } catch (e) {
+                return escapeHtml(value);
+            }
+        }
+
+
+        // Load preview data immediately (always)
+        console.log('📊 Loading preview data...');
+        loadPreview();
+        
+        // Initialize filters in background (only if placeholders exist)
+        console.log('🔧 Initializing filters in background...');
+        initializeFilters();
+        
+        // Handle print with print count tracking
+        async function handlePrint() {
+            console.log('🖨️ Print button clicked');
+            
+            // Only call PrintCount API if print count flag is true
+            if (printCountFlag) {
+                console.log('✅ Print count tracking enabled');
+                try {
+                    // Call the PrintCount API
+                    const printCountUrl = '/Print/Home/PrintCount?formCode=' + encodeURIComponent(formCode) +
+                        '&mainFieldValue=' + encodeURIComponent(mainFieldValue);
+                    
+                    console.log('📡 Calling PrintCount API:', printCountUrl);
+                    
+                    const response = await fetch(printCountUrl);
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        console.log('✅ Print count updated successfully. New count:', result.printCount);
+                    } else {
+                        console.warn('⚠️ PrintCount API failed:', result.message);
+                        // Continue with print even if count update fails
+                    }
+                } catch (error) {
+                    console.error('❌ Error calling PrintCount API:', error);
+                    // Continue with print even if API call fails
+                }
+                
+                // Set up one-time event listener to refresh page after printing
+                const afterPrintHandler = function() {
+                    console.log('🔄 Printing completed - refreshing page to load updated count...');
+                    window.removeEventListener('afterprint', afterPrintHandler);
+                    window.location.reload();
+                };
+                
+                window.addEventListener('afterprint', afterPrintHandler);
+            } else {
+                console.log('ℹ️ Print count tracking disabled - skipping API call');
+            }
+            
+            // Always proceed with printing regardless of API result
+            console.log('🖨️ Initiating print...');
+            window.print();
+        }
+    </script>
+</body>
+</html>

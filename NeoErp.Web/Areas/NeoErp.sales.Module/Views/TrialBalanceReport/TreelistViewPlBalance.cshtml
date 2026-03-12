@@ -1,0 +1,1221 @@
+﻿
+@using NeoErp.sales.Module.Models;
+
+@{
+    ViewBag.Title = "Trial Balance";
+}
+<link href="http://localhost:22395/Content/MainTheme/assets/global/plugins/jstree/dist/themes/default/style.min.css" rel="stylesheet" />
+<style>
+    .nav-tabs {
+        /*border-bottom: 1px solid whitesmoke;
+            position: relative;*/
+        width: 100% !important;
+    }
+
+    .md-checkbox label > .box {
+        top: 3px;
+        border: 1px solid #666;
+        height: 15px;
+        width: 15px;
+        z-index: 5;
+        -webkit-transition-delay: 0.2s;
+        -moz-transition-delay: 0.2s;
+        transition-delay: 0.2s;
+        margin-left: 8px;
+        padding-left: -24px;
+    }
+
+    .md-checkbox label {
+        cursor: pointer;
+        padding-left: 30px;
+        font-size: 12px;
+    }
+
+    tr#trParentHeader .k-header {
+        text-align: center !important;
+    }
+
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        border-bottom-width: 0;
+        font-size: 11px;
+    }
+    /*trail balance table css start here*/
+    .tabbable-line > .nav-tabs > li.Legerclass.active {
+        background: 0 0;
+        border-bottom: 4px solid #36c6d3;
+        position: relative;
+    }
+    /*trail balance table css end here*/
+
+    #grid > .k-grid-content > table > tbody > tr.k-footer-template:not([data-parentid="0"] ) {
+        display: none !important;
+    }
+
+    .close {
+        margin-left: 10px !important;
+    }
+
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    div.k-window-content {
+        position: relative;
+        height: 100%;
+        padding: .58em;
+        overflow: inherit !important;
+        outline: 0;
+    }
+
+    .orders.k-grid.k-widget {
+        margin-top: -3px;
+    }
+
+    .orders table .k-grid-header {
+        display: none;
+    }
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+                 font-size:11px;
+            }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    /*.k-footer-template {
+            display: none;
+        }*/
+    .nav-pills > li.active > a, .nav-pills > li.active > a:focus, .nav-pills > li.active > a:hover {
+        background-color: whitesmoke !important;
+    }
+</style>
+<div class="page-content">
+    <ul id="context-menu" style="display:none;">
+        <li id="ledgerSummaryContextmenu">
+            Ledger Detail
+        </li>
+        <li id="ledgerDetailSummaryContextmenu">
+            Ledger summary
+        </li>
+
+    </ul>
+    <ul id="Subcontext-menu" style="display:none;">
+        <li id="subledgerSummaryContextmenu">
+            Sub Ledger Detail
+        </li>
+        <li id="subledgerdetailSummaryContextMenu">
+            Ledger Daily Summary Report
+        </li>
+
+    </ul>
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+            @*<li>
+                <i class="fa fa-home"></i>
+                <a href="index.html">Home</a>
+                <i class="fa fa-angle-right"></i>
+            </li>
+            <li>
+                <a href="sales/saleshome/dashboard/Dashboard">Organiser</a>
+                <i class="fa fa-angle-right"></i>
+            </li>*@
+
+        </ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+
+                <div class="btn-group" data-toggle="tooltip" title="Click to filter date range!" data-placement="bottom">
+                    @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                </div>
+                @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+                <a class="btn btn-circle btn-icon-only btn-default gap-right" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample" href="javascript:;">
+                    <i class="icon-arrow-down"></i>
+                </a>
+
+
+                <a class="btn btn-circle btn-icon-only btn-default gap-right" id="RunQuery" href="javsascript:;">
+                    <i class="icon-control-play"></i>
+                </a>
+                <a class="btn btn-circle btn-icon-only btn-default gap-right" id="RunQueryPLAccount" href="javsascript:;">
+                    <i class="icon-control-play"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div class="collapse" id="collapseExample">
+                            <div class="card card-block">
+
+                                <div class="col-md-7">
+
+
+                                    <div class="md-checkbox-inline">
+                                        <div class="md-checkbox">
+                                            <input type="checkbox" id="showsubledger" value="1" class="md-check">
+                                            <label for="showsubledger">
+                                                <span></span>
+                                                <span class="check"></span>
+                                                <span class="box"></span>Show Sub Ledger
+                                            </label>
+                                        </div>
+                                        <div class="md-checkbox">
+                                            <input type="checkbox" id="ShowOpeningrow" class="md-check">
+                                            <label for="ShowOpeningrow">
+                                                <span></span>
+                                                <span class="check"></span>
+                                                <span class="box"></span> Hide Opening Transaction
+                                            </label>
+                                        </div>
+                                        <div class="md-checkbox">
+                                            <input type="checkbox" id="showclosingTransaction" class="md-check">
+                                            <label for="showclosingTransaction">
+                                                <span></span>
+                                                <span class="check"></span>
+                                                <span class="box"></span> Hide Closing Balance
+                                            </label>
+                                        </div>
+                                        <div class="md-checkbox">
+                                            <input type="checkbox" id="showTransactioncolumn" class="md-check">
+                                            <label for="showTransactioncolumn">
+                                                <span></span>
+                                                <span class="check"></span>
+                                                <span class="box"></span> Hide Transaction Balance
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label>Data Generic/Posted</label>
+                                        <select class="form-control nput-inline input-sm" id="datageneric">
+                                            <option value="DG">Generic Data</option>
+                                            <option value="DP">Posted Data</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="btn-group pull-right" style="padding-left: 10px;">
+                                        <button type="button" class="btn btn-sm btn-default" id="expandAllNodes">Expand</button>
+                                        <button type="button" class="btn btn-sm btn-default" id="collapseAllNodes">Collapse</button>
+
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tabbable-line">
+                        <ul class="nav nav-tabs dropdownlist" id="tabs">
+                            <li class="active" id="firsttab"><a data-toggle="tab" href="javascript:void(0)">Profit Loss</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="tab1">
+                                <div class="row">
+                                    <div id="grid"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+    <input type="hidden" id="ledgerAccountNo" value="0" />
+    <input type="hidden" id="subledgerAccountNo" value="0" />
+    <input type="hidden" id="ledgerAccountName" value="Select Table Row First(error)" />
+    <div id="window">
+        <div class="" id="accountledger">
+        </div>
+
+    </div>
+
+</div>
+<script src="@Scripts.Url("~/Content/MainTheme/assets/global/plugins/jstree/dist/jstree.min.js")"></script>
+
+
+<script src="@Scripts.Url("~/JS/DateFilter.js?V5")" type="text/javascript"></script>
+<script src="@Scripts.Url("~/JS/dynamicReport.js?V2")" type="text/javascript"></script>
+<script type="text/javascript">
+    //var a = location.hash;
+    //var b = location.pathname;
+    //var url = (b + a);
+    //$(".active").removeClass();
+    //$("a[href='" + url + "']").parent().addClass("active");
+    //$("a[href='" + url + "']").parent().parent().slideDown("slow");
+
+</script>
+<script>
+    //For Grid Right click without selecting first
+    $("#grid").on("mousedown", "tr[role='row']", function (e) {
+
+        if (e.which === 3) {
+            //first remove all selected row
+          //  $('tr.k-state-selected', '#grid').removeClass('k-state-selected');
+          //  //then display selected row
+          //  $(this).addClass("k-state-selected");
+          //  var gview = $('#grid').data('kendoTreeList');
+          //  //Getting selected item
+          //  var selectedItem = gview.dataItem($('.k-grid').find("tr.k-state-selected"));
+          ////  console.log(selectedItem);
+
+          //  $("#subledgerAccountNo").val(selectedItem.Sub_code);
+          //  $("#ledgerAccountNo").val(selectedItem.ACC_CODE);
+          //  $("#ledgerAccountName").val(selectedItem.account_head);
+        }
+    });
+
+    $("#showTransactioncolumn").on("change", function () {
+
+        var treelist = $('#grid').data('kendoTreeList');
+
+        if ($(this).is(':checked')) {
+            var row = treelist.thead.find("#trParentHeader");
+            var footerrow = treelist.tbody.find(".k-footer-template");
+            footerrow.find('td:eq(3), td:eq(4)').hide();
+
+            row.find('th:eq(2)').hide();
+            // rows.find('th:eq(1), th:eq(2)').toggle()
+            treelist.hideColumn(3);
+            treelist.hideColumn(4);
+        }
+        else {
+            var row = treelist.thead.find("#trParentHeader");
+            var footerrow = treelist.tbody.find(".k-footer-template")
+            footerrow.find('td:eq(3), td:eq(4)').show();
+            row.find('th:eq(2)').show()
+            treelist.showColumn(3);
+            treelist.showColumn(4);
+        }
+
+
+    });
+    $("#showclosingTransaction").on("change", function () {
+        var treelist = $('#grid').data('kendoTreeList');
+
+        if ($(this).is(':checked')) {
+            var row = treelist.thead.find("#trParentHeader");
+            var footerrow = treelist.tbody.find(".k-footer-template");
+            footerrow.find('td:eq(5), td:eq(6)').hide();
+            row.find('th:eq(3)').hide()
+            // rows.find('th:eq(1), th:eq(2)').toggle()
+            treelist.hideColumn(5);
+            treelist.hideColumn(6);
+        }
+        else {
+            var row = treelist.thead.find("#trParentHeader");
+            var footerrow = treelist.tbody.find(".k-footer-template");
+            footerrow.find('td:eq(5), td:eq(6)').show();
+            row.find('th:eq(3)').show()
+            treelist.showColumn(5);
+            treelist.showColumn(6);
+        }
+
+
+    });
+    $("#ShowOpeningrow").on("change", function () {
+        var treelist = $('#grid').data('kendoTreeList');
+
+        if ($(this).is(':checked')) {
+            var row = treelist.thead.find("#trParentHeader");
+            var footerrow = treelist.tbody.find(".k-footer-template");
+            footerrow.find('td:eq(1), td:eq(2)').hide();
+            row.find('th:eq(1)').hide()
+            // rows.find('th:eq(1), th:eq(2)').toggle()
+            treelist.hideColumn(1);
+            treelist.hideColumn(2);
+        }
+        else {
+            var row = treelist.thead.find("#trParentHeader");
+            var footerrow = treelist.tbody.find(".k-footer-template");
+            footerrow.find('td:eq(1), td:eq(2)').show();
+            row.find('th:eq(1)').show()
+            treelist.showColumn(1);
+            treelist.showColumn(2);
+        }
+
+
+    });
+    function expended(trdiv) {
+
+        var treeList = $('#grid').data('kendoTreeList');
+        $(trdiv).each(function () {
+
+            treeList.expand(this);
+            if (treeList && this.length) {
+                expended(this);
+            }
+        });
+
+    }
+
+    $("#expandAllNodes").click(function () {
+        var treeList = $('#grid').data('kendoTreeList');
+        // expended("#grid tbody>tr")
+        $("#grid tbody>tr").each(function () {
+            var $this = $(this);
+            var treeItem = treeList.dataSource.getByUid($this.attr("data-uid"));
+
+            if (treeItem != undefined && treeItem != null && treeItem.hasChildren) {
+                treeList.expand($this);
+            }
+        });
+        if ($.active > 0) {
+        }
+
+
+
+        ////  $(".k-i-expand").trigger("click");
+        //  var row = $(".k-grid-content tr").closest("tr");
+        //  var treelist = row.closest(kendo.roleSelector("treelist")).data("kendoTreeList");
+        //  expended(treelist)
+        //if (treelist && row.length) {
+        //    row.each(function () {
+
+        //        treelist.expand(this);
+        //    });
+
+
+        //}
+        // var treeList = $("#treeList").data("kendoTreeList");
+        //var dataItems = treeList.dataSource.data();
+
+        //$.each(dataItems, function (i, item) {
+        //    item.expanded = true;
+        //});
+
+        //treeList.dataSource.data(dataItems);
+    });
+
+    $("#collapseAllNodes").click(function () {
+        var treeview = $('#grid').data('kendoTreeList');
+        $("#grid tbody>tr").each(function () {
+
+            var $this = $(this);
+            var treeItem = treeview.dataSource.getByUid($this.attr("data-uid"));
+
+            if (treeItem != undefined && treeItem != null && treeItem.hasChildren) {
+                treeview.collapse($this);
+            }
+
+        });
+
+        //treeview.collapse(".k-i-expand");
+    });
+    $("#tabs").on("click", ".close", function () {
+
+        var test = $(this).parent().attr("href");
+        $(this).parent().remove();
+        $(test).remove();
+        $(".tab-pane").removeClass("active");
+        $("#tab1").addClass('active');
+        $('#tabs a:first').tab('show');
+        $(window).resize();
+
+
+    })
+
+    $("#firsttab").on("click", function () {
+        $(".tab-pane").removeClass("active");
+        $("#tab1").addClass('active');
+        $('#tabs a:first').tab('show');
+        $(window).resize();
+    })
+
+    $("#subledgerdetailSummaryContextMenu").on("click", function (evt) {
+
+        evt.stopPropagation();
+        var formEnglishDate = $("#FromDateVoucher").val();
+        var toEnglishDate = $("#ToDateVoucher").val();
+        var nextTab = $('#tabs li').size() + 1;
+        var accountName = $("#ledgerAccountName").val();
+
+        var accountNo = $("#ledgerAccountNo").val();
+        var subledgerNo = $("#subledgerAccountNo").val();
+
+
+        var jsonData = JSON.stringify({ formDate: formEnglishDate, toDate: toEnglishDate, AccountCode: accountNo, subCode: String(subledgerNo), totalTab: nextTab }).replace(/"/g, "!");
+        // create the tab
+        $('<li class="Legerclass"><a href="#tab' + nextTab + '" data-toggle="tab"> ' + accountName + '<span class="close">×</span><input type="hidden" class="SubLedgerDetailSummary" value = "' + jsonData + '">    <div class="clearfix"></div></a></li>').appendTo('#tabs');
+
+        // create the tab content
+
+
+        $(window).resize(); // windows resize for the TabDrop
+
+        $.ajax({
+            url: '@Url.Action("SubLedgerDailySummaryReport", "Ledger")',
+            data: { formDate: formEnglishDate, toDate: toEnglishDate, AccountCode: accountNo, subCode: String(subledgerNo), totalTab: nextTab },
+            cache: false,
+            type: "POST",
+            dataType: "html",
+            success: function (data, textStatus, XMLHttpRequest) {
+                $('<div class="tab-pane" id="tab' + nextTab + '">' + data + '</div>').appendTo('.tab-content');
+                $('#tabs a:last').tab('show');
+                $(".tab-pane").removeClass('active');
+                $("#tab" + nextTab).addClass('active');
+                $(window).resize();
+            }
+        });
+        // make the new tab active
+        $('#tabs a:last').tab('show');
+    });
+    $("#subledgerSummaryContextmenu").on("click", function (evt) {
+
+        evt.stopPropagation();
+        var formEnglishDate = $("#FromDateVoucher").val();
+        var toEnglishDate = $("#ToDateVoucher").val();
+        var nextTab = $('#tabs li').size() + 1;
+        var accountName = $("#ledgerAccountName").val();
+        var accountNo = $("#ledgerAccountNo").val();
+        var subledgerNo = $("#subledgerAccountNo").val();
+
+        var jsonData = JSON.stringify({ formDate: formEnglishDate, toDate: toEnglishDate, AccountCode: accountNo, subCode: String(subledgerNo), totalTab: nextTab }).replace(/"/g, "!");
+        // create the tab
+        $('<li class="Legerclass"><a href="#tab' + nextTab + '" data-toggle="tab"> ' + accountName + '<span class="close">×</span><input type="hidden" class="SubLedgerSummary" value = "' + jsonData + '">   <div class="clearfix"></div></a></li>').appendTo('#tabs');
+
+        // create the tab content
+
+
+        $(window).resize(); // windows resize for the TabDrop
+
+        $.ajax({
+            url: '@Url.Action("PopUpSubLedgerDetails", "Ledger")',
+            data: { formDate: formEnglishDate, toDate: toEnglishDate, AccountCode: accountNo, subCode: String(subledgerNo), totalTab: nextTab },
+            cache: false,
+            type: "POST",
+            dataType: "html",
+            success: function (data, textStatus, XMLHttpRequest) {
+                $('<div class="tab-pane" id="tab' + nextTab + '">' + data + '</div>').appendTo('.tab-content');
+                $('#tabs a:last').tab('show');
+                $("#tab" + nextTab).addClass('active');
+                $(window).resize();
+
+            }
+        });
+        // make the new tab active
+        $('#tabs a:last').tab('show');
+    });
+    $("#ledgerDetailSummaryContextmenu").on("click", function (evt) {
+
+        evt.stopPropagation();
+        var formEnglishDate = $("#FromDateVoucher").val();
+        var toEnglishDate = $("#ToDateVoucher").val();
+        $('#tab1').removeClass("active");
+        var nextTab = $('#tabs li').size() + 1;
+        var accountName = $("#ledgerAccountName").val();
+        var accountNo = $("#ledgerAccountNo").val();
+
+
+        var jsonData = JSON.stringify({ formDate: formEnglishDate, toDate: toEnglishDate, AccountCode: accountNo, totalTab: nextTab }).replace(/"/g, "!");
+        // create the tab
+        $('<li><a href="#tab' + nextTab + '" data-toggle="tab"> ' + accountName + '<span class="close">×</span><input type="hidden" class="ledgerDetailSummary" value = "' + jsonData + '"> <div class="clearfix"></div></a></li>').appendTo('#tabs');
+
+        // create the tab content
+
+
+
+
+        $(window).resize();// windows resize for the TabDrop
+
+        $.ajax({
+            url: '@Url.Action("LedgerSummaryReport", "Ledger")',
+            data: { formDate: formEnglishDate, toDate: toEnglishDate, AccountCode: accountNo, totalTab: nextTab },
+            cache: false,
+            type: "POST",
+            dataType: "html",
+            success: function (data, textStatus, XMLHttpRequest) {
+
+                $('<div class="tab-pane" id="tab' + nextTab + '">' + data + '</div>').appendTo('.tab-content');
+                $('#tabs a:last').tab('show');
+                $('.tab-pane').removeClass('active');
+                $("#tab" + nextTab).addClass('active');
+                $(window).resize();
+                //  $("#accountledger").html(data);
+            }
+        });
+        // make the new tab active
+        $('#tabs a:last').tab('show');
+    });
+    $("#ledgerSummaryContextmenu").on("click", function () {
+
+        var formEnglishDate = $("#FromDateVoucher").val();
+        var toEnglishDate = $("#ToDateVoucher").val();
+        $('#tab1').removeClass("active");
+        var nextTab = $('#tabs li').size() + 1;
+        var accountName = $("#ledgerAccountName").val();
+        var branchCode = ReportFilter.filterAdditionalData().ReportFilters.BranchFilter.join(", ")
+        var datageneric = $("#datageneric option:selected").val();
+        var accountNo = $("#ledgerAccountNo").val();
+
+        var jsonData = JSON.stringify({ formDate: formEnglishDate, toDate: toEnglishDate, AccountCode: accountNo, totalTab: nextTab, BranchCode: branchCode, dataGeneric: datageneric }).replace(/"/g, "!");
+        // create the tab
+        $('<li><a href="#tab' + nextTab + '" data-toggle="tab"> ' + accountName + '<span class="close">×</span><input type="hidden" class="ledgerSummary" value = "' + jsonData + '"> <div class="clearfix"></div></a></li>').appendTo('#tabs');
+
+        // create the tab content
+
+
+        $(window).resize(); // windows resize for the TabDrop menu
+
+        $.ajax({
+            url: '@Url.Action("PopUpLedgerDetails", "Ledger")',
+            data: { formDate: formEnglishDate, toDate: toEnglishDate, AccountCode: accountNo, totalTab: nextTab, BranchCode: branchCode, dataGeneric: datageneric },
+            cache: false,
+            type: "POST",
+            dataType: "html",
+            success: function (data, textStatus, XMLHttpRequest) {
+
+                $('<div class="tab-pane" id="tab' + nextTab + '">' + data + '</div>').appendTo('.tab-content');
+                $('#tabs a:last').tab('show');
+                $("#tab" + nextTab).addClass('active');
+                $(window).resize();
+                @*$.ajax({
+                    url: '@Url.Action("BreadCrumbs", "Ledger")',
+                    data: { AccountCode: accountNo },
+                    cache: false,
+                    type: "POST",
+                    dataType: "html",
+                    success: function (data, textStatus, XMLHttpRequest) {
+                        var breadCrumbId = "#breadCrumbDiv" + nextTab;
+                        $(breadCrumbId).html(data);
+                        //  $("#accountledger").html(data);
+                    }
+                });*@
+            }
+        });
+        // make the new tab active
+        $('#tabs a:last').tab('show');
+    });
+
+    function onDataBoundtest(arg) {
+        var myElem = document.getElementById('trParentHeader');
+        if (myElem == null) {
+           // $("#grid").find("th.k-header").parent().before("<tr id='trParentHeader'><th></th><th colspan='2' class='k-header'><strong>Opening Balance</strong></th>  <th colspan='2' class='k-header'><strong>Trasaction</strong></th>  <th scope='col' colspan='2' class='k-header'><strong>Closing Balance</strong></th></tr>");
+        }
+        debugger;
+        // this.pager.element.hide();
+        var grid = this;
+        grid.tbody.find('>tr').each(function () {
+            var dataItem = grid.dataItem(this);
+            if (dataItem != undefined && dataItem != null) {
+                var childnumbher = dataItem.hasChildren;
+
+                if (childnumbher == true) {
+                }
+                else {
+                    $(this).addClass("rightColumnClass");
+                    $(this).find("td:first-child").find('span').removeClass("k-i-expand").addClass("k-i-none");
+                }
+
+                //var subchildnumbher = dataItem.hasChildren;
+                //    if (childnumbher <= 0) {
+
+                //        if (subchildnumbher <= 0 && dataItem.Sub_code != null) {
+                //            $(this).addClass("rightColumnClasssub");
+                //            $(this).find("td:first-child").find('span').removeClass("k-i-expand").addClass("k-i-none");
+                //        }
+                //        else {
+                //            $(this).addClass("rightColumnClass");
+                //            $(this).css("background-color", "#3FD5C0");
+                //        }
+                       
+                //    }
+
+              
+                    //if (childnumbher <= 0) {
+                    //    $(this).addClass("rightColumnClass");
+                    //    $(this).find("td:first-child").find('span').removeClass("k-i-expand").addClass("k-i-none");
+                    //}
+               
+            }
+        });
+
+    }
+    $(".applydp").on("click", function (evt) {
+
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    })
+
+    $(document).ready(function () {
+        // var myWindow = $("#window");
+        function onClose() {
+            undo.fadeIn();
+        }
+        $('[data-toggle="tooltip"]').tooltip({ delay: { show: 500, hide: 100 } });
+        var formEnglishDate = $("#FromDateVoucher").val();
+        var toEnglishDate = $("#ToDateVoucher").val();
+        //var urltest = Arg.url(window.location.protocol + "//" + window.location.host + "/api/TrialBalance/GetchildLedgersTrial", { formDate: formEnglishDate, toDate: toEnglishDate });
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/TrialBalance/GetchildLedgers_SF_PL";//, { model:JSON.stringify(ReportFilter.filterAdditionalData()) });
+        DateFilter.init(function () {
+            consolidate.init(function () {
+                BindGrid(urltest);
+            });
+        });
+
+
+
+        $("#RunQuery").click(function (evt) {
+            var activeTab = $('#tabs li.active a').attr('href');
+            // this code for recent solution
+            if ($('#tabs li').length==2) //first tab
+            {
+                urltest = window.location.protocol + "//" + window.location.host + "/api/TrialBalance/GetchildLedgers_SF_PL";
+                BindGrid(urltest, true);
+            }
+            //
+            if (activeTab == "javascript:void(0)" || activeTab == "#") //first tab
+            {
+                urltest = window.location.protocol + "//" + window.location.host + "/api/TrialBalance/GetchildLedgers_SF_PL";
+                BindGrid(urltest, true);
+            }
+            else {
+                var className = $('#tabs li.active a').find('input[type=hidden]').attr("class");
+
+                 var formEnglishDate = $("#FromDateVoucher").val();
+                 var toEnglishDate = $("#ToDateVoucher").val();
+                 var branchCode = ReportFilter.filterAdditionalData().ReportFilters.BranchFilter.join(", ");
+
+                if (className == "ledgerDetailSummary") //refresh summary
+                {
+
+                    var data = JSON.parse($('#tabs li.active a').find('input[type=hidden]').val().replace(/!/g, '"'));
+                    data.formDate = formEnglishDate;
+                    data.toDate = toEnglishDate;
+                    data.BranchCode = branchCode;
+
+                    $.ajax({
+                         url: '@Url.Action("LedgerSummaryReport", "Ledger")',
+                        data: data,
+                        cache: false,
+                        type: "POST",
+                        dataType: "html",
+                        success: function (data, textStatus, XMLHttpRequest) {
+                            $(activeTab).html('');
+                            $(activeTab).html(data);
+                            $(window).resize();
+                        }
+                    });
+                }
+                if (className == "ledgerSummary") //refresh detail
+                {
+
+                    var data = JSON.parse($('#tabs li.active a').find('input[type=hidden]').val().replace(/!/g, '"'));
+                    data.formDate = formEnglishDate;
+                    data.toDate = toEnglishDate;
+                    data.BranchCode = branchCode;
+                    $.ajax({
+                        url: '@Url.Action("PopUpLedgerDetails", "Ledger")',
+                        data: data,
+                        cache: false,
+                        type: "POST",
+                        dataType: "html",
+                        success: function (data, textStatus, XMLHttpRequest) {
+                            $(activeTab).html('');
+                            $(activeTab).html(data);
+                            $(window).resize();
+                        }
+                    });
+                }
+                if (className == "SubLedgerDetailSummary") //refresh sub ledger summary
+                {
+
+                    var data = JSON.parse($('#tabs li.active a').find('input[type=hidden]').val().replace(/!/g, '"'));
+                    data.formDate = formEnglishDate;
+                    data.toDate = toEnglishDate;
+                    data.BranchCode = branchCode;
+                    $.ajax({
+                        url: '@Url.Action("SubLedgerDailySummaryReport", "Ledger")',
+                        data: data,
+                        cache: false,
+                        type: "POST",
+                        dataType: "html",
+                        success: function (data, textStatus, XMLHttpRequest) {
+                            $(activeTab).html('');
+                            $(activeTab).html(data);
+                            $(window).resize();
+                        }
+                    });
+                }
+                if (className == "SubLedgerSummary") //refresh sub ledger detail
+                {
+                    var data = JSON.parse($('#tabs li.active a').find('input[type=hidden]').val().replace(/!/g, '"'));
+                    data.formDate = formEnglishDate;
+                    data.toDate = toEnglishDate;
+                    data.BranchCode = branchCode;
+                    $.ajax({
+                        url: '@Url.Action("PopUpSubLedgerDetails", "Ledger")',
+                        data: data,
+                        cache: false,
+                        type: "POST",
+                        dataType: "html",
+                        success: function (data, textStatus, XMLHttpRequest) {
+                            $(activeTab).html('');
+                            $(activeTab).html(data);
+                            $(window).resize();
+                        }
+                    });
+                }
+                if (className == "TBvoucherDetail") //refresh TBvoucherDetail
+                {
+                    var data = JSON.parse($('#tabs li.active a').find('input[type=hidden]').val().replace(/!/g, '"'));
+                    $.ajax({
+                         url: '@Url.Action("AgeingVoucherView", "AgeingReport")',
+                        data: data,
+                        cache: false,
+                        type: "POST",
+                        dataType: "html",
+                        success: function (data, textStatus, XMLHttpRequest) {
+                            $(activeTab).html('');
+                            $(activeTab).html(data);
+                            $(window).resize();
+                        }
+                    });
+                }
+                if (className == "voucherDetail") //refresh sub voucherDetail
+                {
+                    var data = JSON.parse($('#tabs li.active a').find('input[type=hidden]').val().replace(/!/g, '"'));
+                    $.ajax({
+                         url: '@Url.Action("AgeingVoucherView", "AgeingReport")',
+                        data: data,
+                        cache: false,
+                        type: "POST",
+                        dataType: "html",
+                        success: function (data, textStatus, XMLHttpRequest) {
+                            $(activeTab).html('');
+                            $(activeTab).html(data);
+                            $(window).resize();
+                        }
+                    });
+                }
+            }
+
+        });
+
+        //BindGrid(urltest);
+        $("#contextmenu").css({ "top": event.pageY + "px", "left": event.pageX + "px" })
+        $("#context-menu").kendoContextMenu({
+            filter: '.rightColumnClass',
+            target: "#grid",
+            orientation: "vertical",
+            alignToAnchor: true
+        });
+        $("#Subcontext-menu").kendoContextMenu({
+            filter: '.rightColumnClasssub',
+            target: "#grid",
+            orientation: "vertical",
+            alignToAnchor: true
+        });
+
+    });
+
+    function BindGrid(readurl, refresh) {
+        var dataSource = new kendo.data.TreeListDataSource({
+            transport: {
+                read: {
+                    url: readurl, // <-- Get data from here.
+                    dataType: "json", // <-- The default was "jsonp".
+                    type: "POST",
+                    //contentType: "application/json",
+                    data: function (data, evt) {
+                        var datageneric = $("#datageneric option:selected").val();
+                        var treeList = $("#grid").data("kendoTreeList");
+                        var dataSource = treeList.dataSource;
+                        return $.extend(ReportFilter.filterAdditionalData(), { datatype: datageneric })
+                        //if (data.id) {
+                        //    var parentNode = dataSource.get(data.id);
+                        //    return $.extend(ReportFilter.filterAdditionalData(), { parentId: parentNode.ACC_CODE, subledger: parentNode.sub_count, datatype: datageneric })
+
+                        //} else {
+                        //    return $.extend(ReportFilter.filterAdditionalData(), { datatype: datageneric })
+                        //}
+
+                    }
+                }
+            },
+
+            schema: {
+                model: {
+                    id: "MasterId",
+                    parentId: "ReportsTo",
+                    fields: {
+                        MasterId: { type: "number", nullable: false, field: "id" },
+                        ReportsTo: { field: "parentId", nullable: false, type: "number" },
+                        signoperater: { field: "signoperater", type:"boolean"},
+                    },
+                  //  expanded: true
+                }
+            },
+            aggregate: [
+                { field: "BalanceAmt", aggregate: "sum" },
+                //{ field: "BalanceAmt", aggregate: "sum" },
+                //           { field: "CR_OPENING", aggregate: "sum" },
+                //             { field: "DR_AMT", aggregate: "sum" },
+                //           { field: "CR_AMT", aggregate: "sum" },
+                //            { field: "DR_CLOSING", aggregate: "sum" },
+                //           { field: "CR_CLOSING", aggregate: "sum" },
+
+            ]
+
+        });
+        if (refresh) {
+            var grid = $('#grid').data('kendoTreeList');
+            grid.setDataSource(dataSource);
+            grid.refresh();
+
+        }
+        else {
+            $("#grid").kendoTreeList({
+                dataSource: dataSource,
+              //  dataBound: onDataBoundtest,
+                
+                //selectable: true,
+                //change: function () {
+                //    var text = "";
+                //    var grid = this;
+
+                //    //grid.select().each(function () {
+                //    //    var dataItem = grid.dataItem($(this));
+                //    //    $("#subledgerAccountNo").val(dataItem.Sub_code);
+                //    //    $("#ledgerAccountNo").val(dataItem.ACC_CODE);
+                //    //    $("#ledgerAccountName").val(dataItem.account_head);
+                //    //});
+                //},
+                //adding column for the subledger menu
+                columnMenu: true,
+                columnMenuInit: function (e) {
+                    wordwrapmenu(e);
+                },
+
+                //end the adding  column part
+                columns: [
+
+                {
+                        field: "DESCRIPTION",
+                    title: "Description",
+                    width: "35%",
+                    footerTemplate: '<span style="float:right;font-weight: bolder;">Total Amount</span>'
+                },
+                 {
+                     field: "BalanceAmt",
+                     title: "Amount",
+                     // width: "80px",
+                     attributes: {
+                         style: "text-align: right;"
+                     },
+                     format: "{0:n}",
+                     //footerTemplate: "#=sum#"
+                     template: '#if (signoperater) {# <span style="float:right">#= kendo.toString(BalanceAmt, "n") #</span> #} else {# <span style="float:right">(#= kendo.toString(BalanceAmt, "n") #)</span> #}#',
+                     //template: '<span style="float:right">#= kendo.toString(BalanceAmt, "n") #</span>',
+                     //aggregates: "sum",
+                     footerTemplate: "<div style='float: right;font-weight: bolder;'>#: kendo.format('{0:n}', sum)#</div>"
+                 }
+                    
+
+                ],
+                //expand: function (e) {
+                //}
+            });
+        }
+
+    };
+
+    function KendoGridRefresh(readUrl) {
+        //$('#grid').val('');
+        //$('#grid').html('');
+        BindGrid(readUrl, true)
+    }
+
+
+    $("#RunQueryPLAccount").on("click", function (evt) {
+
+        evt.stopPropagation();
+        var formEnglishDate = $("#FromDateVoucher").val();
+        var toEnglishDate = $("#ToDateVoucher").val();
+        var nextTab = $('#tabs li').size() + 1;
+        var accountName = $("#ledgerAccountName").val();
+
+        var accountNo = $("#ledgerAccountNo").val();
+        var subledgerNo = $("#subledgerAccountNo").val();
+
+
+        var jsonData = JSON.stringify({ formDate: formEnglishDate, toDate: toEnglishDate, AccountCode: accountNo, subCode: String(subledgerNo), totalTab: nextTab }).replace(/"/g, "!");
+        // create the tab
+        $('<li class="Legerclass"><a href="#tab' + nextTab + '" data-toggle="tab"> ' + accountName + '<span class="close">×</span><input type="hidden" class="SubLedgerDetailSummary" value = "' + jsonData + '">    <div class="clearfix"></div></a></li>').appendTo('#tabs');
+
+        // create the tab content
+
+
+        $(window).resize(); // windows resize for the TabDrop
+
+        $.ajax({
+            url: '@Url.Action("SimplePLAccountSigmentWise", "Ledger")',
+            data: { formDate: formEnglishDate, toDate: toEnglishDate, CompanyCode: accountNo, BranchCode: String(subledgerNo), SegmentName:'test', totalTab: nextTab },
+            cache: false,
+            type: "POST",
+            dataType: "html",
+            success: function (data, textStatus, XMLHttpRequest) {
+                $('<div class="tab-pane" id="tab' + nextTab + '">' + data + '</div>').appendTo('.tab-content');
+                $('#tabs a:last').tab('show');
+                $(".tab-pane").removeClass('active');
+                $("#tab" + nextTab).addClass('active');
+                $(window).resize();
+            }
+        });
+        // make the new tab active
+        $('#tabs a:last').tab('show');
+    });
+
+    //@*function detailInit(e) {
+
+    //   //
+    //    var accountnameWidth = 377;
+    //    var dr_openingwidth = 82 + "px";
+    //    var cr_openingwidth = 82 + "px";
+    //    var dr_Trasactionwidth = 82 + "px";
+    //    var cr_Trasactionwidth = 82 + "px";
+    //    var dr_closingwidth = 82 + "px";
+    //    var cr_closingwidth = 76 + "px";
+    //    var AccountNameClass = "AccountFixTreeView";
+    //    var dr_openingClass = "DrOpeningFixTreeView";
+    //    var cr_openingClass = "CrOpeningFixTreeView";
+    //    var dr_TrasactionClass = "DrTrasactionFixTreeView";
+    //    var cr_TrasactionClass = "CrTrasactionFixTreeView";
+    //    var dr_closingClass = "DrclosingFixTreeView";
+    //    var cr_closingnClass = "CrclosingFixTreeView";
+    //    var detailRow = e.detailRow;
+    //    var testdata = e.data;
+    //    var masterId = testdata.MASTER_ACC_CODE;
+    //  //  alert(masterId);
+    //    var contains = (masterId.indexOf('.') > -1);
+    //    if (contains) {
+    //        var j = masterId.split('.');
+    //        var count = j.length - 1;
+    //        var level = count + 1;
+    //        if (level == 3)
+    //        {
+    //            var FixTreeViewClass = "FixTreeView3";
+    //            var accountnameWidth = 314;
+    //            var dr_openingwidth = 83 + "px";
+    //            var cr_openingwidth = 82 + "px";
+    //            var dr_Trasactionwidth = 82 + "px";
+    //            var cr_Trasactionwidth = 83 + "px";
+    //            var dr_closingwidth = 84 + "px";
+    //            var cr_closingwidth = 64 + "px";
+    //            var AccountNameClass = "AccountFixTreeView3";
+    //            var dr_openingClass = "DrOpeningFixTreeView3";
+    //            var cr_openingClass = "CrOpeningFixTreeView3";
+    //            var dr_TrasactionClass = "DrTrasactionFixTreeView3";
+    //            var cr_TrasactionClass = "CrTrasactionFixTreeView3";
+    //            var dr_closingClass = "DrclosingFixTreeView3";
+    //            var cr_closingnClass = "CrclosingFixTreeView3";
+    //        }
+    //        if (level == 2) {
+    //            var FixTreeViewClass = "FixTreeView2";
+    //            var accountnameWidth = 347;
+    //            var dr_openingwidth = 83 + "px";
+    //            var cr_openingwidth = 83 + "px";
+    //            var dr_Trasactionwidth = 83 + "px";
+    //            var cr_Trasactionwidth = 83 + "px";
+    //            var dr_closingwidth = 83 + "px";
+    //            var cr_closingwidth = 70 + "px";
+    //            var AccountNameClass = "AccountFixTreeView2";
+    //            var dr_openingClass = "DrOpeningFixTreeView2";
+    //            var cr_openingClass = "CrOpeningFixTreeView2";
+    //            var dr_TrasactionClass = "DrTrasactionFixTreeView2";
+    //            var cr_TrasactionClass = "CrTrasactionFixTreeView2";
+    //            var dr_closingClass = "DrclosingFixTreeView2";
+    //            var cr_closingnClass = "CrclosingFixTreeView2";
+    //        }
+
+    //    }
+
+
+
+    //    var accountwidthPix = accountnameWidth + "px";
+    //    var formEnglishDate = $("#FromDateVoucher").val();
+    //    var toEnglishDate = $("#ToDateVoucher").val();
+
+    //    var childUrl = Arg.url(window.location.protocol + "//" + window.location.host + "/api/TrialBalance/GetchildLedgers", { formDate: formEnglishDate, toDate: toEnglishDate, id: masterId });
+    //    detailRow.find(".orders").kendoGrid({
+    //        dataSource: {
+    //            type: "json",
+    //            transport: {
+    //                read: childUrl
+    //            },
+    //            serverPaging: true,
+    //            serverSorting: true,
+    //            serverFiltering: true,
+    //            pageSize: 7,
+    //            aggregate: [
+    //            { field: "CR_OPENING", aggregate: "sum" },
+    //            { field: "DR_OPENING", aggregate: "sum" }]
+    //                    },
+    //        scrollable: false,
+    //        dataBound: onDataBoundtest,
+    //        sortable: true,
+    //        pageable: true,
+
+    //        detailTemplate: kendo.template($("#template").html()),
+    //        detailInit: detailInit,
+    //        showFooter: false,
+    //        selectable: true,
+    //        change: function() {
+    //            var text = "";
+    //            var grid = this;
+    //            grid.select().each(function() {
+    //                var dataItem = grid.dataItem($(this));
+    //                $("#ledgerAccountNo").val(dataItem.ACC_CODE);
+    //                $("#ledgerAccountName").val(dataItem.account_head);
+    //            });
+    //        },
+    //        columns: [
+    //            {
+    //                field: "account_head",
+    //                title: "Account Name",
+    //               // width: accountwidthPix,
+    //                attributes: {
+    //                    "class":AccountNameClass
+    //                },
+    //                template: '<span class="ledgerSummary">#=account_head#</span>'
+    //             //   template: '<a href="#=account_head#" class="undo">#=account_head#</a>'
+    //            },
+    //            {
+    //                field: "DR_OPENING",
+    //                title: "Dr Amount",
+    //              //  width: dr_openingwidth,
+    //                attributes: {
+    //                    "class":dr_openingClass,
+    //                    style: "text-align: right;"
+    //                },
+    //                format: "{0:n}",
+
+    //            },
+    //            {
+    //                field: "CR_OPENING",
+    //                title: "Cr Amount",
+    //             //   width: cr_openingwidth,
+
+    //                attributes: {
+    //                    "class": cr_openingClass,
+    //                    style: "text-align: right;"
+    //                },
+    //                format: "{0:n}",
+    //                //footerTemplate: "<div style='float: right'>#= sum#</div>"
+    //            },
+    //            {
+    //                field: "DR_AMT",
+    //                title: "Dr Amount",
+    //               // width: dr_Trasactionwidth,
+    //                attributes: {
+    //                    "class": dr_TrasactionClass,
+    //                    style: "text-align: right;"
+    //                },
+    //                format: "{0:n}",
+    //            },
+    //            {
+    //                field: "CR_AMT",
+    //                title: "Cr Amount",
+    //              //  width: cr_Trasactionwidth,
+    //                attributes: {
+    //                    "class": cr_TrasactionClass,
+    //                    style: "text-align: right;"
+    //                },
+    //                format: "{0:n}",
+    //            },
+    //             {
+    //                 field: "DR_CLOSING ",
+    //                 title: "Dr Amount",
+    //                // width: dr_closingwidth,
+    //                 attributes: {
+    //                     "class": dr_closingClass,
+    //                     style: "text-align: right;"
+    //                 },
+    //                 format: "{0:n}",
+    //             },
+    //            {
+    //                field: "CR_CLOSING",
+    //                title: "Cr Amount",
+    //               // width: cr_closingwidth,
+    //                attributes: {
+    //                    "class": cr_closingnClass,
+    //                    style: "text-align: right;"
+    //                },
+    //                format: "{0:n}",
+    //            }
+
+    //        ]
+    //    });
+    //    $('.k-grid-content tr').dblclick(function (evt) {
+    //        evt.stopPropagation();
+    //        var accountNo = $("#ledgerAccountNo").val();
+    //        //'201237'
+    //        $.ajax({
+    //            url: '@Url.Action("PopUpLedgerDetails", "Ledger")',
+    //            data: { formDate: formEnglishDate, toDate: toEnglishDate, AccountCode: accountNo },
+    //            cache: false,
+    //            type: "POST",
+    //            dataType: "html",
+    //            success: function (data, textStatus, XMLHttpRequest) {
+    //                $("#accountledger").html(data);
+    //            }
+    //        });
+
+    //        $("#window").kendoWindow({
+    //            width: "900px",
+    //            //height:"500px",
+    //            title: "Ledger Information",
+    //            visible: false,
+    //            position: {
+    //                top: 100, // or "100px"
+    //                left: "10%"
+    //            },
+    //            actions: [
+    //                "Pin",
+    //                "Minimize",
+    //                "Maximize",
+    //                "Close"
+    //            ],
+    //            // close: onClose
+    //        }).data("kendoWindow").open();
+
+    //    });
+
+    //    $("#contextmenu").css({ "top": event.pageY + "px", "left": event.pageX + "px" })
+    //    $("#context-menu").kendoContextMenu({
+    //        filter: 'td[role="gridcell"]',
+    //        target: ".orders",
+    //        orientation: "vertical",
+    //        alignToAnchor: true
+    //    });
+    //}*@
+
+    $('.nav-pills, .nav-tabs').tabdrop(); // tab drop function for options which added into the menu afer one row get full .
+</script>

@@ -1,0 +1,169 @@
+﻿<style>
+    .search {
+        padding: 5px 0;
+        width: 230px;
+        /*height: 30px;*/
+        position: relative;
+        top: -3px;
+        left: -2px;
+        float: left;
+        line-height: 22px;
+    }
+
+        .search input {
+            position: absolute;
+            width: 0px;
+            float: Left;
+            margin-left: 196px;
+            -webkit-transition: all 0.7s ease-in-out;
+            -moz-transition: all 0.7s ease-in-out;
+            -o-transition: all 0.7s ease-in-out;
+            transition: all 0.7s ease-in-out;
+            height: 27px;
+            line-height: 18px;
+            padding: 0 2px 0 2px;
+            background-color: transparent;
+            color: black;
+            border-radius: 1px;
+            border-right: none;
+            border-left: none;
+            border-left: solid 1px #c5c5c5 !important;
+        }
+
+        .search:hover input {
+            width: 200px;
+            /*margin-left:0px;
+            border-left: solid 1px #c5c5c5 !important;*/
+            /*border: 1px solid #c5c5c5;*/
+            height: 26px;
+            margin-left: -9px;
+            width: 200px;
+            
+        }
+
+    .search-btn {
+        background-color: transparent;
+        /*background-color: white;*/        
+        height: 17px;
+        position: absolute;
+        right: 0;
+        top: 4px;        
+        border-radius: 1px;
+    }
+
+        .search-btn:hover {
+            background-color: transparent;
+            color: black;
+            border: solid 1px #c5c5c5;
+            border-left: none;
+        }
+
+    .k-header a.k-button {
+        float: right;
+        margin: 2px !important;
+    }
+
+    .search-btn:hover input .form-control, input .form-control:hover {
+        border-color: #c5c5c5 !important;
+    }
+
+    .btn-group {
+        margin-right: 0px !important;
+    }
+
+    .page-toolbar .btn-icon-only {
+        margin: 2px 1px !important;
+    }
+
+    .page-toolbar .btn-group > .btn:first-child {
+        margin-left: 2px !important;
+    }
+    #downImage {
+        -moz-transition: transform 1s;
+        -webkit-transition: transform 1s;
+        transition: transform 1s;
+    }
+
+    .flip {
+        transform: rotate(-180deg);
+    }
+    #downImage {
+        color: hsl(0, 2%, 47%)
+    }
+</style>
+<script type="text/x-kendo-template" id="toolbar-template">
+    <div class="k-header k-grid-toolbar">
+
+   <!-- AA-->
+        @*<a class="k-button k-button-icontext k-grid-excel" href="javascript:">
+            <i class="fa fa-file-excel-o"></i>
+        </a>*@
+        @*<a class="k-button k-button-icontext docDownload" href="javascript:" style="float:right;">
+            <i class="fa fa-file-word-o"></i>
+        </a>*@
+        @*<a class="k-button k-button-icontext floatright" id="collapseAllButton" data-toggle="tooltip" title="Collapse All" onclick="CollapseAll()">
+            <i class="fa fa-chevron-down"></i>
+        </a>
+        <a class="k-button k-button-icontext floatright" id="expandAllButton" data-toggle="tooltip" title="Expand All" onclick="ExpandAll()">
+            <i class="fa fa-chevron-up"></i>
+        </a>*@
+
+        @*<div class="search pull-right">*@
+            <div style="width:100px; float:right; padding-right:10px;">
+            <input type="text" class="form-control input-sm grid-search" id="searchButton" maxlength="64" placeholder="Search..." onkeyup="GridSearch()" />
+            @*<button class="btn btn-primary btn-sm search-btn fa fa-search" data-toggle="tooltip" title="Search"></button>*@
+    </div>
+        @*</div>*@
+        @*<a class="k-button k-button-icontext k-grid-pdf" href="javascript:">
+            <i class="fa fa-file-pdf-o"></i>
+        </a>*@
+     </div>
+</script>
+
+<script>
+    $("#operationContent").on("click", ".docDownload", function () {
+        $("table[role='grid']").tableExport({ type: 'doc', tableName: 'exported.doc', escape: 'false' });
+    })
+
+    //AA
+    function GridSearch() {
+        debugger;
+        //var val = $('.form-control input-sm grid-search').text();
+        var val = $("#searchButton").val();
+        var grid = $("#customerGrid").data("kendoGrid");
+        var tempServerFilter = grid.dataSource.options.serverFiltering;
+        grid.dataSource.options.serverFiltering = false;
+        var filter = [];
+        $.each(grid.columns, function (i, v) {
+            if (v.field != undefined) {
+                var searchText = $.trim($("#searchButton").val());
+                var model = grid.dataSource.options.schema.model.fields[v.field];
+                var type = "string";
+                if (model != undefined)
+                    type = model.type;
+                if (type === "string")
+                    filter.push({ field: v.field, operator: "contains", value: searchText });
+                else if (type === "number")
+                    filter.push({ field: v.field, operator: "eq", value: searchText });
+                else if (type === "date") {
+                    var dateValue = new Date(searchText);
+                    searchText = dateValue == "Invalid Date" ? searchText : dateValue;
+                    filter.push({ field: v.field, operator: "eq", value: searchText });
+                }
+            }
+
+        });
+        var filter = {
+            logic: "or",
+            filters: filter,
+        }
+
+        grid.dataSource.filter(filter);
+
+        if ($("#searchButton").val().length == 0)
+            grid.dataSource.filter([]);
+        grid.bind("dataBound", function () {
+            grid.dataSource.options.serverFiltering = tempServerFilter;
+        });
+    }
+</script>

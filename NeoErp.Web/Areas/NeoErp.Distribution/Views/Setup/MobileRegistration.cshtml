@@ -1,0 +1,299 @@
+﻿@model IEnumerable<NeoErp.Distribution.Service.Model.MobileRegModel>
+
+<style>
+    .currentDevice {
+        background-color: #008000 !important;
+        color: #ffffff !important;
+    }
+    .currentDevice:hover {
+        background-color: #008000 !important;
+    }
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+    }
+    .k-grid table {
+        table-layout: fixed;
+    }
+    .no-data {
+        background-color: red;
+    }
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+    .k-grid-content {
+        font-size: 12px;
+    }
+    .k-grid-footer {
+        font-size: 12px;
+    }
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+    a.k-button.k-button-icontext.k-grid-excel {
+        float: right;
+    }
+    tr.k-group-footer {
+        text-align: right !important;
+    }
+    .tree_search {
+        position: absolute;
+        right: 8px;
+        top: 9px;
+        color: #ccc;
+    }
+
+    .treegroup_search input.form-control {
+        height: 28px !important;
+        margin-top: 4px;
+        margin-left: -3px;
+        font-size: 11px !important;
+        padding: 0px 6px;
+        border: solid #ddd 1px !important;
+    }
+
+    .treegroup_search {
+        position: relative;
+        margin-top: 2px;
+    }
+</style>
+
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+        </ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+
+                <div class="actions">
+
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_SetupConfig.cshtml", "deviceRegistraction")
+                    </div>
+                </div>
+            </div>
+            <div class="treegroup_search search pull-right">
+                <input type="text" class="form-control  grid-search" maxlength="64" placeholder="Search..." onkeyup="GridSearch()" />
+                <i class=" fa fa-search tree_search"></i>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-body form">
+                    <div class="row">
+                        <table class="table table-hover" id="grid">
+                            <colgroup>
+                                <col style="width:6%" />
+                                <col />
+                                <col style="width:20%" />
+                                <col />
+                                <col />
+                                <col style="width:9%" />
+                                <col style="width:9%" />
+                                <col style="width:9%" />
+                                <col style="width:15%" />
+                                <col style="width:1%" />
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th>S.N.</th>
+                                    <th>Employee</th>
+                                    <th>IMEI</th>
+                                    <th>Username</th>
+                                    <th>Device</th>
+                                    <th>App Version</th>
+                                    <th>Approved</th>
+                                    <th>Active</th>
+                                    <th>Actions</th>
+                                    <th>Is Current</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{ int sn = 0; }
+                                @foreach (var item in Model)
+                                {
+                                    sn++;
+                                    string approved = @item.APPROVED_FLAG == "Y" ? "checked" : "";
+                                    string active = @item.ACTIVE == "Y" ? "checked" : "";
+                                    <tr>
+                                        <td>@sn</td>
+                                        <td>@item.FULL_NAME </td>
+                                        <td>@item.IMEI_NO</td>
+                                        <td>@item.USER_NAME</td>
+                                        <td>@item.DEVICE_NAME</td>
+                                        <td>@item.APP_VERSION</td>
+                                        <td style="text-align:center">
+                                            <input type="checkbox" @approved />
+                                        </td>
+                                        <td style="text-align:center">
+                                            <input type="checkbox" @active />
+                                        </td>
+                                        <td style="text-align:center">
+                                            <input id="save" type="button" value="Save" class="k-button" />
+                                            <input id="delete" type="button" value="Delete" class="k-button" />
+                                        </td>
+                                        <td>@item.CURRENT_LOGIN</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        @*@Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")*@
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+
+<script>
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+
+    $(document).ready(function () {
+
+        $("#grid").kendoGrid({
+            //toolbar: kendo.template($("#toolbar-template").html()),
+            excel: {
+                fileName: "Registered Devices",
+                allPages: true,
+            },
+            height: window.innerHeight - 100,
+            sortable: true,
+            reorderable: true,
+            //groupable: true,
+            resizable: true,
+            filterable: {
+                extra: false,
+                operators: {
+                    number: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "is greater than or equal to	",
+                        gt: "is greater than",
+                        lte: "is less than or equal",
+                        lt: "is less than",
+                    },
+                    string: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        startswith: "Starts with	",
+                        contains: "Contains",
+                        doesnotcontain: "Does not contain",
+                        endswith: "Ends with",
+                    },
+                    date: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "Is after or equal to",
+                        gt: "Is after",
+                        lte: "Is before or equal to",
+                        lt: "Is before",
+                    }
+                }
+            },
+           
+       
+            dataSource: {
+                model: {
+                    fields: {
+                        USERID: { type: "number" },
+                        FULL_NAME: { type: "string" },
+                        IMEI_NO: { type: "string" },
+                        USER_NAME: { type: "string" },
+                        DEVICE_NAME: { type: "string" },
+                        APP_VERSION:{type:"string"}
+                    }
+                },
+                pageSize: 50,
+            },
+                 pageable: {
+                refresh: true,
+                pageSizes: [50, 100, 500, 1000],
+                buttonCount: 5
+            },
+            dataBound: function (o) {
+                GetSetupSetting("deviceRegistraction");
+                var grid = $("#grid tbody");
+                if ($(grid[0]).children().length == 0) {
+                    $(grid[0]).append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="7" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                   // displayPopupNotification("No Data Found.", "info");
+                }
+                for (var i = 0; i < $(grid[0]).children().length; i++) {
+                    var row = $(grid[0]).children()[i];
+                    $($(row).find("td")[9]).hide();
+                    if ($($(row).find("td")[9]).html().trim() == "Y")
+                        $(row).addClass("currentDevice");
+                }
+              
+                $('div').removeClass('.k-header k-grid-toolbar');
+            },
+        });
+    });
+
+    $("#grid").on("click", "#save", function (e) {
+        var rowCells = $(e.srcElement).closest("tr").find("td");
+        var SaveObj = {
+            IMEI_NO: $(rowCells[2]).html().trim(),
+            ACTIVE: $(rowCells[7]).find("input").is(":checked") ? "Y" : "N",
+            APPROVED_FLAG: $(rowCells[6]).find("input").is(":checked") ? "Y" : "N"
+        }
+        $.ajax({
+            url: window.location.protocol + "//" + window.location.host + "/api/UserSetup/UpdateMobileReg",
+            data: SaveObj,
+            dataType: "json",
+            method:"POST",
+            async: false,
+            success: function (data) {
+                displayPopupNotification(data.MESSAGE, data.TYPE);
+            },
+            error: function (ex) {
+                displayPopupNotification("Something went wrong", "error");
+            }
+        });
+        //location.reload();
+    });
+
+    $("#grid").on("click", "#delete", function (e) {
+        bootbox.confirm("<strong>This device will be removed</strong><br /> Are you sure want to remove?", function (result) {
+            if (result) {
+                var row = $(e.srcElement).closest("tr");
+                var rowCells = $(row).find("td");
+                var SaveObj = {
+                    IMEI_NO: $(rowCells[2]).html().trim(),
+                    ACTIVE: $(rowCells[7]).find("input").is(":checked") ? "Y" : "N",
+                    APPROVED_FLAG: $(rowCells[6]).find("input").is(":checked") ? "Y" : "N"
+                }
+                $.ajax({
+                    url: window.location.protocol + "//" + window.location.host + "/api/UserSetup/DeleteMobileReg",
+                    data: SaveObj,
+                    dataType: "json",
+                    method: "POST",
+                    async: false,
+                    success: function (data) {
+                        displayPopupNotification(data.MESSAGE, data.TYPE);
+                        $(row).remove();
+                    },
+                    error: function (ex) {
+                        displayPopupNotification("Something went wrong", "error");
+                    }
+                });
+            }
+        });
+    });
+    
+</script>
+
+<script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js?V2")"></script>

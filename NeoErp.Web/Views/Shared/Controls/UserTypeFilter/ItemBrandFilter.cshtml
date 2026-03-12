@@ -1,0 +1,109 @@
+﻿<style>
+    .brandDiv {
+        padding-bottom:5px;
+    }
+</style>
+<div class="brandDiv">
+    <select id="BrandMultiSelect" data-bind="BRAND_NAME" style="width:400px"></select>
+    <div style="display:none;">
+        <select id="ItemBrandSpCodeMultiSelect" data-bind="SP_CODE" style="width:400px;"></select>
+    </div>
+</div>
+<div class="itemDiv">
+    <select id="ItemBrandItemMultiSelect" data-bind="ITEM_CODE" style="width:400px"></select>
+</div>
+<script>
+
+    $(document).ready(function () {
+        var autoCompleteurl = window.location.protocol + "//" + window.location.host + "/api/UserSetup/GetItemAndBrand";
+        var autoCompletedataSource = new kendo.data.DataSource({
+            transport: {
+                read: {
+                    url: autoCompleteurl,
+                    dataType: "json",
+                    contentType: "application/json; charset=utf-8"
+                }
+            }
+        });
+
+        autoCompletedataSource.fetch(function () {
+            $('#ItemBrandSpCodeMultiSelect').kendoMultiSelect({
+                dataSource:this.data(),
+                dataTextField: "ITEM_EDESC",
+                dataValueField: "ITEM_CODE",
+                height: 600,
+                valuePrimitive: true,
+                headerTemplate: '<div class="col-md-offset-3"><strong>Items...</strong></div>',
+                placeholder: "Select Items...",
+                autoClose: false,
+                dataBound: function (e) {
+                    var current = this.value();
+                    this._savedOld = current.slice(0);
+                    $("#" + e.sender.element[0].id + "_listbox").slimScroll({ 'height': '179px', 'scroll': 'scroll' });
+                },
+            });
+            $('#ItemBrandItemMultiSelect').kendoMultiSelect({
+                dataSource: new kendo.data.DataSource({
+                    data: _.uniq(this.data(), "ITEM_CODE"),
+                }),
+                dataTextField: "ITEM_EDESC",
+                dataValueField: "ITEM_CODE",
+                height: 600,
+                valuePrimitive: true,
+                headerTemplate: '<div class="col-md-offset-3"><strong>Items...</strong></div>',
+                placeholder: "Select Items...",
+                autoClose: false,
+                dataBound: function (e) {
+                    var current = this.value();
+                    this._savedOld = current.slice(0);
+                    $("#" + e.sender.element[0].id + "_listbox").slimScroll({ 'height': '179px', 'scroll': 'scroll' });
+                },
+            });
+
+            $('#BrandMultiSelect').kendoMultiSelect({
+                dataTextField: "BRAND_NAME",
+                dataValueField: "BRAND_NAME",
+                height: 600,
+                valuePrimitive: true,
+                headerTemplate: '<div class="col-md-offset-3"><strong>Brands...</strong></div>',
+                placeholder: "Select Brands...",
+                //autoClose: false,
+                dataBound: function (e) {
+                    $("#" + e.sender.element[0].id + "_listbox").slimScroll({ 'height': '179px', 'scroll': 'scroll' });
+                },
+                dataSource: new kendo.data.DataSource({
+                    data: _.uniq(this.data(), "BRAND_NAME"),
+                }),
+                change: function () {
+                    buildFilters(this.dataItems());
+                }
+            });
+
+            function buildFilters(dataItems) {
+                var filters = [],
+                    length = dataItems.length,
+                    idx = 0, dataItem;
+                if (length == 0) {
+                    $("#ItemBrandItemMultiSelect").data("kendoMultiSelect").value("");
+                }
+                for (; idx < length; idx++) {
+                    dataItem = dataItems[idx];
+
+                    var data = $("#ItemBrandItemMultiSelect").data("kendoMultiSelect").dataSource.data();
+                    var filterdata = _.filter(data, function (da) { return da.BRAND_NAME == dataItem.BRAND_NAME; });
+                    for (var i = 0; i < filterdata.length; i++) {
+                        filters.push(filterdata[i].ITEM_CODE);
+                    }
+
+                    $("#ItemBrandItemMultiSelect").data("kendoMultiSelect").value(filters);
+                }
+
+
+            };
+        });
+
+       
+
+    });
+    //$("#SalesMultiSelect").data("kendoMultiSelect").options.maxSelectedItems = 1;
+</script>

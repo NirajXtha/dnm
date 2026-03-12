@@ -1,0 +1,437 @@
+
+@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    Layout = null;
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+<style>
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+    }
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    a.k-button.k-button-icontext.k-grid-excel {
+        float: right;
+    }
+
+    .bootbox-form {
+        padding: 3px !important;
+    }
+
+    .bootbox-input.bootbox-input-text.form-control {
+        height: 27px !important;
+    }
+</style>
+<style type="text/css">
+    #spDetailLocationMap {
+        width: 100%;
+        height: 450px;
+        background-color: grey;
+    }
+
+    #legend {
+        font-family: Arial, sans-serif;
+        background: #fff;
+        display: inline-flex;
+    }
+
+        #legend h3 {
+            margin-top: 0;
+        }
+
+        #legend img {
+            vertical-align: middle;
+        }
+</style>
+<script>
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+</script>
+
+<head>
+    <link href="@Styles.Url("https://unpkg.com/leaflet@1.9.4/dist/leaflet.css")" rel="stylesheet" />
+</head>
+
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb"></ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+
+                <div class="actions">
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                    </div>
+                    @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                        {
+                            ShowItemBrandFilter = true,
+                        })
+                    </div>
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                        <i class="icon-control-play"></i>
+                    </a>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "AttendanceReport")
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div id="farmerGrid"></div>
+                        <script type="text/x-kendo-template" id="detailTemplate">
+                            <div class="recommendation-grid"></div>
+                        </script>
+                        @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+
+<script src="@Scripts.Url("~/JS/reportFilter.js")"></script>
+<script src="@Scripts.Url("~/JS/DateFilter.js")" type="text/javascript"></script>
+
+<script>
+    var reportConfig = null;
+
+    function getDateFormat(date) {
+        if (!date) return "-";
+        var d = new Date(date);
+        if (d.getFullYear() === 1970) return "-";
+        return kendo.format("{0:" + reportConfig.dateFormat + "}", d);
+    }
+
+    function buildExcelRows(data) {
+        var rows = [];
+
+        // Header row
+        rows.push({
+            cells: [
+                { value: "Farmer Name", bold: true },
+                { value: "Farm Name", bold: true },
+                { value: "Address", bold: true },
+                { value: "Land Size", bold: true },
+                { value: "Altitude", bold: true },
+                { value: "Created By", bold: true },
+                { value: "Created Date", bold: true }
+            ]
+        });
+
+        data.forEach(function (farmer) {
+
+            // Farmer row (6 cells)
+            rows.push({
+                cells: [
+                    { value: farmer.FARMER_NAME },
+                    { value: farmer.FARM_NAME },
+                    { value: farmer.ADDRESS },
+                    { value: farmer.LAND_SIZE },
+                    { value: farmer.ALTITUDE },
+                    { value: farmer.CREATED_BY },
+                    { value: getDateFormat(farmer.CREATED_DATE) }
+                ]
+            });
+
+            if (farmer.RECOMMENDATIONS && farmer.RECOMMENDATIONS.length) {
+
+                // Recommendation header (6 cells)
+                rows.push({
+                    cells: [
+                        { value: "" },
+                        { value: "Crop Name", bold: true },
+                        { value: "Problem", bold: true },
+                        { value: "Problem Description", bold: true },
+                        { value: "Recommendation", bold: true },
+                        { value: "" },
+                        { value: "" }
+                    ]
+                });
+
+                farmer.RECOMMENDATIONS.forEach(function (rec) {
+                    rows.push({
+                        cells: [
+                            { value: "" },
+                            { value: rec.CROP_NAME },
+                            { value: rec.PROBLEM_NAME },
+                            { value: rec.REMARKS },
+                            { value: rec.RECOMMENDATION },
+                            { value: "" },
+                            { value: "" }
+                        ]
+                    });
+                });
+
+                rows.push({
+                    cells: ["", "", "", "", "", ""]
+                });
+            }
+        });
+
+        return rows;
+    }
+
+    function BindFarmerGrid() {
+
+        reportConfig = GetReportSetting("FarmerProblemRecommendationReport");
+
+        $("#farmerGrid").kendoGrid({
+            dataSource: {
+                transport: {
+                    read: {
+                        url: "/api/Report/GetFarmerProblemRecommendation",
+                        type: "POST",
+                        dataType: "json",
+                        contentType: "application/json; charset=utf-8"
+                    },
+                    parameterMap: function (options) {
+                        return JSON.stringify(
+                            $.extend({}, options, ReportFilter.filterAdditionalData())
+                        );
+                    }
+                },
+                pageSize: 10,
+                schema: {
+                    model: {
+                        fields: {
+                            farmerName: { type: "string" },
+                            farmName: { type: "string" },
+                            address: { type: "string" },
+                            landSize: { type: "string" },
+                            altitude: { type: "string" },
+                            createdByName: { type: "string" },
+                            createdDate: { type: "date" }
+                        }
+                    }
+                }
+            },
+
+            pageable: {
+                refresh: true,
+                pageSizes: [10, 20, 50, 100, "All"]
+            },
+            sortable: true,
+            filterable: true,
+            resizable: true,
+            reorderable: true,
+            scrollable: true,
+
+            toolbar: [
+                { name: "excel", text: "Export to Excel" }
+            ],
+
+            //excel: {
+            //    fileName: "Farmer_Problem_Recommendations.xlsx",
+            //    allPages: true,
+            //    filterable: true
+            //},
+
+            detailInit: recommendationDetailInit,
+
+            columns: [
+                {
+                    field: "FARMER_NAME",
+                    title: "Farmer Name",
+                    width: 180
+                },
+                {
+                    field: "FARM_NAME",
+                    title: "Farm Name",
+                    width: 220
+                },
+                {
+                    field: "ADDRESS",
+                    title: "Address",
+                    width: 150
+                },
+                {
+                    field: "LAND_SIZE",
+                    title: "Land Size",
+                    width: 100
+                },
+                {
+                    field: "ALTITUDE",
+                    title: "Altitude",
+                    width: 100
+                },
+                {
+                    field: "CREATED_BY",
+                    title: "Created By",
+                    width: 140
+                },
+                {
+                    field: "CREATED_DATE",
+                    title: "Created Date",
+                    width: 120,
+                    template: "#= getDateFormat(CREATED_DATE) #"
+                }
+            ],
+            excel: {
+                fileName: "Farmer_Problem_Recommendations.xlsx",
+                allPages: true
+            },
+            excelExport: function (e) {
+                e.preventDefault();
+
+                var data = e.sender.dataSource.view();
+                var rows = buildExcelRows(data);
+
+                var workbook = new kendo.ooxml.Workbook({
+                    sheets: [{
+                        title: "Farmer Recommendations",
+                        rows: rows,
+                        columns: [
+                            { autoWidth: true },
+                            { autoWidth: true },
+                            { autoWidth: true },
+                            { autoWidth: true },
+                            { autoWidth: true },
+                            { autoWidth: true },
+                            { autoWidth: true },
+                            { autoWidth: true }
+                        ]
+                    }]
+                });
+
+                kendo.saveAs({
+                    dataURI: workbook.toDataURL(),
+                    fileName: "Farmer_Problem_Recommendations.xlsx"
+                });
+            }
+        });
+    }
+
+    function recommendationDetailInit(e) {
+        $("<div/>")
+            .appendTo(e.detailCell)
+            .kendoGrid({
+                dataSource: {
+                    data: e.data.RECOMMENDATIONS || [],
+                    pageSize: 5,
+                    schema: {
+                        model: {
+                            fields: {
+                                cropName: { type: "string" },
+                                problemName: { type: "string" },
+                                remarks: { type: "string" }
+                            }
+                        }
+                    }
+                },
+                pageable: true,
+                sortable: true,
+                resizable: true,
+                scrollable: false,
+
+                columns: [
+                    {
+                        title: "S.N.",
+                        width: 25,
+                        template: "#= ++window._recIndex #"
+                    },
+                    {
+                        field: "CROP_NAME",
+                        title: "Crop Name",
+                        width: 160
+                    },
+                    {
+                        field: "PROBLEM_NAME",
+                        title: "Problem",
+                        width: 200
+                    },
+                    {
+                        field: "REMARKS",
+                        title: "Problem Description",
+                        width: 350
+                    },
+                    {
+                        field: "RECOMMENDATION",
+                        title: "Recommendation",
+                        width: 350
+                    }
+                ],
+
+                dataBinding: function () {
+                    window._recIndex = 0;
+                }
+            });
+    }
+
+    function RefreshFarmerGrid() {
+        var grid = $("#farmerGrid").data("kendoGrid");
+        if (grid) {
+            grid.destroy();
+            $("#farmerGrid").empty();
+        }
+        BindFarmerGrid();
+    }
+
+    $("#RunQuery").on("click", function (e) {
+        e.preventDefault();
+        RefreshFarmerGrid();
+    });
+
+    $(".applydp").on("click", function (e) {
+        e.preventDefault();
+        $("#RunQuery").trigger("click");
+        $(this).closest(".modal").modal("hide");
+    });
+
+    $("#loadAdvancedFilters").on("click", function (e) {
+        e.preventDefault();
+        $("#RunQuery").trigger("click");
+    });
+
+    $(document).ready(function () {
+
+        DateFilter.init(function () {
+            consolidate.init(function () {
+                BindFarmerGrid();
+            });
+        });
+
+    });
+
+</script>
+<script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js")"></script>

@@ -1,0 +1,226 @@
+<style>
+	#lineItemChargeModal .modal-header {
+		padding: 10px !important;
+		background-color: #eee;
+	}
+
+
+	#lineItemChargeModal .k-icon {
+		display: inline-block;
+	}
+
+
+
+	#productTreeViewdocument {
+		width: 40%;
+		float: left;
+		margin-right: 20px;
+	}
+
+
+
+	.verticalLine {
+		border-left: solid #ddd 1px;
+	}
+
+	.k-group.k-treeview-lines {
+		max-height: 230px !important;
+	}
+
+
+	#productGrid {
+		font-size: 9px;
+		/*height: 345px !important;*/
+	}
+
+
+
+	#topsearch input {
+		margin: 3px;
+		height: 27px !important;
+		margin-top: 0px;
+	}
+
+	.show-displaygrid {
+		display: none;
+	}
+
+
+	.btn-linkicon:hover {
+		background-color: #ccc;
+	}
+
+
+
+	.customcolumn-one {
+		width: 27%;
+	}
+
+	.columnbg {
+		background-color: #eee;
+	}
+
+	.customcolumn-two {
+		width: 73%;
+	}
+
+	.topsearch {
+		margin-right: 51px;
+	}
+
+
+
+	#products-list li {
+		/*border-bottom: solid #ded5d5 1px;*/
+	}
+
+
+	input #filterText.form-control {
+		border: solid #ddd 1px !important;
+	}
+
+	#producttree ul li {
+		font-size: 12px;
+	}
+
+
+	.search-grid table tr {
+		display: table-row !important;
+	}
+
+	.topsearch1 {
+		margin-right: 42px !important;
+		display: block;
+	}
+
+	#topsearch1 input {
+		margin: 3px;
+		height: 27px !important;
+		margin-top: 0px;
+	}
+
+	::-webkit-input-placeholder { /* Chrome/Opera/Safari */
+		color: red;
+		opacity: 0.5;
+	}
+
+	div.k-treeview {
+		overflow-y: scroll !important;
+	}
+</style>
+
+<div ng-controller="lineItemChargeCtrl" id="lineItemChargeCtrl">
+
+	<div class="input-group">
+		<input id="products_{{key}}" ng-model="childModels[key][item.COLUMN_NAME]" name="products" class="cproducts  products c cproduct_{{key}} " kendo-combo-box
+			   k-placeholder="0.0"
+			   k-data-text-field="'ItemDescription'"
+			   k-data-value-field="'ItemCode'"
+			   k-filter="'contains'"
+			   k-auto-bind="false"
+			   k-on-change="SetMuCode(key,kendoEvent)"
+			   k-suggest="false"
+			   product-index="{{key}}"
+			   
+			   k-options="ItemCodeOption"
+			   k-min-length="3" />
+		<span class="input-group-addon addon-iconbox" style="cursor:pointer" ng-click="BrowseLineItemCharge(key,item.COLUMN_NAME)">
+			<i class="fa fa-search" data-toggle="tooltip" title="Search product"></i>
+		</span>
+	</div>
+	<div class="modal fade-out" id="lineItemChargeModal_{{key}}" data-backdrop="static" tabindex="-1" data-width="760">
+		<div class="modal-dialog  modal-dialog-box w-900">
+			<div class="modal-content" style="width:420px;">
+				@*height:200px;*@
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-hidden="true" next-on-tab title="Close"></button>
+					<h4 class="modal-title">
+						<span class="fa fa-list-ul"></span>
+						Line Item Charge
+					</h4>
+				</div>
+				<div class="modal-body modal-dialogbox-body" style="min-height:0px;">
+					<div class="row">
+						<div ng-if="ChargeList!=''" class="col-xs-12 col-sm-8 col-md-6">
+							<div class="table-responsive">
+								<table class="table table-bordered charge-table">
+									<tbody>
+
+										<tr class="P_checkRadio">
+											<td>
+												<input type="hidden" id="charge_Code" value={{ChargeCode}} />
+												<input class="P_checkRadio" type="radio" name="checkRadio" id="P" ng-init="bool=true" ng-model="bool" ng-checked="true">
+											</td>
+											<td>Percentage</td>
+											<td class="P_checkRadio ng-scope" ng-if="percentFlag === 'P'">
+												<input type="number" string-to-number placeholder="0" id="P_Id" class="{{ChargeCode}} clsPID form-control textbox P_checkRadio" ng-model="P" style="background-color:#ddd;" />
+											</td>
+											<td class="P_checkRadio ng-scope" ng-if="percentFlag != 'P'">
+												<input type="number" string-to-number placeholder="0" id="P_Id" class="{{ChargeCode}} clsPID form-control textbox P_checkRadio" ng-model="P" value="0" style="background-color:#ddd;" />
+											</td>
+										</tr>
+										<tr class="V_checkRadio">
+											<td>
+												<input type="hidden" id="charge_Code" value={{ChargeCode}} />
+												<input class="V_checkRadio" type="radio" name="checkRadio" id="V" ng-init="bool=true" ng-model="bool" ng-checked="true">
+											</td>
+											<td>Value</td>
+											<td class="V_checkRadio ng-scope" ng-if="percentFlag === 'V'">
+												<input type="number" string-to-number id="V_Id" placeholder="0" ng-model="V_Id" class="{{ChargeCode}} form-control textbox V_checkRadio" style="background-color:#ddd;" />
+											</td>
+											<td class="V_checkRadio ng-scope" ng-if="percentFlag != 'V'">
+												<input type="number" string-to-number id="V_Id" placeholder="0" ng-model="V_Id" class="{{ChargeCode}} form-control textbox V_checkRadio" value="0" style="background-color:#ddd;" />
+											</td>
+										</tr>
+										<tr class="Q_checkRadio">
+											<td>
+												<input type="hidden" id="charge_Code" value={{ChargeCode}} />
+												<input class="Q_checkRadio" type="radio" name="checkRadio" id="Q" ng-init="bool=true" ng-model="bool" ng-checked="true">
+											</td>
+											<td>Quantity</td>
+											<td class="Q_checkRadio ng-scope" ng-if="percentFlag != 'Q'">
+												<input type="number" string-to-number id="Q_Id" placeholder="0" ng-model="Q_Id" value="0" class="{{ChargeCode}} form-control textbox Q_checkRadio" style="background-color:#ddd;" />
+											</td>
+											<td class="Q_checkRadio ng-scope" ng-if="percentFlag == 'Q'">
+												<input type="number" string-to-number id="Q_Id" placeholder="0" ng-model="Q_Id" class="{{ChargeCode}} form-control textbox Q_checkRadio" style="background-color:#ddd;" />
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer clsManualCalCharge_Y"  value="Y">
+					<button type="button" ng-click="sum(key)" data-dismiss="modal" class="btn btn-sm btn-default btnOk" title="Ok">Ok</button>
+				</div>
+				<div class="modal-footer clsManualCalCharge_N"  value="N">
+					<button type="button" data-dismiss="modal" class="btn btn-sm btn-default btnOk" title="Ok" disabled>Ok</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+	$(document).ready(function () {
+        setTimeout(function () {
+            $(".k-list").slimScroll({
+                position: 'right',
+                //alwaysVisible: false,
+                //height: '350',
+            });
+		}, 100)
+	});
+
+	$('.close').click(function (e) {
+		e.preventDefault;
+		$('#item.COLUMN_NAME').trigger('click');
+	});
+
+	$('.btnOk').click(function (e) {
+		e.preventDefault;
+		$('#item.COLUMN_NAME').trigger('click');
+	});
+   
+</script>

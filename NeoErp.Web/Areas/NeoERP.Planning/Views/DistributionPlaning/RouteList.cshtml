@@ -1,0 +1,260 @@
+﻿@{
+    ViewBag.Title = "RouteList";
+    //Layout = "~/Areas/NeoERP.Planning/Views/Shared/_Layout.cshtml";
+    Layout = null;
+}
+
+
+<style>
+    .k-grid {
+        font-size: 11px;
+    }
+
+    .color-notify {
+        float: left;
+        padding-left: 5px;
+    }
+
+    .color-box-1 {
+        height: 13px;
+        width: 13px;
+        background-color: #91D598;
+        border: 1px solid #9c9797;
+        margin-top: 2px;
+        float: left;
+    }
+
+    .color-box-2 {
+        height: 13px;
+        width: 13px;
+        background-color: #D4FAB6;
+        border: 1px solid #9c9797;
+        margin-top: 2px;
+        float: left;
+    }
+
+    .color-box-3 {
+        height: 13px;
+        width: 13px;
+        background-color: #fff;
+        border: 1px solid #9c9797;
+        margin-top: 2px;
+        float: left;
+    }
+
+    .plant-identification {
+        padding-top: 22px;
+        padding-left: 20px;
+    }
+</style>
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light bordered">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="icon-speech font-green-haze "></i>
+                    <span class="caption-subject font-green-haze bold uppercase"> Route List</span>
+                    <span class="caption-helper"></span>
+                </div>
+                <div class="actions pull-right">
+                    <a href="/Planning/DistributionPlaning/Index#!Planning/CreateRoute" class="btn btn-circle btn-green btn-sm">
+                        <i class="fa fa-plus-circle"></i> Add
+                    </a>
+
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div id="grid"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        BindGrid();
+        hideloader();
+    });
+
+    function BindGrid() {
+
+        var mainurl = window.location.protocol + "//" + window.location.host + "/api/DistributionPlaningApi/GetRouteList?plancode=";
+        var dataSource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: {
+                    url: mainurl, // <-- Get data from here.
+                    dataType: "json", // <-- The default was "jsonp".
+                    type: "get",
+                    contentType: "application/json; charset=utf-8"
+                },
+            },
+
+            schema: {
+                // data: "data", // records are returned in the "data" field of the response
+                // total: "total",
+                model: {
+                    fields: {
+                        START_DATE: { type: "date" },
+                        END_DATE: { type: "date" },
+
+                    }
+                }
+            },
+            serverPaging: false,
+            pageSize: 10,
+        });
+
+        var temp = dataSource.read();
+        var grid = $("#grid").kendoGrid({
+            dataSource: dataSource,
+            sortable: true,
+            pageable: {
+                refresh: true,
+                pageSizes: true,
+                buttonCount: 5
+            },
+            reorderable: true,
+            groupable: false,
+            resizable: true,
+            filterable: {    // filter for the null and is not null etc
+                extra: false,// extra false means there is 2 different filter inside the filter
+                operators: {   // the number is data type for the net sales column , and string for the MITI
+                    number: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "is greater than or equal to	",
+                        gt: "is greater than",
+                        lte: "is less than or equal",
+                        lt: "is less than",
+
+                    },
+                    string: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        startswith: "Starts with	",
+                        contains: "Contains",
+                        doesnotcontain: "Does not contain",
+                        endswith: "Ends with",
+                    },
+                    date: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "Is after or equal to",
+                        gt: "Is after",
+                        lte: "Is before or equal to",
+                        lt: "Is before",
+                    }
+                }
+            },
+
+            columnMenu: true,
+            pageable: true,
+            dataBinding: function () {
+                record = (this.dataSource.page() - 1) * this.dataSource.pageSize();
+            },
+            //  autoBind: true,
+            scrollable: {
+                virtual: true
+            },
+            detailInit: detailInit,
+            dataBound: function (o) {
+                var grid = o.sender;
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.length;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    displayPopupNotification("No Data Found Given Date Filter.", "Info");
+                }
+                else {
+                    var g = $("#grid").data("kendoGrid");
+                    for (var i = 0; i < g.columns.length; i++) {
+                        g.showColumn(i);
+                    }
+                    $("div.k-group-indicator").each(function (i, v) {
+                        g.hideColumn($(v).data("field"));
+                    });
+                }
+
+            },
+            columns: [
+                {
+                    title: "SN",
+                    template: "#= ++record #",
+                    width: "35px"
+                },
+                {
+                    field: "PLAN_EDESC",
+                    title: "Routes Plan Name",
+                    //width: "70px",
+                    //template: "#= SetPlanLink(NAME_EDESC,PLAN_ROUTES_CODE) #"
+                },
+                {
+                    field: "START_DATE",
+                    title: "Start Date",
+                    format: "{0:dd-MMM-yyyy}",
+                    //width: "35px",
+                },
+                {
+                    field: "END_DATE",
+                    title: "End Date",
+                    format: "{0:dd-MMM-yyyy}",
+                    //width: "35px",
+                    // format: "{0:n}",
+                },
+                {
+                    field: "TIME_FRAME_EDESC",
+                    title: "Time Frame",
+                    //width: "30px",
+                },
+                {
+                    field: "REMARKS",
+                    //hidden: true,
+                },
+            ],
+
+            dataBound: function (event) {
+
+            }
+
+        });
+    }
+
+    function detailInit(e) {
+        $("<div/>").appendTo(e.detailCell).kendoGrid({
+            dataSource: {
+                transport: {
+                    read: window.location.protocol + "//" + window.location.host + "/api/DistributionPlaningApi/GetRouteByRouteCode?PLAN_ROUTE_CODE=" + e.data.PLAN_CODE
+                },
+                pageSize: 10,
+                //filter: { field: "PLAN_ROUTES_CODE", operator: "eq", value: e.data.PLAN_ROUTES_CODE }
+            },
+            scrollable: false,
+            sortable: true,
+            pageable: true,
+            columns: [
+                //{ title: "SN", template: "#= ++record #", width: "6px" },
+                { field: "ROUTE_CODE", title: "Route code", width: "20px" },
+                { field: "ROUTE_NAME", title: "Route Name", width: "110px" },
+            ]
+        });
+    }
+
+    function SetPlanLink(name, value) {
+        var html = '<a style="" href="/Planning/Home/Index#!Planning/PlanSetup/' + value + '" >' + name + ' </a>';
+        return html;
+    }
+
+    function setRedirection(planCode) {
+        var html = '<a style="color:green;" class="goto_planSetup planCode_' + planCode + ' icon icon-share-alt "><span class="sr-only"></span> </a>';
+        return html;
+    }
+
+    function RefreshGrid() {
+        $('#grid').data("kendoGrid").dataSource.read();
+    }
+</script>

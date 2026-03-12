@@ -1,0 +1,174 @@
+﻿
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>
+    ();
+    }
+    <style type="text/css">
+        .dynamicforms label {
+            font-size: 13px !important;
+            color: #333;
+        }
+    </style>
+
+    <link href="@Styles.Url(" ~/Areas/NeoERP.ProjectManagement/Content/financecss.css?120")" rel="stylesheet" media="print" />
+    <link href="@Styles.Url(" ~/Areas/NeoERP.ProjectManagement/Content/financecss.css?120")" rel="stylesheet" />
+    <div class="printable-modal" style="width:571px;">
+        <div class="print_document_title_fisc">
+            <h3 style="text-decoration-line:underline; text-transform:uppercase;">{{printCompanyInfo.formName}}</h3>
+
+        </div>
+
+        <div class="left-side">
+            <div class="date">
+                <table class="print_table meta">
+                    <thead>
+                        <tr ng-repeat="element in MasterFormElement" ng-if="element.COLUMN_HEADER.indexOf('Date') != -1">
+                            <th><span>{{element.COLUMN_HEADER}}</span></th>
+                            <td>
+                                <span>{{masterModels[element.COLUMN_NAME]}}</span>
+                                <span>[{{getNepaliDate(masterModels[element.COLUMN_NAME])}}]</span>
+                            </td>
+                        </tr>
+                    </thead>
+                </table>
+
+                <table class="print_table meta table-bordered1">
+                    <thead>
+                        <tr ng-repeat="element in MasterFormElement | orderBy:'SERIAL_NO'" ng-if="element.COLUMN_NAME.indexOf('NO') !== -1">
+                            <th ng-if="element.COLUMN_NAME.indexOf('INVOICE_NO') !== -1" style="width:30%"><span>Invoice No#</span></th>
+                            <th ng-if="element.COLUMN_NAME.indexOf('INVOICE_NO') === -1" style="width:30%"><span>{{element.COLUMN_HEADER}}</span></th>
+                            <td>
+                                <span>{{masterModels[element.COLUMN_NAME]}}</span>
+                            </td>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+        <div class="left-side">
+            <div class="info">
+                <p> {{printCompanyInfo.companyName}}<br>{{printCompanyInfo.form_edesc}}</p>
+                <p>{{printCompanyInfo.address}}</p>
+                <p>Phone : {{printCompanyInfo.phoneNo}}</p>
+                @*<p>Mobile : 9854035126,9854035122</p>*@
+                <p ng-if="printCompanyInfo.email!=null">E-Mail : {{printCompanyInfo.email}}</p>
+                <p>PAN: {{printCompanyInfo.tPinVatNo}}</p>
+
+            </div>
+        </div>
+
+     
+        <table class="print_table fnce table-bordered">
+            <thead>
+                <tr>
+                    <th style="width:90%;">Particulars</th>
+                    <th>Amounts</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="(key,row) in print_body_col1 | orderBy: 'SERIAL_NO'" style="height:20px">
+                    <td ng-repeat="item in row.element | orderBy: 'SERIAL_NO'">
+                        <div ng-if="item.COLUMN_NAME.indexOf('CODE') !== -1">
+                            <div ng-if="item.COLUMN_NAME.indexOf('ACC') !== -1">
+                                <span>{{childModels[key].ACC_EDESC}}</span>
+                                <div ng-if="childModels[key].ACC_CODE=== dynamicSubLedgerModalData[key].ACC_CODE">
+                                    <table>
+                                        <tbody>
+                                            <tr ng-repeat="(k,row) in dynamicSubLedgerModalData[key].SUBLEDGER">
+                                                <td style="border-right:none !important;">
+                                                    <span>{{dynamicSubLedgerModalData[key].SUBLEDGER[k].SUB_EDESC}} {{dynamicSubLedgerModalData[key].SUBLEDGER[k].AMOUNT}}</span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                </div>
+                                <div ng-if="childModels[key].ACC_CODE=== dynamicModalData[key].ACC_CODE">
+                                    <table>
+                                        <tbody>
+                                            <tr ng-repeat="(k,row) in dynamicModalData[key].BUDGET">
+                                                <td style="border-right:none !important;">
+                                                    <span>{{dynamicModalData[key].BUDGET[k].BUDGET_CODE}} {{dynamicModalData[key].BUDGET[k].AMOUNT}}</span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                </div>
+                            </div>
+                        </div>
+                        <div ng-if="item.COLUMN_NAME==='AMOUNT'" style="text-align:right;">
+                            <span>{{childModels[key][item.COLUMN_NAME]}}</span>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        @*<table class="print_table balance table-bordered">
+            <tr>
+                <th style="width:993px; text-align:right"><span> Total </span></th>
+                <td style="width:99px;text-align:right"><span>{{accsummary.drTotal}}</span></td>
+            </tr>
+            <tr>
+                <th style="width:993px;"><span>Amount in words :</span> {{amountinword}} Only.</th>
+            </tr>
+        </table>*@
+        <table class="print_table balance table-bordered">
+
+            <tr ng-repeat="element in MasterFormElement | orderBy:'SERIAL_NO'">
+                <td style="width:89.5%;text-align:right" ng-if="element.COLUMN_NAME.indexOf('MASTER_AMOUNT') !== -1">
+                    <span>Total</span>
+                </td>
+                <td style="width:99px;text-align:right" ng-if="element.COLUMN_NAME.indexOf('MASTER_AMOUNT') !== -1">
+                    <span>{{masterModels[element.COLUMN_NAME]}}</span>
+                </td>
+            </tr>
+            <tr>
+                <th style="width:993px;"><span>Amount in words :</span> {{amountinword}} Only.</th>
+            </tr>
+
+        </table>
+        <p> Through: Cash In Hand -Factory</p>
+
+        <div class="invoice_footer">
+            <div class="narration">
+                <table class="print_table meta table-bordered1">
+                    <tbody>
+                        <tr ng-repeat="element in MasterFormElement | orderBy:'SERIAL_NO'">
+                            <td ng-if="element.COLUMN_NAME.indexOf('REMARKS') !== -1">
+                                <p><strong>Narration :</strong>{{masterModels[element.COLUMN_NAME]}}</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+
+
+        </div>
+        <div class="invoice_footer_details">
+            <ul>
+                <li>
+                    <div class="by">@workingContent.CurrentUserinformation.login_code</div>
+                    Prepared By:
+                </li>
+                <li>
+                    <div class="by"></div>
+                    Receiver Signature :
+                </li>
+                <li>
+                    <div class="by"></div>
+                    Checked By :
+                </li>
+                <li>
+                    <div class="by"></div>
+                    Authorised Signatory :
+                </li>
+            </ul>
+        </div>
+    </div>
+
+

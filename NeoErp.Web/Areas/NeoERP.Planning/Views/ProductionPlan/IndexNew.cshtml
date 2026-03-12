@@ -1,0 +1,329 @@
+﻿
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@using NeoErp.Core.Models;
+
+@model NeoErp.Planning.Service.Models.PreferenceSetupModel
+
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+    ViewBag.Title = "Create Plan";
+
+    Layout = null;
+    string LoggedInUsers_EmployeeCode = ViewBag.EmployeeCode;
+    string plancode = ViewBag.PlanCode;
+    string productSelectionLimit = string.Empty;
+    productSelectionLimit = ViewBag.productSelectionLimit;
+}
+<style>
+    .customdesign label {
+        font-size: 13px;
+    }
+
+    .k-grid {
+        font-size: 11px;
+    }
+
+    .customdesign .form-control {
+        padding: 3.5px 5px !important;
+        height: auto !important;
+    }
+
+    .k-autocomplete.k-state-default, .k-picker-wrap.k-state-default, .k-numeric-wrap.k-state-default, .k-dropdown-wrap.k-state-default {
+        background-color: #fafafa;
+    }
+
+    .input-group.input-medium.date-picker.input-daterange {
+        width: 100% !important;
+    }
+
+    .datefilter > label {
+        text-align: left;
+    }
+
+    fieldset {
+        border: 1px solid #aaa;
+        border-radius: 5px;
+        margin-bottom: 10px;
+    }
+
+
+
+    /*legend.productMaster {
+            width: 13%;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+       legend.planOption {
+           width: 11% !important;
+
+       }*/
+    .treeViewField {
+        min-height: 170px;
+    }
+
+    .md-radio-inline > div {
+        padding: 0px 10px 0px 0px;
+        float: left;
+    }
+
+    #productTab .k-group.k-treeview-lines {
+        max-height: 700px !important;
+    }
+
+    #grid td input {
+        width: 100%;
+        height: 16px !important;
+        background: none !important;
+        font-size: 11px !important;
+        text-align: right;
+        border: solid 1px rgba(0,0,0,0)
+    }
+
+        #grid td input:focus {
+            outline: none !important;
+        }
+
+    .calendar-icon-2 {
+        position: absolute;
+        right: 10px;
+        top: 26px;
+        color: #bdb5b5;
+    }
+
+    .md-radio-inline span {
+        padding-right: 15px;
+    }
+
+    .buttonadd, .buttondelete {
+        border: solid #ddd 1px;
+        background-color: #eee;
+        padding: 1px 5px;
+        display: inline-block;
+        margin-right: 5px;
+    }
+
+        .buttonadd:hover, .buttondelete:hover {
+            background-color: #ddd;
+            transition: 0.5s ease-in-out;
+        }
+
+    fieldset.material_opt {
+        padding-top: 0em !important;
+        padding-bottom: 0em !important;
+        padding-right: 0em !important;
+    }
+
+    .repeat {
+        max-height: 150px;
+    }
+</style>
+<script src="~/Areas/NeoERP.Planning/Scripts/jquery.maskedinput.min.js"></script>
+<script src="~/Areas/NeoERP.Planning/Scripts/DateFilter.js"></script>
+<style>
+    .alert {
+        padding-top: 0px;
+        padding-bottom: 0px;
+        margin-bottom: 0px;
+    }
+</style>
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+            @*<li>
+                    <i class="fa fa-home"></i>
+                    <a href="/Distribution/Home/Dashboard#!Distribution/">Home</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>
+                <li>
+                    <a href="#">Group Setup</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>*@
+        </ul>
+    </div>
+
+</div>
+<div class="col-md-12 alertBox" style="display:none;">
+    <div class="alert alert-danger">
+        
+        <strong>Info !</strong> <small> Employee Code is not assigned to application user. contact administrator to resolve.</small>
+    </div>
+</div>
+<div id="ProductionPlanNewCtrl" ng-controller="ProductionPlanNewCtrl" class="portlet light form-fit1 bordered common">
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="fa fa-list-alt font-green-haze"></i>
+            <span class="caption-subject font-green-haze bold uppercase">
+                {{pageName}}
+            </span>
+        </div>
+        @*<span class="pull-right" id="controlbuttons">
+                <button type="button" id="cancelplan" name="cancelplan" ng-click="clearAllField()" class="btn btn-default btn-circle btn-sm"><i class="fa fa-times"></i> Cancel</button>
+                <button type="button" id="SavePlan1" ng-show="visibleSavebtn" ng-click="saveMaterialPlanAll(generateplan.$valid)" name="next" class="btn btn-green btn-circle btn-sm">
+                    <i class="fa fa-caret-right"></i> Save
+                </button>
+                <button type="button" id="createMaterialPlan1" ng-show="visibleGenerateBtn" ng-click="generatePlan(generateplan.$valid)" name="next" class="btn btn-green btn-circle btn-sm pull-right" style="margin-bottom:10px;">
+                    Generate
+                </button>
+            </span>*@
+    </div>
+    <div class="portlet-body row">
+        <div class="customdesign" id="showFormPanel">
+            <form id="generateplan" name="generateplan" novalidate>
+                <div class="col-md-12">
+                    <div class="columndivide">
+
+                        <fieldset class="material_opt">
+                            <legend class="planOption">{{manualOrReferential}} Options</legend>
+                            <div class="row1">
+                                <div id="isFromSalesOrder">
+                                    <div class="col-md-6">
+                                        @Html.Partial("~/Areas/NeoERP.Planning/Views/Shared/PlanningDateField.cshtml", true)
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label class="control-label">
+                                                Customer
+                                            </label>
+                                            <input id="customerList" ng-model="customerList" name="customerList" style="width: 100%;" />
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                            <div class="row1">
+                                <div class="col-md-9" id="divgeneratepi">
+                                    <button type="button" id="summeryqty" class="btn btn-sm btn-green pull-right" ng-click="viewSummeryQty()" data-toggle="tooltip" title="View Summery Quantity"><i class="fa fa-eye"></i>View1</button>
+                                </div>
+                            </div>
+
+                            <div class="row1" style="margin-top: 50px;margin-bottom: 50px;">
+                                <div class="col-md-9">
+                                    <kendo-grid id="kGrid" options="productDetailsGridOptions" k-rebind="productDetailsGridOptions">
+                                    </kendo-grid>
+                                </div>
+                            </div>
+                            <div class="row1" ng-if="secondView=='Y'">
+                                <div class="col-md-9" id="divgeneratepi">
+                                    <button type="button" id="distinctqty" class="btn btn-sm btn-green pull-right" ng-click="viewDistinctQty()" data-toggle="tooltip" title="View distinct Quantity"><i class="fa fa-eye"></i>View2</button>
+                                </div>
+                            </div>
+                            <div class="row1" ng-if="checkedItemsDistReset.length>0">
+                                <div class="col-md-9" id="divsummeryqty">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th style="width:160px">
+                                                    Product Name
+                                                </th>
+                                                <th style="width:100px">
+                                                    Quantity
+                                                </th>
+                                                <th style="width:100px">
+                                                    P Quantity
+                                                </th>
+
+                                            </tr>
+                                        </thead>
+                                        <tr ng-repeat="item in checkedItemsDistReset">
+                                            <td>{{item.item_edesc}}</td>
+                                            <td>{{item.qty}}</td>
+                                            <td>
+                                                <input type="number" id="lname" name="lname" style="border:none" ng-model="item.Pqty">
+                                            </td>
+                                        </tr>
+                                        <tbody>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="row1" ng-if="thirdView=='Y'">
+                                <div class="col-md-9" id="divviewstock">
+                                    <button type="button" id="viewstock" class="btn btn-sm btn-green pull-right" ng-click="viewStock()" data-toggle="tooltip" title="View distinct Quantity"><i class="fa fa-eye"></i>View3</button>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                </div>
+                
+            </form>
+
+        </div>
+    </div>
+</div>
+    <script>
+        $(".nepali-calendar").nepaliDatePicker({
+            npdMonth: true,
+            onFocus: true,
+            npdYear: true,
+            npdYearCount: 10,
+            altFormat: "dd-MMM-YYYY",
+            dateFormat: "dd-MMM-YYYY",
+            onChange: function (evt) {
+                var nepalidate = $("#nepaliDate5").val();
+                var Engdate = BS2AD(nepalidate);
+                var FormattedEngDate = moment(Engdate).format('DD-MMM-YYYY');
+                // $("#englishdatedocument").val(FormattedEngDate);
+            }
+        });
+        $(document).ready(function () {
+            debugger;
+            
+            DateFilter.init("BS", getSelectedOption);
+            BindCustomerList();
+
+        });
+        function getSelectedOption() {
+            $(".dateFilterSelect").val('This Year');
+            $("#ddlDateFilterVoucher").trigger('change');
+        }
+        function BindCustomerList() {
+            var mainurl = window.location.protocol + "//" + window.location.host + "/api/MaterialPlanApi/BindSalesOrderCustomer";
+            $("#customerList").kendoMultiSelect({
+                //optionLabel: "--Select Production--",
+                placeholder: "Select Customer",
+                filter: "contains",
+                dataTextField: "CUSTOMER_EDESC",
+                dataValueField: "CUSTOMER_CODE",
+                valuePrimitive: true,
+                autoBind: false,
+                dataSource: {
+                    type: "json",
+                    transport: {
+                        read: {
+                            url: mainurl,
+                        },
+                        parameterMap: function (data, action) {
+
+                            if (data.filter != undefined) {
+                                if (data.filter.filters[0] != undefined) {
+                                    var newParams = {
+                                        filter: data.filter.filters[0].value
+                                    };
+                                    return newParams;
+                                }
+                                else {
+                                    var newParams = {
+                                        filter: ""
+                                    };
+                                    return newParams;
+                                }
+                            }
+                            else {
+                                var newParams = {
+                                    filter: ""
+                                };
+                                return newParams;
+                            }
+
+                        }
+
+                    }
+                },
+                //close: ddlChngEvnt,
+                change: function () {
+                    //angular.element('#MaterialFromProductionPICtrl').scope().commonFn();
+                }
+            });
+        }
+    </script>

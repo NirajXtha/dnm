@@ -1,0 +1,277 @@
+﻿@using NeoErp.Core.Models;
+<style>
+    #cancelOutlet {
+        margin-right: 10px;
+    }
+
+    span.fa.fa-truck {
+        margin-right: 5px;
+    }
+
+    a#RunQuery {
+        margin-right: 5px;
+    }
+
+    #grid {
+        height: 100%;
+    }
+
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+    }
+
+    .page-bar {
+        margin-bottom: 0px !important;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content, .k-grid-header {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    a.k-button.k-button-icontext.k-grid-excel {
+        float: right;
+    }
+</style>
+
+<div>
+    <div class="content">
+        <div class="page-bar">
+            <ul class="page-breadcrumb">
+                <li>
+                    <i class="fa fa-home"></i>
+                    <a href="/Distribution/Distributor/Index#!Distributor/Dashboard">Home</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>
+                <li>
+                    <a href="#">Account Statement</a>
+                </li>
+            </ul>
+            <div class="page-toolbar">
+                <div class="btn-group pull-right">
+                    <div class="actions">
+                        <div class="btn-group">
+                            @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+
+                        </div>
+                        <div class="btn-group">
+                            @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                       {
+                           ShowAccountsFilter = true,
+                           //ShowCompanyFilter = true
+
+                       })
+                        </div>
+                        <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                            <i class="icon-control-play"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row collapse in" id="demo">
+            <div class="col-md-12">
+                <div class="portlet light bordered">
+                    <div class="portlet-body form">
+                        <!--grid-->
+                        <div class="row">
+                            <div id="grid">
+                            </div>
+                            @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                        </div>
+                        <!--grid-->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="@Scripts.Url("~/JS/reportFilter.js?v9")"></script>
+<script src="@Scripts.Url("~/JS/DateFilter.js?v5")" type="text/javascript"></script>
+<script>
+    function BindGrid() {
+        $("#grid").kendoGrid({
+            dataSource: {
+                type: "JSON",
+                transport: {
+                    read: {
+                        url: window.location.protocol + "//" + window.location.host + "/api/Distributor/GetAccounStatement",
+                        dataType: "json",
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8"
+                    },
+                    parameterMap: function (options, type) {
+                        var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+
+                    },
+                },
+                schema: {
+                    model: {
+                        fields: {
+                            PARTICULARS: { type: "string" },
+                            VOUCHER_NO: { type: "string" },
+                            VOUCHER_DATE: { type: "date" },
+                            DR_AMOUNT: { type: "number" },
+                            CR_AMOUNT: { type: "number" },
+                            BALANCE: { type: "number" },
+
+                        }
+                    }
+                },
+                error: function (e) {
+                    displayPopupNotification("Sorry error occured while processing data", "error");
+                },
+                pageSize: 100,
+                aggregate: [{ field: "DR_AMOUNT", aggregate: "sum" },
+                { field: "CR_AMOUNT", aggregate: "sum" },
+                { field: "BALANCE", aggregate: "sum" },
+                ],
+            },
+            toolbar: kendo.template($("#toolbar-template").html()),
+            excel: {
+                fileName: "Account Statement",
+                allPages: true,
+            },
+            height: window.innerHeight - 150,
+
+            scrollable: {
+                virtual: true
+            },
+            dataBound: function (o) {
+                var grid = o.sender;
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.length;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    displayPopupNotification("No Data Found Given Date Filter.", "info");
+                }
+                $('div').removeClass('.k-header k-grid-toolbar');
+            },
+            columns: [{
+                field: "PARTICULARS",
+                title: "Particular",
+                width: "20%",
+            }, {
+                field: "SUB_EDESC",
+                title: "Name",
+                width: "20%",
+            }, {
+                field: "ACC_EDESC",
+                title: "A/C Name",
+                width: "20%",
+            }, {
+                field: "VOUCHER_NO",
+                title: "Voucher No.",
+                width: "15%",
+            }, {
+                field: "VOUCHER_DATE",
+                title: "Voucher Date",
+                format: "{0:dd-MMM-yyyy}",
+                width: "8%",
+                footerTemplate: "Total: ",
+            }, {
+                field: "DR_AMOUNT",
+                title: "Dr. Amt",
+                attributes: {
+                    style: "text-align: right;"
+                },
+                width: "8%",
+                aggregates: ["sum"],
+                footerTemplate: "#:sum#",
+            }, {
+                field: "CR_AMOUNT",
+                title: "Cr. Amt",
+                attributes: {
+                    style: "text-align: right;"
+                },
+                width: "8%",
+                aggregates: ["sum"],
+                footerTemplate: "#:sum#",
+            }, {
+                field: "BALANCE",
+                title: "Balance",
+                attributes: {
+                    style: "text-align: right;"
+                },
+                width: "15%",
+                aggregates: ["sum"],
+                //footerTemplate: "#:sum#",
+                footerTemplate: "#=kendo.toString(sum) < 0 ? kendo.toString(kendo.format('{0:n}',sum)) +'  Cr.': kendo.toString(kendo.format('{0:n}',sum)) +'  Dr.'#",
+            }]
+        });
+    }
+
+    $(".applydp").on("click", function (evt) {
+
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+        $(this).closest("#applydp").modal('hide');
+    });
+
+    $("#loadAdvancedFilters").on("click", function (evt) {
+        debugger;
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    });
+    function KendoGridRefresh(readUrl) {
+        $('#grid').val('');
+        $('#grid').html('');
+        BindGrid(readUrl)
+    }
+    $(document).ready(function () {
+        debugger;
+        DateFilter.init(function () {
+            BindGrid();
+
+        });
+    });
+
+</script>
+
+<script type="text/javascript">
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+
+
+
+    $(".applydp").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+        urltest = window.location.protocol + "//" + window.location.host + "/api/Distributor/GetAccounStatement";
+        KendoGridRefresh(urltest);
+
+    });
+    $("#RunQuery").on("click", function (evt) {
+        evt.preventDefault();
+        $("#grid").data("kendoGrid").dataSource.read();
+        urltest = window.location.protocol + "//" + window.location.host + "/api/Distributor/GetAccounStatement";
+        KendoGridRefresh(urltest);
+
+    });
+</script>

@@ -1,0 +1,604 @@
+﻿@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@using NeoErp.Core.Helpers
+@using NeoErp.Core.Models.CustomModels
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>
+    ();
+}
+<style>
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+        width: 183px !important;
+    }
+
+    .page-bar {
+        margin-bottom: 0px !important;
+    }
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+             font-size:11px;
+        }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    button#locationToggle {
+        height: 29px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    .treelist-header {
+        text-align: center;
+        font-weight: normal;
+    }
+</style>
+<div class="page-content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb"></ul>
+       
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+                <div class="btn-group pull-right">
+                    <div class="btn btn-sm" data-container="body" data-placement="bottom" data-original-title="Click To Filter Date Range">
+                    </div>
+                    <div class="btn-group" data-toggle="tooltip" data-placement="bottom">
+                  
+                        @Html.Partial("~/Views/Shared/Controls/DatePicker.cshtml", new NeoErp.Core.Models.CustomModels.DatePickerModel()
+                   {
+                       TextToAppend = "Last Week Of",
+                       AppendText = true,
+                       IsPopUp = true
+
+                   })
+                    </div>
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="javsascript:;">
+                        <i class="icon-control-play"></i>
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div id="grid"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+@Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+@*
+    <script type="text/x-kendo-template" id="toolbar-template">
+        <div class="k-header k-grid-toolbar">
+            <a class="k-button k-button-icontext k-grid-excel" href="javascript:">
+                <i class="fa fa-file-excel-o"></i>
+            </a>
+            <a class="k-button k-button-icontext k-grid-pdf" href="javascript">
+                <i class="fa fa-file-pdf-o"></i>
+            </a>
+        </div>
+    </script>*@
+
+@*<script src="@Scripts.Url("~/JS/DateFilter.js?V5")" type="text/javascript"></script>*@
+<script src="@Scripts.Url("~/JS/dynamicReport.js?V2")" type="text/javascript"></script>
+<script type="text/javascript">
+    
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+
+</script>
+<script>
+    
+        var days = [];
+        var companyName = ('@workingContent.CurrentUserinformation.company_name');
+
+        $(".applydp").on("click", function (evt) {
+            evt.preventDefault();
+            $("#RunQuery").trigger("click");
+            $(this).closest("#applydp").modal('hide');
+            //Date-filter-range display on top
+            if ($("#datePickerBs").val() != undefined && $("#datePickerBs").val() != "") {
+                var value = $("#datePickerBs").val();
+                if (value != "") {
+                    $("#date-filter-value").html("<span class='date-filter-icon'>" + value + "</span>");
+                }
+                else {
+                    $("#date-filter-value").html();
+                }
+
+            }
+            else {
+                $("#date-filter-value").html();
+            }
+        });
+
+        $("#loadAdvancedFilters").on("click", function (evt) {
+            evt.preventDefault();
+            $("#RunQuery").trigger("click");
+        });
+        if ($("#datePickerBs").val() != undefined && $("#datePickerBs").val() != "") {
+            var value = "" + $("#datePickerBs").val();
+            if (value != "") {
+                $("#date-filter-value").html("<span class='date-filter-icon'>" + value + "</span>");
+            }
+            else {
+                $("#date-filter-value").html();
+            }
+
+        }
+        else {
+            $("#date-filter-value").html();
+        }
+
+
+        function KendoGridRefresh() {
+            $('#grid').data("kendoTreeList").destroy();
+            $('#grid').val('');
+            $('#grid').html('');
+            weeklyReport.BindGrid();
+        }
+
+        var weeklyReport = (function () {
+            function CalculateColumn(response) {
+
+                var duration = getDuration();
+                var amountRow = _.filter(response, function (x) {
+                    return x.AMOUNT != 0;
+                });
+
+                
+                $.each(amountRow, function (i, obj) {
+                    if (moment(obj.VOUCHER_DATE).toString() == moment(duration[0]["sun"]).toString())
+                        amountRow[i].sun = obj.AMOUNT;
+                    if (moment(obj.VOUCHER_DATE).toString() == moment(duration[0]["mon"]).toString())
+                        amountRow[i].mon = obj.AMOUNT;
+                    if (moment(obj.VOUCHER_DATE).toString() == moment(duration[0]["tue"]).toString())
+                        amountRow[i].tue = obj.AMOUNT;
+                    if (moment(obj.VOUCHER_DATE).toString() == moment(duration[0]["wed"]).toString())
+                        amountRow[i].wed = obj.AMOUNT;
+                    if (moment(obj.VOUCHER_DATE).toString() == moment(duration[0]["thr"]).toString())
+                        amountRow[i].thr = obj.AMOUNT;
+                    if (moment(obj.VOUCHER_DATE).toString() == moment(duration[0]["fri"]).toString())
+                        amountRow[i].fri = obj.AMOUNT;
+                    if (moment(obj.VOUCHER_DATE).toString() == moment(duration[0]["sat"]).toString())
+                        amountRow[i].sat = obj.AMOUNT;
+                    if (moment(moment(obj.VOUCHER_DATE).toString() <= moment().toString()))
+                        amountRow[i].ytd = obj.AMOUNT;
+
+                });
+
+                return parseTreeList(response);
+
+
+            }
+            function parseTreeList(response) {
+
+                //parse to calculate amount
+                var parentNode = _.filter(response, function (x) {
+                    return x.PRE_ACC_CODE == null;
+                });
+
+                $.each(parentNode, function (index, obj) {
+                    var node = _.filter(response, function (x) {
+                        return x.PRE_ACC_CODE == obj.MASTER_ACC_CODE;
+                    });
+                    if (node.length > 0)
+                        Recursive(response, node);
+
+                });
+
+
+                return response;
+
+            }
+            function Recursive(data, node) {
+                
+                $.each(node, function (index, obj) {
+                    var childNode = _.filter(data, function (x) {
+                        return x.PRE_ACC_CODE == obj.MASTER_ACC_CODE;
+                    });
+
+                    if (childNode.length > 0)
+                        Recursive(data, childNode);
+                    else {
+                        ReverseRecursive(data, obj);
+                    }
+                });
+            }
+            function ReverseRecursive(data, node) {
+                
+                if (node.PRE_ACC_CODE != null) {
+                    var parentNode = _.filter(data, function (x) {
+                        return x.MASTER_ACC_CODE == node.PRE_ACC_CODE;
+                    });
+
+                    parentNode[0].sun = parentNode[0].sun == undefined ? 0 : parentNode[0].sun;
+                    node.sun = node.sun == undefined ? 0 : node.sun;
+                    parentNode[0].mon = parentNode[0].mon == undefined ? 0 : parentNode[0].mon;
+                    node.mon = node.mon == undefined ? 0 : node.mon;
+                    parentNode[0].tue = parentNode[0].tue == undefined ? 0 : parentNode[0].tue;
+                    node.tue = node.tue == undefined ? 0 : node.tue;
+                    parentNode[0].wed = parentNode[0].wed == undefined ? 0 : parentNode[0].wed;
+                    node.wed = node.wed == undefined ? 0 : node.wed;
+                    parentNode[0].thr = parentNode[0].thr == undefined ? 0 : parentNode[0].thr;
+                    node.thr = node.thr == undefined ? 0 : node.thr;
+                    parentNode[0].fri = parentNode[0].fri == undefined ? 0 : parentNode[0].fri;
+                    node.fri = node.fri == undefined ? 0 : node.fri;
+                    parentNode[0].sat = parentNode[0].sat == undefined ? 0 : parentNode[0].sat;
+                    node.sat = node.sat == undefined ? 0 : node.sat;
+
+                    parentNode[0].ytd = parentNode[0].ytd == undefined ? 0 : parentNode[0].ytd;
+                    node.ytd = node.ytd == undefined ? 0 : node.ytd;
+
+                    parentNode[0].sun += node.sun;
+                    parentNode[0].mon += node.mon;
+                    parentNode[0].tue += node.tue;
+                    parentNode[0].wed += node.wed;
+                    parentNode[0].thr += node.thr;
+                    parentNode[0].fri += node.fri;
+                    parentNode[0].sat += node.sat;
+
+                    parentNode[0].ytd += node.ytd;
+
+
+                    ReverseRecursive(data, parentNode[0]);
+                }
+
+            }
+            function getDuration() {
+                
+                //new implimentation
+                var duration = [];
+                var ad = moment($("#datePickerAd").val()).add(-6, 'days');
+                duration = [];
+                duration.push(
+                    {
+                        "sun": moment(ad)._d,
+                        "mon": moment(ad).add(1, 'days')._d,
+                        "tue": moment(ad).add(2, 'days')._d,
+                        "wed": moment(ad).add(3, 'days')._d,
+                        "thr": moment(ad).add(4, 'days')._d,
+                        "fri": moment(ad).add(5, 'days')._d,
+                        "sat": moment(ad).add(6, 'days')._d
+                    });
+                days = [];
+                    var start = AD2BS(moment(ad).format("YYYY-MM-DD"));
+                    days.push(AD2BS(moment(ad).format("YYYY-MM-DD")).substring(8) + "-" + moment(ad).format('ddd'));
+                    days.push(AD2BS(moment(ad).add(1, 'days').format("YYYY-MM-DD")).substring(8) + "-" + moment(ad).add(1, 'days').format('ddd'));
+                    days.push(AD2BS(moment(ad).add(2, 'days').format("YYYY-MM-DD")).substring(8) + "-" + moment(ad).add(2, 'days').format('ddd'));
+                    days.push(AD2BS(moment(ad).add(3, 'days').format("YYYY-MM-DD")).substring(8) + "-" + moment(ad).add(3, 'days').format('ddd'));
+                    days.push(AD2BS(moment(ad).add(4, 'days').format("YYYY-MM-DD")).substring(8) + "-" + moment(ad).add(4, 'days').format('ddd'));
+                    days.push(AD2BS(moment(ad).add(5, 'days').format("YYYY-MM-DD")).substring(8) + "-" + moment(ad).add(5, 'days').format('ddd'));
+                    days.push(AD2BS(moment(ad).add(6, 'days').format("YYYY-MM-DD")).substring(8) + "-" + moment(ad).add(6, 'days').format('ddd'));
+                    var end = AD2BS(moment(ad).add(6, 'days').format("YYYY-MM-DD"));
+                    days.push(" &nbsp;&nbsp;<small>(" + start + " to " + end + ")</small>");
+                    return duration;
+
+
+                //var current_date = getNepaliDate();
+                //var date = current_date.split("-");
+                //var currentFiscalYear = (parseInt(date[0]) - 1).toString() + "/" + date[0].toString().substring(2, date[0].toString().length);
+                //var readUrl = window.location.protocol + "//" + window.location.host + "/api/Common/GetDateFilters?fiscalYear=" + currentFiscalYear;
+                //$.ajax({
+                //    type: "GET",
+                //    url: readUrl,
+                //    async: false,
+                //    success: function (dateData) {
+                //        $.each(dateData, function (i) {
+                //            if (dateData[i].RangeName == "This Week") {
+                //                duration.push(
+                //                    {
+                //                        "sun": moment(dateData[i].StartDate)._d,
+                //                        "mon": moment(dateData[i].StartDate).add(1, 'days')._d,
+                //                        "tue": moment(dateData[i].StartDate).add(2, 'days')._d,
+                //                        "wed": moment(dateData[i].StartDate).add(3, 'days')._d,
+                //                        "thr": moment(dateData[i].StartDate).add(4, 'days')._d,
+                //                        "fri": moment(dateData[i].StartDate).add(5, 'days')._d,
+                //                        "sat": moment(dateData[i].StartDate).add(6, 'days')._d
+                //                    });
+                //                var start = AD2BS(moment(dateData[i].StartDate).format("YYYY-MM-DD"));
+                //                days.push(AD2BS(moment(dateData[i].StartDate).format("YYYY-MM-DD")).substring(8));
+                //                days.push(AD2BS(moment(dateData[i].StartDate).add(1, 'days').format("YYYY-MM-DD")).substring(8));
+                //                days.push(AD2BS(moment(dateData[i].StartDate).add(2, 'days').format("YYYY-MM-DD")).substring(8));
+                //                days.push(AD2BS(moment(dateData[i].StartDate).add(3, 'days').format("YYYY-MM-DD")).substring(8));
+                //                days.push(AD2BS(moment(dateData[i].StartDate).add(4, 'days').format("YYYY-MM-DD")).substring(8));
+                //                days.push(AD2BS(moment(dateData[i].StartDate).add(5, 'days').format("YYYY-MM-DD")).substring(8));
+                //                days.push(AD2BS(moment(dateData[i].StartDate).add(6, 'days').format("YYYY-MM-DD")).substring(8));
+                //                var end = AD2BS(moment(dateData[i].StartDate).add(7, 'days').format("YYYY-MM-DD"));
+                //                days.push(" &nbsp;&nbsp;<small>(" + start + " to " + end + ")</small>");
+                //            }
+                //            if (dateData[i].RangeName == "This Year") {
+                //                duration.push(
+                //                    {
+                //                        "yearStart": moment(dateData[i].StartDate)._d,
+                //                        "yearEnd": moment(dateData[i].EndDate)._d,
+                //                    });
+                //            }
+                //        });
+                //    },
+                //});
+                //return duration;
+            }
+            function BindGrid() {
+                
+                var fromADdate = $("#FromDateVoucher").val()
+                var toADdate = $("#ToDateVoucher").val();
+                var fromBSdate = $("#fromInputDateVoucher").val();
+                var toBSdate = $("#toInputDateVoucher").val();
+                var branches = ReportFilter.getBranchs();
+                var url = window.location.protocol + "//" + window.location.host + "/api/SalesSummaryReportApi/GetWeeklyExpenseAnalysis";
+
+
+                var dataSource = new kendo.data.TreeListDataSource({
+                    transport: {
+                        read: {
+                            url: url,
+                            dataType: "json", // <-- The default was "jsonp".
+                            type: "POST",
+                            contentType: "application/json",
+                        },
+                        parameterMap: function (options, type) {
+                            
+                            var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData().ReportFilters));
+                            //  paramMap.formDate = $("#FromDateVoucher").val();
+                            delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                            delete paramMap.$format; // <-- remove format parameter.
+                            return paramMap;
+                        }
+                    },
+                    schema: {
+                        //parse: parseTreeList,
+                        parse: function (response) {
+
+                            var data = weeklyReport.CalculateColumn(response);
+
+                            return data;
+                        },
+                        model: {
+                            id: "MASTER_ACC_CODE",
+                            parentId: "PRE_ACC_CODE",
+                            fields: {
+                                AMOUNT: { field: "AMOUNT", type: "number", nullable: true },
+                                MASTER_ACC_CODE: { field: "MASTER_ACC_CODE" },
+                                PRE_ACC_CODE: { field: "PRE_ACC_CODE", nullable: true },
+                            },
+                        },
+                    },
+
+
+                });
+
+                $("#grid").kendoTreeList({
+                    dataSource: dataSource,
+                    animation: {
+                        expand: true,
+                    },
+                    //height: 540,
+                    filterable: {
+                        extra: false,
+                        operators: {
+                            number: {
+                                eq: "Is equal to",
+                                neq: "Is not equal to",
+                                gte: "is greater than or equal to	",
+                                gt: "is greater than",
+                                lte: "is less than or equal",
+                                lt: "is less than",
+                            },
+                            string: {
+
+                                eq: "Is equal to",
+                                neq: "Is not equal to",
+                                startswith: "Starts with	",
+                                contains: "Contains",
+                                doesnotcontain: "Does not contain",
+                                endswith: "Ends with",
+                            },
+                            date: {
+                                eq: "Is equal to",
+                                neq: "Is not equal to",
+                                gte: "Is after or equal to",
+                                gt: "Is after",
+                                lte: "Is before or equal to",
+                                lt: "Is before",
+                            }
+                        }
+                    },
+                    sortable: true,
+                    reorderable: true,
+                    columnMenu: true,
+                    resizable: true,
+                    dataBound: function (data) {
+
+                        var oldRow = $("#grid").find("thead > tr");
+                        var html = '<tr role="row">' +
+                            '<th rowspan="2" class="treelist-header">' + oldRow.find("th:first > a.k-link").html() + ' </th>' +
+                            '<th colspan="7" class="treelist-header" >Expenses During the Period</th>' +
+                            '<th rowspan="2" class="treelist-header">' + oldRow.find("th:eq(8) > a.k-link").html() + ' </th>' +
+                            '<th rowspan="2" class="treelist-header">' + oldRow.find("th:eq(9) > a.k-link").html() + ' </th>' +
+                            '<th rowspan="2" class="treelist-header">' + oldRow.find("th:eq(10) > a.k-link").html() + ' </th>';
+                        $("#grid").find("thead").prepend(html);
+                        $("#grid").find("thead > tr:last >th:first").remove();
+                        $("#grid").find("thead > tr:last >th:eq(7)").remove();
+                        $("#grid").find("thead > tr:last >th:eq(7)").remove();
+                        $("#grid").find("thead > tr:last >th:eq(7)").remove();
+
+                        //update columns header
+                        var headers = $("#grid").find("thead > tr:eq(1) > th");
+                        $.each(headers, function (i, o) {
+                            $(o).find(".k-link").text(days[i]);
+                        });
+                        $("#grid").find("thead > tr:eq(0) > th:eq(1)").append(days[7]);
+
+
+                    },
+                    columns: [
+                        {
+                            field: "ACC_EDESC", title: "Acc Head", width: "220px",
+                        },
+                        {
+                            field: "sun",
+                            title: "",
+                            width: "80px",
+                            format: "{0:n}",
+                            attributes: {
+                                style: "text-align: right;"
+                            },
+
+
+                        },
+                        {
+                            field: "mon",
+                            title: "",
+                            width: "80px",
+                            format: "{0:n}",
+                            attributes: {
+                                style: "text-align: right;"
+                            },
+                        },
+                        {
+                            field: "tue",
+                            title: "",
+                            width: "80px",
+                            format: "{0:n}",
+                            attributes: {
+                                style: "text-align: right;"
+                            },
+                        },
+                        {
+                            field: "wed",
+                            title: "",
+                            width: "80px",
+                            format: "{0:n}",
+                            attributes: {
+                                style: "text-align: right;"
+                            },
+                        },
+                        {
+                            field: "thr",
+                            title: "",
+                            width: "80px",
+                            format: "{0:n}",
+                            attributes: {
+                                style: "text-align: right;"
+                            },
+                        },
+                        {
+                            field: "fri",
+                            title: "",
+                            width: "80px",
+                            format: "{0:n}",
+                            attributes: {
+                                style: "text-align: right;"
+                            },
+                        },
+                        {
+                            field: "sat",
+                            title: "",
+                            width: "80px",
+                            format: "{0:n}",
+                            attributes: {
+                                style: "text-align: right;"
+                            },
+                        },
+                        {
+                            field: "week",
+                            title: "Week Total",
+                            format: "{0:n}",
+                            attributes: {
+                                style: "text-align: right;"
+                            },
+                            template: function (data) {
+                                value = data.sun + data.mon + data.tue + data.wed + data.thr + data.fri + data.sat;
+                                value = isNaN(value) == true ? 0 : value;
+                                return kendo.toString(value, "n");
+                            }
+
+                        },
+                        {
+                            field: "ytd",
+                            title: "Ytd Expense",
+                            format: "{0:n}",
+                            attributes: {
+                                style: "text-align: right;"
+                            },
+                            template: function (data) {
+                                data = isNaN(data.ytd) == true ? 0 : data.ytd;
+                                return kendo.toString(data, "n");
+                            }
+                        },
+                        {
+                            field: "ytd",
+                            title: "Avg / Month",
+                            format: "{0:n}",
+                            attributes: {
+                                style: "text-align: right;"
+                            },
+                            template: function (data) {
+                                data = isNaN(data.ytd) == true ? 0 : data.ytd;
+                                data = data / 12;
+                                return kendo.toString(data, "n");
+                            }
+                        }
+
+                    ],
+                });
+
+            }
+            return {
+                parseTreeList: parseTreeList,
+                CalculateColumn: CalculateColumn,
+                BindGrid: BindGrid
+            };
+        })();
+
+        $(document).ready(function () {
+               weeklyReport.BindGrid();
+               //DatePicker.init();
+
+            $("#RunQuery").click(function (evt) {
+                evt.preventDefault();
+                KendoGridRefresh();
+            });
+
+
+        });
+
+
+</script>
+

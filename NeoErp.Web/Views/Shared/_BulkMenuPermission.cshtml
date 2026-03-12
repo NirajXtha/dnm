@@ -1,0 +1,366 @@
+﻿
+@model int
+
+@{
+    
+    var pageid = ViewData["ActionPageId"];
+}
+    <div class="row form-inline menuMultiSelectList">
+        <div class="form-group  col-sm-10 col-md-10 col-xs-10">
+            <select id="bulkPermissionMultiSelect_{{$index}}" class="bulkPermissionMultiSelect_{{$index}}"
+                     kendo-multi-select
+                     k-options="menuMultiOptions"
+                     k-ng-model="menuPermission.menuMultiOptions">
+
+            </select>
+            <p ng-show="menuPermission.menuMultiOptions.length" style="padding-top: 1em;"><i></i>
+        </div>
+        <div class="col-sm-2 col-md-2 col-xs-2 form-group hideShow">
+            <button type="button" class="btn green" data-toggle="modal" ng-click="OnMultiSelectToggle($index)"><i class="fa fa-chevron-down"></i></button>
+        </div>
+    </div>
+    <div class="bulkPermissionSlidebox">
+        <div ng-show="menuPermission.treeDiv" class="tab-pane fade in active">
+            <a data-toggle="tab"></a>
+            <div id="bulkPermissionTreeView_{{$index}}"class="bulkPermissionTreeView" kendo-tree-view="tree" k-options="menuTreeOptions" k-on-change="selectedItem = dataItem">
+            </div>
+        </div>
+    </div>
+   
+<script>
+   var bulkApp = angular.module('bulkApp', ['kendo.directives'])
+   bulkApp.controller('bulkCtrl', ['$http', '$q', '$timeout', '$scope', 'bulkService', function ($http, $q, $timoout, $scope, bulkService) {
+       $scope.hierarchyFields = new kendo.data.ObservableArray([]);
+       $scope.permissionList = [];
+       GetAllMenus();
+       
+
+       function InitialMenuAssign(userid, i) {
+           var getAllData = bulkService.GetMenuForUser(userid);
+           getAllData.then(function (menus) {
+               var arr = [];
+               if (menus !== undefined || menus !== null) {
+                   if (menus.data!=="")
+                         var arr = menus.data.MENU_NO.split(',');
+               }
+             
+               $scope.permissionList[i].menuMultiOptions = arr;
+           }, function () {
+               toastr.error("There is no data.");
+           });
+       }
+       function GetAllMenus() {
+           var getAllData = bulkService.GetUser();
+           getAllData.then(function (menuControl) {
+               $scope.permissionList = menuControl.data;
+               // $scope.permissionList.length
+               for (var i = 0; i < $scope.permissionList.length; i++) {
+                   $scope.permissionList[i].menuMultiOptions = [];
+                   $scope.permissionList[i].treeDiv = false;
+                   InitialMenuAssign($scope.permissionList[i].id, i);
+               }
+               
+           }, function () {
+               toastr.error("There is no data.");
+           });
+       }
+       $scope.OnMultiSelectToggle = function (e) {
+           $scope.permissionList[e].treeDiv = $scope.permissionList[e].treeDiv === false ? true : false;
+       }
+
+
+       var loadAllMenusUrl = window.location.protocol + "//" + window.location.host + "/api/MenuSettings/GetAllMenusNodes";
+       var loadMenusByNodeUrl = window.location.protocol + "//" + window.location.host + "/api/MenuSettings/GetAllMenusByMenuNo";
+       $scope.multiSelectDataSource = {
+           transport: {
+               read: {
+                   url: loadAllMenusUrl,
+                   dataType: "json"
+               }
+           }
+       };
+       SaveBulkData = function (e) {
+           var idx = e.sender.$angular_scope.i;
+           var multipleMenu = $scope.permissionList[idx].menuMultiOptions.join(',');
+           var user = $scope.permissionList[idx].id;
+           console.log(multipleMenu, user);
+           var Menu = {
+               MENU_NO: multipleMenu,
+               USER_NO: user
+           }
+           var getMenuData = bulkService.AddBulkUserAndMenu(Menu);
+           getMenuData.then(function (msg) {
+               OnMultiSelectChange(e);
+               toastr.success("Saved Successfully!");
+           }, function () {
+               toastr.error('Error in adding record');
+           });
+       }
+       SaveBulkDataByCheck = function (e) {
+           debugger;
+           var idx = e.sender.$angular_scope.i;
+           var multipleMenu = $scope.permissionList[idx].menuMultiOptions.join(',');
+           var user = $scope.permissionList[idx].id;
+           console.log(multipleMenu, user);
+           var Menu = {
+               MENU_NO: multipleMenu,
+               USER_NO: user
+           }
+           var getMenuData = bulkService.AddBulkUserAndMenu(Menu);
+           getMenuData.then(function (msg) {
+               toastr.success("Saved Successfully!");
+           }, function () {
+               toastr.error('Error in adding record');
+           });
+       }
+       $scope.menuMultiOptions = {
+           autoScroll: true,
+           height: 400,
+           autoClose: false,
+           placeholder: "Select Menu...",
+           dataTextField: "MENU_EDESC",
+           dataValueField: "MENU_NO",
+           valuePrimitive: true,
+           autoBind: false,
+           select: OnMultiSelect,
+           dataBound: function () {
+               var current = this.value();
+               this._savedOld = current.slice(0);
+           },
+           dataSource: $scope.multiSelectDataSource,
+           change:SaveBulkData
+       };
+
+       function OnMultiSelect(e) {
+           var dataItem = this.dataItem(e.item.index());
+           var idx = e.sender.$angular_scope.i;
+           var treeView = $("#bulkPermissionTreeView_" + idx).data('kendoTreeView');
+           var dataSource = treeView.dataSource;
+           var treeViewItem = dataSource.get(dataItem.MENU_NO);
+           if (typeof treeViewItem != 'undefined') {
+               $("#_" + treeViewItem.uid).attr('checked', true);
+           }
+       };
+
+       function OnMultiSelectChange(e) {
+           var idx = e.sender.$angular_scope.i;
+           var previous = this._savedOld;
+           var arrObj = e.sender.dataItems();
+           var result = [];
+           for (var i = 0; i < arrObj.length; i += 1) {
+               result.push(arrObj[i].MENU_NO);
+           }
+           var current = result;
+           var diff = [];
+           if (previous) {
+               diff = $(previous).not(current).get();
+           }
+           this._savedOld = current.slice(0);
+           if (diff.length > 0) {
+               var treeView = $("#bulkPermissionTreeView_" + idx).data('kendoTreeView');
+               var dataSource = treeView.dataSource;
+               var mydataItem = dataSource.get(diff);
+               $("#_" + mydataItem.uid).attr('checked', false);
+           }
+       }
+       $scope.permissionDataSource = {
+           transport: {
+               read: function (options) {
+                   if (typeof options.data.MENU_NO != 'undefined') {
+                       var id = options.data.MENU_NO;
+                       var data = getNextLevel(localData, id);
+                       if (data) {
+                           options.success(data);
+                       } else {
+                           var currentnode = get(localData, id);
+                           $.ajax({
+                               url: loadMenusByNodeUrl,
+                               data: {
+                                   menuNo: currentnode.MENU_NO,
+                                   level: currentnode.LEVEL,
+                                   masterCode: currentnode.MASTER_MENU_CODE
+                               },
+                               type: "GET",
+                               success: function (result) {
+                                   setTimeout(function () {
+                                       var res = result;
+                                       addToLocalData(localData, res, currentnode.MENU_NO);
+                                       options.success(res);
+                                   }, 1000);
+
+                               },
+                               error: function (result) {
+                                   options.error(result);
+                               }
+                           });
+                       }
+                   }
+                   else {
+                       $.ajax({
+                           url: loadAllMenusUrl,
+                           type: "GET",
+                           success: function (result) {
+                               setTimeout(function () {
+                                   options.success(result);
+                               }, 1000);
+                               localData = result;
+                           },
+                           error: function (result) {
+                               options.error(result);
+                           }
+                       });
+                   }
+               }
+           },
+           schema: {
+               model: {
+                   id: "MENU_NO",
+                   hasChildren: "hasMenus",
+                   masterMCode: "MASTER_MENU_CODE"
+               }
+           }
+       };
+
+       $scope.menuTreeOptions = {
+           checkboxes: {
+               checkChildren: true,
+           },
+           autoScroll: true,
+           height: 400,
+           dataSource: $scope.permissionDataSource,
+           dataTextField: "MENU_EDESC",
+           dataValueField: "MENU_NO",
+           scrollable: {
+               virtual: true
+           },
+           check: onCheck,
+          
+       };
+
+
+       function onCheck(e) {
+           debugger;
+           var idx = e.sender.$angular_scope.i;
+           var bulkPermissionMultiSelect = $("#bulkPermissionMultiSelect_" + idx).data("kendoMultiSelect");
+           var mvalue = bulkPermissionMultiSelect.value();
+           var dataItemMenuNo = this.dataItem(e.node).MENU_NO;
+           if (this.dataItem(e.node).checked == true) {
+               var res = [];
+               res.push(dataItemMenuNo);
+               res.forEach(function (dataItem) {
+                   var temp = $.merge($.merge([], mvalue), [dataItem]);
+                   temp = $.unique(temp);
+                   bulkPermissionMultiSelect.value(temp);
+                   bulkPermissionMultiSelect._savedOld = temp.slice(0);
+                   SaveBulkDataByCheck(e);
+               });
+
+           }
+           if (this.dataItem(e.node).checked == false) {
+               //mvalue.forEach(function (dataItem) {
+                  var temp = $.grep(mvalue, function (a) { return a != dataItemMenuNo });
+                   temp = $.unique(temp);
+                   bulkPermissionMultiSelect.value(temp);
+                   SaveBulkDataByCheck(e);
+                   //bulkPermissionMultiSelect._savedOld = temp.slice(0);
+               //});
+
+           }
+           
+       }
+
+       function getNextLevel(data, id) {
+           if (!id) {
+               return data;
+           } else {
+               for (var i = 0; i < data.length; i++) {
+                   if (data[i].MENU_NO == id) {
+                       return data[i].Items;
+                   } else if (data[i].Items) {
+                       for (var j = 0; j < data[i].Items.length; j++) {
+                           if (data[i].Items[j].MENU_NO == id) {
+                               return data[i].Items[j].Items;
+                           }
+                       }
+                   }
+               }
+           }
+       }
+
+       function get(data, id) {
+           if (id) {
+               for (var i = 0; i < data.length; i++) {
+                   if (data[i].MENU_NO == id) {
+                       return data[i];
+                   }
+                   else if (data[i].Items) {
+                       for (var j = 0; j < data[i].Items.length; j++) {
+                           if (data[i].Items[j].MENU_NO == id) {
+                               return data[i].Items[j];
+                           }
+                       }
+                   }
+               }
+           }
+           return null;
+       }
+
+       function addToLocalData(localdata, data, id) {
+           if (!id) {
+               return localdata;
+           } else {
+               for (var i = 0; i < localdata.length; i++) {
+                   if (localdata[i].MENU_NO == id) {
+                       localdata[i].Items = data;
+                       return;
+                   } else {
+                       if (localdata[i].Items) {
+                           for (var j = 0; j < localdata[i].Items.length; j++) {
+                               if (localdata[i].Items[j].MENU_NO == id) {
+                                   localdata[i].Items[j].Items = data;
+                                   return;
+                               }
+                           }
+                       }
+                   }
+               }
+           }
+       }
+   }]);
+    bulkApp.service("bulkService", ['$http', '$q', '$timeout', function ($http, $q, $timeout) {
+                this.GetUser = function () {
+                    var response = $http({
+                        method: "post",
+                        url: "/MenuControl/GetUser"
+                    });
+                    return response;
+                }
+                this.AddBulkUserAndMenu = function (menu)
+                {
+                    var response = $http({
+                        method: "post",
+                        url: "/MenuControl/AddBulkMenuUser",
+                        data: JSON.stringify(menu),
+                        dataType: "json"
+                    });
+                    return response;
+                };
+                this.GetMenuForUser = function (userNo) {
+                    var response = $http({
+                        method: "post",
+                        url: "/MenuControl/GetUserWiseBulkMenu",
+                        params: {
+                            userNo: JSON.stringify(userNo)
+                        },
+                        dataType: "json"
+                    });
+                    return response;
+                };
+    }]);
+
+    $(function () {
+        $('.k-list.k-reset,.k-treeview').slimScroll({
+
+        });
+    });
+</script>

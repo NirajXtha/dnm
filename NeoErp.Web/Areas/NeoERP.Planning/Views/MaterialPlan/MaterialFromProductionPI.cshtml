@@ -1,0 +1,732 @@
+﻿
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@using NeoErp.Core.Models;
+
+@model NeoErp.Planning.Service.Models.PreferenceSetupModel
+
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+    ViewBag.Title = "Create Plan";
+
+    Layout = null;
+    string LoggedInUsers_EmployeeCode = ViewBag.EmployeeCode;
+    string plancode = ViewBag.PlanCode;
+    string productSelectionLimit = string.Empty;
+    productSelectionLimit = ViewBag.productSelectionLimit;
+}
+<style>
+    .customdesign label {
+        font-size: 13px;
+    }
+
+    .k-grid {
+        font-size: 11px;
+    }
+
+    .customdesign .form-control {
+        padding: 3.5px 5px !important;
+        height: auto !important;
+    }
+
+    .k-autocomplete.k-state-default, .k-picker-wrap.k-state-default, .k-numeric-wrap.k-state-default, .k-dropdown-wrap.k-state-default {
+        background-color: #fafafa;
+    }
+
+    .input-group.input-medium.date-picker.input-daterange {
+        width: 100% !important;
+    }
+
+    .datefilter > label {
+        text-align: left;
+    }
+
+    fieldset {
+        border: 1px solid #aaa;
+        border-radius: 5px;
+        margin-bottom: 10px;
+    }
+
+
+
+    /*legend.productMaster {
+            width: 13%;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+       legend.planOption {
+           width: 11% !important;
+
+       }*/
+    .treeViewField {
+        min-height: 170px;
+    }
+
+    .md-radio-inline > div {
+        padding: 0px 10px 0px 0px;
+        float: left;
+    }
+
+    #productTab .k-group.k-treeview-lines {
+        max-height: 700px !important;
+    }
+
+    #grid td input {
+        width: 100%;
+        height: 16px !important;
+        background: none !important;
+        font-size: 11px !important;
+        text-align: right;
+        border: solid 1px rgba(0,0,0,0)
+    }
+
+        #grid td input:focus {
+            outline: none !important;
+        }
+
+    .calendar-icon-2 {
+        position: absolute;
+        right: 10px;
+        top: 26px;
+        color: #bdb5b5;
+    }
+
+    .md-radio-inline span {
+        padding-right: 15px;
+    }
+
+    .buttonadd, .buttondelete {
+        border: solid #ddd 1px;
+        background-color: #eee;
+        padding: 1px 5px;
+        display: inline-block;
+        margin-right: 5px;
+    }
+
+        .buttonadd:hover, .buttondelete:hover {
+            background-color: #ddd;
+            transition: 0.5s ease-in-out;
+        }
+
+    fieldset.material_opt {
+        padding-top: 0em !important;
+        padding-bottom: 0em !important;
+        padding-right: 0em !important;
+    }
+
+    .repeat {
+        max-height: 150px;
+    }
+</style>
+<script src="~/Areas/NeoERP.Planning/Scripts/jquery.maskedinput.min.js"></script>
+<script src="~/Areas/NeoERP.Planning/Scripts/DateFilter.js"></script>
+<style>
+    .alert {
+        padding-top: 0px;
+        padding-bottom: 0px;
+        margin-bottom: 0px;
+    }
+</style>
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+            @*<li>
+                    <i class="fa fa-home"></i>
+                    <a href="/Distribution/Home/Dashboard#!Distribution/">Home</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>
+                <li>
+                    <a href="#">Group Setup</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>*@
+        </ul>
+    </div>
+
+</div>
+<div class="col-md-12 alertBox" style="display:none;">
+    <div class="alert alert-danger">
+        @*<strong>Info !</strong> <small> Your Employee Code have not assigned to application_user, so that you could not create Employee Code less Plan. Please! contact system administrator to resolve this issue.</small>*@
+        <strong>Info !</strong> <small> Employee Code is not assigned to application user. contact administrator to resolve.</small>
+    </div>
+</div>
+
+<div id="MaterialFromProductionPICtrl" class="portlet light form-fit1 bordered common">
+    <div class="portlet-title">
+        <div class="caption">
+            <i class="fa fa-list-alt font-green-haze"></i>
+            <span class="caption-subject font-green-haze bold uppercase">
+                {{pageName}}
+            </span>
+        </div>
+        <span class="pull-right" id="controlbuttons">
+            <button type="button" id="cancelplan" name="cancelplan" ng-click="clearAllField()" class="btn btn-default btn-circle btn-sm"><i class="fa fa-times"></i> Cancel</button>
+            <button type="button" id="SavePlan1" ng-show="visibleSavebtn" ng-click="saveMaterialPlanAll(generateplan.$valid)" name="next" class="btn btn-green btn-circle btn-sm">
+                <i class="fa fa-caret-right"></i> Save
+            </button>
+            <button type="button" id="createMaterialPlan1" ng-show="visibleGenerateBtn" ng-click="generatePlan(generateplan.$valid)" name="next" class="btn btn-green btn-circle btn-sm pull-right" style="margin-bottom:10px;">
+                Generate
+            </button>
+        </span>
+    </div>
+    <div class="portlet-body row">
+        <div class="customdesign" id="showFormPanel">
+            <form id="generateplan" name="generateplan" novalidate>
+                <div class="col-md-12">
+                    <div class="columndivide">
+
+                        <fieldset class="material_opt">
+                            <legend class="planOption">{{manualOrReferential}} Options</legend>
+                            <div class="row1">
+                                <div class="col-md-3 col-sm-12 custom_col">
+                                    <div class="md-radio-inline" style="padding-top:10px;">
+                                        <div class="ManualDiv">
+                                            <span>
+                                                <input id="ManualOnlyDiv" type="radio" name="SALES_PRODUCTION" value="Manual" checked>
+                                                <label for="ManualOnlyDiv">Manual</label>
+                                            </span>
+                                        </div>
+                                        <div class="ReferenceDiv">
+                                            <span class="manual_mrp">
+                                                <input id="fromMRPRadio" type="radio" name="SALES_PRODUCTION" value="Sales">
+                                                <label for="fromMRPRadio">Sales</label>
+                                            </span>
+                                            <span>
+                                                <input id="ProductionRadio" type="radio" name="SALES_PRODUCTION" value="Production">
+                                                <label for="ProductionRadio">Production</label>
+                                            </span>
+                                            <span>
+                                                <input id="OrderRadio" type="radio" name="SALES_PRODUCTION" value="Order">
+                                                <label for="OrderRadio">Order</label>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="isManualProcmt">
+                                    <div class="col-md-6 col-sm-6">
+                                        <div class="form-group">
+                                            <label class="control-label">
+                                                Sales
+                                            </label>
+                                            <input id="SalesPlanList" ng-model="SalesPlanList" name="SalesPlanList" style="width: 100%;" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="isFromMRP">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="control-label">
+                                                Production
+                                            </label>
+                                            <input id="ProductionPlanList" ng-model="ProductionPlanList" name="ProductionPlanList" style="width: 100%;" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="isFromSalesOrder">
+                                    <div class="col-md-6">
+                                        @Html.Partial("~/Areas/NeoERP.Planning/Views/Shared/PlanningDateField.cshtml", true)
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label class="control-label">
+                                                Customer
+                                            </label>
+                                            <input id="customerList" ng-model="customerList" name="customerList" style="width: 100%;" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label class="control-label">
+                                                From Department
+                                            </label>
+                                            <input id="location" ng-model="fromdepartment" name="location" class="location mlocation masterlocation w-100" kendo-combo-box
+                                                   k-placeholder="'Select Location Code'"
+                                                   k-data-text-field="'LocationName'"
+                                                   k-data-value-field="'LocationCode'"
+                                                   k-filter="'contains'"
+                                                   k-auto-bind="true"
+                                                   k-options="locationCodeOption"
+                                                   k-suggest="false"
+                                                   k-min-length="3" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label class="control-label">
+                                                To Department
+                                            </label>
+                                            <input id="location" ng-model="todepartment" name="location" class="location mlocation masterlocation w-100" kendo-combo-box
+                                                   k-placeholder="'Select Location Code'"
+                                                   k-data-text-field="'LocationName'"
+                                                   k-data-value-field="'LocationCode'"
+                                                   k-filter="'contains'"
+                                                   k-auto-bind="true"
+                                                   k-options="locationCodeOption"
+                                                   k-suggest="false"
+                                                   k-min-length="3" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="manualDiv" class="manual_div parent_div col-md-7 custom_col_two">
+                                    <div class="row">
+                                        <div class="col-xs-6 col-sm-6 col-md-6">
+                                            <label class="control-label">
+                                                Product
+                                            </label>
+                                        </div>
+                                        <div class="col-xs-4 col-sm-4 col-md-4">
+                                            <label class="control-label">
+                                                Quantity
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="repeat">
+                                        <div class="row" ng-repeat="(key, good) in GoodsQty track by $id($index)">
+                                            <div class="col-xs-6 col-sm-6 col-md-6">
+                                                <div class="form-group">
+                                                    <span style="color:red" ng-show="generateplan.fgProducts.$invalid">
+                                                        <span ng-show="generateplan.fgProducts.$error.required">*</span>
+                                                    </span>
+                                                    <select id="fgProducts_{{key}}" name="fgProducts"
+                                                            k-ng-model="good.FG_ITEM_CODE"
+                                                            kendo-combo-box style="width: 100%"
+                                                            k-options="productOptions" prod-data-index="{{key}}" required></select>
+                                                </div>
+                                            </div>
+                                            <div class="col-xs-3 col-sm-4 col-md-4">
+                                                <div class="form-group">
+                                                    <input type="number" id="materialPlanQty_{{key}}" name="materialPlanQty_{{key}}" ng-model="good.QTY" ng-change="qtyChangeEvent()" class="form-control" min="1" max="9999999999" value="1" placeholder="quantity" style="text-align:right" required />
+                                                    <span style="color:red" ng-show="generateplan['materialPlanQty_' + key].$invalid">
+                                                        <span ng-show="generateplan['materialPlanQty_' + key].$error.required">* quantity should not be empty.</span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="col-xs-3 col-sm-2 col-md-2">
+                                                <div class="form-group">
+                                                    @*<a href="" id="add_child_element_{{key}}" name="add_child_element" class="buttonadd" ng-click="AddGoodsNQty(key)"><i class="fa fa-plus"></i></a>
+                                                        <a href="" class="buttondelete" ng-click="RemoveGoodsNQty(key)" data-tooltip="Remove item">
+                                                            <i class="fa fa-trash text-danger"></i>
+                                                        </a>*@
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="control-label">
+                                        Plan Name <span style="color:red" ng-show="generateplan.planName.$invalid">
+                                            <span ng-show="generateplan.planName.$error.required">*</span>
+                                        </span>
+                                    </label>
+                                    <input type="text" id="planName" name="planName" class="form-control input-sm" ng-model="materialPlan.PLAN_EDESC" required />
+                                </div>
+                            </div>
+                            @*<div class="col-md-4 productionListDiv">
+                                    <div class="form-group">
+                                        <label class="control-label">
+                                            Production
+                                        </label>
+                                        <input id="ProductionPlanList" ng-model="ProductionPlanList" name="ProductionPlanList" style="width: 100%;" />
+                                    </div>
+                                </div>
+                                <div class="col-md-4 salesListDiv">
+                                    <div class="form-group">
+                                        <label class="control-label">
+                                            Sales
+                                        </label>
+                                        <input id="SalesPlanList" ng-model="SalesPlanList" name="SalesPlanList" style="width: 100%;" />
+                                    </div>
+                                </div>*@
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="control-label">Remarks</label>
+                                    <input type="text" id="remarks" name="remarks" class="form-control input-sm" ng-model="remarks" />
+                                </div>
+                            </div>
+                            <div class="col-md-4 form-group" style="display:none;">
+                                <label class="control-label">
+                                    Plan Date <span style="color:red" ng-show="generateplan.PLAN_DATE.$invalid">
+                                        <span ng-show="generateplan.PLAN_DATE.$error.required">*</span>
+                                    </span>
+                                </label>
+                                <input type="text" id="nepaliDate5" data-checkfor="englishdatedocument" name="PLAN_DATE" ng-model="materialPlan.PLAN_NDATE" autocomplete="off" class="nepali-calendar form-control" required />
+                                <i class="fa fa-calendar form-control-feedback calendar-icon-2"></i>
+                            </div>
+                            <input type="hidden" id="plancode" ng-model="plancode" value="" />
+                        </div>
+                        @*<div class="row">
+                                <div>
+                                    @Html.Partial("~/Areas/NeoERP.Planning/Views/Shared/PlanningDateField.cshtml", true)
+                                </div>
+                            </div>*@
+                    </div>
+                </div>
+            </form>
+            <div class="col-md-12">
+                <form id="pmGridForm">
+                    <input type="hidden" id="END_DATE" name="END_DATE" value="" />
+                    <input type="hidden" id="PLAN_CODE" name="PLAN_CODE" value="" ng-model="p_code" />
+                    <input type="hidden" id="PLAN_EDESC" name="PLAN_EDESC" value="" />
+                    <input type="hidden" id="REMARKS" name="REMARKS" value="" />
+                    <input type="hidden" id="START_DATE" name="START_DATE" value="" />
+                    <input type="hidden" id="TIME_FRAME_CODE" name="TIME_FRAME_CODE" value="" />
+                    <input type="hidden" id="TIME_FRAME_EDESC" name="TIME_FRAME_EDESC" value="" />
+                    <input type="hidden" id="customerCode" name="customerCode" value="" />
+                    <input type="hidden" id="branchCode" name="branchCode" value="" />
+                    <input type="hidden" id="divisionCode" name="divisionCode" value="" />
+                    <input type="hidden" id="employeeCode" name="employeeCode" value="" />
+                    <input type="hidden" id="dateFormat" name="dateFormat" value="" />
+
+                    <div id="grid" class="tablegride" style="margin-top:20px;"></div>
+                    <div id="divgeneratepi">
+                        <button type="button" id="generatePI" class="btn btn-sm btn-green pull-right" ng-click="generatePI()" data-toggle="tooltip" title="Generate PI"><i class="fa fa-calculator"></i>Generate PI</button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="@Scripts.Url("~/Areas/NeoERP.Planning/Scripts/DateFilterWithADBS.js")" type="text/javascript"></script>
+<script src="@Scripts.Url("~/JS/ReportFilter.js")" type="text/javascript"></script>
+
+<script>
+    $(".nepali-calendar").nepaliDatePicker({
+        npdMonth: true,
+        onFocus: true,
+        npdYear: true,
+        npdYearCount: 10,
+        altFormat: "dd-MMM-YYYY",
+        dateFormat: "dd-MMM-YYYY",
+        onChange: function (evt) {
+            var nepalidate = $("#nepaliDate5").val();
+            var Engdate = BS2AD(nepalidate);
+            var FormattedEngDate = moment(Engdate).format('DD-MMM-YYYY');
+            // $("#englishdatedocument").val(FormattedEngDate);
+        }
+    });
+    $(document).ready(function () {
+        DateFilter.init("BS", getSelectedOption);
+        BindProductionPlanList();
+        BindSalesPlanList();
+        BindCustomerList();
+        $("#isFromMRP").hide();
+        $("#isManualProcmt").hide();
+        $("#divgeneratepi").hide();
+        
+        $("#manualDiv").show();
+        $('.repeat').slimScroll({
+        });
+    });
+    function getSelectedOption() {
+        $(".dateFilterSelect").val('This Year');
+        $("#ddlDateFilterVoucher").trigger('change');
+    }
+    $('input[name=SALES_PRODUCTION]:radio').on('change', function () {
+        var $this = $(this).val();
+        if ($this == "Production") {
+            $("#isFromMRP").show();
+            $("#isManualProcmt").hide();
+            $("#manualDiv").hide();
+            $("#isFromSalesOrder").hide();
+        }
+        else if ($this == "Manual") {
+            $("#isFromMRP").hide();
+            $("#isManualProcmt").hide();
+            $("#manualDiv").show();
+            $("#isFromSalesOrder").hide();
+        }
+        else if ($this == "Order") {
+            $("#isFromSalesOrder").show();
+            $("#isFromMRP").hide();
+            $("#isManualProcmt").hide();
+            $("#manualDiv").hide();
+        }
+        else {
+            $("#isFromMRP").hide();
+            $("#isManualProcmt").show();
+            $("#manualDiv").hide();
+            $("#isFromSalesOrder").hide();
+        }
+        $("#SalesPlanList").data("kendoMultiSelect").value([]);
+        $("#ProductionPlanList").data("kendoMultiSelect").value([]);
+        if (typeof angular.element('#MaterialFromProductionPICtrl').scope().gbClickInfo === 'function')
+            angular.element('#MaterialFromProductionPICtrl').scope().gbClickInfo();
+    });
+    var headerWidth_ScreenWise = function (width) {
+        var windowwidth = (window.innerWidth - 172) - $(".page-sidebar").width();
+        var returnValue = (width / 100) * windowwidth;
+        return returnValue;
+    }
+
+    function BindPartial() {
+        var partialPlanUrl = window.location.protocol + "//" + window.location.host + "/ProcurementPlan/LoadMaterialPlanGridPartial";
+        $.ajax({
+            type: 'GET',
+            url: partialPlanUrl,
+            //data: param,
+            dataType: 'html',
+            success: function (partial) {
+                $("#kendoGridFromPartial").html(partial);
+            }
+        });
+    }
+    function BindProductionPlanList() {
+        var ddlChngEvnt = function (e) {
+            var pCode = e.sender.dataItem().PLAN_CODE
+            $.ajax({
+                type: 'POST',
+                url: window.location.protocol + "//" + window.location.host + "/api/MaterialPlanApi/GetAllProductionPlanItemByPlanCode?pCode=" + pCode,
+                //data: data,
+                dataType: 'html',
+                async: false,
+                success: function (result) {
+                    result = JSON.parse(result);
+                    var itemList = _.uniq(result, "ITEM_CODE");
+                    var itemCodeList = itemList.map(function (e) {
+                        return e.ITEM_CODE;
+                    });
+                    if (itemList.length > 0)
+                        $("#productMultiselect").data("kendoMultiSelect").value(itemCodeList);
+                    var productTreeView = $('#productTreeView').data('kendoTreeView');
+                    checkUncheckAllNodes(productTreeView.dataSource.view(), false)
+                    for (var i = 0; i < itemList.length; i++) {
+                        var v = itemList[i];
+                        productTreeView.expandPath([v.ITEM_CODE]);
+                        if (i == (itemList.length - 1)) {
+                            $.each(itemList, function (i, v) {
+                                var itemName = v.ITEM_EDESC;
+                                var itemCode = v.ITEM_CODE;
+                                var item = productTreeView.findByText(itemName);
+                                if (item.length > 0) {
+                                    if (v.GROUP_SKU_FLAG == 'G') {
+                                        productTreeView.dataItem(item).set("dirty", true);
+                                        var listOfChilds = $.grep(ret.selectedItemsList, function (it, vl) {
+                                            return v.MASTER_ITEM_CODE == it.PRE_ITEM_CODE;//&& vl.ITEM_CODE==item.ITEM_CODE;
+                                        });
+                                        if (listOfChilds.length == 0) {
+                                            productTreeView.dataItem(item).set("checked", true);
+                                        }
+                                    }
+                                    else if (v.GROUP_SKU_FLAG == 'I') {
+                                        productTreeView.dataItem(item).set("checked", true);
+                                    }
+                                }
+                            });
+                        }
+
+                    }
+                }
+            });
+        }
+        var mainurl = window.location.protocol + "//" + window.location.host + "/api/MaterialPlanApi/BindProductionPlanByPlanCode";
+        $("#ProductionPlanList").kendoMultiSelect({
+            //optionLabel: "--Select Production--",
+            placeholder: "Select Production",
+            filter: "contains",
+            dataTextField: "PLAN_EDESC",
+            dataValueField: "PLAN_CODE",
+            //valuePrimitive: true,
+            autoBind: false,
+            dataSource: {
+                type: "json",
+                transport: {
+                    read: {
+                        url: mainurl,
+                    },
+                    parameterMap: function (data, action) {
+
+                        if (data.filter != undefined) {
+                            if (data.filter.filters[0] != undefined) {
+                                var newParams = {
+                                    filter: data.filter.filters[0].value
+                                };
+                                return newParams;
+                            }
+                            else {
+                                var newParams = {
+                                    filter: ""
+                                };
+                                return newParams;
+                            }
+                        }
+                        else {
+                            var newParams = {
+                                filter: ""
+                            };
+                            return newParams;
+                        }
+
+                    }
+
+                }
+            },
+            //close: ddlChngEvnt,
+            change: function () {
+                angular.element('#MaterialFromProductionPICtrl').scope().commonFn();
+            }
+        });
+    }
+
+    function BindCustomerList() {
+        var mainurl = window.location.protocol + "//" + window.location.host + "/api/MaterialPlanApi/BindSalesOrderCustomer";
+        $("#customerList").kendoMultiSelect({
+            //optionLabel: "--Select Production--",
+            placeholder: "Select Customer",
+            filter: "contains",
+            dataTextField: "CUSTOMER_EDESC",
+            dataValueField: "CUSTOMER_CODE",
+            valuePrimitive: true,
+            autoBind: false,
+            dataSource: {
+                type: "json",
+                transport: {
+                    read: {
+                        url: mainurl,
+                    },
+                    parameterMap: function (data, action) {
+
+                        if (data.filter != undefined) {
+                            if (data.filter.filters[0] != undefined) {
+                                var newParams = {
+                                    filter: data.filter.filters[0].value
+                                };
+                                return newParams;
+                            }
+                            else {
+                                var newParams = {
+                                    filter: ""
+                                };
+                                return newParams;
+                            }
+                        }
+                        else {
+                            var newParams = {
+                                filter: ""
+                            };
+                            return newParams;
+                        }
+
+                    }
+
+                }
+            },
+            //close: ddlChngEvnt,
+            change: function () {
+                angular.element('#MaterialFromProductionPICtrl').scope().commonFn();
+            }
+        });
+    }
+
+    function BindSalesPlanList() {
+        var ddlChngEvnt = function (e) {
+            var pCode = e.sender.dataItem().PLAN_CODE
+            $.ajax({
+                type: 'POST',
+                url: window.location.protocol + "//" + window.location.host + "/api/MaterialPlanApi/GetAllSalesPlanItemByPlanCode?pCode=" + pCode,
+                //data: data,
+                dataType: 'html',
+                async: false,
+                success: function (result) {
+                    result = JSON.parse(result);
+                    var itemList = _.uniq(result, "ITEM_CODE");
+                    var itemCodeList = itemList.map(function (e) {
+                        return e.ITEM_CODE;
+                    });
+                    if (itemList.length > 0)
+                        $("#productMultiselect").data("kendoMultiSelect").value(itemCodeList);
+                    var productTreeView = $('#productTreeView').data('kendoTreeView');
+                    checkUncheckAllNodes(productTreeView.dataSource.view(), false)
+                    for (var i = 0; i < itemList.length; i++) {
+                        var v = itemList[i];
+                        productTreeView.expandPath([v.ITEM_CODE]);
+                        if (i == (itemList.length - 1)) {
+                            $.each(itemList, function (i, v) {
+                                var itemName = v.ITEM_EDESC;
+                                var itemCode = v.ITEM_CODE;
+                                var item = productTreeView.findByText(itemName);
+                                if (item.length > 0) {
+                                    if (v.GROUP_SKU_FLAG == 'G') {
+                                        productTreeView.dataItem(item).set("dirty", true);
+                                        var listOfChilds = $.grep(ret.selectedItemsList, function (it, vl) {
+                                            return v.MASTER_ITEM_CODE == it.PRE_ITEM_CODE;//&& vl.ITEM_CODE==item.ITEM_CODE;
+                                        });
+                                        if (listOfChilds.length == 0) {
+                                            productTreeView.dataItem(item).set("checked", true);
+                                        }
+                                    }
+                                    else if (v.GROUP_SKU_FLAG == 'I') {
+                                        productTreeView.dataItem(item).set("checked", true);
+                                    }
+                                }
+                            });
+                        }
+
+                    }
+                }
+            });
+        }
+        var mainurl = window.location.protocol + "//" + window.location.host + "/api/MaterialPlanApi/BindSalesPlanByPlanCode";
+        $("#SalesPlanList").kendoMultiSelect({
+            //optionLabel: "--Select Sales--",
+            placeholder: "Select Sales",
+            filter: "contains",
+            dataTextField: "PLAN_EDESC",
+            dataValueField: "PLAN_CODE",
+            //valuePrimitive: true,
+            autoBind: false,
+            dataSource: {
+                type: "json",
+                transport: {
+                    read: {
+                        url: mainurl,
+                    },
+                    parameterMap: function (data, action) {
+
+                        if (data.filter != undefined) {
+                            if (data.filter.filters[0] != undefined) {
+                                var newParams = {
+                                    filter: data.filter.filters[0].value
+                                };
+                                return newParams;
+                            }
+                            else {
+                                var newParams = {
+                                    filter: ""
+                                };
+                                return newParams;
+                            }
+                        }
+                        else {
+                            var newParams = {
+                                filter: ""
+                            };
+                            return newParams;
+                        }
+
+                    }
+
+                }
+            },
+            //close: ddlChngEvnt,
+            change: function () {
+                angular.element('#MaterialFromProductionPICtrl').scope().commonFn();
+            }
+        });
+    }
+    function RemainingField(itemCode, rqQ, cQ, rmQ, stk, poPending) {
+        rmQ = parseFloat(rmQ).toFixed(2);
+        var html = "";
+        if (rmQ < 0)
+            html = "<input class='materialQty_" + itemCode + "' placeholder='-' style='text-align:right;' name= 'materialQty_" + itemCode + "_rqQ$" + rqQ + "_rmQ$" + rmQ + "_cQ$" + cQ + "_stk$" + stk + "_poP$" + poPending + "' readonly ng-model='materialQty_" + itemCode + "' type= 'number' min= '0'/>";
+        else
+            html = "<input class='materialQty_" + itemCode + "' style='text-align:right;' name= 'materialQty_" + itemCode + "_rqQ$" + rqQ + "_rmQ$" + rmQ + "_cQ$" + cQ + "_stk$" + stk + "_poP$" + poPending + "' readonly ng-model='materialQty_" + itemCode + "' type= 'number' min= '0' value='" + rmQ + "'/>";
+        return html;
+    }
+</script>
+<script src="@Scripts.Url(" ~/Areas/NeoERP.Planning/js/controller/PlanningMenuNavigation.js")"></script>

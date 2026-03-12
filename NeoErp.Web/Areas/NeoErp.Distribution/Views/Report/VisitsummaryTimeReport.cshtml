@@ -1,0 +1,362 @@
+﻿@using NeoErp.Core.Models.CustomModels;
+
+<style>
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+    }
+
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+         font-size:11px;
+    }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    a.k-button.k-button-icontext.k-grid-excel {
+        float: right;
+    }
+
+    .bootbox-form {
+        padding: 3px !important;
+    }
+
+    .bootbox-input.bootbox-input-text.form-control {
+        height: 27px !important;
+    }
+</style>
+
+<script>
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+</script>
+
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+        </ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+
+                <div class="actions">
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DatePicker.cshtml", new DatePickerModel() { IsPopUp = true })
+                    </div>
+                    @*@Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)*@
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                        <i class="icon-control-play"></i>
+                    </a>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "VisitSummaryReport")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div id="grid"></div>
+                        @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+
+<script src="@Scripts.Url("~/JS/reportFilter.js")"></script>
+
+<script src="@Scripts.Url("~/JS/DateFilter.js?V5")" type="text/javascript"></script>
+
+<script>
+
+    var reportConfig = GetReportSetting("VisitSummaryTimeReport");
+
+
+    function getDateFormat(date) {
+        var test = new Date(date);
+        if (test.getFullYear() == '1970')
+            return '-';
+        return kendo.format("{0:" + reportConfig.dateFormat + "}", new Date(date));
+    }
+    function getTimeFormat(date) {
+        var test = new Date(date);
+        if (test.getFullYear() == '1970')
+            return '-';
+        return kendo.format("{0:hh:mm tt}", moment(date)._d)
+    }
+    
+
+    $(".applydp").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+        $(this).closest("#applydp").modal('hide');
+    });
+
+    $("#loadAdvancedFilters").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    });
+
+    $("#RunQuery").click(function (evt) {
+        evt.preventDefault();
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/Distribution/GetVisitSummaryTimeReport";
+        KendoGridRefresh(urltest);
+    });
+
+
+    $("#Savefavriote").on("click", function () {
+        bootbox.prompt({
+            title: '<span class="fa fa-save"></span> Save Report',
+            placeholder: 'Enter Favroite Name to save',
+            buttons: {
+                confirm: {
+                    label: 'Save'
+                }
+            },
+            callback: function (value) {
+                SaveReportConfigSetting({
+                    gridName: "grid",
+                    reportName: value,
+                    isFavroite: true,
+                    virtualPath: window.location.hash,
+                });
+            }
+        });
+    });
+
+
+
+    function BindGrid(readurl) {
+        var fromADdate = $("#FromDateVoucher").val()
+        var toADdate = $("#ToDateVoucher").val();
+        var fromBSdate = $("#fromInputDateVoucher").val();
+        var toBSdate = $("#toInputDateVoucher").val();
+
+
+        var branches = ReportFilter.getBranchs();
+        reportConfig = GetReportSetting("VisitSummaryTimeReport");
+
+        var dataSource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: {
+                    url: readurl, // <-- Get data from here.
+                    dataType: "json", // <-- The default was "jsonp".
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8"
+                },
+                parameterMap: function (options, type) {
+                    var report = $.extend({}, true, ReportFilter.filterAdditionalData());
+                    report.ReportFilters.FromDate = moment($("#datePickerAd").val()).format('YYYY-MMM-DD');
+                    report.ReportFilters.ToDate = moment($("#datePickerAd").val()).format('YYYY-MMM-DD');
+
+                    var paramMap = JSON.stringify(report);
+                    delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                    delete paramMap.$format; // <-- remove format parameter.
+                    return paramMap;
+                }
+            },
+
+            error: function (e) {
+                displayPopupNotification("Sorry error occured while processing data", "error");
+            },
+            schema: {
+            },
+            model: {
+                fields: {
+                    UPDATE_DATE: { type: "date" },
+                }
+            },
+            group: { field: "FULL_NAME", dir: "asc" },
+            pageSize: reportConfig.defaultPageSize,
+        });
+
+
+        var grid = $("#grid").kendoGrid({
+            dataSource: dataSource,
+            toolbar: kendo.template($("#toolbar-template").html()),
+            excel: {
+                fileName: "Visit Summary Report",
+                allPages: true,
+            },
+            //excelExport: function (e) {
+            //},
+
+            pdf: {
+                fileName: "Received Schedule",
+                allPages: true,
+                avoidLinks: true,
+                pageSize: "auto",
+                margin: {
+                    top: "2m",
+                    right: "1m",
+                    left: "1m",
+                    buttom: "1m",
+                },
+
+                landscape: true,
+                repeatHeaders: true,
+                scale: 0.8,
+            },
+            height: 550,
+            sortable: true,
+            reorderable: true,
+            groupable: true,
+            resizable: true,
+            filterable: {
+                extra: false,
+                operators: {
+                    number: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "is greater than or equal to	",
+                        gt: "is greater than",
+                        lte: "is less than or equal",
+                        lt: "is less than",
+                    },
+                    string: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        startswith: "Starts with	",
+                        contains: "Contains",
+                        doesnotcontain: "Does not contain",
+                        endswith: "Ends with",
+                    },
+                    date: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "Is after or equal to",
+                        gt: "Is after",
+                        lte: "Is before or equal to",
+                        lt: "Is before",
+                    }
+                }
+            },
+            columnMenu: true,
+            columnMenuInit: function (e) {
+                wordwrapmenu(e);
+                checkboxItem = $(e.container).find('input[type="checkbox"]');
+            },
+            columnShow: function (e) {
+                if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                    SaveReportSetting('VisitSummaryTimeReport', 'grid');
+            },
+            columnHide: function (e) {
+                if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                    SaveReportSetting('VisitSummaryTimeReport', 'grid');
+            },
+            pageable: {
+                refresh: true,
+                pageSizes: reportConfig.itemPerPage,
+                buttonCount: 5
+            },
+            scrollable: {
+                virtual: true
+            },
+            dataBound: function (o) {
+                var grid = o.sender;
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.length;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    displayPopupNotification("No Data Found Given Date Filter.", "info");
+                }
+                else {
+                    var g = $("#grid").data("kendoGrid");
+                    for (var i = 0; i < g.columns.length; i++) {
+                        g.showColumn(i);
+                    }
+                    $("div.k-group-indicator").each(function (i, v) {
+                        g.hideColumn($(v).data("field"));
+                    });
+                }
+
+                UpdateReportUsingSetting("VisitSummaryTimeReport", "grid");
+                $('div').removeClass('.k-header k-grid-toolbar');
+            },
+            columns: [{
+                    field: "CUSTOMER_NAME",
+                    title: "Customer Name",
+                }, {
+                    field: "CUSTOMER_TYPE",
+                    title: "Customer Type",
+                }, {
+                    field: "FULL_NAME",
+                    title: "VIsited by",
+                }, {
+                    field: "MITI",
+                    title: "Miti",
+
+                }, {
+                    field: "UPDATE_DATE",
+                    title: "Date",
+                    template: "#= getDateFormat(UPDATE_DATE) #",
+                    groupHeaderTemplate: "#= getDateFormat(value) #",
+                    hidden: true,
+                }, {
+                    field: "UPDATE_TIME",
+                    title: "Time",
+                }, {
+                    field: "SPENT_TIME",
+                    title: "Spent time",
+                    //template: "#= getTimeFormat(Visit_Time)#",
+                    //groupHeaderTemplate: "Time : #= getTimeFormat(value) #",
+                }, {
+                    field: "REMARKS",
+                    title: "Remarks",
+                }]
+        });
+    }
+    
+    function KendoGridRefresh(readUrl) {
+        $('#grid').val('');
+        $('#grid').html('');
+        BindGrid(readUrl)
+    }
+
+    $(document).ready(function () {
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/Distribution/GetVisitSummaryTimeReport"
+        //  BindGrid(urltest);
+        DatePicker.init();
+        BindGrid(urltest);
+    });
+</script>
+<script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js")"></script>

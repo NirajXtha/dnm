@@ -1,0 +1,674 @@
+﻿@{
+	Layout = null;
+
+}
+<style>
+	.table-responsive {
+		overflow-y: visible; /* or auto if you need scrolling */
+	}
+	.SNo {
+		width: 60px;
+		text-align: center;
+	}
+
+	.Parameters {
+		width: 180px;
+	}
+
+	.ChecklistItems {
+		width: 200px;
+	}
+
+	.Status {
+		width: 130px;
+	}
+
+	.Remarks {
+		width: 200px;
+	}
+
+	/* === Inner Nested Table === */
+	.inner-table {
+		width: 100%;
+		border-collapse: collapse;
+	}
+
+		.inner-table td {
+			border: none;
+			vertical-align: middle;
+			padding: 3px 5px;
+		}
+
+	/* === Form Controls === */
+	.Sub-SNo {
+		width: 100%;
+		text-align: right;
+	}
+
+	.textbox {
+		width: 100%;
+		border: 1px solid #ddd !important;
+		height: 26px;
+	}
+
+	/* === General === */
+	.dynamic-table th, .dynamic-table td {
+		font-size: 12px;
+		padding: 4px 8px;
+		vertical-align: middle;
+	}
+
+	.input-row {
+		border: solid #ddd 1px !important;
+		width: 233px !important;
+	}
+	/*.date-width {
+		width: 87px !important;
+	}*/
+
+	.date-container {
+		display: flex;
+		flex-direction: column; /* label on top */
+	}
+
+	.date-label {
+		margin-bottom: 6px; /* space below label */
+		font-weight: 500;
+	}
+
+	.date-row {
+		display: flex;
+		gap: 12px; /* 👈 constant distance */
+		align-items: center;
+	}
+
+	.nepali-wrapper {
+		position: relative;
+		display: inline-flex;
+		align-items: center;
+	}
+
+	.nepali-calendar {
+		padding-right: 30px; /* space for icon */
+		height: 34px; /* match Kendo input height */
+	}
+
+
+	.calendar-icon-2 {
+		position: absolute;
+		right: 8px;
+		top: 50%;
+		transform: translateY(-50%);
+		font-size: 14px;
+		color: #555;
+		right: 9px !important;
+		top: 10px !important;
+		pointer-events: none;
+	}
+
+	.k-widget.k-datepicker {
+		width: 50% !important;
+	}
+</style>
+@*<link href="@Styles.Url("~/Areas/NeoERP.QCQAManagement/Content/QCQASetup.css")" rel="stylesheet" />*@
+<div class="col-md-12 bodyController" ng-controller="PreDispatchInspectionList">
+	<div class="portlet light form-fit bordered bottomspance">
+		<div class="portlet box green-box main">
+			<div class="portlet-title">
+				<div class="caption">
+					<a class="btn-back pull-left" data-toggle="tooltip" data-placement="top" title="Back To Dashboard" href="/QuotationManagement/Home/Dashboard">
+						<i class="fa fa-arrow-circle-left"></i>
+					</a>
+					<i class="fa fa-gift font-white-haze"></i>
+					<span class="caption-subject font-white-haze bold uppercase">Pre Dispatch Inspection Report</span>
+				</div>
+			</div>
+			<div class="portlet-body light bg-inverse">				
+				<div id="ItemGrid">
+					<div class="row" style="margin-bottom: 10px; margin-top: 10px;">
+						<form id="registeredVehicle" name="registeredVehicle">
+							<div class="col-md-12 col-sm-12 form-group nopadding-right dynamicform">
+								<div class="form-group col-md-3 col-sm-3">
+									<label for="element">Dispatch No:</label>
+									<div>
+										<input type="text" ng-model="DISPATCH_NO" ng-init="DISPATCH_NO='@ViewBag.QCNO'" disabled>
+									</div>
+								</div>
+								<div class="form-group col-md-4 date-container">
+									<label class="date-label">Date / Miti</label>
+
+									<div class="date-row">
+										<input id="englishdatedocument"
+											   autocomplete="off"
+											   class="englishdate"
+											   kendo-date-picker
+											   ng-model="CREATED_DATE"
+											   k-options="monthSelectorOptions" />
+
+										<div class="nepali-wrapper nopadding-left pl-1">
+											<input type="text"
+												   id="nepaliDate5"
+												   class="nepali-calendar"
+												   data-checkfor="englishdatedocument"
+												   autocomplete="off"
+												   onchange="ConvertNepToEng(this)"
+												   next-on-tab />
+											<i class="fa fa-calendar calendar-icon-2"></i>
+										</div>
+									</div>
+								</div>
+								<div class="form-group col-md-3 col-sm-3 material-align" style="margin-left:35px;">
+									<label for="element">Customer Name</label>
+									<div>
+										<input type="text" ng-model="CUSTOMER_NAME" autocomplete="off" class="material-font" name="WB_SLIP_NO" id="txtCustomerName" />
+									</div>
+								</div>
+							</div>
+							<div class="col-md-12 col-sm-12 form-group nopadding-right dynamicform">
+								<div class="form-group col-md-3 col-sm-3">
+									<label for="element">Customer Invoice No.</label>
+									<div class="topsearch" style="display: block;">
+
+										<select id="ddlCustomerInvoiceNo" k-ng-model="CUSTOMER_INVOICE_NO" kendo-drop-down-list
+												k-options="ddlCustomerInvoiceNo"
+												class="ddlCustomerInvoiceNo">
+										</select>
+									</div>
+								</div>
+								<div class="form-group col-md-4 col-sm-3">
+									<label for="element">Transport Detail</label>
+									<div>
+										<input type="text" ng-model="TRANSPORT_DETAIL" autocomplete="off" class="material-font" name="WB_SLIP_NO1" id="txtTransportDetail" />
+									</div>
+								</div>
+								<div class="form-group  col-md-3 col-sm-3 material-align" style=" margin-left: 37px;">
+									<label for="element">Driver Name</label>
+									<div>
+										<input type="text" ng-model="DRIVER_NAME" autocomplete="off" class="material-font" name="WB_SLIP_NO" id="txtDriverName" />
+									</div>
+								</div>
+							</div>
+							<div class="col-md-12 col-sm-12 form-group nopadding-right dynamicform">
+								<div class="form-group col-md-3 col-sm-3">
+									<label for="element">Driver Contact Number</label>
+									<div class="topsearch" style="display: block;">
+										<input type="text" ng-model="DRIVER_CONTACT_NO" autocomplete="off" class="material-font" name="WB_SLIP_NO" id="txtDriverContactNo" />
+									</div>
+								</div>
+								<div class="form-group col-md-4 col-sm-3">
+									<label for="element">Vehicle No</label>
+									<div>
+										<input type="text" ng-model="VEHICLE_NO" autocomplete="off" class="material-font" name="WB_SLIP_NO1" id="txtVehicleNo" />
+									</div>
+								</div>
+								<div class="form-group  col-md-3 col-sm-3 material-align" style=" margin-left: 37px;">
+									<label for="element">Dispatch Person</label>
+									<div>
+										<input type="text" ng-model="DISPATCH_PERSON" autocomplete="off" class="material-font" name="WB_SLIP_NO" id="txtDispatchPerson" />
+									</div>
+								</div>
+							</div>
+							<div class="col-md-12 col-sm-12 form-group nopadding-right dynamicform">
+								<div class="form-group col-md-3 col-sm-3" style="width:29%; margin-right:-50px;">
+									<label for="element">QC Inspector</label>
+									<div class="topsearch" style="display: block;">
+										<input type="text" ng-model="QC_INSPECTOR" class="material-font" autocomplete="off" name="WB_SLIP_NO" id="txtQCInpector" />
+									</div>
+								</div>
+						    </div>
+						</form>
+					</div>
+					<div class="tab-content d-tab-content">
+						<div class="tab-pane active" id="tab_15_1">
+							<div class="table-responsive">
+								<table class="document_child_table dynamic-table table-fixed dynamic_child_table dynamic_child_table6">
+									<thead class="child-table-head">
+										<tr>
+											<th class="SNo">SNo</th>
+											<th class="Parameters">Inspection Parameters</th>
+											<th class="condition-row">Checklist Items</th>
+											<th class="Status">Status Pass ()/ Fail (X)</th>
+											<th class="condition-row-remarks">Remarks</th>
+										</tr>
+									</thead>
+									<tbody class="table_body" style=" overflow-y: visible;">
+
+										<tr ng-repeat="(key,row) in PreDispatchItemsData" id="idPreDispatchItemsData" style="overflow-y: hidden;">
+											<td class="SNo">
+												<div style="margin-left:-8px;">
+													<input type="text" style="text-align: right; width: 59px !important;" value="{{key + 1}}" class="form-control Sub-SNo" disabled />
+												</div>
+											</td>
+											<td class="Parameters">{{row.PARAMETERS}}</td>
+											<td colspan="3" style="padding: 0;">
+												<table class="table table-inner" style="width: 100%;">
+													<tr ng-repeat="(keys,rows) in row.PreDispatchInspectionDetailsList">
+														<td class="condition-row">{{rows.ITEM_EDESC}}</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Dust_dirt_accumulation'" class="Status">
+														
+															<select id="ddlISDUST_VEHICLE"
+																	kendo-drop-down-list
+																	k-ng-model="ISDUST_VEHICLE"
+																	k-options="YesNoOptions"
+																	style="width: 100%;">
+															</select>
+
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Dust_dirt_accumulation'" class="condition-row-remarks">
+															<input type="text" ng-model="VEHICLE_DUST_REMARKS"
+																   placeholder="Enter Remarks"
+																   class="form-control input-row textbox _{{keys}} {{rows.COLUMN_HEADER}}_REMARKS" />
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'water_spill'" class="Status">
+															<select id="ddlWATERSPILL_VEHICLE"
+																	kendo-drop-down-list
+																	k-ng-model="ISWATERSPILL_VEHICLE"
+																	k-options="YesNoOptions"
+																	style="width: 100%;">
+															</select>
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'water_spill'" class="condition-row-remarks">
+															<input type="text" ng-model="VEHICLE_WATERSPILL_REMARKS"
+																   placeholder="Enter Remarks"
+																   class="form-control input-row textbox _{{keys}} {{rows.COLUMN_HEADER}}_REMARKS" />
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Cracks_and_holes'" class="Status">
+															<select id="ddlCRACKSHOLES_VEHICLE"
+																	kendo-drop-down-list
+																	k-ng-model="ISCRACKSHOLES_VEHICLE"
+																	k-options="YesNoOptions"
+																	style="width: 100%;">
+															</select>
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Cracks_and_holes'" class="condition-row-remarks">
+															<input type="text" ng-model="VEHICLE_CRACKSHOLES_REMARKS"
+																   placeholder="Enter Remarks"
+																   class="form-control input-row textbox _{{keys}} {{rows.COLUMN_HEADER}}_REMARKS" />
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'protruding_nails_or_pointed_object'" class="Status">
+															<select id="ddlNAILS_VEHICLE"
+																	kendo-drop-down-list
+																	k-ng-model="ISNAILS_VEHICLE"
+																	k-options="YesNoOptions"
+																	style="width: 100%;">
+															</select>
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'protruding_nails_or_pointed_object'" class="condition-row-remarks">
+															<input type="text" ng-model="VEHICLE_NAILS_REMARKS"
+																   placeholder="Enter Remarks"
+																   class="form-control input-row textbox _{{keys}} {{rows.COLUMN_HEADER}}_REMARKS" />
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'leaking_roofs_or_wall'" class="Status">															
+															<select id="ddlLEAKWALL_VEHICLE"
+																	kendo-drop-down-list
+																	k-ng-model="ISLEAKWALL_VEHICLE"
+																	k-options="YesNoOptions"
+																	style="width: 100%;">
+															</select>
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'leaking_roofs_or_wall'" class="condition-row-remarks">
+															<input type="text" ng-model="VEHICLE_WALL_REMARKS"
+																   placeholder="Enter Remarks"
+																   class="form-control input-row textbox _{{keys}} {{rows.COLUMN_HEADER}}_REMARKS" />
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Visual_defects_scratches_dents_cracks'" class="Status">
+															<select id="ddlVISUALDEFECT_PRODUCT"
+																	kendo-drop-down-list
+																	k-ng-model="ISVISUALDEFECT_PRODUCT"
+																	k-options="YesNoOptions"
+																	style="width: 100%;">
+															</select>
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Visual_defects_scratches_dents_cracks'" class="condition-row-remarks">
+															<input type="text" ng-model="PRODUCT_DEFECT_REMARKS"
+																   placeholder="Enter Remarks"
+																   class="form-control input-row textbox _{{keys}} {{rows.COLUMN_HEADER}}_REMARKS" />
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Dimensions_and_specifications'" class="Status">
+															<select id="ddlDIMENSIONS_PRODUCT"
+																	kendo-drop-down-list
+																	k-ng-model="ISDIMENSIONS_PRODUCT"
+																	k-options="YesNoOptions"
+																	style="width: 100%;">
+															</select>
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Dimensions_and_specifications'" class="condition-row-remarks">
+															<input type="text" ng-model="PRODUCT_DIMENSIONS_REMARKS"
+																   placeholder="Enter Remarks"
+																   class="form-control input-row textbox _{{keys}} {{rows.COLUMN_HEADER}}_REMARKS" />
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Weight_and_tolerance_checks'" class="Status">
+															<select id="ddlWEIGHTCHECK_PRODUCT"
+																	kendo-drop-down-list
+																	k-ng-model="ISWEIGHTCHECK_PRODUCT"
+																	k-options="YesNoOptions"
+																	style="width: 100%;">
+															</select>
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Weight_and_tolerance_checks'" class="condition-row-remarks">
+															<input type="text" ng-model="PRODUCT_WEIGHT_REMARKS"
+																   placeholder="Enter Remarks"
+																   class="form-control input-row textbox _{{keys}} {{rows.COLUMN_HEADER}}_REMARKS" />
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Correct_labeling_and_barcodes'" class="Status">
+															<select id="ddlCORRECT_PACKAGING"
+																	kendo-drop-down-list
+																	k-ng-model="ISCORRECT_PACKAGING"
+																	k-options="YesNoOptions"
+																	style="width: 100%;">
+															</select>
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Correct_labeling_and_barcodes'" class="condition-row-remarks">
+															<input type="text" ng-model="PACKAGING_CORRECT_REMARKS"
+																   placeholder="Enter Remarks"
+																   class="form-control input-row textbox _{{keys}} {{rows.COLUMN_HEADER}}_REMARKS" />
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Packaging_integrity_no_damage_sealed'" class="Status">
+															<select id="ddlSEALED_PACKAGING"
+																	kendo-drop-down-list
+																	k-ng-model="ISSEALED_PACKAGING"
+																	k-options="YesNoOptions"
+																	style="width: 100%;">
+															</select>
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Packaging_integrity_no_damage_sealed'" class="condition-row-remarks">
+															<input type="text" ng-model="PACKAGING_SEALED_REMARKS"
+																   placeholder="Enter Remarks"
+																   class="form-control input-row textbox _{{keys}} {{rows.COLUMN_HEADER}}_REMARKS" />
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Quantity_per_box_carton_matches'" class="Status">
+															<select id="ddlPERBOX_PACKAGING"
+																	kendo-drop-down-list
+																	k-ng-model="ISPERBOX_PACKAGING"
+																	k-options="YesNoOptions"
+																	style="width: 100%;">
+															</select>
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Quantity_per_box_carton_matches'" class="condition-row-remarks">
+															<input type="text" ng-model="PACKAGING_PERBOX_REMARKS"
+																   placeholder="Enter Remarks"
+																   class="form-control input-row textbox _{{keys}} {{rows.COLUMN_HEADER}}_REMARKS" />
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Stacking'" class="Status">
+															<select id="ddlSTACKING_PACKAGING"
+																	kendo-drop-down-list
+																	k-ng-model="ISSTACKING_PACKAGING"
+																	k-options="YesNoOptions"
+																	style="width: 100%;">
+															</select>
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Stacking'" class="condition-row-remarks">
+															<input type="text" ng-model="PACKAGING_STACKING_REMARKS"
+																   placeholder="Enter Remarks"
+																   class="form-control input-row textbox _{{keys}} {{rows.COLUMN_HEADER}}_REMARKS" />
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Invoice_and_packing_list'" class="Status">
+															<select id="ddlINVOICE_DOCUMENTATION"
+																	kendo-drop-down-list
+																	k-ng-model="ISINVOICE_DOCUMENTATION"
+																	k-options="YesNoOptions"
+																	style="width: 100%;">
+															</select>
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Invoice_and_packing_list'" class="condition-row-remarks">
+															<input type="text" ng-model="DOCU_INVOICE_REMARKS"
+																   placeholder="Enter Remarks"
+																   class="form-control input-row textbox _{{keys}} {{rows.COLUMN_HEADER}}_REMARKS" />
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Quality_assurance_certificates'" class="Status">
+															<select id="ddlQUALITY_DOCUMENTATION"
+																	kendo-drop-down-list
+																	k-ng-model="ISQUALITY_DOCUMENTATION"
+																	k-options="YesNoOptions"
+																	style="width: 100%;">
+															</select>
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Quality_assurance_certificates'" class="condition-row-remarks">
+															<input type="text" ng-model="DOCU_QUALITY_REMARKS"
+																   placeholder="Enter Remarks"
+																   class="form-control input-row textbox _{{keys}} {{rows.COLUMN_HEADER}}_REMARKS" />
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Compliance_certificates_ISO_NS_etc'" class="Status">
+															<select id="ddlCOMPLIANCE_DOCUMENTATION"
+																	kendo-drop-down-list
+																	k-ng-model="ISCOMPLIANCE_DOCUMENTATION"
+																	k-options="YesNoOptions"
+																	style="width: 100%;">
+															</select>
+														</td>
+														<td ng-if="rows.COLUMN_HEADER === 'Compliance_certificates_ISO_NS_etc'" class="condition-row-remarks">
+															<input type="text" ng-model="DOCU_COMP_REMARKS"
+																   placeholder="Enter Remarks"
+																   class="form-control input-row textbox _{{keys}} {{rows.COLUMN_HEADER}}_REMARKS" />
+														</td>
+													</tr>
+												</table>
+											</td>											
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</div>
+
+				</div>
+			</div>
+
+		</div>
+		<div class="modal-footer">
+			<button type="button" class="btn btn-sm btn-green" ng-hide="panelMode === 'view'" id="savedocumentformdata" ng-click="saveDispatchInspection()" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Processing..." href="javascript:;">
+				<i class="fa fa-floppy-o"></i> Save
+			</button>
+			<button type="button" class="btn btn-sm btn-danger" ng-click="ItemCancel()" data-dismiss="modal">
+				<i class="fa-solid fa-xmark"></i> Cancel
+			</button>
+		</div>
+	</div>
+</div>
+<script>
+	var a = location.hash;
+	var b = location.pathname;
+	var url = (b + a);
+	$(".active").removeClass();
+	$("a[href='" + url + "']").parent().addClass("active");
+	$("a[href='" + url + "']").parent().parent().slideDown("slow");
+</script>
+<script>
+	function dateSet(date) {
+		var month = date.getMonth() + 1;
+		var day = date.getDate();
+		date = date.getFullYear() + '/' +
+			(('' + month).length < 2 ? '0' : '') + month + '/' +
+			(('' + day).length < 2 ? '0' : '') + day;
+		return date;
+	}
+
+	function setNepaliDateFromEnglish() {
+		var engDate = $("#englishdatedocument").val();
+		var formattedDate = moment(engDate, 'M/D/YYYY').format('DD-MMM-YYYY');
+		$("#englishdatedocument").val(formattedDate);
+		var formattedEngDate = moment(engDate, 'M/D/YYYY').format('YYYY-MM-DD');
+		var nepaliDate = AD2BS(formattedEngDate);
+		$("#issueNep").val(nepaliDate);
+	}
+
+	function NepaliDateFromEnglish() {
+		var engDate = $("#validDt").val();
+		var formattedDate = moment(engDate, 'M/D/YYYY').format('DD-MMM-YYYY');
+		$("#validDt").val(formattedDate);
+
+		var formattedEngDate = moment(engDate, 'M/D/YYYY').format('YYYY-MM-DD');
+		var nepaliDate = AD2BS(formattedEngDate);
+		$("#nepaliDate").val(nepaliDate);
+
+		var issueDt = moment($("#englishdatedocument").val(), 'DD-MMM-YYYY');
+		var validUntilDt = moment(engDate, 'M/D/YYYY');
+
+		if (validUntilDt.isBefore(issueDt)) {
+			displayPopupNotification("To be Deliver Date cannot be greater than Date/Miti date.", "error");
+		}
+	}
+
+	function ConvertNepToEng(e) {
+		var date = BS2AD($("#issueNep").val());
+		var FormattedEngDate = moment(date).format('DD-MMM-YYYY');
+		$("#englishdatedocument").val(FormattedEngDate);
+	}
+
+	$(".nepali-calendar").nepaliDatePicker({
+		npdMonth: true,
+		onFocus: true,
+		npdYear: true,
+		npdYearCount: 10,
+		altFormat: "dd-MMM-YYYY",
+		dateFormat: "dd-MMM-YYYY",
+		onChange: function (evt) {
+			var nepaliDate = $("#issueNep").val(); // Get the Nepali date value
+			var engDate = BS2AD(nepaliDate); // Convert Nepali date to English date
+			var formattedEngDate = moment(engDate).format('DD-MMM-YYYY'); // Format the English date
+			$("#englishdatedocument").val(formattedEngDate); // Update the English date input field
+		}
+	});
+
+	function NepToEng(e) {
+		var date = BS2AD($("#nepaliDate").val());
+		var FormattedEngDate = moment(date).format('DD-MMM-YYYY');
+		$("#validDt").val(FormattedEngDate);
+	}
+
+	$(".nepali-calendar").nepaliDatePicker({
+		npdMonth: true,
+		onFocus: true,
+		npdYear: true,
+		npdYearCount: 10,
+		altFormat: "dd-MMM-YYYY",
+		dateFormat: "dd-MMM-YYYY",
+		onChange: function (evt) {
+			var nepalidate = $("#nepaliDate5").val();
+			var Engdate = BS2AD(nepalidate);
+			var cmpEngDate = moment(Engdate).format('YYYY/MM/DD');
+			var FormattedEngDate = moment(Engdate).format('DD-MMM-YYYY');
+			var date = new Date();
+			var formBackDays = $('#hdnformBackDays').val();
+			date.setDate(date.getDate() - formBackDays);
+			var minDate = dateSet(date);
+			var maxDate = dateSet(new Date());
+			$("#englishdatedocument").val(FormattedEngDate);
+		}
+	});
+</script>
+<script type="text/javascript">
+
+	$(document).ready(function () {
+		var grid = $("#ItemGrid").data("kendoGrid");
+		function parseCustomDate(dateStr) {
+			var parts = dateStr.split("/");
+			if (parts.length === 3) {
+				return new Date(parts[2], parts[0] - 1, parts[1]); // Month is zero-based
+			}
+			return null;
+		}
+
+		$(document).on('click', '.clsSupplier', function (e) {
+			e.preventDefault();
+			var inputElement = $(this).closest('.input-group').find('.hidItemCode');
+			var productIndex = $(this).closest('.input-group').find('input[product-index]').attr('product-index');
+			var selectedVal = inputElement.val(); // Get value from input
+			if (selectedVal) {
+				ShowPopupList(selectedVal, productIndex, "RM"); // Show popup with details For Raw Materials
+			}
+		});
+		$(document).on('click', '.clsBatch', function (e) {
+			e.preventDefault();
+			var inputElement = $(this).closest('.input-group').find('.hidItemCode');
+			var productIndex = $(this).closest('.input-group').find('input[product-index]').attr('product-index');
+			var selectedVal = inputElement.val(); // Get value from input
+			if (selectedVal) {
+				ShowPopupList(selectedVal, productIndex, "Batch"); // Show popup with details For Raw Materials
+			}
+		});
+		function ShowPopupList(itemCode, index, ItemName) {
+			// Example: Fetch details from an API
+			if (ItemName === "Batch") {
+
+				$.get("/api/RawMaterialAPI/GetBatchNoByItemCode?ItemCode=" + itemCode, function (response) {
+					if ($("#popupWindow").length === 0) {
+						$("body").append('<div id="popupWindow"></div>');
+					}
+					$("#popupWindow").kendoWindow({
+						width: "800px",
+						height: "300px",
+						title: "Select Voucher",
+						visible: false,
+						modal: true,
+						actions: ["Close"]
+					});
+					var popupWindow = $("#popupWindow").data("kendoWindow");
+
+					$.each(response, function (index, value) {
+
+						let contentHtml =
+							`<input type="text" id="searchInputText" placeholder="Search..." style="width: 35%;position: inherit; margin-bottom: 10px;margin-top: 4px; border: 1px solid #ccc;height: 25px;" />
+							<table id=voucherList class=voucher-list  border='1' style='border-collapse: collapse; width: 100%;'>
+						<tr style="padding:5px; border-bottom:1px solid #ccc; font-size: 14px;height: 25px;">
+						<td class=textpadding><b>REFERENCE NO</b></td>
+						<td class=textpadding><b>BATCH NO</b></td>
+						<td class=textpadding><b>QUANTITY</b></td>
+						<td class=textpadding><b>UNIT PRICE</b></td>
+					</tr>`
+						$.each(response, function (index, value) {
+							contentHtml += `<tr id='voucherList' data-transaction="${value.TRANSACTION_NO}" data-batch="${value.BATCH_NO}" style="padding:5px; border-bottom:1px solid #ccc; font-size: 14px;">
+						<td class=textpadding>${value.REFERENCE_NO}</td>
+						<td class=textpadding>${value.BATCH_NO}</td>
+
+						<td class=textpadding>${value.QUANTITY}</td>
+						<td class=textpadding>${value.UNIT_PRICE}</td>
+						<td><button class="btnClass batch-no large-button  data-batch=${value.BATCH_NO} type ="button">Ref</button></td>
+					</tr>`;
+						});
+						contentHtml += "</table>"; // Closing the table tag
+						popupWindow.content(contentHtml);
+						popupWindow.center().open();
+						$("#searchInputText").on("keyup", function () {
+							var searchText = $(this).val().toLowerCase();
+							$("#voucherList tbody tr").each(function () {
+								var rowText = $(this).find("td").map(function () {
+									return $(this).text().toLowerCase();
+								}).get().join(" "); // Join all cell values for a full-row search
+								$(this).toggle(rowText.includes(searchText));
+							});
+						});
+					});
+
+					$("#voucherList").on("click", "tr", function (e) {
+						var selectedBatch = $(this).attr("data-batch");
+						var selectedTransactionNo = $(this).attr("data-transaction");
+						$('#batch_' + index).val(selectedBatch);
+						$('#transactionNo_' + index).val(selectedTransactionNo);
+						var inputSelector = `.ccustomer_${key}`;
+						$(inputSelector).val(selectedBatch).trigger("input"); // Trigger input event for Angular binding
+						popupWindow.close(); // Close popup after selection
+					});
+					$(document).on("click", ".btnClass", function () {
+						var classes = this.classList;
+						var selectedBatch = null;
+						var selectedTransaction = null;
+						classes.forEach(function (token) {
+							if (token.indexOf("data-batch=") === 0) {
+								selectedBatch = token.substring("data-batch=".length);
+								selectedTransaction = token.substring("data-transaction=".length);
+							}
+						});
+						$('#batch_' + index).val(selectedBatch);
+						$('#transactionNo_' + index).val(selectedTransaction);
+						var inputSelector = `.ccustomer_${key}`;
+						$(inputSelector).val(selectedBatch).trigger("input"); // Trigger input event for Angular binding
+						popupWindow.close(); // Close popup after selection
+					});
+				});
+			}			
+		}
+		var grid = $("#ItemGrid").data("kendoGrid");
+	});
+</script>
+

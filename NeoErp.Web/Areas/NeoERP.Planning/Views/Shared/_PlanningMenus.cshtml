@@ -1,0 +1,357 @@
+﻿@{
+    var myAreaName = string.Empty;
+    object areaObj;
+    if (ViewContext.RouteData.Values.TryGetValue("area", out areaObj))
+    {
+        myAreaName = areaObj.ToString();
+    }
+}
+<div>
+    <div class="page-sidebar navbar-collapse collapse" ng-controller="menuCtrl">
+        <ul class="page-sidebar-menu page-sidebar-menu-light" data-keep-expanded="true" data-auto-scroll="true" data-slide-speed="200">
+            <li class="sidebar-search-wrapper">
+                <form class="sidebar-search" action="" method="POST">
+                    <a href="javascript:;" class="remove">
+                        <i class="icon-close"></i>
+                    </a>
+                    <div class="input-group search-input">
+                        <a href="#search">
+                            <input type="text" class="form-control swith" placeholder="Search...">
+                            <span class="input-group-btn search-icon">
+                                <i class="icon-magnifier"></i>
+                            </span>
+                        </a>
+                    </div>
+                </form>
+                <div id="search">
+                    <button type="button" class="search-close">×</button>
+                    <form>
+                        <input type="search" value="" placeholder="type here to Search" />
+                        <button type="submit" class="btn btn-primary">Search</button>
+                    </form>
+                </div>
+            </li>
+            <!-- Favourite Menu Start from here-->
+            <li ng-show="favroiteMenuList.length > 0">
+                <a href="javascript:;" class="nav-link nav-toggle">
+                    <i class="fa fa-bookmark font-red-sunglo"></i>
+                    <span class="title">Favourite</span>
+                    <span class="arrow open"></span>
+                </a>
+                <ul class="sub-menu" style="display:block;">
+                    <li ng-init="randomColor(0,0,$last)" ng-repeat="item in favroiteMenuList | filter:  { Report:{RName: searchBox} }">
+                        <a ng-href="{{ getMenuLink(item.Report.RName,item.Report.virtualPath,item.Report.RName) }}" data-abbr="{{item.MODULE_ABBR}}">
+                            <i class="{{item.Report.icon}}"></i>
+                            <span class="title">{{item.Report.RName}}</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            <!-- Favourite Menu End from here-->
+            @*<li class="start">
+            <a href="/Planning/Home/PlanningDashboard">
+                <i class="fa fa-bank"></i>
+                <span class="title">Organiser</span>
+                <span class="selected"></span>
+                <span class=""></span>
+            </a>
+        </li>
+        <li class="start">
+            <a href="/Planning/Home/Setup#!Planning/Dashboard">
+                <i class="fa fa-dashboard"></i>
+                <span class="title">Dashboard</span>
+                <span class="selected"></span>
+                <span class=""></span>
+            </a>
+        </li>*@
+            @*<li class="start">
+            <a href="javascript:;" class="nav-link nav-toggle">
+                <i class="fa fa-book" aria-hidden="true"></i>
+                <span class="title">Planning</span>
+                <span class="selected"></span>
+                <span class="arrow open"></span>
+            </a>
+            <ul class="sub-menu" style="display:block;">
+                <li class="start">
+                    <a href="/Planning/GroupDashboard/Index">
+                        <i class="fa fa-bookmark"></i>
+                        <span class="title">Plans </span>
+                        <span class="selected"></span>
+                        <span class=""></span>
+                    </a>
+                </li>
+            </ul>
+        </li>*@
+
+            @*<li class="start">
+            <a href="javascript:;" class="nav-link nav-toggle">
+                <i class="fa fa-book" aria-hidden="true"></i>
+                <span class="title">New Changes</span>
+                <span class="selected"></span>
+                <span class="arrow open"></span>
+            </a>
+            <ul class="sub-menu" style="display:block;">
+                <li class="start">
+                    <a href="/Planning/GroupDashboard/Index">
+                        <i class="fa fa-bookmark"></i>
+                        <span class="title">Plans </span>
+                        <span class="selected"></span>
+                        <span class=""></span>
+                    </a>
+                </li>
+                <li class="start">
+                    <a href="/Planning/Home/Setup#!Planning/MasterPlanSetup">
+                        <i class="fa fa-bookmark"></i>
+                        <span class="title">Master Plan Report </span>
+                        <span class="selected"></span>
+                        <span class=""></span>
+                    </a>
+                </li>
+                <li class="start">
+                    <a href="/Planning/Setup/EmployeeHandover">
+                        <i class="fa fa-bookmark"></i>
+                        <span class="title">Employee Handover </span>
+                        <span class="selected"></span>
+                        <span class=""></span>
+                    </a>
+                </li>
+                 <li class="start">
+                    <a href="/Planning/Setup/ConfigSetup">
+                        <i class="fa fa-bookmark"></i>
+                        <span class="title">Plan wise product settings</span>
+                        <span class="selected"></span>
+                        <span class=""></span>
+                    </a>
+                </li>
+            </ul>
+        </li>*@
+
+            <li class="nav-item" ng-repeat="parent in menuList|filter:{GROUP_SKU_FLAG:'G'} | orderBy:'MENU_EDESC'" @*ng-if="parent.MENU_EDESC!='Planning'"*@>
+                <a href="javascript:;" class="nav-link nav-toggle">
+                    <i class="{{parent.ICON_PATH}}" aria-hidden="true"></i>
+                    <span class="title">{{parent.MENU_EDESC}}</span>
+                    <span class="selected"></span>
+                    <span class="arrow"></span>
+                </a>
+                <ul class="sub-menu" style="display:none;" ng-if="parent.Items.length>0">
+                    <li class="start" ng-if="child.DASHBOARD_FLAG==='Y'" ng-repeat="child in parent.Items">
+                        <a href="{{child.VIRTUAL_PATH}}">
+                            @*<a href="{{child.VIRTUAL_PATH}}" ng-if="child.DASHBOARD_FLAG==='Y'" >*@
+                            <i class="{{child.ICON_PATH}}" ng-if="child.DASHBOARD_FLAG==='Y'"></i>
+                            <span class="title">{{child.MENU_EDESC}} </span>
+                            <span class="selected"></span>
+                            <span class=""></span>
+                        </a>
+                    </li>
+                    <li class="start" style="display:none;" ng-if="child.DASHBOARD_FLAG==='N'" ng-repeat="child in parent.Items">
+                        <a href="{{child.VIRTUAL_PATH}}">
+                            @*<a href="{{child.VIRTUAL_PATH}}" ng-if="child.DASHBOARD_FLAG==='Y'" >*@
+
+                        </a>
+                    </li>
+                </ul>
+        </ul>
+        <div id="test"></div>
+        @*<ul class="sub-menu" style="display:block;">
+            <li class="start">
+                <a href="/Planning/GroupDashboard/Index">
+                    <span class="title">Plan</span>
+                    <span class="selected"></span>
+                    <span class=""></span>
+                </a>
+            </li>
+        </ul>*@
+        @*<ul class="sub-menu" style="display:block;">
+            <li class="start">
+                <a href="/Planning/Home/Setup#!Planning/LedgerBudgetPlan">
+
+                    <span class="title">Ledger Budget Plan</span>
+                    <span class="selected"></span>
+                    <span class=""></span>
+                </a>
+            </li>
+        </ul>*@
+        @*<ul class="sub-menu" style="display:block;">
+            <li class="start">
+                <a href="/Planning/Home/Setup#!Planning/BrandingPlan">
+
+                    <span class="title">Branding Plan</span>
+                    <span class="selected"></span>
+                    <span class=""></span>
+                </a>
+            </li>
+        </ul>*@
+
+        @*<ul class="sub-menu" style="display:block;">
+            <li class="start">
+                <a href="/Planning/Home/Setup#!Planning/MaterialPlan">
+
+                    <span class="title">Material Plan</span>
+                    <span class="selected"></span>
+                    <span class=""></span>
+                </a>
+            </li>
+        </ul>*@
+
+        @*<li class="nav-item">
+            <a href="javascript:;" class="nav-link nav-toggle">
+                <i class="fa fa-calendar-plus-o" aria-hidden="true"></i>
+                <span class="title">Sales Planning</span>
+                <span class="selected"></span>
+                <span class="arrow open"></span>
+            </a>
+            <ul class="sub-menu" style="display:block;">
+                <li class="start">
+                    <a href="/Planning/Home/Setup#!Planning/">
+                        <i class="fa fa-tachometer"></i>
+                        <span class="title">Plans</span>
+                        <span class="selected"></span>
+                        <span class=""></span>
+                    </a>
+                </li>
+                <li class="start">
+                    <a href="/Planning/Home/Setup#!Planning/MasterPlan">
+                        <i class="fa fa-sitemap"></i>
+                        <span class="title">Master Plans</span>
+                        <span class="selected"></span>
+                        <span class=""></span>
+                    </a>
+                </li>
+                <li class="start hidden">
+                    <a href="/Planning/Home/Setup#!Planning/SubplanList">
+                        <i class="icon-home"></i>
+                        <span class="title">Sub Plans</span>
+                        <span class="selected"></span>
+                        <span class=""></span>
+                    </a>
+                </li>
+                <li class="start">
+                    <a href="/Planning/Home/Setup#!Planning/FrequencySetup">
+                        <i class="fa fa-forumbee"></i>
+                        <span class="title">Frequency</span>
+                        <span class="selected"></span>
+                        <span class=""></span>
+                    </a>
+                </li>
+                <li class="start">
+                    <a href="/Planning/Home/Setup#!Planning/EmployeeTree">
+                        <i class="fa fa-sitemap"></i>
+                        <span class="title">Employee Tree</span>
+                        <span class="selected"></span>
+                        <span class=""></span>
+                    </a>
+                </li>
+                <li class="start">
+                    <a href="/Planning/Home/Setup#!Planning/BudgetPlan">
+                        <i class="fa fa-dollar"></i>
+                        <span class="title">Budget Plan</span>
+                        <span class="selected"></span>
+                        <span class=""></span>
+                    </a>
+                </li>
+            </ul>
+        </li>
+        <li class="nav-item">
+            <a href="javascript:;" class="nav-link nav-toggle">
+                <i class="fa fa-file-text"></i>
+                <span class="title">Sales Planning Report</span>
+                <span class="selected"></span>
+                <span class="arrow open"></span>
+            </a>
+            <ul class="sub-menu" style="display:block;">
+                <li class="start">
+                    <a href="/Planning/PlanReport/Index#!Planning/PlanReport">
+                        <i class="fa fa-tachometer"></i>
+                        <span class="title">Plans Report</span>
+                        <span class="selected"></span>
+                        <span class=""></span>
+                    </a>
+                </li>
+            </ul>
+
+
+        </li>
+        <li><hr /></li>
+        <li class="nav-item">
+            <a href="javascript:;" class="nav-link nav-toggle">
+                <i class="fa fa-home"></i>
+                <span class="title">Visit Plan</span>
+                <span class="selected"></span>
+                <span class="arrow open"></span>
+            </a>
+
+            <ul class="sub-menu" style="display:block;">
+                <li class="start">
+                    <a href="/Planning/DistributionPlaning/Index#!Planning/RouteList">
+                        <i class="fa fa-road"></i>
+                        <span class="title">Plan Routes</span>
+                        <span class="selected"></span>
+                    </a>
+                </li>
+                <li class="start">
+                    <a href="/Planning/DistributionPlaning/Index#!Planning/EmployeeRouteSetup">
+                        <i class="fa fa-bus"></i>
+                        <span class="title">Sales Person Route</span>
+                        <span class=""></span>
+                    </a>
+                </li>
+                <li class="nav-item hidden">
+                    <a href="javascript:;" class="nav-link nav-toggle">
+                        <span class="title">Master Route Setup</span>
+                        <span class="arrow open"></span>
+                    </a>
+                    <ul class="sub-menu" style="display: block;">
+                        <li class="start">
+                            <a href="/Planning/DistributionPlaning/Index#!Planning/RouteSetup">
+                                <i class="fa fa-cog"></i>
+                                <span class="title">Route Area</span>
+                                <span class="selected"></span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </li>*@
+        </ul>
+        <!-- END SIDEBAR MENU -->
+    </div>
+</div>
+
+
+@section scripts{
+  
+}
+
+<script>
+    $(function () {
+        $(".sub-menu > li").on('click', function () {
+            $('.page-sidebar-menu').find('li').removeClass('active');
+            $(this).parent().parent().addClass('active')
+            $(this).addClass('active');
+        })
+
+        $(".page-sidebar-menu > li").on('click', function () {
+            if (!$(this).hasClass('nav-item')) {
+                $('.page-sidebar-menu').find('li').removeClass('active');
+                $(this).addClass('active');
+            }
+        })
+
+        $('a[href="#search"]').on('click', function (event) {
+            event.preventDefault();
+            $('#search').addClass('open');
+            $('#search > form > input[type="search"]').focus();
+        });
+
+        $('#search, #search button.search-close').on('click keyup', function (event) {
+            if (event.target == this || event.target.className == 'search-close' || event.keyCode == 27) {
+                $(this).removeClass('open');
+            }
+        });
+        $('form').submit(function (event) {
+            event.preventDefault();
+            return false;
+        })
+    });
+
+</script>

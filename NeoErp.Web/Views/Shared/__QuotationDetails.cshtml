@@ -1,0 +1,595 @@
+﻿@model NeoErp.Core.Domain.User
+@{
+    Layout = null;
+    var isErrorstring = ViewBag.error ?? false;
+
+}
+<script src="@Scripts.Url("~/Areas/NeoERP.QuotationManagement/Scripts/Angular-Module-underscore.js")"></script>
+<script src="@Scripts.Url("~/Areas/NeoERP.QuotationManagement/Scripts/handsontable.full.js")"></script>
+<script src="@Scripts.Url("~/Areas/NeoERP.QuotationManagement/Scripts/ngHandsontable.js")"></script>
+<script src="@Scripts.Url("~/Areas/NeoERP.QuotationManagement/Scripts/angularjs-dropdown-multiselect.min.js")"></script>
+<script src="@Scripts.Url("~/Areas/NeoERP.QuotationManagement/Scripts/hotkeys.js")"></script>
+
+<script src="@Scripts.Url("~/JS/Module/TMModule.js")"></script>
+<script src="@Scripts.Url("~/JS/Controller/quotationDetails.js")"></script>
+<link href="@Styles.Url("~/Content/css/QuotationDetails.css")" rel="stylesheet" />
+
+<div class="col-md-12 bodyController" ng-controller="quotationDetails" id="quotationDetails">
+    <div class="portlet light form-fit bordered bottomspance">
+        <div class="portlet box main">
+            <div class="portlet-body">
+                <div class="row boxbg">
+                    <div ng-show="IS_POSTED == 'Y'">
+                        <div style="font-size: large;">
+                            <center><b>The Following quotation is already closed!</b></center>
+                        </div>
+                    </div>
+                    <form id="quotationForm" ng-show="IS_POSTED == 'N'" class="quotationform" ng-submit="saveData()" method="post" enctype="multipart/form-data">
+                        <div class="card-container">
+                            <div class="col-md-10">
+                                <h4><b>{{company.COMPANY_EDESC}}</b></h4>
+                                <p>{{company.ADDRESS}}</p>
+                                <p>{{company.EMAIL}}</p>
+                            </div>
+                            <div class="col-md-2">
+                                <img ng-src="{{ company.LOGO_FILE_NAME }}" alt="Company Logo" class="logo-default" />
+                            </div>
+                        </div>
+
+                        <div class="col-md-12 customerDetailsSection" style="margin-top: 1rem; display: flex; flex-direction: column;">
+                            <h5><b>Party Details</b></h5>
+                            <div style="display: flex; flex-wrap: wrap; gap: 16px 0px;">
+
+                                <div class="form-group" ng-show="LOCAL_FLAG == 'Y'">
+                                    <label for="panNo">Pan No</label>
+                                    <input type="text" id="panNo" placeholder="Enter Pan No"
+                                           ng-disabled="LOCAL_FLAG == 'N'"
+                                           ng-model="PAN_NO"
+                                           ng-model-options="{ debounce: 300 }"
+                                           ng-required="LOCAL_FLAG == 'Y'"
+                                           name="panNo"
+                                           ng-change="fetchEmployeeDetails()"
+                                           class="form-control"
+                                           autocomplete="off" />
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="customerName">Party Name</label>
+                                    <input type="text" id="customerName"
+                                           ng-model="PARTY_NAME"
+                                           ng-change="fetchVendorDetails()"
+                                           ng-model-options="{ debounce: 300 }"
+                                           name="customerName"
+                                           required
+                                           class="form-control"
+                                           autocomplete="off" />
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="address">Address</label>
+                                    <input type="text" id="address"
+                                           ng-model="ADDRESS"
+                                           name="address"
+                                           required
+                                           class="form-control"
+                                           autocomplete="off" />
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="contactNo">Contact No.</label>
+                                    <input type="number" id="contactNo"
+                                           ng-model="CONTACT_NO"
+                                           name="contactNo"
+                                           required
+                                           class="form-control"
+                                           pattern="[0-9]{10}"
+                                           title="Please enter a 10-digit phone number"
+                                           autocomplete="off" />
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="email">Email</label>
+                                    <input type="email" id="email"
+                                           ng-model="EMAIL"
+                                           name="email"
+                                           class="form-control"
+                                           required
+                                           autocomplete="off" />
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="currency">Currency</label><br>
+                                    <select id="currency" name="currency"
+                                            kendo-drop-down-list
+                                            k-options="currencyOptions"
+                                            slim-scroll
+                                            ng-model="selectedCurrency"
+                                            class="form-control currencySelect"
+                                            style="width: 18rem;"
+                                            required>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="currencyRate">Currency Rate</label>
+                                    <input type="text" id="currencyRate"
+                                           ng-model="CURRENCY_RATE"
+                                           name="currencyRate"
+                                           class="form-control"
+                                           required
+                                           autocomplete="off" />
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Date/Miti</label>
+                                    <div style="display: flex; gap: 8px;">
+                                        <input id="englishdatedocument"
+                                               class="englishdate dateclass"
+                                               kendo-date-picker
+                                               onchange="setNepaliDateFromEnglish(this)"
+                                               ng-model="DELIVERY_DATE"
+                                               k-options="monthSelectorOptions" />
+
+                                        <div style="position: relative; flex: 1;">
+                                            <input type="text" id="nepaliDate5"
+                                                   data-checkfor="englishdatedocument"
+                                                   onchange="ConvertNepToEng(this)"
+                                                   class="nepali-calendar form-control dateclass" />
+                                            <i class="fa fa-calendar form-control-feedback calendar-icon-2"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group" ng-show="LOCAL_FLAG == 'Y'">
+                                    <label for="vat include">Include Vat</label>
+                                    <input type="checkbox"
+                                           id="vatInclude"
+                                           name="vatInclude"
+                                           ng-model="VAT_INCLUDE_FLAG"
+                                           ng-true-value="'Y'"
+                                           ng-false-value="'N'"
+                                           ng-change="onVatIncludeChanged()"
+                                           class=""
+                                           autocomplete="off" />
+                                </div>
+
+                            </div>
+
+                            <!-- Second Row -->
+                            <div style="display: flex; flex-wrap: wrap; gap: 16px 0px; margin-top: 16px; padding: 0;" class="col-md-12">
+
+                                <div class="form-group">
+                                    <label for="tenderNo">Quote No</label>
+                                    <input type="text" id="tenderNo"
+                                           ng-model="TENDER_NO"
+                                           name="quoteNo"
+                                           class="form-control"
+                                           required
+                                           readonly />
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Date/Miti</label>
+                                    <div style="display: flex; gap: 8px;">
+                                        <input type="text"
+                                               ng-model="ISSUE_DATE"
+                                               class="form-control dateclass"
+                                               readonly />
+                                        <input type="text"
+                                               data-checkfor="englishdatedocument"
+                                               ng-model="NEPALI_DATE"
+                                               class="nepali-calendar form-control dateclass"
+                                               readonly />
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="validDt">Delivery Date</label>
+                                    <div style="display: flex; gap: 8px;">
+                                        <input type="text"
+                                               ng-model="VALID_DATE"
+                                               class="form-control dateclass"
+                                               readonly />
+                                        <input type="text"
+                                               data-checkfor="englishdatedocument"
+                                               ng-model="DELIVERY_DT_BS"
+                                               class="form-control dateclass"
+                                               readonly />
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="control-label">Remarks</label>
+                                    <textarea id="remarks"
+                                              ng-model="TXT_REMARKS"
+                                              readonly
+                                              class="form-control remarks"
+                                              type="textarea"></textarea>
+                                </div>
+
+                            </div>
+                            <div class="col-md-12" style="padding: 0;">
+                                <div class="table-container" ng-init="setInitialWidth()">
+                                    <div class="table-responsive">
+                                        <table class="table-bordered table-striped modal-table">
+                                            <tr>
+                                                <td style="width: 49px;" class="table-head">S.N</td>
+                                                <td class="table-head">Item Description</td>
+                                                <td class="table-head">
+                                                    Specification
+                                                    <span class="arrow-wrapper" title="More Specification">
+                                                        <span>
+                                                            <i class="fa fa-arrow-circle-left" ng-click="toggleDetails()" ng-show="showSpecificationDetail" aria-hidden="true"></i>
+                                                            <i class="fa fa-arrow-circle-right" ng-click="toggleDetails()" ng-hide="showSpecificationDetail" aria-hidden="true"></i>
+                                                        </span>
+                                                    </span>
+                                                </td>
+                                                <td ng-show="showSpecificationDetail" class="table-head">Category</td>
+                                                <td ng-show="showSpecificationDetail" class="table-head">Brand Name</td>
+                                                <td ng-show="showSpecificationDetail" class="table-head">Interface</td>
+                                                <td ng-show="showSpecificationDetail" class="table-head">Type</td>
+                                                <td ng-show="showSpecificationDetail" class="table-head">Lamination</td>
+                                                <td ng-show="showSpecificationDetail" class="table-head">Item Size</td>
+                                                <td ng-show="showSpecificationDetail" class="table-head">Thickness</td>
+                                                <td ng-show="showSpecificationDetail" class="table-head">Color</td>
+                                                <td ng-show="showSpecificationDetail" class="table-head">Grade</td>
+                                                <td ng-show="showSpecificationDetail" class="table-head">Size Length</td>
+                                                <td ng-show="showSpecificationDetail" class="table-head">Size Width</td>
+                                                <td class="table-head">Image</td>
+                                                <td class="table-head">Unit</td>
+                                                <td class="table-head">Quantity</td>
+                                                <td class="table-head">Rate</td>
+                                                <td class="table-head">Amount</td>
+                                                <td class="table-head" style="position:relative" ng-show="LOCAL_FLAG == 'Y'">
+                                                    Discount
+                                                    <span title="Discount Type">
+                                                        <span>
+                                                            <i class="fa fa-arrow-circle-down" ng-click="toggleDiscountTypePopup()" ng-show="!showDiscountType" aria-hidden="true"></i>
+                                                            <i class="fa fa-arrow-circle-up" ng-click="toggleDiscountTypePopup()" ng-show="showDiscountType" aria-hidden="true"></i>
+                                                        </span>
+                                                    </span>
+                                                    <span ng-show="selectedDiscountType">({{ selectedDiscountType }})</span>
+                                                    <div class="discount-popup" ng-show="showDiscountType">
+                                                        <ul>
+                                                            <li ng-click="updateSelectedDiscountType('Percentage')">Percentage</li>
+                                                            <li ng-click="updateSelectedDiscountType('Flat')">Flat</li>
+                                                            <li ng-click="updateSelectedDiscountType('Quantity')">Quantity</li>
+                                                        </ul>
+                                                    </div>
+                                                </td>
+                                                <td class="table-head" ng-show="LOCAL_FLAG == 'Y'">Discount Amount</td>
+                                                <td class="table-head" ng-show="LOCAL_FLAG == 'Y'">Excise</td>
+                                                <td class="table-head" ng-show="LOCAL_FLAG == 'Y'">Taxable Amount</td>
+                                                <td class="table-head" ng-show="LOCAL_FLAG == 'Y'">Vat Amount(13%)</td>
+                                                <td class="table-head" ng-show="LOCAL_FLAG == 'Y'">Net Amount</td>
+                                            </tr>
+                                            <tr ng-repeat="product in productFormList" ng-init="updateSums(product)">
+                                                <td>
+                                                    <input style="width:49px;" type="text" name="unit_{{product.ID}}" id="unit_{{product.ID}}" ng-model="product.ID" value="" readonly class="form-control">
+                                                </td>
+                                                <td class="">
+                                                    <input type="text" name="unit_{{product.ID}}" id="unit_{{product.ID}}" ng-model="product.ITEM_CODE" value="" readonly class="form-control itemSelect">
+                                                </td>
+                                                <td>
+                                                    <input type="text" name="specification_{{product.ID}}" id="specification_{{product.ID}}" ng-model="product.SPECIFICATION" readonly class="form-control" value="">
+                                                </td>
+                                                <td ng-show="showSpecificationDetail">
+                                                    <input type="text" name="category_{{product.ID}}" min="0" id="category_{{product.ID}}" ng-model="product.CATEGORY" readonly class="form-control small-width" value="">
+                                                </td>
+                                                <td ng-show="showSpecificationDetail">
+                                                    <input type="text" name="brandName_{{product.ID}}" id="brandName_{{product.ID}}" ng-model="product.BRAND_NAME" readonly class="form-control small-width" value="">
+                                                </td>
+                                                <td ng-show="showSpecificationDetail">
+                                                    <input type="text" name="interface_{{product.ID}}" id="interface_{{product.ID}}" ng-model="product.INTERFACE" readonly class="form-control small-width" value="">
+                                                </td>
+                                                <td ng-show="showSpecificationDetail">
+                                                    <input type="text" name="type_{{product.ID}}" id="type_{{product.ID}}" ng-model="product.TYPE" readonly class="form-control small-width" value="">
+                                                </td>
+                                                <td ng-show="showSpecificationDetail">
+                                                    <input type="text" name="lamination_{{product.ID}}" id="lamination_{{product.ID}}" ng-model="product.LAMINATION" readonly class="form-control small-width right-align" value="">
+                                                </td>
+                                                <td ng-show="showSpecificationDetail">
+                                                    <input type="text" name="itemSize_{{product.ID}}" min="0" id="itemSize_{{product.ID}}" ng-model="product.ITEM_SIZE" readonly class="form-control small-width right-align" value="">
+                                                </td>
+                                                <td ng-show="showSpecificationDetail">
+                                                    <input type="text" name="thickness_{{product.ID}}" min="0" id="thickness_{{product.ID}}" ng-model="product.THICKNESS" readonly class="form-control small-width right-align" value="">
+                                                </td>
+                                                <td ng-show="showSpecificationDetail">
+                                                    <input type="text" name="color_{{product.ID}}" id="color_{{product.ID}}" ng-model="product.COLOR" class="form-control small-width" value="" readonly>
+                                                </td>
+                                                <td ng-show="showSpecificationDetail">
+                                                    <input type="text" name="lamination_{{product.ID}}" id="lamination_{{product.ID}}" ng-model="product.GRADE" readonly class="form-control small-width right-align" value="">
+                                                </td>
+                                                <td ng-show="showSpecificationDetail">
+                                                    <input type="number" name="sizeLength_{{product.ID}}" min="0" id="sizeLength_{{product.ID}}" readonly ng-model="product.SIZE_LENGTH" class="form-control small-width right-align" value="">
+                                                </td>
+                                                <td ng-show="showSpecificationDetail">
+                                                    <input type="number" name="sizeHeight_{{product.ID}}" min="0" id="sizeHeight_{{product.ID}}" readonly ng-model="product.SIZE_WIDTH" class="form-control small-width right-align" value="">
+                                                </td>
+                                                <td>
+                                                    <img name="image_{{product.ID}}" id="image_{{product.ID}}" ng-src="{{product.IMAGE_LINK}}" ng-model="product.IMAGE" class="form-control large-width" ng-click="openImage(product.IMAGE_LINK)" />
+                                                </td>
+                                                <td>
+                                                    <input type="text" name="unit_{{product.ID}}" id="unit_{{product.ID}}" ng-model="product.UNIT" readonly class="form-control small-width" value="">
+                                                </td>
+                                                <td>
+                                                    <input type="number" name="quantity_{{product.ID}}" min="0" id="quantity_{{product.ID}}" ng-model="product.QUANTITY" readonly class="form-control small-width right-align" value="">
+                                                </td>
+                                                <td>
+                                                    <input type="number" name="rate_{{product.ID}}" min="0" id="rate_{{product.ID}}" ng-model="product.RATE" ng-change="updateAmount(product);updateTaxableAmt(product);" class="form-control small-width right-align" required>
+                                                </td>
+                                                <td>
+                                                    <input type="number" name="amount_{{product.ID}}" id="amount_{{product.ID}}" ng-model="product.AMOUNT" class="form-control large-width right-align" value="" readonly>
+                                                </td>
+                                                <td>
+                                                    <input type="number" name="discount_{{product.ID}}" ng-show="LOCAL_FLAG == 'Y'" id="discount_{{product.ID}}" ng-model="product.DISCOUNT" ng-change="updateDiscountAmt(product);updateTaxableAmt(product);" class="form-control large-width right-align" required>
+                                                </td>
+                                                <td>
+                                                    <input type="number" name="discountAmt_{{product.ID}}" ng-show="LOCAL_FLAG == 'Y'" id="discountAmt_{{product.ID}}" ng-model="product.DISCOUNT_AMOUNT" class="form-control large-width right-align" readonly>
+                                                </td>
+                                                <td>
+                                                    <input type="number" name="excise_{{product.ID}}" ng-show="LOCAL_FLAG == 'Y'" id="excise_{{product.ID}}" ng-model="product.EXCISE" ng-change="updateTaxableAmt(product);" class="form-control large-width right-align" value="">
+                                                </td>
+                                                <td>
+                                                    <input type="number" name="taxableAmt_{{product.ID}}" ng-show="LOCAL_FLAG == 'Y'" id="taxableAmt_{{product.ID}}" ng-model="product.TAXABLE_AMOUNT" class="form-control large-width right-align" readonly>
+                                                </td>
+                                                <td>
+                                                    <input type="number" name="vatAmt_{{product.ID}}" ng-show="LOCAL_FLAG == 'Y'" id="vatAmt_{{product.ID}}" ng-model="product.VAT_AMOUNT" class="form-control large-width right-align" value="">
+                                                </td>
+                                                <td>
+                                                    <input type="number" name="netAmt_{{product.ID}}" ng-show="LOCAL_FLAG == 'Y'" id="netAmt_{{product.ID}}" ng-model="product.NET_AMOUNT" class="form-control large-width right-align" value="">
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="summary-table" style="display: flex; flex-wrap: wrap; gap: 16px; padding: 0;">
+
+                                <!-- Summary Amount -->
+                                <div class="customerDetailsSection" style="flex: 1 1 300px;">
+                                    <table class="table table-bordered">
+                                        <thead class="font-green">
+                                            <tr>
+                                                <th colspan="2">Summary</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Total</td>
+                                                <td class="text-right">{{TOTAL_AMOUNT}}</td>
+                                            </tr>
+                                            <tr ng-show="LOCAL_FLAG == 'Y'">
+                                                <td>Discount</td>
+                                                <td class="text-right">{{TOTAL_DISCOUNT}}</td>
+                                            </tr>
+                                            <tr ng-show="LOCAL_FLAG == 'Y'">
+                                                <td>Excise</td>
+                                                <td class="text-right">{{TOTAL_EXCISE}}</td>
+                                            </tr>
+                                            <tr ng-show="LOCAL_FLAG == 'Y'">
+                                                <td>Taxable Amount</td>
+                                                <td class="text-right">{{TOTAL_TAXABLE_AMOUNT}}</td>
+                                            </tr>
+                                            <tr ng-show="LOCAL_FLAG == 'Y'">
+                                                <td>VAT(13%)</td>
+                                                <td class="text-right">{{TOTAL_VAT}}</td>
+                                            </tr>
+                                            <tr ng-show="LOCAL_FLAG == 'Y'">
+                                                <td>Net Amount</td>
+                                                <td class="text-right">{{TOTAL_NET_AMOUNT}}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Summary Quantity -->
+                                <div class="customerDetailsSection" style="flex: 1 1 200px;">
+                                    <table class="table table-bordered">
+                                        <thead class="font-green">
+                                            <tr>
+                                                <th colspan="2">Summary Quantity</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Total Quantity</td>
+                                                <td class="text-right">{{TOTAL_QUANTITY}}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Terms and Conditions -->
+                                <div style="flex: 1 1 400px;">
+                                    <div class="table-container" ng-init="setInitialWidth()" style="height: 20rem; overflow-y: auto;">
+                                        <div class="table-responsive">
+                                            <table class="table-bordered table-striped modal-table">
+                                                <thead>
+                                                    <tr>
+                                                        <td style="width: 44px;" class="table-head">S.N</td>
+                                                        <td class="table-head">Terms and Condition</td>
+                                                        <td class="btn-action">&nbsp;</td>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr ng-repeat="term in termList">
+                                                        <td>
+                                                            <input style="width:44px;" type="text" readonly class="form-control text-right"
+                                                                   ng-model="term.ID" name="unit_{{term.ID}}" id="unit_{{term.ID}}">
+                                                        </td>
+                                                        <td>
+                                                            <input type="text" class="form-control termsCondition"
+                                                                   ng-model="term.TERM_CONDITION"
+                                                                   name="unit_{{term.ID}}" id="unit_{{term.ID}}">
+                                                        </td>
+                                                        <td class="btn-action">
+                                                            <a href="" class="buttonadd" ng-click="addRow()">
+                                                                <i class="fa fa-plus" title="Add row"></i>
+                                                            </a>
+                                                            <a href="" class="buttondelete" ng-click="deleteRow($index)">
+                                                                <i class="fa fa-trash" title="Delete row"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- File Upload -->
+                                <div style="flex: 1 1 250px;">
+                                    <label class="control-label">Upload Files <span style="color: red;">(Upload files less than 4 MB)</span></label>
+                                    <div id="dQuotationUpload" class="dropzone">
+                                        <div class="dz-default dz-message">
+                                            <i class="fa fa-upload upload-icon" aria-hidden="true"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="col-md-12">
+                                <div class="col-md-11 text-right">
+                                </div>
+                                <div class="col-md-1 text-right" ng-hide="formSubmitted">
+                                    <button type="submit" class="btn btn-success">Submit</button>
+                                </div>
+                            </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        var today = new Date();
+        var formattedDate = moment(today).format('DD-MMM-YYYY');
+        $("#englishdatedocument").val(formattedDate);
+        var formattedEngDate = moment(today).format('YYYY-MM-DD');
+        var nepaliDate = AD2BS(formattedEngDate);
+        $("#nepaliDate5").val(nepaliDate);
+    });
+
+    function dateSet(date) {
+        var month = date.getMonth() + 1;
+        var day = date.getDate();
+        date = date.getFullYear() + '/' +
+            (('' + month).length < 2 ? '0' : '') + month + '/' +
+            (('' + day).length < 2 ? '0' : '') + day;
+        return date;
+    }
+    function setNepaliDateFromEnglish() {
+        var engDate = $("#englishdatedocument").val();
+        var formattedDate = moment(engDate, 'M/D/YYYY').format('DD-MMM-YYYY');
+        $("#englishdatedocument").val(formattedDate);
+        var formattedEngDate = moment(engDate, 'M/D/YYYY').format('YYYY-MM-DD');
+        var nepaliDate = AD2BS(formattedEngDate);
+        $("#nepaliDate5").val(nepaliDate);
+    }
+
+    function ConvertNepToEng(e) {
+        var date = BS2AD($("#nepaliDate5").val());
+        var FormattedEngDate = moment(date).format('DD-MMM-YYYY');
+        $("#englishdatedocument").val(FormattedEngDate);
+    }
+    $(".nepali-calendar").nepaliDatePicker({
+        npdMonth: true,
+        onFocus: true,
+        npdYear: true,
+        npdYearCount: 10,
+        altFormat: "dd-MMM-YYYY",
+        dateFormat: "dd-MMM-YYYY",
+        onChange: function (evt) {
+            var nepaliDate = $("#nepaliDate5").val(); // Get the Nepali date value
+            var engDate = BS2AD(nepaliDate); // Convert Nepali date to English date
+            var formattedEngDate = moment(engDate).format('DD-MMM-YYYY'); // Format the English date
+            $("#englishdatedocument").val(formattedEngDate); // Update the English date input field
+        }
+    });
+
+</script>
+<script>
+    $(document).ready(function () {
+        $('#quotationForm input').on('keydown', function (e) {
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    });
+</script>
+<script>
+    var myInventoryDropzone;
+    angular.element(document).ready(function () {
+        var scope = angular.element(document.getElementById('quotationDetails')).scope();
+
+        myInventoryDropzone = new Dropzone('#dQuotationUpload', {
+            url: "/Quotation/QuotationFileUpload/",
+            thumbnailWidth: 200,
+            thumbnailHeight: 75,
+            autoDiscover: false,
+            autoProcessQueue: false,
+            addRemoveLinks: true,
+            paramName: "inputFiles",
+            uploadMultiple: true,
+            parallelUploads: 2,
+            maxFiles: 2,
+            maxFilesize: 10,
+            init: function () {
+                this.on("maxfilesexceeded", function (file) {
+                    this.removeFile(file);
+                    displayPopupNotification("Only 2 files can be uploaded at a time.", "warning");
+                });
+                this.on("addedfile", function (file) {
+                    if (file.size > 4 * 1024 * 1024) {
+                        this.removeFile(file);
+                        displayPopupNotification("File size must not exceed 4 MB.", "warning");
+                    }
+                });
+            }
+        });
+
+        myInventoryDropzone.on('sending', function (file, xhr, formData) {
+            if (scope) {
+                var tenderNo = scope.TENDER_NO;
+                var quotationNo = scope.quotationNo;
+                var companyCode = scope.companyCode;
+                var branchCode = scope.branchCode;
+                debugger;
+                formData.append('TenderNo', tenderNo);
+                formData.append('QuotationNo', quotationNo);
+                formData.append('CompanyCode', companyCode);
+                formData.append('BranchCode', branchCode);
+            } else {
+                console.error("Scope is undefined");
+            }
+        });
+
+        myInventoryDropzone.on("success", function (file, responseText) {
+            if (responseText.status == "Error") {
+                displayPopupNotification("File upload did not succeed. Please try again.", "error");
+            } else {
+                myInventoryDropzone.removeFile(file);
+            }
+        });
+
+        myInventoryDropzone.on("removedfile", function (file, xhr, formData) {
+            if (scope) {
+                var filename = file.name;
+                var voucherno = scope.OrderNo;
+                var formcode = scope.formcode;
+                var model = {
+                    FILE_NAME: filename,
+                    FORM_CODE: formcode,
+                    VOUCHER_NO: voucherno
+                };
+            } else {
+                console.error("Scope is undefined during file removal");
+            }
+        });
+    });
+</script>

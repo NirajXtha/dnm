@@ -1,0 +1,414 @@
+﻿@model List<NeoErp.Planning.Service.Models.MyColumnSettings>
+@{
+    ViewBag.Title = "PlanSetup";
+    //Layout = "~/Areas/NeoERP.Planning/Views/Shared/_Layout.cshtml";
+    Layout = null;
+    // var FrequencyCol = ViewBag.itemCharges as List<NeoErp.Planning.Service.Models.MyColumnSettings>;
+}
+<style>
+    .gaprightleft
+    {
+        padding-left:15px;
+        padding-right:15px;
+    }
+       #PlanSetupTreeList input
+       {
+           width:100%;
+           border:none;
+           background:none !important;
+           height:17px !important;
+           display:block;
+           /*text-align:center;*/
+       }
+    #PlanSetupTreeList input:focus
+    {
+        border:solid #ddd 1px;
+    }
+    input:focus{
+    outline: none !important;
+}
+     #PlanSetupTreeList .k-treelist .k-alt {
+    background-color: #eee;
+}
+</style>
+
+<div id="planSetupCtrl" class="portlet light form-fit bordered">
+    <div class="portlet-title">
+        <span class="caption-subject font-green bold uppercase text-center" style="text-align:center">
+            <i class="fa fa-list-alt"></i>
+            plansetup: {{pageName}}
+        </span>
+        <span class="pull-right">
+            <button type="button" id="ResetComsumptionIssue" ng-click="ResetConsumptionIssue(consumptionForm)" class="btn btn-default">Reset</button>
+            <button type="submit" id="SavePlanSetup" class="btn green">Save</button>
+        </span>
+    </div>
+    <div class="portlet-body gaprightleft">
+        <div class="block">
+            @*<h4><b><i> <span class="text-warning">{{ITEM}}</span> Plan between <span class="text-warning">{{startDate}}</span> and <span class="text-warning">{{endDate}}</span> </i></b></h4>*@
+        </div>
+       
+        <form id="planSetupForm" name="planSetupForm" novalidate class="form-horizontal1">
+        
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="control-label ">Plan</label>
+                            <input id="ItemPlan" name="ItemPlan" ng-model="planSetup.selectedItemPlan" style="width: 98%;" />
+                            <div class="help-block" ng-messages="planSetup.ItemPlan.$error" ng-if="planSetup.ItemPlan.$touched  || planSetup.ItemPlan.$submitted ">
+                                <p ng-message="required">
+                                    <span class="required">This field is required</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                    <div class="row itemHeader" style="display:none;">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label ">Item Name</label>
+                            <input id="item" name="item" ng-model="planSetup.selectedItem" style="width: 98%;" />
+                            <div class="help-block" ng-messages="planSetup.item.$error" ng-if="planSetup.item.$touched  || planSetup.item.$submitted ">
+                                <p ng-message="required">
+                                    <span class="required">This field is required</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label ">Plan Type</label>
+                            @*<select id="plan" kendo-drop-down-list style="width: 98%" k-data-text-field="'ProductName'" k-options="planType" ng-model="planSetup.selectedPlan"></select>*@
+                            <input id="plan" name="plan" ng-model="planSetup.selectedPlan" style="width: 98%;" />
+                            <div class="help-block" ng-messages="planSetup.plan.$error" ng-if="planSetup.plan.$touched  || planSetup.plan.$submitted ">
+                                <p ng-message="required">
+                                    <span class="required">This field is required</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="control-label ">Frequency</label>
+                            @*<select id="frequency" kendo-drop-down-list style="width: 98%" k-data-text-field="'ProductName'" k-options="frequencyType" ng-model="planSetup.selectedFrequency"></select>*@
+                            <input id="frequency" name="frequency" ng-model="planSetup.selectedFrequency" style="width: 98%;">@*{{Frequency}}</input>*@
+                            <div class="help-block" ng-messages="planSetup.frequency.$error" ng-if="planSetup.frequency.$touched  || planSetup.frequency.$submitted ">
+                                <p ng-message="required">
+                                    <span class="required">This field is required</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+ 
+</form>
+      
+            <div id="PlanSetupTreeList" style="margin: 10px 0px 0px 0px;"></div>
+
+        </div>
+        @*<kendo-tree-list k-options="treelistOptions"></kendo-tree-list>*@
+
+    </div>
+ 
+ 
+@*<script type="text/x-kendo-tmpl" id="ItemTemplate">
+    <input class="autoFillNum" dir="rtl" style="width:70px !important" type="number" />
+</script>
+<script type="text/x-kendo-tmpl" id="FreqTemplate">
+    <input class="autoFillItemNum" dir="rtl" style="width:100% !important " type="number" />
+</script>
+<script>
+    (function () {
+        BindPlanName();
+        GetPlanSetupTreeList(85, 10);
+    })();
+
+    function GetPlanSetupTreeList(plancode, itemCode) {
+        var savePlanUrl = window.location.protocol + "//" + window.location.host + "/Plan/LoadPlanSetupTreeListPartial";
+        var param = {
+            planCode: plancode,
+            itemCode: itemCode
+        };
+        $.ajax({
+            type: 'GET',
+            url: savePlanUrl,
+            data: param,
+            dataType: 'html',
+            success: function (partial) {
+                $("#PlanSetupTreeList").html(partial);
+                BindTreeList(itemCode);
+            },
+            error: function (error) {
+                debugger;
+                displayPopupNotification(error, "error");
+            }
+        });
+    }
+
+    $("#SavePlanSetup1").on('click', function () {
+        //var savePlanUrl = window.location.protocol + "//" + window.location.host + "/api/PlanSetupApi/savePlan";
+        var savePlanUrl = window.location.protocol + "//" + window.location.host + "/Plan/savePlan";
+        var dataList = $('#treeListForm').serialize();
+        $.ajax({
+            type: 'POST',
+            url: savePlanUrl,
+            data: JSON.stringify(dataList),
+            async: false,
+            dataType: 'json',
+            success: function (data) {
+                if (data == "error") {
+                    displayPopupNotification(data, "error");
+                }
+                else {
+                    displayPopupNotification("Succesfully Saved.", "success");
+                }
+
+            },
+            error: function (error) {
+                debugger;
+                displayPopupNotification(error, "error");
+            }
+        });
+    });
+
+    function BindPlanName() {
+        var mainurl = window.location.protocol + "//" + window.location.host + "/api/PlanSetupApi/GetAllPlanNames";
+        $("#ItemPlan").kendoDropDownList({
+            optionLabel: "--Select Product Plan Name--",
+            filter: "contains",
+            dataTextField: "ITEM_EDESC",
+            dataValueField: "PLAN_CODE",
+            suggest: true,
+            dataSource: {
+                type: "json",
+                serverFiltering: true,
+                transport: {
+                    read: {
+                        url: mainurl,
+                    },
+                    parameterMap: function (data, action) {
+
+                        if (data.filter != undefined) {
+                            if (data.filter.filters[0] != undefined) {
+                                var newParams = {
+                                    filter: data.filter.filters[0].value
+                                };
+                                return newParams;
+                            }
+                            else {
+                                var newParams = {
+                                    filter: ""
+                                };
+                                return newParams;
+                            }
+                        }
+                        else {
+                            var newParams = {
+                                filter: ""
+                            };
+                            return newParams;
+                        }
+
+                    }
+
+                }
+            },
+            change: function (e) {
+                if ($("#treelist").data("kendoTreeList") != undefined) {
+                    $("#treelist").html('');
+                    $("#treelist").data("kendoTreeList").dataSource.data([]);
+                }
+
+                var planCode = this.dataItem().PLAN_CODE;
+                var itemCode = this.dataItem().ITEM_CODE;
+                var freqCode = this.dataItem().TIME_FRAME_CODE;
+                debugger;
+                BindItem(itemCode);
+                BindPlan(planCode);
+                BindFrequency(freqCode);
+                $('.itemHeader').css({ display: "block" });;
+                //$("#item").data("kendoDropDownList").select(itemCode);
+                //$("#plan").data("kendoDropDownList").select(planCode);
+                //$("#frequency").data("kendoDropDownList").select(freqCode);
+                //BindPartial();
+                GetPlanSetupTreeList(planCode, itemCode);
+            },
+        });
+
+    }
+
+    function BindPartial() {
+        var savePlanUrl = window.location.protocol + "//" + window.location.host + "/Plan/LoadDynamicCol";
+        var param = {
+            planCode: "85"
+        };
+        $.ajax({
+            type: 'POST',
+            url: savePlanUrl,
+            data: JSON.stringify(param),
+            async: false,
+            dataType: 'json',
+            success: function (data) {
+                debugger;
+                if (data == "error") {
+                    displayPopupNotification(data, "error");
+                }
+                else {
+                    displayPopupNotification("Succesfully Saved.", "success");
+                }
+
+            },
+            error: function (error) {
+                debugger;
+                displayPopupNotification(error, "error");
+            }
+        });
+    }
+    function BindItem(ItemCode) {
+        $("#item")
+            .kendoDropDownList({
+                optionLabel: "--Select Item--",
+                filter: "contains",
+                dataTextField: "ITEM_EDESC",
+                dataValueField: "ITEM_CODE",
+                suggest: true,
+                dataSource: {
+                    type: "json",
+                    serverFiltering: true,
+                    transport: {
+                        read: {
+                            url: "/api/PlanSetupApi/getItemByFilter"
+                        },
+                        parameterMap: function (data, action) {
+                            var newParams;
+                            if (data.filter != undefined) {
+                                if (data.filter.filters[0] != undefined) {
+                                    newParams = {
+                                        filter: data.filter.filters[0].value
+                                    };
+                                    return newParams;
+                                } else {
+                                    newParams = {
+                                        filter: ""
+                                    };
+                                    return newParams;
+                                }
+                            } else {
+                                newParams = {
+                                    filter: ItemCode
+                                };
+                                return newParams;
+                            }
+
+                        }
+
+                    }
+                },
+                dataBound: function () {
+                    this.select(1);
+                },
+                change: function (e) {
+                    //if ($("#treelist").data("kendoTreeList") != undefined) {
+                    //$("#treelist").html('');
+                    //}
+                    //var key = $("#item").data("kendoDropDownList").value();
+                    //BindTreeList(key);
+                }
+            });
+    };
+
+    function BindPlan(planCode) {
+        $("#plan")
+            .kendoDropDownList({
+                optionLabel: "--Select Plan Type--",
+                dataSource: {
+                    type: "json",
+                    transport: {
+                        read: {
+                            url: "/api/PlanSetupApi/getPlanType"
+                        },
+                        parameterMap: function (data, action) {
+                            var newParams;
+                            if (data.filter != undefined) {
+                                if (data.filter.filters[0] != undefined) {
+                                    newParams = {
+                                        filter: data.filter.filters[0].value
+                                    };
+                                    return newParams;
+                                } else {
+                                    newParams = {
+                                        filter: ""
+                                    };
+                                    return newParams;
+                                }
+                            } else {
+                                newParams = {
+                                    filter: planCode
+                                };
+                                return newParams;
+                            }
+
+                        }
+
+
+                    }
+                },
+                dataBound: function () {
+                    this.select(1);
+                }
+            });
+
+    }
+    function BindFrequency(freqCode) {
+        $("#frequency")
+            .kendoDropDownList({
+                optionLabel: "--Select Fequency--",
+                dataTextField: "fname",
+                dataValueField: "fvalue",
+                dataSource: {
+                    type: "json",
+                    serverFiltering: true,
+                    transport: {
+                        read: {
+                            url: "/api/PlanSetupApi/getFrequencyType"
+                        },
+                        parameterMap: function (data, action) {
+                            var newParams;
+                            if (data.filter != undefined) {
+                                if (data.filter.filters[0] != undefined) {
+                                    newParams = {
+                                        filter: data.filter.filters[0].value
+                                    };
+                                    return newParams;
+                                } else {
+                                    newParams = {
+                                        filter: ""
+                                    };
+                                    return newParams;
+                                }
+                            } else {
+                                newParams = {
+                                    filter: freqCode
+                                };
+                                return newParams;
+                            }
+
+                        }
+
+                    }
+                },
+                dataBound: function () {
+                    this.select(1);
+                }
+            });
+
+    }
+
+
+    $(function () {
+        $('.k-list.k-reset')
+            .slimScroll({
+
+            });
+    });
+</script>*@

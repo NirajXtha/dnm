@@ -1,0 +1,537 @@
+﻿@using NeoErp.Core;
+@using NeoErp.Core.Models;
+@{
+    ViewBag.Title = "PlanList";
+    string LoggedInUsers_EmployeeCode = ViewBag.EmployeeCode;
+    //Layout = "~/Areas/NeoERP.Planning/Views/Shared/_Layout.cshtml";
+    Layout = null;
+}
+@{
+    string retrived_start_date = ViewBag.startdate;
+    string retrived_end_date = ViewBag.enddate;
+}
+
+<style>
+    /*.k-grid {
+        font-size: 11px;
+    }*/
+
+    .color-notify {
+        float: left;
+        padding-left: 5px;
+    }
+
+    .color-box-1 {
+        height: 13px;
+        width: 13px;
+        background-color: #91D598;
+        border: 1px solid #9c9797;
+        margin-top: 2px;
+        float: left;
+    }
+
+    .color-box-2 {
+        height: 13px;
+        width: 13px;
+        background-color: #D4FAB6;
+        border: 1px solid #9c9797;
+        margin-top: 2px;
+        float: left;
+    }
+
+    .color-box-3 {
+        height: 13px;
+        width: 13px;
+        background-color: #fff;
+        border: 1px solid #9c9797;
+        margin-top: 2px;
+        float: left;
+    }
+
+    .plant-identification {
+        padding-top: 22px;
+        padding-left: 20px;
+    }
+
+    .k-list.k-reset {
+        overflow: hidden !important;
+    }
+
+    #operationContent .slimScrollBar {
+        display: none !important;
+    }
+
+        #operationContent .slimScrollBar:hover {
+            display: block !important;
+        }
+
+    /*.k-ff input.k-textbox {
+        float: right;
+        margin-bottom: 5px;
+        font-size: 11px;
+    }*/
+
+    #copyDetail.modal.fade.in {
+        top: 40%;
+        margin: auto;
+        width: 470px !important;
+        height: 464px !important;
+        margin-left: -12% !important;
+    }
+
+    .k-header.k-grid-toolbar {
+        /*height:33px;*/
+        padding: 0px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    .filterbuttons {
+    }
+
+    .k-grid-header tr th {
+        text-align: center;
+    }
+</style>
+<link href="@Styles.Url("~/Content/MainTheme/assets/global/plugins/bootstrap-switch/css/bootstrap-switch.min.css")" rel="stylesheet" type="text/css" />
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+            @*<li>
+                    <i class="fa fa-home"></i>
+                    <a href="/Distribution/Home/Dashboard#!Distribution/">Home</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>
+                <li>
+                    <a href="#">Group Setup</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>*@
+        </ul>
+    </div>
+
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="portlet light bordered">
+            <div class="portlet-title">
+                <div class="caption">
+                    <i class="icon-speech font-green-haze"></i>
+                    <span class="caption-subject font-green-haze bold uppercase">Monthly Sales Plan</span>
+                    <span class="caption-helper"></span>
+                </div>
+
+                
+                @*<div class=" ">
+                    <div class="pull-right">
+                        @*<input type="checkbox" class="make-switch" id="my-input" checked data-on-color="primary" data-off-color="info">
+                        <input id="TheCheckBox" type="checkbox" data-off-text="AD" data-on-text="BS" checked="AD" class="BSswitch">
+                    </div>
+                </div>*@
+
+                <div class="actions pull-right">
+                    <input type="radio" id="dateFormatAD" name="dateFormat" value="AD" class="">
+                    <label for="dateFormatAD" style="padding-right:10px;"> AD</label>
+                    <input type="radio" id="dateFormatBS" name="dateFormat" checked="checked" value="BS" class="">
+                    <label for="dateFormatBS"> BS </label>
+                    <div class="btn-group" style="display:none;">
+                        @Html.Partial("~/Areas/NeoERP.Planning/Views/Shared/Controls/DateField.cshtml", false)
+                    </div>
+                    @*<div class="btn-group">
+                            <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                                <i class="icon-control-play"></i>
+                            </a>
+                        </div>*@
+                </div>
+
+            </div>
+
+            <div class="page-toolbar pull-right">
+                <div class="pull-left">
+                    <script type="text/x-kendo-template" id="toolbar-template">
+                        <div class="k-header k-grid-toolbar">
+                            <a class="k-button k-button-icontext floatright" id="collapseAllButton" title="Collapse All" onclick="CollapseAll()"><i class="fa fa-chevron-up"></i></a>
+                            <a class="k-button k-button-icontext floatright" id="expandAllButton" title="Expand All" onclick="ExpandAll()"><i class="fa fa-chevron-down"></i></a>
+                            <div class="search pull-right">
+                                <input type="text" id="txtSearchString" class="form-control input-sm grid-search" maxlength="64" placeholder="Search..." onkeyup="onSearch(this)" />
+                                <button class="btn btn-primary btn-sm search-btn fa fa-search"></button>
+                            </div>
+                        </div>
+                    </script>
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div id="grid"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<div id="copyDetail" class="modal fade" tabindex="-1" data-width="760">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+        <h4 class="modal-title">Copy Plan</h4>
+    </div>
+    <div class="modal-body copyContentBody"></div>
+    <div class="modal-footer">
+        <button type="button" data-dismiss="modal" class="btn btn-outline dark">Close</button>
+        <button type="button" class="btn green" id="saveCopiedPlan">Save</button>
+    </div>
+</div>
+<script src="@Scripts.Url("~/Areas/NeoERP.Planning/Scripts/DateFilter.js")" type="text/javascript"></script>
+<script src="@Scripts.Url("~/JS/ReportFilter.js")" type="text/javascript"></script>
+
+<script>
+    var frequencyTitleObject;
+    var planUrl = window.location.protocol + "//" + window.location.host + "/api/PlanReportApi/GetFavSalesPlanReport";
+    var loggedInUsers_employeeCode = '@LoggedInUsers_EmployeeCode';
+    $(document).ready(function () {
+
+        var retrived_start_date = '@retrived_start_date';
+        var retrived_end_date = '@retrived_end_date';
+        console.log('S' + retrived_start_date + 'E' + retrived_end_date);
+        if (retrived_start_date != '' && retrived_end_date != '') {
+            var dateOption = $('[name=DateStep] option').filter(function () {
+                return ($(this).attr('data-start-date') === moment(retrived_start_date).format("YYYY-MM-DD") && $(this).attr('data-end-date') === moment(retrived_end_date).format("YYYY-MM-DD")); //To select date range
+            }).prop('selected', true);
+        }
+        //BindGrid();
+        DateFilter.init(function () {
+
+            $("#ddlDateFilterVoucher").val('This Year');
+            $("#ddlDateFilterVoucher").trigger('change');
+
+            BindPlanList(planUrl);
+        });
+        hideloader();
+        $("#RunQuery").click(function (evt) {
+            evt.preventDefault();
+            KendoGridRefresh(planUrl);
+        });
+        $('input[type=radio][name=dateFormat]').change(function () {
+            showloader();
+            KendoGridRefresh(planUrl);
+        });
+
+    });
+
+    $("#clearall").on('click', function () {
+        $("#customerMultiSelect").data("kendoMultiSelect").value('');
+        $("#employeeMultiSelect").data("kendoMultiSelect").value('');
+        $("#divisionMultiSelect").data("kendoMultiSelect").value('');
+        $("#BranchMultiSelect").data("kendoMultiSelect").value('');
+
+    });
+
+    $(".applydp").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    });
+
+    $("#loadAdvancedFilters").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+
+    });
+
+    $("#txtSearchString").on('keyup', function (e) {
+
+        onSearch(e);
+    })
+
+    function onSearch($this) {
+        var q = $("#txtSearchString").val();
+        var grid = $("#grid").data("kendoGrid");
+        grid.dataSource.query({
+            page: 1,
+            pageSize: 50,
+            filter: {
+                logic: "or",
+                filters: [
+                    { field: "PLAN_EDESC", operator: "contains", value: q },
+                    { field: "START_DATE", operator: "contains", value: q },
+                    { field: "END_DATE", operator: "contains", value: q },
+                    { field: "SALES_TYPE", operator: "contains", value: q },
+                    { field: "CUSTOMER_EDESC", operator: "contains", value: q },
+                    { field: "EMPLOYEE_EDESC", operator: "contains", value: q },
+                    { field: "BRANCH_EDESC", operator: "contains", value: q },
+                    { field: "DIVISION_EDESC", operator: "contains", value: q }
+                ]
+            }
+        });
+    }
+    function BindFrequencyTitle()
+    {
+        var startDate = $("#FromDateVoucher").val();
+        var endDate = $("#ToDateVoucher").val();
+        startDate = moment(startDate).format('MM-DD-YYYY');
+        endDate = moment(endDate).format('MM-DD-YYYY')
+        var param = {
+            startDate: startDate,
+            endDate: endDate,
+            timeFrameCode: "",
+            timeFrameName: "month",
+            datetype: $('input[name=dateFormat]:checked').val()
+        };
+
+        $.ajax({
+            type: 'GET',
+            url: window.location.protocol + "//" + window.location.host + "/Planning/Plan/getFrequencyTitle",
+            data: param,
+            dataType: 'html',
+            async: false,
+            success: function (result) {
+                frequencyTitleObject = JSON.parse(result);
+            }
+        });
+    }
+    var monthWiseResponseData = [];
+    var totalSum = 0;
+
+    function BindMonthWiseData() {
+        
+        var param =  ReportFilter.filterAdditionalData();
+        $.ajax({
+            type: 'POST',
+            url: planUrl, //+ "?datetype=" + $('input[name=dateFormat]:checked').val(),
+            data: param,
+            dataType: 'html',
+            async: false,
+            success: function (result) {
+                result = JSON.parse(result);
+                var itemList = _.uniq(result, "ITEM_CODE");
+                var changeArr = [];
+                for (var i = 0; i < itemList.length; i++) {
+                    var obj = {
+                        ITEM_CODE: itemList[i].ITEM_CODE,
+                        ITEM_EDESC: itemList[i].ITEM_EDESC
+                    };
+                    $.each(result, function (e, v) {
+                        if (itemList[i].ITEM_CODE == v.ITEM_CODE) {
+                            obj[v.MITI] = v.PER_DAY_AMOUNT;
+                        }
+                    });
+                    changeArr.push(obj);
+                }
+                monthWiseResponseData = changeArr;
+                $.each(result, function (e, v) {
+                    totalSum = totalSum + parseFloat(parseFloat(v.PER_DAY_AMOUNT).toFixed(2));
+                });
+            }
+        });
+
+    }
+
+    //function yearSum() {
+    //    return totalSum.toFixed(2);
+    //}
+    function BindPlanList(pUrl) {
+        
+        totalSum = 0;
+        BindMonthWiseData();
+        BindFrequencyTitle();
+        //yearSum();
+        var dynamicHeader = [];
+        var yearWiseArr = [];
+
+        var headerWidth_ScreenWise = function (width) {
+            var windowwidth = window.innerWidth - 185;
+            var returnValue = (width / 100) * windowwidth;
+            return returnValue;
+        }
+
+        dynamicHeader.push({
+            field: "ITEM_EDESC",
+            title: "Item",
+            locked: true,
+            editable: false,
+            footerTemplate: "Total Amount: #=yearSum()#",
+            width: 300,
+        });
+        $.each(frequencyTitleObject, function (id, it) {
+            yearWiseArr.push(it.getPeriod[0].YEAR);
+        });
+        yearWiseArr = _.uniq(yearWiseArr);
+        var aggregate = [];
+        $.each(yearWiseArr, function (e, i) {
+            var monthArr = {};
+            var test = $.grep(frequencyTitleObject, function (e) { return e.getPeriod[0].YEAR == i; });
+            var column = [];
+            $.each(test, function (idx, item) {
+                if (item.PropertyName != null || item.Title != null) {
+                    column.push({
+                        field: item.PropertyName,
+                        title: item.Title,
+                        editable: true,
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                        format: "{0:n}",
+                        footerTemplate: "#= kendo.toString(sum, '0.00') #",
+                        aggregates: ["sum"],
+                        width: headerWidth_ScreenWise(7),
+                    });
+                    aggregate.push({
+                        field: item.PropertyName,
+                        aggregate: "sum"
+                    })
+                }
+            })
+            monthArr['title'] = i;
+            monthArr['headerAttributes'] = { style: "text-align: center" };
+            monthArr['columns'] = column;
+            dynamicHeader.push(monthArr);
+        });
+        $("#grid").kendoGrid({
+            dataSource: {
+                type: "json",
+                //transport: {
+                //    read: {
+                //        url: pUrl, // <-- Get data from here.
+                //        dataType: "json", // <-- The default was "jsonp".
+                //        type: "POST",
+                //        contentType: "application/json; charset=utf-8"
+                //    },
+                //    parameterMap: function (options, type) {
+
+                //        var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+                //        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                //        delete paramMap.$format; // <-- remove format parameter.
+                //        return paramMap;
+
+                //    }
+                //},
+                data: monthWiseResponseData,
+                schema: {
+                    model: {
+                        fields: {
+                            BAISAKH: { type: number },
+                            JESTHA: { type: number },
+                            ASHAD: { type: number },
+                            SHRAWAN: { type: number },
+                            BHADRA: { type: number },
+                            ASHOJ: { type: number },
+                            KARTIK: { type: number },
+                            MANGSIR: { type: number },
+                            POUSH: { type: number },
+                            MAGH: { type: number },
+                            FALGUN: { type: number },
+                            CHAITRA: { type: number },
+                        },
+                        yearSum: function () {
+                            return this.BAISAKH + this.JESTHA + this.ASHAD + this.SHRAWAN + this.BHADRA + this.ASHOJ + this.KARTIK + this.MANGSIR + this.POUSH + this.MAGH + this.FALGUN + this.CHAITRA;
+                        }
+                    }
+                },
+                aggregate: aggregate,
+                //[
+                //{ field: "BAISAKH", aggregate: "sum" },
+                //{ field: "JESTHA", aggregate: "sum" },
+                //{ field: "ASHAD", aggregate: "sum" },
+                //{ field: "SHRAWAN", aggregate: "sum" },
+                //{ field: "BHADRA", aggregate: "sum" },
+                //{ field: "ASHOJ", aggregate: "sum" },
+                //{ field: "KARTIK", aggregate: "sum" },
+                //{ field: "MANGSIR", aggregate: "sum" },
+                //{ field: "POUSH", aggregate: "sum" },
+                //{ field: "MAGH", aggregate: "sum" },
+                //{ field: "FALGUN", aggregate: "sum" },
+                //{ field: "CHAITRA", aggregate: "sum" }
+                //],
+                pageSize: 20,
+            },
+            height: window.innerHeight - 200,
+            sortable: true,
+            reorderable: true,
+            //groupable: true,
+            //toolbar: kendo.template($("#toolbar-template").html()),
+            resizable: true,
+            filterable: {
+                extra: false,
+                operators: {
+                    number: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "is greater than or equal to	",
+                        gt: "is greater than",
+                        lte: "is less than or equal",
+                        lt: "is less than",
+                    },
+                    string: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        startswith: "Starts with	",
+                        contains: "Contains",
+                        doesnotcontain: "Does not contain",
+                        endswith: "Ends with",
+                    },
+                    date: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "Is after or equal to",
+                        gt: "Is after",
+                        lte: "Is before or equal to",
+                        lt: "Is before",
+                    }
+
+                }
+            },
+            columnMenu: true,
+            //Wordwrapmenu function calling
+            columnMenuInit: function (e) {
+                //wordwrapmenu(e);
+                checkboxItem = $(e.container).find('input[type="checkbox"]');
+            },
+            pageable: {
+                refresh: true,
+                //pageSizes: reportConfig.itemPerPage,
+                buttonCount: 5
+            },
+            //  autoBind: true,
+            scrollable: {
+                virtual: true
+            },
+            dataBinding: function () {
+                record = (this.dataSource.page() - 1) * this.dataSource.pageSize();
+            },
+            dataBound: function () {
+                $('div').removeClass('.k-header k-grid-toolbar');
+                
+                hideloader();
+            },
+            columns: dynamicHeader
+        });
+    }
+
+    function KendoGridRefresh(readUrl) {
+        $('#grid').val('');
+        $('#grid').html('');
+        BindPlanList(planUrl);
+    }
+    function RefreshGrid() {
+        $('#grid').data("kendoGrid").dataSource.read();
+    }
+</script>
+<script src="@Scripts.Url(" ~/Areas/NeoERP.Planning/js/controller/PlanningMenuNavigation.js?V3")"></script>
+<script src="@Scripts.Url("~/Content/MainTheme/assets/global/plugins/bootstrap-switch/js/bootstrap-switch.min.js")" type="text/javascript"></script>
+<script>
+
+    //$(function () {
+    //    $('#toggle-one').bootstrapToggle();
+    //})
+    //$("#my-input").siblings(".bootstrap-switch-handle-on").text("AD");
+
+
+    $('.BSswitch').bootstrapSwitch('state', true);
+
+
+     
+ 
+</script>
+
+

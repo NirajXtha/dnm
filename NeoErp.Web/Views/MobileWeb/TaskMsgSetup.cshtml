@@ -1,0 +1,481 @@
+﻿@{
+    ViewBag.Title = "Task Message Setup";
+    Layout = "~/Views/Shared/_LayoutNew.cshtml";
+}
+<style>
+    .main input.form-control {
+        height: 24px;
+        border: solid #ddd 1px;
+        padding: 0px 3px;
+    }
+
+    .k-widget.k-multiselect.k-header {
+        border-color: #ddd;
+    }
+
+    .k-multiselect-wrap.k-floatwrap {
+        min-height: 22px !important;
+    }
+
+    .k-multiselect-wrap li {
+        font-size: 10px;
+    }
+
+    textarea {
+        resize: vertical;
+        max-height: 260px;
+    }
+</style>
+<div class="page-content-wrapper" id="operationContent">
+    <div class="page-content full-width" style="min-height:310px">
+        <div ng-app="mobileWebApp" class="">
+            <div id="menuSettingController" ng-controller="mobileWebCtrl">
+                <!-- BEGIN PAGE HEADER-->
+                <div class="page-bar">
+                    <ul class="page-breadcrumb">
+                        <li>
+                            <i class="fa fa-cog"></i>
+                            <a href="~/MobileWeb/TaskMsgSetup">Task Message Setup</a>
+                            <i class="fa fa-angle-right"></i>
+                        </li>
+                    </ul>
+                </div>
+                <div class="portlet light bordered main" style="display: block;" stop-digest>
+                    <div class="portlet-body common_form customdesign">
+                        <form id="MsgTaskForm" ng-model="TASK_SETUP_MODEL" novalidate>
+                            <div class="row" ng-repeat="(key,item) in TASK_SETUP_MODEL">
+                                <div class="col-sm-6 col-md-2">
+                                    <div class="form-group">
+                                        <label class="control-label">
+                                            Task
+                                        </label><br />
+                                        <label class="control-label">
+                                            {{item.TASK_NAME}}
+                                        </label>
+                                        <input type="checkbox" id="task_{{key}}" name="purchaseRM" ng-model="item.TASK" value="RM" class="form-control" required />
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-md-2">
+                                    <div class="form-group">
+                                        <label class="control-label">
+                                            User
+                                        </label>
+                                        <select id="userList_{{key}}" k-ng-model="item.USERS"
+                                                kendo-multi-select style="width: 100%"
+                                                k-options="userOptions"></select>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-md-2">
+                                    <div class="form-group">
+                                        <label class="control-label">
+                                            Message Format
+                                        </label>
+                                        <input type="text" id="msgFormat_{{key}}" name="msgFormat" ng-model="item.MSG_FORMAT" class="form-control" />
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-md-5">
+                                    <div class="form-group">
+                                        <label class="control-label">
+                                            QUERY
+                                        </label>
+                                        <textarea type="text" id="query_{{key}}" name="query" ng-model="item.QUERY" class="form-control" rows="4"></textarea>
+                                    </div>
+                                </div>
+                                <div class="col-sm-2 col-md-1">
+                                    <button type="button" id="save" ng-click="save(item)" name="save" class="btn btn-green btn-circle btn-sm" style="margin-top:20px;">
+                                        <i class="fa fa-caret-right"></i> Save
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-6 col-md-2">
+                                    <div class="form-group">
+                                        <label class="control-label">
+                                            Task
+                                        </label><br />
+                                        <label class="control-label">
+                                            Sales
+                                        </label>
+                                        <input type="checkbox" id="purchaseRM" name="purchaseRM" ng-model="ITEM_SETUP_MODEL.TASK"  class="form-control" required />
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-md-5">
+                                    <div class="form-group">
+                                        <label class="control-label">
+                                            Item
+                                        </label>
+                                        <select id="productList" k-ng-model="ITEM_SETUP_MODEL.ITEM"
+                                                kendo-multi-select style="width: 100%"
+                                                k-options="productOptions"></select>
+                                    </div>
+                                </div>
+                                <div class="col-sm-2 col-md-1">
+                                    <button type="button" id="save" ng-click="saveItem(ITEM_SETUP_MODEL)" name="save" class="btn btn-green btn-circle btn-sm" style="margin-top:20px;">
+                                        <i class="fa fa-caret-right"></i> Save
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function setAction(taskName, msgFormat, userId, deviceId, taskDate) {
+        var html = '';
+        msgFormat = msgFormat.replace("'", "\\'");
+        html += '<button type="submit" onclick="sendNotification(\'' + taskName + '\',\'' + userId + '\',\'' + taskDate + '\',\'' + msgFormat + '\')" name="notification" class="btn btn-green btn-circle btn-sm" style="margin-top:20px;"> Send Msg</button>';
+        //html += '<button type="submit" onclick="sendNotification(\"'+param+'\")" name="notification" class="btn btn-green btn-circle btn-sm" style="margin-top:20px;"> Send Msg</button>';
+        return html;
+    }
+    function sendNotification(taskName, userId, taskDate, msgFormat) {
+        var url;
+        if (taskName == "BR")
+            url = window.location.protocol + "//" + window.location.host + "/Api/MobileServer/sendMsgByTaskName?userNo=" + userId + "&taskName=" + taskName + "&taskDate=" + taskDate + "&msg=" + msgFormat;
+        else
+            url = window.location.protocol + "//" + window.location.host + "/Api/MobileServer/getTaskWiseMsgByUser?userNo=" + userId + "&taskName=" + taskName + "&taskDate=" + taskDate + "&msg=" + msgFormat;
+        $.ajax({
+            url: url,
+            type: "GET",
+            dataType: 'JSON',
+            success: function (data) {
+                toastr.success('Msg send Successfully!!!')
+            },
+            error: function (jqxhr) {
+                toastr.error('There is error while saving.')
+            }
+        });
+    }
+
+    var app = angular.module('mobileWebApp', ['kendo.directives', 'ngMessages']);
+    app.controller('mobileWebCtrl', function ($scope, $http) {
+
+        $scope.production_query = "select to_char(trunc(sysdate),''YYYYMMDD'')||A.ITEM_CODE MRR_NO, A.item_code, B.ITEM_EDESC , SUM(NVL(A.QUANTITY, 0))Qty from IP_PRODUCTION_MRR A, IP_ITEM_MASTER_SETUP B where a.item_code = b.item_code and a.company_code = b.company_code and a.company_code = ''01'' and a.deleted_flag = ''N'' GROUP BY A.ITEM_CODE, B.ITEM_EDESC ORDER BY B.ITEM_EDESC";
+        $scope.bank_receive_query = "SELECT  BG_AMOUNT, ALERT_PRIOR_DAYS,  END_DATE, CS_FLAG, ACC_CODE, BANK_GNO , CASE CS_FLAG WHEN  ''C'' THEN FN_FETCH_DESC(COMPANY_CODE, ''SA_CUSTOMER_SETUP'', CS_CODE) WHEN  ''S'' THEN FN_FETCH_DESC(COMPANY_CODE, ''IP_SUPPLIER_SETUP'', CS_CODE) ELSE ''NA'' END PARTY_NAME FROM FA_BANK_GUARANTEE WHERE CLOSE_FLAG = ''N'' AND END_DATE BETWEEN SYSDATE  AND SYSDATE + ALERT_PRIOR_DAYS";
+        $scope.purchase_rm_query = "select to_char(trunc(sysdate),''YYYYMMDD'')||A.ITEM_CODE MRR_NO, A.item_code, B.ITEM_EDESC , SUM(NVL(A.QUANTITY, 0))Qty from IP_PRODUCTION_MRR A, IP_ITEM_MASTER_SETUP B where a.item_code = b.item_code and a.company_code = b.company_code and a.company_code = ''01'' and a.deleted_flag = ''N'' GROUP BY A.ITEM_CODE, B.ITEM_EDESC ORDER BY B.ITEM_EDESC";
+
+        $scope.TASK_SETUP_MODEL = [{
+            TASK_NAME: "Purchase RM",
+            TASK_ABBR: "RM",
+            TASK: false,
+            MSG_FORMAT: "Yesterday''s purchase RM #message#",
+            USERS: [],
+            QUERY: " SELECT to_char(trunc(sysdate),''YYYYMMDD'')||A.ITEM_CODE MRR_NO, A.item_code, B.ITEM_EDESC , SUM(NVL(A.QUANTITY,0)) Qty FROM IP_PURCHASE_MRR A, IP_ITEM_MASTER_SETUP B WHERE A.ITEM_CODE = B.ITEM_CODE AND A.COMPANY_CODE = B.COMPANY_CODE AND A.COMPANY_CODE = ''01'' AND A.DELETED_FLAG = ''N'' AND TRUNC(MRR_DATE) = TRUNC(SYSDATE - 1) AND B.CATEGORY_CODE IN(SELECT CATEGORY_CODE FROM IP_CATEGORY_CODE WHERE CATEGORY_TYPE= ''RM'' AND COMPANY_CODE= ''01'') GROUP BY A.ITEM_CODE, B.ITEM_EDESC ORDER BY B.ITEM_EDESC",
+        }, {
+            TASK_NAME: "Bank Receive",
+            TASK_ABBR: "BR",
+            TASK: false,
+            MSG_FORMAT: "Bank Receive: Party = #PARTY_NAME#, Bank GNO= #BANK_GNO#, Amount=#BG_AMOUNT#, Prior Days= #ALERT_PRIOR_DAYS#, End Date=#END_DATE#",
+            USERS: [],
+            QUERY: $scope.bank_receive_query
+        }]
+
+        $scope.ITEM_SETUP_MODEL = {
+            TASK: true,
+            TASK_NAME:"SALES",
+            ITEM:[]
+        }
+
+        $scope.userDataSource = {
+            type: "json",
+            serverFiltering: false,
+            transport: {
+                read: {
+                    dataType: "json",
+                    url: window.location.protocol + "//" + window.location.host + '/api/MobileWebApi/GetAllUsers',
+                },
+                parameterMap: function (data, action) {
+                    if (data.filter != undefined) {
+                        if (data.filter.filters[0] != undefined) {
+                            var newParams = {
+                                filter: data.filter.filters[0].value
+                            };
+                            return newParams;
+                        }
+                        else {
+                            var newParams = {
+                                filter: ""
+                            };
+                            return newParams;
+                        }
+                    }
+                    else {
+                        var newParams = {
+                            filter: ""
+                        };
+                        return newParams;
+                    }
+                }
+            },
+            requestEnd: function () {
+                $('.k-list.k-reset').slimScroll({
+                    height: '200px'
+                });
+            }
+        };
+
+        $scope.userOptions = {
+            //optionLabel: "-- Select User --",
+            //placeholder: "Select User...",
+            dataTextField: "LOGIN_EDESC",
+            dataValueField: "USER_NO",
+            valuePrimitive: true,
+            autoBind: false,
+            filter: "contains",
+            dataSource: $scope.userDataSource
+        };
+
+        $scope.itemDataSource = {
+            type: "json",
+            serverFiltering: false,
+            transport: {
+                read: {
+                    dataType: "json",
+                    url: window.location.protocol + "//" + window.location.host + '/api/MobileWebApi/getAllItems',
+                },
+                parameterMap: function (data, action) {
+                    if (data.filter != undefined) {
+                        if (data.filter.filters[0] != undefined) {
+                            var newParams = {
+                                filter: data.filter.filters[0].value
+                            };
+                            return newParams;
+                        }
+                        else {
+                            var newParams = {
+                                filter: ""
+                            };
+                            return newParams;
+                        }
+                    }
+                    else {
+                        var newParams = {
+                            filter: ""
+                        };
+                        return newParams;
+                    }
+                }
+            },
+            requestEnd: function () {
+                $('.k-list.k-reset').slimScroll({
+                    height: '200px'
+                });
+            }
+        };
+
+        $scope.productOptions = {
+            //optionLabel: "-- Select Item --",
+            //placeholder: "Select Item...",
+            dataTextField: "ITEM_EDESC",
+            dataValueField: "ITEM_CODE",
+            valuePrimitive: true,
+            autoBind: false,
+            autoClose:false,
+            filter: "contains",
+            dataSource: $scope.itemDataSource
+        };
+
+        $scope.bindSavedItemsList = function () {
+            $http({
+                method: 'GET',
+                url: window.location.protocol + "//" + window.location.host + "/Api/MobileWebApi/getSavedItems"
+            }).then(function successCallback(response) {
+                if (response.data[0].ITEM_CODE != null && response.data[0].ITEM_CODE != "")
+                    $scope.ITEM_SETUP_MODEL.ITEM = response.data[0].ITEM_CODE.split("','");
+                }, function errorCallback(response) {
+                    //toastr.error(response.responseJSON.ExceptionMessage);
+            });
+        }
+        $scope.bindSavedItemsList();
+
+        $scope.save = function (data) {
+            var isRm = data.TASK;
+            if (!isRm) {
+                return toastr.warning('Plese Tick on the task');
+            }
+            var userList = JSON.parse(JSON.stringify(data.USERS));
+            if (userList.length < 1) {
+                return toastr.warning('Please select user');
+            }
+
+            var userArr = [];
+            $.each(userList, function (i, v) {
+                var obj = {
+                    USER_NO: v,
+                }
+                userArr.push(obj);
+            });
+            var param = {
+                USER_NO: userArr,
+                MSG_FORMAT: data.MSG_FORMAT,
+                PURCHASE_RM: data.TASK_ABBR,
+                QUERY: data.QUERY,
+            }
+            var url = window.location.protocol + "//" + window.location.host + "/Api/MobileWebApi/saveUserWiseTaskFormat";
+            if (data.TASK_ABBR == "BR")
+                url = window.location.protocol + "//" + window.location.host + "/Api/MobileWebApi/saveBRTaskMsgFormat";
+            $.ajax({
+                url: url,
+                type: "POST",
+                data: param,
+                dataType: 'JSON',
+                success: function (data) {
+                    if (data == "Success")
+                        toastr.success('Successfully saved!!!')
+                    else
+                        toastr.error(data);
+                },
+                error: function (jqxhr) {
+                    //toastr.error('There is error while saving.');
+                    toastr.error(jqxhr.responseJSON.ExceptionMessage);
+                }
+            });
+        }
+        $scope.saveItem = function (data) {
+            var isRm = data.TASK;
+            if (!isRm) {
+                return toastr.warning('Plese Tick on the task');
+            }
+            
+            var param = {
+                TYPE: data.TASK_NAME,
+                ITEM_CODE: data.ITEM.join("','"),
+            }
+            var url = window.location.protocol + "//" + window.location.host + "/Api/MobileWebApi/saveFilterDataForMobile";
+            $.ajax({
+                url: url,
+                type: "POST",
+                data: param,
+                dataType: 'JSON',
+                success: function (data) {
+                    if (data == "Success")
+                        toastr.success('Successfully saved!!!')
+                    else
+                        toastr.error(data);
+                },
+                error: function (jqxhr) {
+                    toastr.error(jqxhr.responseJSON.ExceptionMessage);
+                }
+            });
+        }
+
+        var grid,
+            createGrid = function () {
+                grid = $("#grid").kendoGrid({
+                    dataSource: {
+                        type: "json",
+                        transport: {
+                            read: window.location.protocol + "//" + window.location.host + "/Api/MobileWebApi/GetAllMobileWebLog",
+                        },
+                        pageSize: 20,
+                        requestEnd: function () {
+                            //hideloader();
+                        },
+                    },
+                    height: window.innerHeight - 330,
+                    groupable: false,
+                    resizable: true,
+                    filterable: {    // filter for the null and is not null etc
+                        extra: false,// extra false means there is 2 different filter inside the filter
+                        operators: {   // the number is data type for the net sales column , and string for the MITI
+                            number: {
+
+                                eq: "Is equal to",
+                                neq: "Is not equal to",
+                                gte: "is greater than or equal to	",
+                                gt: "is greater than",
+                                lte: "is less than or equal",
+                                lt: "is less than",
+
+                            },
+                            string: {
+
+                                eq: "Is equal to",
+                                neq: "Is not equal to",
+                                startswith: "Starts with	",
+                                contains: "Contains",
+                                doesnotcontain: "Does not contain",
+                                endswith: "Ends with",
+                            },
+                            date: {
+
+                                eq: "Is equal to",
+                                neq: "Is not equal to",
+                                gte: "Is after or equal to",
+                                gt: "Is after",
+                                lte: "Is before or equal to",
+                                lt: "Is before",
+                            }
+                        }
+                    },
+                    sortable: true,
+                    pageable: true,
+                    columnMenu: false,
+                    dataBinding: function () {
+                        record = (this.dataSource.page() - 1) * this.dataSource.pageSize();
+                    },
+                    dataBound: function (o) {
+                        var grid = o.sender;
+                        if (grid.dataSource.total() == 0) {
+                            var colCount = grid.columns.length;
+                            $(o.sender.wrapper)
+                                .find('tbody')
+                                .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                            displayPopupNotification("No Data Found.", "info");
+                            $scope.visibleSavebtn = false;
+                            $scope.visibleGenerateBtn = true;
+                        }
+
+                    },
+                    columns: [
+                        { title: "SN", template: "#= ++record #", width: "15px" },
+                        {
+                            field: "TASK_NAME",
+                            title: "Task Name",
+                            width: "30px",
+                        },
+                        {
+                            field: "LOGIN_EDESC",
+                            title: "User Name",
+                            width: "60px",
+                        },
+                        {
+                            field: "TASK_DATE",
+                            title: "Task Date",
+                            //format: "{0:yyyy-MMM-dd}",
+                            width: "35px",
+                        },
+                        {
+                            field: "USER_NO",
+                            title: "Type",
+                            width: "20px",
+                        },
+                        {
+                            field: "MESSAGE_FORMAT",
+                            title: "Message",
+                            width: "150px",
+                        },
+                        //{
+                        //    field: "DEVICEID",
+                        //    title: "Device Id",
+                        //    width: "150px",
+                        //},
+                        {
+                            field: "TASK_NAME", title: "Action", sortable: false, filterable: false, width: "90px",
+                            template: "#= setAction(TASK_NAME,MESSAGE_FORMAT,USER_NO,DEVICEID,TASK_DATE) #",
+                            groupable: false,
+                            width: "40px",
+                        },
+
+                    ],
+                }).data("kendoGrid");
+
+            };
+
+        createGrid();
+    });
+</script>
+

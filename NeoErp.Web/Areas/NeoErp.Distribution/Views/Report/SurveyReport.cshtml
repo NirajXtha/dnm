@@ -1,0 +1,608 @@
+﻿
+
+@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@using NeoErp.Core.Models.CustomModels
+@{
+    Layout = null;
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+<style>
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+    }
+
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+         font-size:11px;
+    }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+
+    a.k-button.k-button-icontext.k-grid-excel {
+        float: right;
+    }
+
+    .bootbox-form {
+        padding: 3px !important;
+    }
+
+    .bootbox-input.bootbox-input-text.form-control {
+        height: 27px !important;
+    }
+
+    tr.k-group-footer {
+        text-align: right !important;
+    }
+
+    .k-grid table {
+        min-width: 2500px;
+    }
+</style>
+<script>
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+</script>
+<div class="content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb"></ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+
+                <div class="actions">
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DatePicker.cshtml", new DatePickerModel() { IsPopUp = true })
+                    </div>
+                    @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+
+                    <a class="btn btn-circle btn-icon-only btn-default" id="RunQuery" href="#">
+                        <i class="icon-control-play"></i>
+                    </a>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "SurveyReport")
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div id="grid"></div>
+                        @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+
+<script src="@Scripts.Url("~/JS/reportFilter.js")"></script>
+
+<script src="@Scripts.Url("~/JS/DateFilter.js")" type="text/javascript"></script>
+
+<script>
+
+    var expandedDetailRowDistributor = "";
+
+    function getDateFormat(date) {
+        var test = new Date(date);
+        if (test.getFullYear() == '1970')
+            return '-';
+        return kendo.format("{0:" + reportConfig.dateFormat + "}", new Date(date));
+    }
+    function getTimeFormat(date) {
+        var test = new Date(date);
+        if (test.getFullYear() == '1970')
+            return '-';
+        return kendo.format("{0:hh:mm tt}", moment(date)._d)
+    }
+
+    $(".applydp").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+        $(this).closest("#applydp").modal('hide');
+    });
+
+    $("#loadAdvancedFilters").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    });
+
+    $("#RunQuery").click(function (evt) {
+        evt.preventDefault();
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/Report/GetSurveyReport"
+        KendoGridRefresh(urltest);
+    });
+
+    var columns = [];
+
+    function bindColumn() {
+        var colUrl = window.location.protocol + "//" + window.location.host + "/api/Report/GetSurveyReportCol"
+        $.ajax({
+            url: colUrl,
+            error: function () {
+
+            },
+            dataType: 'jsonp',
+            success: function (data) {
+                for (var i = 0; i < data.length - 1; i++) {
+                    var childCol = [];
+                    if (data[i].title = "What are the Chewda Product available in your store?") {
+                        var arr = [{
+                            field: "LNT",
+                            title: "LNT",
+                        },
+                            {
+                            field: "Sandesh",
+                                title: "SANDESH",
+                        },
+                            {
+                            title: "Time Pass",
+                                field: "TIME_PASS",
+                        }, {
+                            title: "Upakar",
+                            field: "UPAKAR",
+                        }]
+                        childCol.push(arr);
+                    }
+                    var colObj = {
+                        title: data.title,
+                        field: data.field,
+                        column:childCol
+                    }
+                    coumns.push(colObj);
+                }
+
+            },
+            type: 'POST'
+        });
+    };
+
+    function BindGrid(readurl) {
+        var branches = ReportFilter.getBranchs();
+        reportConfig = GetReportSetting("SurveyReportReport");
+        var grid = $("#grid").kendoGrid({
+            dataSource: new kendo.data.DataSource({
+                type: "json",
+                transport: {
+                    read: {
+                        url: readurl, // <-- Get data from here.
+                        dataType: "json", // <-- The default was "jsonp".
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8"
+                    },
+                    parameterMap: function (options, type) {
+                        var report = $.extend({}, true, ReportFilter.filterAdditionalData());
+                        report.ReportFilters.FromDate = moment($("#datePickerAd").val()).format('DD-MMM-YYYY');
+                        report.ReportFilters.ToDate = moment($("#datePickerAd").val()).format('DD-MMM-YYYY');
+
+                        var paramMap = JSON.stringify(report);
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+                    }
+                },
+                aggregate: [
+                    { field: "QN2_LNT", aggregate: "sum", attributes: { style: "text-align:right;" } },
+                    { field: "QN2_SANDESH", aggregate: "sum" },
+                    { field: "QN2_TIME_PASS", aggregate: "sum" },
+                    { field: "QN2_UPAKAR", aggregate: "sum" },
+                    { field: "QN2_ANY_OTHER", aggregate: "sum" },
+                    { field: "TASTE", aggregate: "sum", attributes: { style: "text-align:right;" } },
+                    { field: "QUALITY", aggregate: "sum" },
+                    { field: "LOW_PRICE", aggregate: "sum" },
+                    { field: "GOOD", aggregate: "sum" },
+                    { field: "AVERAGE", aggregate: "sum", attributes: { style: "text-align:right;" } },
+                    { field: "BAD", aggregate: "sum" },
+                    { field: "TASTY", aggregate: "sum" },
+                    { field: "CRUNCHY", aggregate: "sum" },
+                    { field: "AATA", aggregate: "sum", attributes: { style: "text-align:right;" } },
+                    { field: "SUJI", aggregate: "sum" },
+                    { field: "RICE", aggregate: "sum" },
+                    { field: "DAAL", aggregate: "sum" }],
+                error: function (e) {
+                    displayPopupNotification("Sorry error occured while processing data", "error");
+                },
+                pageSize: reportConfig.defaultPageSize,
+                schema: {
+                    model: {
+                        id: "DIST_OUTLET_NAME",
+                        fields: {
+                            DIST_OUTLET_NAME: { nullable: true },
+                            FULL_NAME: { nullable: true },
+                            QN2_LNT: { type: "number", },
+                            QN2_SANDESH: { type: "number", },
+                            QN2_TIME_PASS: { type: "number", },
+                            QN2_UPAKAR: { type: "number" },
+                            TASTE: { type: "number" },
+                            QUALITY: { type: "number" },
+                            LOW_PRICE: { type: "number" },
+                            GOOD: { type: "number" },
+                            AVERAGE: { type: "number" },
+                            BAD: { type: "number" },
+                            TASTY: { type: "number" },
+                            CRUNCHY: { type: "number" },
+                            AATA: { type: "number" },
+                            SUJI: { type: "number" },
+                            RICE: { type: "number" },
+                            DAAL: { type: "number" },
+                        }
+                    },
+                }
+            }),
+            toolbar: kendo.template($("#toolbar-template").html()),
+            excel: {
+                fileName: "Survey Report",
+                allPages: true,
+            },
+            excelExport: function (e) {
+                e.preventDefault();
+                var workbook = e.workbook;
+
+                //Add filter information
+                var companyName = ('@workingContent.CurrentUserinformation.company_name');
+                var fromADdate = $("#datePickerAd").val();
+                var fromBSdate = $("#datePickerBs").val();
+                var branches = ReportFilter.getBranchs();
+
+                workbook.sheets[0].rows.unshift({
+                    cells: [{ value: "Survey Report".split('').join(' '), colSpan: 7 }]
+                });
+
+                workbook.sheets[0].rows.unshift({
+                    cells: [{ value: "Date :- " + fromADdate + "(" + fromBSdate + ")", colSpan: 7 }]
+                });
+
+                for (var companyCount = 0; companyCount < branches.length; companyCount++) {
+                    workbook.sheets[0].rows.unshift({
+                        cells: [{ value: branches[companyCount].Company + " :- " + branches[companyCount].Branches.join(','), colSpan: 7 }]
+                    });
+                }
+                kendo.saveAs({
+                    dataURI: new kendo.ooxml.Workbook(workbook).toDataURL(),
+                    fileName: "Survey Report.xlsx"
+                });
+            },
+            pdf: {
+                fileName: "Received Schedule",
+                allPages: true,
+                avoidLinks: true,
+                pageSize: "auto",
+                margin: {
+                    top: "2m",
+                    right: "1m",
+                    left: "1m",
+                    buttom: "1m",
+                },
+
+                landscape: true,
+                repeatHeaders: true,
+                scale: 0.8,
+            },
+            height: window.innerHeight - 50,
+            sortable: true,
+            reorderable: true,
+            groupable: false,
+            resizable: true,
+            filterable: {
+                extra: false,
+                operators: {
+                    number: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "is greater than or equal to	",
+                        gt: "is greater than",
+                        lte: "is less than or equal",
+                        lt: "is less than",
+                    },
+                    string: {
+
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        startswith: "Starts with	",
+                        contains: "Contains",
+                        doesnotcontain: "Does not contain",
+                        endswith: "Ends with",
+                    },
+                    date: {
+                        eq: "Is equal to",
+                        neq: "Is not equal to",
+                        gte: "Is after or equal to",
+                        gt: "Is after",
+                        lte: "Is before or equal to",
+                        lt: "Is before",
+                    }
+                }
+            },
+            columnMenu: true,
+            columnMenuInit: function (e) {
+                wordwrapmenu(e);
+                checkboxItem = $(e.container).find('input[type="checkbox"]');
+            },
+            columnShow: function (e) {
+                if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                    SaveReportSetting('SurveyReport', 'grid');
+            },
+            columnHide: function (e) {
+                if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                    SaveReportSetting('SurveyReport', 'grid');
+            },
+            pageable: {
+                refresh: true,
+                pageSizes: reportConfig.itemPerPage,
+                buttonCount: 5
+            },
+            dataBound: function (o) {
+                var grid = o.sender;
+                if (grid.dataSource.total() == 0) {
+                    var colCount = grid.columns.length;
+                    $(o.sender.wrapper)
+                        .find('tbody')
+                        .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                    displayPopupNotification("No Data Found Given Date Filter.", "info");
+                }
+                else {
+                    var g = $("#grid").data("kendoGrid");
+                    for (var i = 0; i < g.columns.length; i++) {
+                        g.showColumn(i);
+                    }
+                    $("div.k-group-indicator").each(function (i, v) {
+                        g.hideColumn($(v).data("field"));
+                    });
+                }
+                //wordwrapmenu(o);
+                UpdateReportUsingSetting("SurveyReport", "grid");
+                $('div').removeClass('.k-header k-grid-toolbar');
+            },
+            scrollable: true,
+            columns: [
+                {
+                    title: "Outlet/Distributor Name",
+                    field: "DIST_OUTLET_NAME",
+                    width: "110px",
+                },
+                {
+                    field: "FULL_NAME",
+                    title: "Sales Person Name",
+                    width: "110px",
+                },
+                {
+                    field: "CREATED_DATE",
+                    title: "Date",
+                    template: "#= kendo.toString(kendo.parseDate(CREATED_DATE), 'dd MMM yyyy hh:mm') #",
+                    footerTemplate: "Total ",
+                    width: "100px",
+                },
+                {
+                    field: "Q1",
+                    title: "Do you have any idea about Hulas Chewda ?",
+                    width: "110px",
+                },
+                {
+                    title: "What are the Chewda Product available in your store?",
+                    width: "110px",
+                    columns: [{
+                            field: "QN2_LNT",
+                            title: "LNT",
+                            footerTemplate: "#: kendo.toString(sum, '\\#\\#,\\#')#",
+                            //attributes: { style: "text-align:right;" }
+                            width: "50px",
+                        },
+                        {
+                            field: "QN2_SANDESH",
+                            title: "Sandesh",
+                            footerTemplate: "#: kendo.toString(sum, '\\#\\#,\\#') #",
+                            //attributes: { style: "text-align:right;" }
+                            width: "50px",
+                        },
+                        {
+                            title: "Time Pass",
+                            field: "QN2_TIME_PASS",
+                            footerTemplate: "#: kendo.toString(sum, '\\#\\#,\\#') #",
+                            //attributes: { style: "text-align:right;" }
+                            width: "50px",
+                        }, {
+                            title: "Upakar",
+                            field: "QN2_UPAKAR",
+                            footerTemplate: "#: kendo.toString(sum, '\\#\\#,\\#') #",
+                            //attributes: { style: "text-align:right;" }
+                            width: "50px",
+                        }, {
+                            title: "Any Other",
+                            field: "QN2_ANY_OTHER",
+                            footerTemplate: "#: kendo.toString(sum, '\\#\\#,\\#') #",
+                            //attributes: { style: "text-align:right;" }
+                            width: "50px",
+                        }]
+                },
+                {
+                    field:"Q3",
+                    title: "Which Chewda has the highest demand?",
+                    width: "110px",
+                },
+                {
+                    //field: "Q4",
+                    title: "What is the reason for highest sale?",
+                    columns: [{
+                        field: "TASTE",
+                        title: "Taste",
+                        footerTemplate: "#: kendo.toString(sum, '\\#\\#,\\#')#",
+                        //width: '30px'
+                    },
+                    {
+                        field: "QUALITY",
+                        title: "Quality",
+                        footerTemplate: "#: kendo.toString(sum, '\\#\\#,\\#') #",
+                        //width: '30px'
+                        //attributes: { style: "text-align:right;" }
+                    },
+                    {
+                        title: "Low Price",
+                        field: "LOW_PRICE",
+                        footerTemplate: "#: kendo.toString(sum, '\\#\\#,\\#') #",
+                        //width: '30px'
+                        //attributes: { style: "text-align:right;" }
+                    }],
+                    width: '110px'
+                },
+                {
+                    field: "QN5",
+                    title: "If Hulas is Available, how is customer response?",
+                    columns: [{
+                        field: "GOOD",
+                        title: "Good",
+                        footerTemplate: "#: kendo.toString(sum, '\\#\\#,\\#')#",
+                    },
+                    {
+                        field: "AVERAGE",
+                        title: "Average",
+                        footerTemplate: "#: kendo.toString(sum, '\\#\\#,\\#') #",
+                    },
+                    {
+                        title: "Bad",
+                        field: "BAD",
+                        footerTemplate: "#: kendo.toString(sum, '\\#\\#,\\#') #",
+                    }],
+                    width: '110px'
+                },
+                 {
+                    field: "QN6",
+                    title: "What does the consumer say about the taste of Hulas Chewda?",
+                    columns: [{
+                        field: "TASTY",
+                        title: "Testy",
+                        footerTemplate: "#: kendo.toString(sum, '\\#\\#,\\#')#",
+                    },
+                    {
+                        field: "CRUNCHY",
+                        title: "Crunchy",
+                        footerTemplate: "#: kendo.toString(sum, '\\#\\#,\\#') #",
+                    }],
+                    width: '110px'
+                },
+                {
+                    field: "Q7",
+                    title: "What does the consumer say about the rate of Hulas Chewda?",
+                    width: '110px'
+                 },
+                {
+                    field: "QN8",
+                    title: "Do you have others products of Hulas? If Yes, Then which?",
+                    columns: [{
+                        field: "AATA",
+                        title: "Aata",
+                        footerTemplate: "#: kendo.toString(sum, '\\#\\#,\\#')#",
+                    },
+                    {
+                        field: "RICE",
+                        title: "Rice",
+                        footerTemplate: "#: kendo.toString(sum, '\\#\\#,\\#') #",
+                        //attributes: { style: "text-align:right;" }
+                    },
+                    {
+                        title: "Suji",
+                        field: "SUJI",
+                        footerTemplate: "#: kendo.toString(sum, '\\#\\#,\\#') #",
+                        //attributes: { style: "text-align:right;" }
+                    }, {
+                        title: "Daal",
+                        field: "DAAL",
+                        footerTemplate: "#: kendo.toString(sum, '\\#\\#,\\#') #",
+                        //attributes: { style: "text-align:right;" }
+                    }],
+                    width: '110px'
+                },
+                {
+                    field: "Q9",
+                    title: "Have you seen Hulas Chewda Advertisement? ",
+                    width: '110px'
+                    //columns: subColumn,
+                },
+                //{
+                //    field: "QN10",
+                //    title: "If Yes, where have you seen?",
+                //    //columns: generateSubcol("QN10"),
+                //    width: '110px'
+                //},
+                {
+                    field: "Q11",
+                    title: "If any suggestion, would you like to give for Hulas Chewda?",
+                    //columns: subColumn,
+                    width: '110px'
+                },
+                {
+                    field: "Q12",
+                    title: "Any suggestion for other products of Hulas Food?",
+                    //columns: subColumn,
+                    width: '110px'
+                },
+                {
+                    field: "Q13",
+                    title: "Do people like Home Made Chewda?",
+                    width: '110px'
+                    //columns: subColumn,
+                },
+            ]
+
+        });
+
+    };
+
+
+    function KendoGridRefresh(readUrl) {
+        $('#grid').data("kendoGrid").destroy();
+        $('#grid').val('');
+        $('#grid').html('');
+        BindGrid(readUrl)
+    }
+
+
+
+    $(document).ready(function () {
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/Report/GetSurveyReport"
+        //  BindGrid(urltest);
+        DatePicker.init();
+        consolidate.init(function () {
+            BindGrid(urltest);
+        });
+    });
+</script>
+<script src="@Scripts.Url("~/Areas/NeoErp.Distribution/js/MenuNavigation.js")"></script>

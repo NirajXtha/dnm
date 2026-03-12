@@ -1,0 +1,169 @@
+
+
+<style>
+    /*.btnadd {
+        margin-top: 2px;
+        float: right;
+        margin-right: 5px !important;
+    }*/
+
+    /* Ensure vertical scrolling for long account trees */
+    #accounttree {
+        max-height: 60vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding-right: 4px; /* avoid scrollbar overlay */
+    }
+
+    .k-grid-content {
+        height: 358px !important;
+    }
+    .portlet > .portlet-title > .actions .btn-icon-only {
+        padding: 9px 7px 3px 7px !important;
+    }
+    .addcolor {
+    color:#ffffff;
+    }
+    .k-splitter .k-scrollable {
+        overflow-y: hidden !important;
+    }
+
+    .k-scrollable .k-widget.k-treeview {
+        max-height: 444px;
+        overflow: auto !important;
+    }
+    
+</style>
+@*<div ng-controller="accountSetupTreeCtrl">*@
+<div class="portlet box green-box">
+    <account></account>
+    <div class="portlet-title">
+        <div class="caption ">
+            <i class="icon-pin"></i>
+            <span class="caption-subject bold uppercase"> CHART OF ACCOUNT</span>
+        </div>
+        <div class="actions">
+            <div class="btn-group">
+                <a class="btn dark-green btn-sm" id="adddocumentformdata" @*ng-disabled="newrootinsertFlag!= 'Y'"*@ ng-click="addNewAccount(event)" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Processing..." href="javascript:;">
+                    <i class="fa fa-plus addcolor"></i>
+                </a>
+                @*<a class="btn btn-sm green-meadow" id="adddocumentformdata" @*ng-disabled="newrootinsertFlag!= 'Y'" ng-click="addNewAccount(event)" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Processing..." href="javascript:;">
+                    <i class="fa fa-plus"></i> NEW ROOT
+                </a>*@
+            </div>
+        </div>
+    </div>
+    <div class="portlet-body">
+        <div class="row">
+            <div class="col-md-offset-0 col-md-12">
+                <div class="topmaingroupsearch">
+                    <input class="k-textbox txtMainGroupSearchString"
+                           type="text"
+                           ng-model="txtMainGroupSearchString"
+                           ng-change="filterTreeView()"
+                           placeholder="Search Charter Account"
+                           style="width:100%" />
+                </div>
+            </div>
+        </div>
+        <div id="accounttree" class="disableLeftClickOnTree" kendo-tree-view="tree" 
+             k-data-source="acctreeData"
+             k-options="accoptions"
+             k-data-bound="acconDataBound">
+            <span k-template ng-click="BindGrid(dataItem.masterAccountCode)">
+                {{dataItem.AccountName}}
+            </span>
+        </div>
+        <ul kendo-context-menu
+            k-filter="'.hasTreeCustomMenu'"
+            k-on-open="menuOpen = menuOpen + 1"
+            k-on-close="menuOpen = menuOpen - 1"
+            k-on-select="onContextSelect(kendoEvent)">
+            <li>Add</li>
+            <li>Update</li>
+            <li>Delete</li>
+        </ul>
+        <ul kendo-context-menu k-filter="'.disableLeftClickOnTree'"></ul>
+    </div>
+    </div>
+    <script>
+        // Native CSS-based scrolling is enabled on #accounttree via max-height and overflow-y.
+        // Legacy slimScroll initialization removed to prevent conflicting scroll containers.
+
+        //Prem Prakash Dhakal 01-05-2025
+        //$("#acctxtMainGroupSearchString").on("keyup", function () {
+        //    var searchTerm = $(this).val().toLowerCase();
+        //    filterTree(searchTerm);
+        //});
+        //function filterTree(searchTerm) {
+        //    var treeView = $("#accounttree").data("kendoTreeView");
+        //    var dataSource = treeView.dataSource;
+        //    dataSource.filter({}); 
+        //    var filter = {
+        //        field: "AccountName",
+        //        operator: function (value) {
+        //            return value && value.toLowerCase().indexOf(searchTerm) > -1;
+        //        }
+        //    };
+        //    dataSource.filter(filter);
+        //}
+        //function expandFilteredNodes(treeView) {
+        //    treeView.dataSource.view().forEach(function (item) {
+        //        expandMatchingNode(item, treeView);
+        //    });
+        //}
+        //function expandMatchingNode(item, treeView) {
+        //    if (item.hasChildren) {
+        //        item.children.view().forEach(function (child) {
+        //            expandMatchingNode(child, treeView);
+        //        });
+        //        treeView.expand(item);
+        //    }
+        //}
+
+
+        // Prem Prakash Dhakal 01-05-2025
+        //$("#acctxtMainGroupSearchString").on("keyup", function () {
+        //    var searchTerm = $(this).val().toLowerCase().trim();
+        //    filterTree(searchTerm);
+        //});
+
+        //function filterTree(searchTerm) {
+        //    var treeView = $("#accounttree").data("kendoTreeView");
+        //    var dataSource = treeView.dataSource;
+        //    dataSource.filter({});
+        //    if (!searchTerm) {
+        //        treeView.collapse(".k-item"); 
+        //        return;
+        //    }
+        //    var filter = {
+        //        field: "AccountName",
+        //        operator: function (value) {
+        //            return value && value.toLowerCase().indexOf(searchTerm) > -1;
+        //        }
+        //    };
+        //    dataSource.filter(filter);
+        //    setTimeout(function () {
+        //        expandFilteredNodes(treeView);
+        //    }, 100); 
+        //}
+        //function expandFilteredNodes(treeView) {
+        //    var items = treeView.dataSource.view();
+
+        //    items.forEach(function (item) {
+        //        expandMatchingNode(item, treeView);
+        //    });
+        //}
+        //function expandMatchingNode(item, treeView) {
+        //    if (item.hasChildren) {
+        //        var children = item.children.view();
+
+        //        children.forEach(function (child) {
+        //            expandMatchingNode(child, treeView);
+        //        });
+        //        if (children.length > 0 || item.AccountName.toLowerCase().includes($("#acctxtMainGroupSearchString").val().toLowerCase())) {
+        //            treeView.expand(item);
+        //        }
+        //    }
+        //}
+    </script>

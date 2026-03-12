@@ -1,0 +1,51 @@
+﻿  
+<div>
+    <select id="LedgerMultiSelect" multiple="multiple" style="width: 400px;"></select>
+</div>
+
+
+
+
+<script type="text/javascript">
+    var ledgerIds = "";
+    var autoCompleteurl = window.location.protocol + "//" + window.location.host + "/api/SubsidiaryLedger/GetLedgerAC?ledgerMultiSelects=" + ledgerIds;
+    var autoCompletedataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: autoCompleteurl,
+                dataType: "json"
+            }
+        }
+        //serverFiltering: true
+    });
+
+    $("#LedgerMultiSelect").kendoMultiSelect({
+        dataSource: autoCompletedataSource,
+        dataTextField: "Name",
+        dataValueField: "Code",
+        height: 600,
+        //scrollable: {
+        //    virtual: true
+        //},
+        headerTemplate: '<div class="col-md-offset-4"><strong>Ledger (A/C)...</strong></div>',
+        filter: "contains",
+        placeholder: "Find Ledger List...",
+        autoClose: false,
+        //select: OnMultiSelect,
+        dataBound: function () {
+            var current = this.value();
+            this._savedOld = current.slice(0);
+        },
+        change: OnMultiSelectChange
+    });
+
+    function OnMultiSelectChange(e) {
+        var previous = this._savedOld;
+        var current = this.value();
+        var diff = [];
+        if (previous) {
+            diff = $(previous).not(current).get();
+        }
+        this._savedOld = current.slice(0);
+    }
+</script>

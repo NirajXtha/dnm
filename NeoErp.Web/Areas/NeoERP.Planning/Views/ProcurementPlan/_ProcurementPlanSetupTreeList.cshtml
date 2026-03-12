@@ -1,0 +1,771 @@
+﻿@model List<NeoErp.Planning.Service.Models.MyColumnSettings>
+@{
+    // Layout = null;
+    var FrequencyCol = ViewBag.itemCharges as List<NeoErp.Planning.Service.Models.MyColumnSettings>;
+    string itemCode = (string)ViewBag.Item_Code;
+}
+<style>
+    .k-treelist k-grid k-widget k-grid-lockedcolumns, input[type=number] {
+        text-align: right;
+    }
+
+    tr.amountRow {
+        /*font-size: 9px;*/
+        font-style: normal;
+        font-weight: 100 !important;
+    }
+
+    th {
+        font-weight: normal;
+    }
+
+    .stock_qty {
+        /*border-left: solid #c5c5c5 1px;*/
+        padding-right: 5px;
+        /*padding-left: 23px;*/
+        padding-bottom: 0px;
+        /*background-color: #eee;*/
+        /*float: right;*/
+        height: 22px;
+        width: 80px;
+    }
+    .total_sales {
+        /*border-left: solid #c5c5c5 1px;*/
+        padding-right: 5px;
+        /*padding-left: 23px;*/
+        padding-bottom: 0px;
+        /*background-color: #eee;*/
+        /*float: right;*/
+        height: 22px;
+        width: 46px;
+    }
+   
+</style>
+<form id="treeListForm">
+    <div id="treelist"></div>
+</form>
+
+
+<script>
+    var planDetailValue = [];
+    var d1 = $.Deferred();
+
+    function BindTreeList(plancode, code, preItemCode, planDetailItemValue) {
+        
+        frequencyTitleObject;
+        if (planDetailItemValue != undefined) {
+            planDetailValue = planDetailItemValue;
+        }
+        var getItemUrl = window.location.protocol + "//" + window.location.host + "/api/ProcurementPlanSetupApi/getItems";
+        var getItemByCodeUrl = window.location.protocol + "//" + window.location.host + "/api/ProcurementPlanSetupApi/getItemByCode";
+
+        var temp_dataSource = retrievedItem.selectedItemsList;
+        var defaultValue;
+        if (temp_dataSource[0] == undefined)
+            defaultValue = '00';
+        else
+            defaultValue = temp_dataSource[0].PRE_ITEM_CODE;
+        var dataSource = new kendo.data.TreeListDataSource({
+            data: retrievedItem.selectedItemsList,
+            schema: {
+                model: {
+                    id: "MASTER_ITEM_CODE",
+                    parentId: "PRE_ITEM_CODE",
+                    fields: {
+                        ITEM_CODE: { field: "ITEM_CODE", type: "string" },
+                        PRE_ITEM_CODE: { field: "PRE_ITEM_CODE", type: "string", defaultValue: defaultValue },
+                    },
+                    expanded: true
+                }
+            }
+        });
+
+        function ExportToExcel(e) {
+            var tables = $('#treelist table');
+            var temptable = '';
+            var table1 = tables[0],
+                table2 = tables[1],
+                table3 = tables[2],
+                table4 = tables[3];
+            temptable = $('.setup_description').html() + "<hr/>" + "<table border='1' cellspacing='0' bordercolor='#d0d0d0'><thead><tr>";
+            temptable += "<td>Items</td><td>Total</td>";
+
+            var selectedFreq = $('#choosed_frequency').html().toLowerCase();
+            var headerRows = selectedFreq == 'week' ? $($(table2).find('tr')[2]).find('th') : $($(table2).find('tr')[1]).find('th')
+            $.each(headerRows, function (i, v) {
+                temptable += "<td style='font-weight:700;background-color:#a0a0a0;'>" + v.innerText + "</td>";
+            });
+            temptable += "</tr></thead>";
+
+            temptable += "<tbody>";
+            var table3row = $(table3).find('tr');
+
+            $.each(table3row, function (i, v) {
+                temptable += '<tr>';
+                var vtd = $(v).find('td');
+                $.each(vtd, function (vindex, vValue) {
+                    var gap = '';
+                    var cellValue = '';
+                    if (vindex == 0 && vValue.hasChildNodes()) {
+                        $.each(vValue.childNodes, function () {
+                            gap += '- ';
+                        })
+                    }
+                    if (vindex == 0) {
+                        cellValue = vValue.innerText;
+                    }
+                    else if (vindex == 1) {
+                        cellValue = $(vValue).find('input').val();
+                    }
+                    temptable += "<td style='white-space: nowrap;'>" + gap + cellValue + "</td>";
+                })
+                var table4eachrow_td = $($(table4).find('tr')[i]).find('td');
+                $.each(table4eachrow_td, function (i, v) {
+                    temptable += "<td>" + $(v).find('input').val() + "</td>";
+                })
+                temptable += "</tr>";
+            });
+            temptable += "</tbody></table>";
+            var link = window.document.createElement("a");
+            link.setAttribute("href", "data:application/vnd.ms-excel," + encodeURIComponent(temptable));
+            link.setAttribute("download", $('#PlanName').html().trim() + ".xls");
+            link.click();
+
+            //var SheetRow = [];//array to store the rows
+            //var sheet = e.workbook.sheets;
+            //
+            //if (sheet != undefined && sheet.length > 0) {
+            //    var rows = sheet[0].rows;
+            //    if (rows.length > 0) {
+            //        $.each(rows, function (index, key) {
+            //
+            //            var headcols = [];
+            //            var rowValueCols = [];
+            //            if (key.type == 'header') {
+            //                var headerCells = key.cells;
+            //                $.each(headerCells, function (i, v) {
+            //                    headcols.push(v);
+            //                })
+            //                SheetRow.push({ cells: headcols });
+            //            }
+            //            else if (key.type == 'data') {
+            //                var dataCells = key.cells;
+            //                $.each(dataCells, function (i, v) {
+            //                    rowValueCols.push(v);
+            //                });
+            //                SheetRow.push({ cells: rowValueCols });
+            //            }
+            //        });
+
+            //    }
+            //}
+            ////initializing a workbook with above prepared rows
+            //var Workbook = new kendo.ooxml.Workbook({
+            //    sheets: [{
+            //        title: "Plan Values",
+            //        rows: SheetRow,
+            //    }]
+            //});
+            //finally saving the excel sheet
+            //kendo.saveAs({
+            //    dataURI: Workbook.toDataURL(),
+            //    fileName: "text.xlsx"
+            //});
+        }
+        var dynamicHeader = [];
+
+        var headerWidth_ScreenWise = function (width) {
+            var windowwidth = (window.innerWidth - 172) - $(".page-sidebar").width();
+            var returnValue = (width / 100) * windowwidth;
+            return returnValue;
+        }
+        
+        dynamicHeader.push({
+            field: "ITEM_EDESC",
+            title: "Item",
+            locked: true,
+            editable: false,
+            width: headerWidth_ScreenWise(15.4),
+            template:'<span class="itemName itemName_#=ITEM_CODE#">#=ITEM_EDESC#</span>',
+            //width: 500,
+            //template: "#=ITEM_EDESC#",
+            //template: "#=ITEM_EDESC#<div class ='stock_qty'><span class='stock_qty_#=ITEM_CODE#'></span></div> <div class ='stock_qty'><span class='total_sales_#=ITEM_CODE#'></span></div> ",
+            //template: "#=ITEM_EDESC# <input title='' class='stock_qty stock_qty_#=ITEM_CODE#' name='stock_qty_#=ITEM_CODE#' style='' ng-model='stock_qty_#=ITEM_CODE#' type='number' min='0' readonly/>",
+            //headerTemplate: '<strong>Items</strong> <div class="pull-right"><strong class="total_sales">Total Sales</strong>  <strong class="total_stock">Stock Qty</strong></div>',
+            headerTemplate: '<strong>Items</strong>',
+        });
+        dynamicHeader.push({
+            //field: "ITEM_EDESC",
+            title: "Total Ref Value",
+            locked: true,
+            editable: false,
+            width: headerWidth_ScreenWise(6),
+            attributes: {
+                style: "text-align: right;"
+            },
+            template: "<span class='total_sales total_sales_#=ITEM_CODE#'></span>",
+            //template: "#=ITEM_EDESC# <input title='' class='stock_qty stock_qty_#=ITEM_CODE#' name='stock_qty_#=ITEM_CODE#' style='' ng-model='stock_qty_#=ITEM_CODE#' type='number' min='0' readonly/>",
+            //headerTemplate: '<strong>Items</strong> <div class="pull-right"><strong class="total_sales">Total Sales</strong>  <strong class="total_stock">Stock Qty</strong></div>',
+            headerTemplate: '<strong>Total Ref Value</strong>',
+        });
+        dynamicHeader.push({
+            //field: "ITEM_EDESC",
+            title: "Stock Qty",
+            locked: true,
+            editable: false,
+            width: headerWidth_ScreenWise(6),
+            attributes: {
+                style: "text-align: right;"
+            },
+            template: "<div class ='stock_qty'><span class='stock_qty_#=ITEM_CODE#'></span>",
+            //template: "#=ITEM_EDESC# <input title='' class='stock_qty stock_qty_#=ITEM_CODE#' name='stock_qty_#=ITEM_CODE#' style='' ng-model='stock_qty_#=ITEM_CODE#' type='number' min='0' readonly/>",
+            //headerTemplate: '<strong>Items</strong> <div class="pull-right"><strong class="total_sales">Total Sales</strong>  <strong class="total_stock">Stock Qty</strong></div>',
+            headerTemplate: '<strong>Stock Qty</strong>',
+        });
+        dynamicHeader.push({
+            title: "Auto fill",
+            locked: true,
+            width: headerWidth_ScreenWise(6),
+            template: '#= SetAutoTextField(ITEM_CODE) #',
+            headerTemplate: '<strong class="">Total </strong>',
+        });
+        $.each(frequencyTitleObject, function (idx, item) {
+            if (item.PropertyName != null || item.Title != null) {
+                dynamicHeader.push({
+                    field: item.PropertyName,
+                    title: item.Title,
+                    editable: true,
+                    attributes: {
+                        style: "text-align: right;"
+                    },
+                    format: "{0:n}",
+                    width: headerWidth_ScreenWise(5.67),
+                    //width: 75,
+                    template: "#= SetTextField(ITEM_CODE, '" + item.PropertyName + "','" + item.getPeriod[0].YEAR + "') #"
+                })
+            }
+        })
+        //var expand_collapse = '<a class="k-button k-button-icontext floatright" id="collapseAllButton" title="Collapse All" onclick="CollapseAllTree()"><i class="fa fa-chevron-up"></i></a><a class="k-button k-button-icontext floatright" id="expandAllButton" title="Expand All" onclick="ExpandAllTree()"><i class="fa fa-chevron-down"></i></a>'
+        $("#treelist").kendoTreeList({
+            toolbar: ["excel"],
+            excel: {
+                fileName: "Sales Report",
+                allPages: true
+            },
+            excelExport: function (e) {
+                ExportToExcel(e);
+                e.preventDefault();
+            },
+            dataSource: dataSource,
+            //dataSource: temp_dataSource,
+            scrollable: true,
+            height: window.innerHeight - 250,
+            resizable: true,
+            expanded: true,
+            columns:dynamicHeader,
+            dataBound: function (e) {
+                if (planDetailItemValue != undefined) {
+                    var autoFieldInputs = $('input[class*=autoFillNum_]');
+                    $.each(autoFieldInputs, function (i, val) {
+                        var freqInputs = $('input[class*=freqItemNum_' + val.className.split('_')[1] + ']');
+                        var sumval = 0;
+                        $.each(freqInputs, function (index, input) {
+                            var temp = parseFloat(input.value);
+                            if (isNaN(temp))
+                                temp = 0;
+                            sumval += parseFloat(temp);
+                        })
+                        sumval = parseFloat(sumval).toFixed(4);
+                        $('input[class=' + val.className + ']').val(sumval);
+                    })
+                }
+                var html = "<tr style='height: 35px;'>";
+                var yearHtml = "<tr style='height: 35px;'>";
+                var monthHtml = "<tr style='height: 35px;'>";
+                var weekHeader = "";
+
+                var prevYear = "";
+                var prevMonth = "";
+                var yearmonth = "";
+                $.each(frequencyTitleObject, function (idx, it) {
+                    if (it.getPeriod.length > 0 && it.FrequencyName=="MONTH") {
+                        if (prevYear != it.getPeriod[0].YEAR) {
+                            html += "<th class='k-header' style='text-align: center;font-weight:600' colspan='"+it.getPeriod[0].YEARCOUNT+"' >"+it.getPeriod[0].YEAR+"</th>";
+                        }
+                        prevYear = it.getPeriod[0].YEAR;
+                    }
+                    else if (it.getPeriod.length > 0 && it.FrequencyName=="WEEK") {
+                        var year = it.getPeriod[0].YEAR,
+                         month = it.getPeriod[0].MONTH,
+                         week = it.getPeriod[0].WEEK,
+                         yearCount = it.getPeriod[0].YEARCOUNT,
+                         monthCount = it.getPeriod[0].MONTHCOUNT;
+
+                        if (prevYear != year) {
+                            yearHtml += "<th class='k-header' style='text-align: center;font-weight:600' colspan='"+yearCount+"' >"+it.getPeriod[0].YEAR+"</th>";
+                            weekHeader = "week";
+                            prevYear = year;
+                        }
+                        if (prevMonth != month) {
+                            monthHtml += "<th class='k-header' style='text-align: center;font-weight:600' colspan='"+monthCount+"' >"+it.getPeriod[0].MONTH+"</th>";
+                            prevMonth = month;
+                        }
+                    }
+                    if (idx == frequencyTitleObject.length - 1) {
+                        hideloader();
+                    }
+                });
+                var aq = "";//$('#plan_for').html()[0] + $('#plan_for').html().slice(1).toLowerCase();
+                var AQRow = "<tr class='amountRow'><th></th><th style='border-left:1px solid #bdbcbc'><small style='padding-left:8px;'> " + aq + " </small></th></tr>", blankRow = '<tr><th></th><th></th></tr>', blankTr = '';
+                blankTr = AQRow;
+                if (html != "")
+                    html += "</tr>";
+                if (weekHeader != "") {
+                    html = yearHtml + "</tr>" + monthHtml + "</tr>";
+                    blankTr = AQRow + blankRow;
+                }
+                $("#treelist").find("thead").last().prepend(html);
+                $("#treelist").find('thead').first().append(blankTr);
+
+                var treeViewColFit = $("#treelist").data("kendoTreeList");
+                treeViewColFit.autoFitColumn();
+
+                dataView = this.dataSource.view();
+                for (var i = 0; i < dataView.length; i++) {
+                    var uid = dataView[i].uid;
+
+                    if (dataView[i].IS_CHILD_SELECTED == "N") {
+                        $("#treelist tbody").find("tr[data-uid=" + uid + "] td > span").removeClass("k-icon");
+                    }
+                }
+
+
+                var preVal = 0;
+                $("input[type='number']").on('focusin', function () {
+                    var itemCode = this.className.split("_")[1]
+
+                    $(".itemName").removeClass("hightlight_arrow_font_weight");
+                    $(".itemName_" + itemCode).addClass("hightlight_arrow_font_weight");
+
+                    $(".itemName").parent('td').removeClass("hightlight_arrow");
+                    $(".itemName_" + itemCode).parent('td').addClass("hightlight_arrow");
+
+                    var focusVal = parseFloat($(this).val());
+                    if (isNaN(focusVal))
+                        focusVal = 0;
+                    preVal = focusVal;
+                });
+                $("input[type='number']").on('focusout', function () {
+                    var itemCode = this.className.split("_")[1];
+                    $(".itemName").removeClass("hightlight_arrow_font_weight");
+                    $(".itemName").parent('td').removeClass("hightlight_arrow");
+                });
+                function checkValidNumberLength($this) {
+                    var value = $this.val();
+                    var number = value.split('.');
+                    if (number.length == 1) {
+                        if (number[0].length > 12) {
+                            $this.val('');
+                            $this.focus();
+                            displayPopupNotification('Only number less than 12 digit can accepted.', "error");
+                            return false;
+                        }
+                    } else if (number.length == 2) {
+                        if (number[0].length > 12 || number[1].length > 4) {
+                            $this.val('');
+                            $this.focus();
+                            displayPopupNotification('Only number less than 12 digit with 4 decimal can accepted.', "error");
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+                $("input[type='number']").on("change", function () {
+                    var $this = $(this);
+                    checkValidNumberLength($this)
+                    // Parent textfield calculation
+                    var datas = $("#treelist").data("kendoTreeList").dataSource.data();
+                    var itemCount = datas.length;
+                    var ItemCode = $this[0].className.split('_')[1];
+
+                    if ($this[0].className.indexOf("autoFillNum_") < 0) {
+                        ////Child event
+                        ////Month week textfield value calculation
+                        var childSumValue = 0;
+                        var thisVal = parseFloat($this.val());
+                        if (isNaN(thisVal))
+                            thisVal = 0;
+                        var changedValue = thisVal - preVal;
+                        parentValueCalculate1($this);
+                        childValueCalculate1($this, changedValue);
+                        _.each(datas, function (i, e) {
+                            //// check here
+                            var freqSumValue = 0;
+                            var childInputArr = $('input[class*=freqItemNum_' + i.ITEM_CODE + '_]');
+                            _.each(childInputArr, function (i, e) {
+                                if (i.value != "")
+                                    freqSumValue += parseFloat(i.value);
+                            });
+                            if (freqSumValue != "0.00") {
+                                $('.autoFillNum_' + i.ITEM_CODE).val((freqSumValue).toFixed(4));
+                            } else {
+                                if (ItemCode == i.ITEM_CODE)
+                                    $('.autoFillNum_' + i.ITEM_CODE).val((freqSumValue).toFixed(4));
+                            }
+                        });
+
+                    } else {
+                        // Parent event
+                        parentValueCalculate($this);
+                        childValueCalculate($this);
+                        ownChildValueCalc($this);
+                    }
+
+                });
+
+                function ownChildValueCalc($this) {
+
+                    var datas = $("#treelist").data("kendoTreeList").dataSource.data();
+                    var colsName = $("#treelist").data("kendoTreeList").columns;
+                    var totalCol = colsName.length - 4;
+                    var colName = "";
+                    if ($("#treelist").data("kendoTreeList").columns[2].field != undefined) {
+                        colName = $("#treelist").data("kendoTreeList").columns[2].field.split('_')[0];
+                    }
+                    var ownItemCode = $this[0].className.split('_')[1];
+                    var ownValue = $this.val();
+                    if (colName == 'WEEK') {
+                        for (var i = 0; i < totalCol; i++) {
+                            $('.freqItemNum_' + ownItemCode + '_' + colName + '_' + colsName[2 + i].field.split('_')[1]).val((ownValue / totalCol).toFixed(4));
+                        }
+                    }
+                    else {
+                        $.each(colsName, function (i, e) {
+                            if (i < 2)
+                                return;
+                            $('.freqItemNum_' + ownItemCode + '_' + e.field).val((ownValue / totalCol).toFixed(4));
+                        })
+                    }
+                }
+                function getChildArryList(masterCodeArrList) {
+                    var arrList = [];
+                    var dataList = $("#treelist").data("kendoTreeList").dataSource.data();
+                    $.each(dataList, function (i, e) {
+                        if ($.inArray(e.PRE_ITEM_CODE, masterCodeArrList) > -1) {
+                            arrList.push(e.PRE_ITEM_CODE);
+                        }
+                    });
+                    return arrList;
+                }
+
+                function childHorizentalCalculation($this, itemCode) {
+                    //
+                    var datas = $("#treelist").data("kendoTreeList").dataSource.data();
+                    var colsName = $("#treelist").data("kendoTreeList").columns;
+                    var horizontalInputs = $('input[class*=freqItemNum_' + itemCode + '_]');
+                    var totalCol = colsName.length - 4;
+                    var colName = "";
+                    if ($("#treelist").data("kendoTreeList").columns[2].field != undefined) {
+                        colName = $("#treelist").data("kendoTreeList").columns[2].field.split('_')[0];
+                    }
+                    var ownItemCode = $this[0].className.split('_')[1];
+                    var parentVal = $('.autoFillNum_' + itemCode).val();
+                    var ownValue = $this.val();
+                    if (colName == 'WEEK') {
+                        for (var i = 0; i < horizontalInputs.length; i++) {
+                            horizontalInputs[i].value = ((parentVal / totalCol).toFixed(4));
+                        }
+                        for (var i = 0; i < totalCol; i++) {
+                            var inputClass = horizontalInputs[i].className;
+                            $('.freqItemNum_' + ownItemCode + '_' + inputClass.split('_').splice(2, 3).join('_')).val((ownValue / totalCol).toFixed(4));
+                        }
+                    }
+                    else {
+                        for (var i = 0; i < horizontalInputs.length; i++) {
+                            horizontalInputs[i].value = ((parentVal / totalCol).toFixed(4));
+                        }
+                        for (var i = 0; i < totalCol; i++) {
+                            var inputClass = horizontalInputs[i].className;
+                            $('.freqItemNum_' + ownItemCode + '_' + inputClass.split('_').splice(2, 3).join('_')).val((ownValue / totalCol).toFixed(4));
+                        }
+                    }
+                }
+
+                function childValueCalculate1($this, changedValue) {
+                    var datas = $("#treelist").data("kendoTreeList").dataSource.data();
+                    var itemCount = datas.length;
+
+                    var calParentChildVal = function (tree, masterItemCode, itemCode) {
+                        var array = [];
+                        var $parentVal = $('.autoFillNum_' + itemCode).val();
+                        _.each(datas, function (i, e) {
+                            if (i.PRE_ITEM_CODE == masterItemCode) {
+                                array.push(i);
+                            }
+                        });
+                        _.each(array, function (i, e) {
+                            var ItemCode = i.ITEM_CODE;
+                            var columnName = $this[0].className.split('_')[2];
+                            if (columnName == "WEEK") {
+                                var year = $this[0].className.split('_')[4];
+                                var columnNameWeek = columnName + "_" + $this[0].className.split('_')[3];
+                                var $freqParentVal = parseFloat($(".freqItemNum_" + itemCode + "_" + columnNameWeek + "_" + year).val());
+                                if (isNaN($freqParentVal))
+                                    $freqParentVal = 0;
+
+                                $(".freqItemNum_" + ItemCode + "_" + columnNameWeek + "_" + year).val(parseFloat(($freqParentVal / array.length)).toFixed(4));
+                            } else {
+                                var year = $this[0].className.split('_')[3];
+                                var $freqParentVal = parseFloat($(".freqItemNum_" + itemCode + "_" + columnName + "_" + year).val());
+                                if (isNaN($freqParentVal))
+                                    $freqParentVal = 0;
+                                $(".freqItemNum_" + ItemCode + "_" + columnName + "_" + year).val(parseFloat(($freqParentVal / array.length)).toFixed(4));
+                            }
+                        });
+                        _.each(array, function (i, e) {
+                            calParentChildVal(array, i.MASTER_ITEM_CODE, i.ITEM_CODE);
+                        });
+
+                    }
+                    _.each(datas, function (i, e) {
+                        if (i.ITEM_CODE == $this[0].className.split('_')[1]) {
+                            calParentChildVal(datas, i.MASTER_ITEM_CODE, i.ITEM_CODE);
+                        }
+                    });
+
+                }
+                function childValueCalculate($this) {
+                    var datas = $("#treelist").data("kendoTreeList").dataSource.data();
+                    var itemCount = datas.length;
+
+                    var calParentChildVal = function (tree, masterItemCode, itemCode) {
+                        var array = [];
+                        var $parentVal = $('.autoFillNum_' + itemCode).val();
+                        _.each(datas, function (i, e) {
+                            if (i.PRE_ITEM_CODE == masterItemCode) {
+                                array.push(i);
+                            }
+                        });
+                        _.each(array, function (i, e) {
+                            $('.autoFillNum_' + i.ITEM_CODE).val(($parentVal / array.length).toFixed(4));
+                            childHorizentalCalculation($this, i.ITEM_CODE);
+                        });
+                        _.each(array, function (i, e) {
+                            calParentChildVal(array, i.MASTER_ITEM_CODE, i.ITEM_CODE);
+                        });
+
+                    }
+                    _.each(datas, function (i, e) {
+                        if (i.ITEM_CODE == $this[0].className.split('_')[1]) {
+                            calParentChildVal(datas, i.MASTER_ITEM_CODE, i.ITEM_CODE);
+                        }
+                    });
+
+                }
+
+                function checkBoxValueCalculate($this) {
+                    var datas = $("#treelist").data("kendoTreeList").dataSource.data();
+                    var itemCount = datas.length;
+
+                    var calParentChildVal = function (tree, masterItemCode, itemCode) {
+                        var array = [];
+                        var $parentVal = $('.autoFillNum_' + itemCode).val();
+                        _.each(datas, function (i, e) {
+                            if (i.PRE_ITEM_CODE == masterItemCode) {
+                                array.push(i);
+                            }
+                        });
+                        _.each(array, function (i, e) {
+                            $('.autoFillNum_' + i.ITEM_CODE).val(($parentVal / array.length).toFixed(4));
+                        });
+                        _.each(array, function (i, e) {
+                            calParentChildVal(array, i.MASTER_ITEM_CODE, i.ITEM_CODE);
+                        });
+
+                    }
+                    calParentChildVal(datas, datas[0].MASTER_ITEM_CODE, datas[0].ITEM_CODE);
+                }
+
+                function parentValueCalculate1($this) {
+                    var datas = $("#treelist").data("kendoTreeList").dataSource.data();
+                    var itemCount = datas.length;
+                    var calParentChildVal = function (tree, preItemCode, itemCode) {
+                        var childArray = [];
+                        var $parentVal = $('.autoFillNum_' + itemCode).val();
+                        var parentSumValue = 0;
+                        _.each(datas, function (i, e) {
+                            if (i.PRE_ITEM_CODE == preItemCode) {
+                                childArray.push(i);
+                            }
+                        });
+                        _.each(childArray, function (i, e) {
+                            var value = parseInt($('.autoFillNum_' + i.ITEM_CODE).val());
+                            if (!isNaN(value))
+                                parentSumValue += value;
+                        });
+                        _.each(datas, function (i, e) {
+                            if (i.MASTER_ITEM_CODE == preItemCode) {
+                                var ItemCode = i.ITEM_CODE;
+                                var columnName = $this[0].className.split('_')[2];
+
+                                if (columnName == "WEEK") {
+                                    var year = $this[0].className.split('_')[4];
+                                    var colSumVal = 0;
+                                    var columnNameWeek = columnName + "_" + $this[0].className.split('_')[3];
+                                    _.each(childArray, function (i, e) {
+                                        var colVal = parseFloat($(".freqItemNum_" + i.ITEM_CODE + "_" + columnNameWeek + "_" + year).val());
+                                        if (!isNaN(colVal))
+                                            colSumVal += parseFloat(colVal);
+                                    });
+                                    $(".freqItemNum_" + ItemCode + "_" + columnNameWeek + "_" + year).val(colSumVal.toFixed(4));
+                                } else {
+                                    //
+                                    var year = $this[0].className.split('_')[3];
+                                    var colSumVal = 0;
+                                    _.each(childArray, function (i, e) {
+                                        var colVal = parseFloat($(".freqItemNum_" + i.ITEM_CODE + "_" + columnName + "_" + year).val());
+                                        if (!isNaN(colVal))
+                                            colSumVal += colVal;
+                                    });
+                                    $(".freqItemNum_" + ItemCode + "_" + columnName + "_" + year).val(parseFloat(colSumVal.toFixed(4)));
+                                }
+                            }
+                        });
+
+
+                        _.each(datas, function (i, e) {
+                            _.each(childArray, function (ic, ec) {
+                                if (i.MASTER_ITEM_CODE == ic.PRE_ITEM_CODE) {
+                                    calParentChildVal(datas, i.PRE_ITEM_CODE, i.ITEM_CODE);
+                                }
+                            });
+                        });
+
+                    }
+                    _.each(datas, function (i, e) {
+                        if (i.ITEM_CODE == $this[0].className.split('_')[1]) {
+                            calParentChildVal(datas, i.PRE_ITEM_CODE, i.ITEM_CODE);
+                        }
+                    });
+                }
+                function parentValueCalculate($this) {
+                    //
+                    var datas = $("#treelist").data("kendoTreeList").dataSource.data();
+                    var itemCount = datas.length;
+                    var calParentChildVal = function (tree, preItemCode, itemCode) {
+                        var childArray = [];
+                        var $parentVal = $('.autoFillNum_' + itemCode).val();
+                        var parentSumValue = 0;
+                        _.each(datas, function (i, e) {
+                            if (i.PRE_ITEM_CODE == preItemCode) {
+                                childArray.push(i);
+                            }
+                        });
+                        _.each(childArray, function (i, e) {
+                            var value = parseInt($('.autoFillNum_' + i.ITEM_CODE).val());
+                            if (!isNaN(value))
+                                parentSumValue += value;
+                        });
+                        _.each(datas, function (i, e) {
+                            if (i.MASTER_ITEM_CODE == preItemCode) {
+                                $('.autoFillNum_' + i.ITEM_CODE).val((parentSumValue).toFixed(4));
+
+                                childHorizentalCalculation($this, i.ITEM_CODE); //ap
+                            }
+                        });
+                        _.each(datas, function (i, e) {
+                            _.each(childArray, function (ic, ec) {
+                                if (i.MASTER_ITEM_CODE == ic.PRE_ITEM_CODE) {
+                                    calParentChildVal(datas, i.PRE_ITEM_CODE, i.ITEM_CODE);
+                                }
+                            });
+                        });
+
+                    }
+                    _.each(datas, function (i, e) {
+                        if (i.ITEM_CODE == $this[0].className.split('_')[1]) {
+                            calParentChildVal(datas, i.PRE_ITEM_CODE, i.ITEM_CODE);
+                        }
+                    });
+                }
+
+                var treeList = $("#treelist").data("kendoTreeList");
+                var rows = $("tr.k-treelist-group", treeList.tbody);
+
+
+                var tr = treeList.dataItems();
+                d1.resolve();
+            }, // databound
+        }); //tree
+        var expandCollapseButtons = '<div class="pull-right"><a class="k-button k-button-icontext floatright" id="collapseAllButton" title="Collapse All" onclick="CollapseAllTree()"><i class="fa fa-chevron-up"></i></a><a class="k-button k-button-icontext floatright" id="expandAllButton" title="Expand All" onclick="ExpandAllTree()"><i class="fa fa-chevron-down"></i></a></div>';
+        $('.k-header.k-grid-toolbar').append(expandCollapseButtons);
+    };
+
+    $.when(d1).then(function () {
+        hideloader();
+    })
+
+    function SetAutoTextField(ITEM_CODE) {
+        planDetailValue;
+        var itemvalue = 0;
+        var itemsInputListObj = $.grep(planDetailValue, function (val, index) {
+            return val.ITEM_CODE == ITEM_CODE; //&& val.FREQUENCY_JSON.split('__')[1] == year + '_' + Title.split('_')[1];
+        });
+
+        var autoFieldText = $("input[class='autoFillNum_" + ITEM_CODE + "']");
+        var aft = autoFieldText.val();
+        var autoValue = (parseFloat(aft).toFixed(4) + parseFloat(itemvalue))
+        autoFieldText.val(parseFloat(autoValue).toFixed(4));
+        ITEM_CODE = ITEM_CODE.replace(/\./g, "");
+        itemvalue = itemvalue == 0 ? '' : parseFloat(itemvalue).toFixed(4);
+        var html = "<input title='' class='autoFillNum_" + ITEM_CODE + "' name='autoFillNum_" + ITEM_CODE + "' style='' ng-model='autoFillNum_" + ITEM_CODE + "' type='number' min='0' value='" + itemvalue + "'/>";
+        return html;
+    }
+    
+
+    var months = [{ name: 'JAN', value: 1 }, { name: 'FEB', value: 2 }, { name: 'MAR', value: 3 }, { name: 'APR', value: 4 }
+                , { name: 'MAY', value: 5 }, { name: 'JUN', value: 6 }, { name: 'JUL', value: 7 }, { name: 'AUG', value: 8 }, { name: 'SEP', value: 9 }
+                , { name: 'OCT', value: 10 }, { name: 'NOV', value: 11 }, { name: 'DEC', value: 12 }];
+    var bsmonths = [{ name: 'BAISAKH', value: '01' }, { name: 'JESTHA', value: '02' }, { name: 'ASHADH', value: '03' }, { name: 'SHRAWAN', value: '04' }
+                , { name: 'BHADRA', value: '05' }, { name: 'ASHOJ', value: '06' }, { name: 'KARTIK', value: '07' }, { name: 'MANGSIR', value: '08' }, { name: 'POUSH', value: '09' }
+                , { name: 'MAGH', value: 10 }, { name: 'FALGUN', value: 11 }, { name: 'CHAITRA', value: 12 }];
+
+
+    function SetTextField(ITEM_CODE, Title, year) {
+        planDetailValue;
+        var itemvalue = "";
+        if (Title.split('_').length > 1) { // incase of week
+            var itemsInputListObj = $.grep(planDetailValue, function (val, index) {
+                return val.ITEM_CODE == ITEM_CODE && val.FREQUENCY_JSON.split('__')[1] == year + '_' + Title.split('_')[1];
+            })
+            if (itemsInputListObj.length > 0) {
+                itemvalue = itemsInputListObj[0].FREQUENCY_JSON.split('__')[3];
+            }
+        }
+        else { // incase of month
+            if (retrievedItem.dateFormat == 'LOC' || retrievedItem.dateFormat == 'BS') {
+                var itemsInputListObj = $.grep(planDetailValue, function (val, index) {
+                    var monthvalue = bsmonths[_.findIndex(bsmonths, function (mItem) { return mItem.name == Title })].value;
+                    return val.ITEM_CODE == ITEM_CODE && val.FREQUENCY_JSON.split('__')[1] == monthvalue + '_' + year;
+                })
+                if (itemsInputListObj.length > 0) {
+                    itemvalue = itemsInputListObj[0].FREQUENCY_JSON.split('__')[3];
+                }
+            }
+            else {
+                var itemsInputListObj = $.grep(planDetailValue, function (val, index) {
+                    var monthvalue = months[_.findIndex(months, function (mItem) { return mItem.name == Title })].value;
+                    return val.ITEM_CODE == ITEM_CODE && val.FREQUENCY_JSON.split('__')[1] == monthvalue + '_' + year;
+                })
+                if (itemsInputListObj.length > 0) {
+                    itemvalue = itemsInputListObj[0].FREQUENCY_JSON.split('__')[3];
+                }
+            }
+
+        }
+
+        ITEM_CODE = ITEM_CODE.replace(/\./g, "");
+        var html = "<input  title='' class='freqItemNum_" + ITEM_CODE + "_" + Title + "_" + year + "' name='freqItemNum_" + ITEM_CODE + "_" + Title + "_" + year + "' ng-model='freqItemNum_" + ITEM_CODE + "' type='number' min='0' value='" + itemvalue + "'/>";
+        return html;
+    }
+</script>

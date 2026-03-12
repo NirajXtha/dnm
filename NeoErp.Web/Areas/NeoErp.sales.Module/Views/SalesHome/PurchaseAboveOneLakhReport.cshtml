@@ -1,0 +1,490 @@
+﻿
+@using NeoErp.Core.Models;
+@using NeoErp.Core;
+@using NeoErp.Core.Infrastructure;
+@{
+    var workingContent = EngineContext.Current.Resolve<IWorkContext>();
+}
+<style>
+    div.k-grid-header th.k-header, tr.k-filter-row > th {
+        text-align: center;
+    }
+
+    /*.page-bar {
+        margin-bottom: 0px !important;
+    }*/
+
+    .k-grid table {
+        table-layout: fixed;
+    }
+
+    .no-data {
+        background-color: red;
+    }
+    /*#grid thead{
+         font-size:11px;
+    }*/
+    .k-grid td {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .k-grid-content {
+        font-size: 10px;
+    }
+
+    .k-grid-content-locked {
+        font-size: 10px;
+    }
+
+    .k-grid-footer {
+        font-size: 10px;
+    }
+
+    .k-grid-header {
+        font-size: 11px;
+    }
+
+    .floatright {
+        float: right;
+        margin-top: 2px !important;
+    }
+</style>
+
+
+
+<div class="page-content">
+    <div class="page-bar">
+        <ul class="page-breadcrumb">
+            @*<li>
+                    <i class="fa fa-home"></i>
+                    <a href="/main/DashBoard">Home</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>
+                <li>
+                    <a href="sales/saleshome/dashboard/Dashboard">Organiser</a>
+                    <i class="fa fa-angle-right"></i>
+                </li>*@
+        </ul>
+        <div class="page-toolbar">
+            <div class="btn-group pull-right">
+                <div class="actions">
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/DateField.cshtml", false)
+                    </div>
+                    <div class="btn-group" style="display: none;">
+                        @Html.Partial("~/Views/Shared/Controls/ConsolidateFilter.cshtml", true)
+                    </div>
+                    <div class="btn-group" style="display: none;">
+                        @Html.Partial("~/Views/Shared/Controls/_AdvancedFilter.cshtml", new AdvancedFilterSettingsModel()
+                   {
+                       ShowSupplierFilter = true,
+                       ShowPurchaseDocumentFilter = true,
+                       //ShowAreaFilter = true,
+                       //ShowProductFilter = true,
+                       //ShowCategoryFilter = true,
+                       //ShowCompanyFilter = true,
+                       //ShowBranchFilter = true
+                   })
+                    </div>
+
+                    @Html.Partial("~/Views/Shared/Controls/_reportFilterSettings.cshtml", new ReportFilterSettingsModel()
+               {
+                   ShowAmountFigureFilter = true,
+                   ShowAmountFilter = true,
+                   ShowAmountRoundUpFilter = true,
+                   ShowRangeAmountFilter = true,
+
+               })
+
+                    <div style="display: none;">
+                        @Html.Partial("~/Views/Shared/Controls/ComposeMail.cshtml")
+                    </div>
+                    <a data-toggle="modal" id="RunQuery" href="#">
+                        <div class="btn btn-circle btn-icon-only btn-default" data-placement="left" data-html="true" data-container="body" data-toggle="tooltip" title="Refresh">
+                            <i class="icon-control-play"></i>
+                        </div>
+                    </a>
+                    <div class="btn-group">
+                        @Html.Partial("~/Views/Shared/Controls/_ReportConfig.cshtml", "PurchaseAboveOneLakhReport")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- END PAGE HEADER-->
+    <!-- BEGIN PAGE CONTENT-->
+    <div class="row collapse in" id="demo">
+        <div class="col-md-12">
+            <div class="portlet light bordered">
+
+
+                <div class="portlet-body form">
+                    <div class="row">
+                        <div id="grid" class="table-grid"></div>
+                        @Html.Partial("~/Views/Shared/Controls/_GridToolbar.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END PAGE CONTENT-->
+</div>
+<script src="@Scripts.Url("~/JS/DateFilter.js?V5")" type="text/javascript"></script>
+<script src="@Scripts.Url("~/JS/dynamicReport.js?V2")" type="text/javascript"></script>
+<script type="text/javascript">
+    var fileMailSender = new ManualEmailSender({
+        GridName: "grid",
+        GridRefreshTriggerName: "Runquery",
+        reportName: "DateWiseSalesDetail",
+    });
+</script>
+<script type="text/javascript">
+    var a = location.hash;
+    var b = location.pathname;
+    var url = (b + a);
+    $(".active").removeClass();
+    $("a[href='" + url + "']").parent().addClass("active");
+    $("a[href='" + url + "']").parent().parent().slideDown("slow");
+
+</script>
+<script>
+
+    var reportConfig = GetReportSetting("DateWiseSalesDetail");
+    function getDateFormat(date) {
+        return kendo.format("{0:" + reportConfig.dateFormat + "}", date);
+    }
+
+    $(".applydp").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    })
+
+    $("#loadAdvancedFilters").on("click", function (evt) {
+        evt.preventDefault();
+        $("#RunQuery").trigger("click");
+    });
+
+    $(document).ready(function () {
+
+         DateFilter.init(function () {
+                  consolidate.init(function () {
+                    BindGrid(urltest);
+                });
+         });
+
+        fileMailSender.init();
+
+        var urltest = window.location.protocol + "//" + window.location.host + "/api/SalesHome/PurchaseAboveOneLakhReport";
+
+        $("#RunQuery").click(function (evt) {
+            evt.preventDefault();
+            urltest = window.location.protocol + "//" + window.location.host + "/api/SalesHome/PurchaseAboveOneLakhReport";
+            KendoGridRefresh(urltest);
+        });
+
+        //BindGrid(urltest);
+    });
+
+
+     function BindGrid(readurl) {
+            //if ($("#grid").data("kendoGrid")) {
+            //    $("#grid").data("kendoGrid").destroy();
+            //    $("#grid").empty(); // Clear old content to prevent duplicates
+            //}
+            var companyName = ('@workingContent.CurrentUserinformation.company_name');
+            var fromADdate = $("#FromDateVoucher").val()
+            var toADdate = $("#ToDateVoucher").val();
+            var fromBSdate = $("#fromInputDateVoucher").val();
+            var toBSdate = $("#toInputDateVoucher").val();
+            var branches = ReportFilter.getBranchs();
+            reportConfig = GetReportSetting("PurchaseAboveOneLakhReport");
+            var dataSource = new kendo.data.DataSource({
+                type: "json",
+                transport: {
+                    read: {
+                        url: readurl, // <-- Get data from here.
+                        dataType: "json", // <-- The default was "jsonp".
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8"
+                    },
+                    parameterMap: function (options, type) {
+                        var paramMap = JSON.stringify($.extend(options, ReportFilter.filterAdditionalData()));
+                        //  paramMap.formDate = $("#FromDateVoucher").val();
+                        delete paramMap.$inlinecount; // <-- remove inlinecount parameter.
+                        delete paramMap.$format; // <-- remove format parameter.
+                        return paramMap;
+                    }
+                },
+
+                error: function (e) {
+                    displayPopupNotification("Sorry error occured while processing data", "error");
+                },
+                serverFiltering: true,
+                serverAggregates: true,
+                schema: {
+                    data: "SalesAboveOneLakh", // records are returned in the "data" field of the response
+                    //total: "total", // total number of records is in the "total" field of the response
+                    total: function (response) {
+                        // Ensure we get the total count of ALL records (not just current page)
+                        return response.Total || response.total || (response.SalesAboveOneLakh ? response.SalesAboveOneLakh.length : 0);
+                    },
+                    aggregates: "AggregationResult",
+                    model: {
+                        fields: {
+                            PAN: { type: "string" },
+                            NAME_OF_TAXPAYER: { type: "string" },
+                            TRADE_NAME_TYPE: { type: "string" },
+                            PURCHASE_SALES: { type: "string" },
+                            EXEMPTED_AMOUNT: { type: "number" },
+                            TAXABLE_AMOUNT: { type: "number" },
+                            REMARKS: { type: "string" },
+                        }
+
+                    }
+                },
+                aggregate: [
+                    { field: "EXEMPTED_AMOUNT", aggregate: "sum" },
+                    { field: "TAXABLE_AMOUNT", aggregate: "sum" },
+                ],
+
+                serverPaging: true,
+                //serverSorting: true,
+                pageSize: reportConfig.defaultPageSize,
+            });
+            var grid = $("#grid").kendoGrid({
+                dataSource: dataSource,
+                toolbar: kendo.template($("#toolbar-template").html()),
+                excel: {
+                    fileName: "Purchase AboveOne LakhReport",
+                    allPages: true
+                },
+                excelExport: function (e) {
+                    e.preventDefault();
+                    var workbook = e.workbook;
+                    var sheet = workbook.sheets[0];
+
+                    // Step 1: Clean the footer (Grand Total) values by removing any HTML tags
+                    for (var i = 0; i < sheet.rows.length; i++) {
+                        var row = sheet.rows[i];
+
+                        if (row.type === "footer") { // Only for footer rows
+                            for (var j = 0; j < row.cells.length; j++) {
+                                var cell = row.cells[j];
+
+                                if (cell && cell.value && typeof cell.value === "string") {
+                                    // Remove HTML tags and extra spaces
+                                    cell.value = cell.value.replace(/<[^>]*>/g, '').trim();
+
+                                    // Optional: if cell is numeric after cleanup, convert it to number
+                                    if (!isNaN(cell.value.replace(/,/g, ""))) {
+                                        cell.value = parseFloat(cell.value.replace(/,/g, ""));
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Step 2: Add custom headers before the data rows
+                    sheet.rows.unshift({
+                        cells: [{ value: "Purchase AboveOne LakhReport".split('').join(' '), colSpan: 18 }]
+                    });
+
+                    var filterText = $("#AdvanceFilter").attr('data-original-title');
+                    if (filterText.indexOf('|') < 0) {
+                        filterText = $((filterText).replace(/<strong>/g, "|")).text().replace('|', '').split('|').reverse();
+                        $.each(filterText, function (k, item) {
+                            sheet.rows.unshift({
+                                cells: [{ value: item, colSpan: 18 }]
+                            });
+                        });
+                    }
+
+                    if (filterText.toString().indexOf('Date Range') < 0) {
+                        sheet.rows.unshift({
+                            cells: [{ value: "From :- " + fromADdate + "(" + fromBSdate + ")" + "\t To :- " + toADdate + "(" + toBSdate + ")", colSpan: 18 }]
+                        });
+                    }
+
+                    for (var companyCount = 0; companyCount < branches.length; companyCount++) {
+                        sheet.rows.unshift({
+                            cells: [{ value: branches[companyCount].Company + " :- " + branches[companyCount].Branches.join(','), colSpan: 18 }]
+                        });
+                    }
+
+                    sheet.rows.unshift({
+                        cells: [{ value: companyName.split('').join(' '), colSpan: 18 }]
+                    });
+
+                    // Step 3: Create a final Workbook object
+                    var WorkbookFinal = new kendo.ooxml.Workbook({
+                        sheets: [{
+                            columns: [
+                                { width: 110 } // Optional: you can set widths properly if you want
+                            ],
+                            rows: sheet.rows
+                        }]
+                    });
+
+                    // Step 4: Save the final Excel file
+                    kendo.saveAs({
+                        dataURI: WorkbookFinal.toDataURL(),
+                        fileName: "Purchase AboveOne LakhReport.xlsx"
+                    });
+                },
+                height: window.innerHeight - 50,
+                sortable: true,
+                reorderable: true,
+                groupable: true,
+                resizable: true,
+                filterable: {
+                    extra: false,
+                    operators: {
+                        number: {
+                            eq: "Is equal to",
+                            neq: "Is not equal to",
+                            gte: "is greater than or equal to	",
+                            gt: "is greater than",
+                            lte: "is less than or equal",
+                            lt: "is less than",
+                        },
+                        string: {
+
+                            eq: "Is equal to",
+                            neq: "Is not equal to",
+                            startswith: "Starts with	",
+                            contains: "Contains",
+                            doesnotcontain: "Does not contain",
+                            endswith: "Ends with",
+                        },
+                        date: {
+
+                            eq: "Is equal to",
+                            neq: "Is not equal to",
+                            gte: "Is after or equal to",
+                            gt: "Is after",
+                            lte: "Is before or equal to",
+                            lt: "Is before",
+                        }
+                    }
+                },
+                columnMenu: true,
+                columnMenuInit: function (e) {
+                    wordwrapmenu(e);
+                    checkboxItem = $(e.container).find('input[type="checkbox"]');
+                },
+                columnShow: function (e) {
+                    if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                        SaveReportSetting('PurchaseAboveOneLakhReport', 'grid');
+                },
+                columnHide: function (e) {
+                    if ($(".k-widget.k-reset.k-header.k-menu.k-menu-vertical").is(":visible") && checkboxItem != "")
+                        SaveReportSetting('PurchaseAboveOneLakhReport', 'grid');
+                },
+                pageable: {
+                    refresh: true,
+                    pageSizes: reportConfig.itemPerPage,
+                    buttonCount: 5
+                },
+                scrollable: {
+                    virtual: true
+                },
+                dataBound: function (o) {
+                    var grid = o.sender;
+                    if (grid.dataSource.total() == 0) {
+                        var colCount = grid.columns.length + 1;
+                        $(o.sender.wrapper)
+                            .find('tbody')
+                            .append('<tr class="kendo-data-row" style="font-size:12px;"><td colspan="' + colCount + '" class="alert alert-danger">Sorry, no data :(</td></tr>');
+                        displayPopupNotification("No Data Found Given Date Filter.", "info");
+                    }
+                    else {
+                        //var g = $("#grid").data("kendoGrid");
+                        //for (var i = 0; i < g.columns.length; i++) {
+                        //    g.showColumn(i);
+                        //}
+                        //$("div.k-group-indicator").each(function (i, v) {
+                        //    g.hideColumn($(v).data("field"));
+                        //});
+                    }
+                    //var myElem = document.getElementById('trParentHeader');
+                    //if (myElem == null) {
+                    //    $("#grid").find("th.k-header").parent().before("<tr id='trParentHeader'><th class='k-header'></th><th class='k-header'></th> <th class='k-header'></th><th class='k-header'></th><th class='k-header'></th><th class='k-header'></th><th class='k-header'></th> <th colspan='2' class='k-header'><strong>Local Purchase of Trade Goods</strong></th>  <th colspan='2' class='k-header'><strong>Import Purchase</strong></th>  <th scope='col' colspan='2' class='k-header'><strong>Administrative Expenses</strong></th><th scope='col' colspan='2' class='k-header'><strong>Capital Expenditure</strong></th><th scope='col' colspan='2' class='k-header'><strong>Total Purchase</strong></th><th scope='col' colspan='2' class='k-header'><strong>Total of VAT</strong></th></tr>");
+                    //}
+                    $('div').removeClass('.k-header k-grid-toolbar');
+                    UpdateReportUsingSetting("PurchaseAboveOneLakhReport", "grid");
+                },
+                columns: [
+                    {
+                        field: "PAN",
+                        title: "PAN",
+                        width: "110px",
+                        footerTemplate: '<span style="float:right"> Grand Total</span>',
+                    },
+                    {
+                        field: "NAME_OF_TAXPAYER",
+                        title: "Name of Tax Payer",
+                        width: "180px",
+
+                    },
+                    {
+                        field: "TRADE_NAME_TYPE",
+                        title: "Trade Name Type",
+                        width: "150px",
+
+                    },
+                    {
+                        field: "PURCHASE_SALES",
+                        title: "Purchase/Sales",
+                        width: "150px",
+
+                    },
+                    {
+                        field: "TAXABLE_AMOUNT",
+                        title: "Taxable Amount",
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                        width: "150px",
+                        aggregates: ["sum"],
+                        groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                        format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                        footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+
+
+                    },
+                    {
+                        field: "EXEMPTED_AMOUNT",
+                        title: "Extended Amount",
+                        attributes: {
+                            style: "text-align: right;"
+                        },
+                        width: "150px",
+                        aggregates: ["sum"],
+                        groupFooterTemplate: '<span style="float:right"> #=kendo.toString(sum, "n"+ReportFilter.parseDecimalPlace("AmountRoundUpFilter").toString())#</span>',
+                        format: "{0:n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter").toString() + "}",
+                        footerTemplate: '# if (typeof sum !== "undefined") { # <span style="float:right">#= kendo.toString(sum, "n" + ReportFilter.parseDecimalPlace("QuantityRoundUpFilter")) #</span> # } #',
+
+
+                    },
+                    {
+                        field: "REMARKS",
+                        title: "Remarks",
+                        width: "110px",
+
+                    },
+
+
+                ]
+
+            });
+
+        };
+
+    function KendoGridRefresh(readUrl) {
+        $('#grid').val('');
+        $('#grid').html('');
+        BindGrid(readUrl)
+    }
+</script>
