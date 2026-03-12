@@ -1,0 +1,105 @@
+name: CI/CD - NeoErp.Distribution Plugin
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  build-and-publish:
+    name: 🏗️ Build & Publish NeoErp.Distribution
+    runs-on: windows-latest
+
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔧 Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: 🔧 Setup NuGet
+        uses: NuGet/setup-nuget@v2
+        with:
+          nuget-version: 'latest'
+
+      - name: 🗃️ Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.nuget/packages
+            ${{ github.workspace }}/**/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/packages.config', '**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      - name: 📦 Restore NuGet packages
+        run: nuget restore **/*.sln
+        shell: pwsh
+
+      - name: 🏗️ Build full solution (Release)
+        run: |
+          msbuild **/*.sln `
+            /p:Configuration=Release `
+            /p:Platform="Any CPU" `
+            /p:VisualStudioVersion=17.0 `
+            /m `
+            /verbosity:minimal
+        shell: pwsh
+
+      - name: 📂 Collect plugin into publish folder
+        run: |
+          $src  = "${{ github.workspace }}\NeoErp.Web\Areas\NeoErp.Distribution"
+          $dest = "${{ github.workspace }}\publish"
+
+          New-Item -ItemType Directory -Path $dest -Force | Out-Null
+
+          # Folders
+          $folders = @("Views","Content","Scripts","Images","fonts","js","Areas","App_Start")
+          foreach ($folder in $folders) {
+            $from = Join-Path $src $folder
+            $to   = Join-Path $dest $folder
+            if (Test-Path $from) {
+              Write-Host "Copying folder: $folder"
+              Copy-Item -Path $from -Destination $to -Recurse -Force
+            }
+          }
+
+          # bin: only NeoErp.Distribution DLLs
+          $binSrc  = Join-Path $src "bin\Release"
+          $binDest = Join-Path $dest "bin"
+          New-Item -ItemType Directory -Path $binDest -Force | Out-Null
+
+          Get-ChildItem -Path $binSrc -File |
+            Where-Object { $_.Name -match '^NeoErp\.Distribution' } |
+            ForEach-Object {
+              Write-Host "Copying DLL: $($_.Name)"
+              Copy-Item -Path $_.FullName -Destination $binDest -Force
+            }
+
+          # Root-level files
+          $rootFiles = @(
+            "Web.config","Description.txt","ProductCondition.xml",
+            "GiftItemCategory.xml","DependencyRegistrar.cs",
+            "DistributionAreaRegistration.cs","DistributionPlugin.cs","packages.config"
+          )
+          foreach ($file in $rootFiles) {
+            $from = Join-Path $src $file
+            if (Test-Path $from) {
+              Write-Host "Copying file: $file"
+              Copy-Item -Path $from -Destination $dest -Force
+            }
+          }
+
+          Write-Host "`n── publish folder contents ──"
+          Get-ChildItem -Path $dest -Recurse | Select-Object FullName
+        shell: pwsh
+
+      - name: 📤 Upload publish artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NeoErp.Distribution-v${{ github.run_number }}
+          path: ${{ github.workspace }}\publish\
+          retention-days: 30
