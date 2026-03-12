@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          
+
       - name: 🔍 Diagnose packages
         run: |
           Write-Host "=== packages folder root ==="
@@ -47,6 +47,30 @@ jobs:
           nuget restore $sln -PackagesDirectory "${{ github.workspace }}\packages" -Source "${{ github.workspace }}\packages"
         shell: pwsh
 
+      - name: 🏗️ Build NeoErp.Web (Release)
+        run: |
+          $roslynPath = (Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio" `
+            -Recurse -Filter "csc.exe" | `
+            Where-Object { $_.FullName -match "Roslyn" } | `
+            Select-Object -First 1).DirectoryName
+
+          $csproj = (Get-ChildItem -Recurse -Filter "*.csproj" | `
+            Where-Object { $_.FullName -match "NeoErp.Web" } | `
+            Select-Object -First 1).FullName
+          Write-Host "Found project: $csproj"
+
+          msbuild $csproj `
+            /p:Configuration=Release `
+            /p:Platform="AnyCPU" `
+            /p:VisualStudioVersion=17.0 `
+            /p:RestorePackages=false `
+            /p:SolutionDir="${{ github.workspace }}\\" `
+            /p:CscToolPath="$roslynPath" `
+            /p:CscToolExe="csc.exe" `
+            /m `
+            /verbosity:minimal
+        shell: pwsh
+        
       - name: 🏗️ Build full solution (Release)
         run: |
           $roslynPath = (Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio" `
