@@ -17,100 +17,26 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: 🔍 Verify DLLs on runner
-        run: |
-          $ef   = Test-Path "${{ github.workspace }}\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.dll"
-          $json = Test-Path "${{ github.workspace }}\packages\Newtonsoft.Json.7.0.1\lib\net45\Newtonsoft.Json.dll"
-          $ora  = Test-Path "${{ github.workspace }}\packages\Oracle.OracleClient.4.121.2\lib\net40\Oracle.ManagedDataAccess.dll"
-
-          Write-Host "EntityFramework.dll present : $ef"
-          Write-Host "Newtonsoft.Json.dll present : $json"
-          Write-Host "Oracle.ManagedDataAccess.dll present : $ora"
-
-          Write-Host "`n=== Total files checked out in packages ==="
-          (Get-ChildItem "${{ github.workspace }}\packages" -Recurse -Filter "*.dll" | Measure-Object).Count
-        shell: pwsh
-        
-      - name: 🔍 Diagnose packages
-        run: |
-          Write-Host "=== packages folder root ==="
-          Get-ChildItem "${{ github.workspace }}\packages" | Select-Object Name
-
-          Write-Host "`n=== EntityFramework in packages? ==="
-          Get-ChildItem "${{ github.workspace }}\packages" -Recurse -Filter "EntityFramework.dll" | Select-Object FullName
-
-          Write-Host "`n=== Newtonsoft in packages? ==="
-          Get-ChildItem "${{ github.workspace }}\packages" -Recurse -Filter "Newtonsoft.Json.dll" | Select-Object FullName
-
-          Write-Host "`n=== HintPaths in NeoErp.Data.csproj ==="
-          $csproj = Get-Content "${{ github.workspace }}\Core\NeoErp.Data\NeoErp.Data.csproj"
-          $csproj | Select-String "HintPath"
-        shell: pwsh
-
       - name: 🔧 Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-    #   - name: 🔧 Setup NuGet
-    #     uses: NuGet/setup-nuget@v2
-    #     with:
-    #       nuget-version: 'latest'
+      - name: 🔧 Setup NuGet
+        uses: NuGet/setup-nuget@v2
 
-    #   - name: 📦 Restore NuGet packages (local source)
-    #     run: |
-    #       $sln = (Get-ChildItem -Recurse -Filter "*.sln" | Select-Object -First 1).FullName
-    #       nuget restore $sln -PackagesDirectory "${{ github.workspace }}\packages" -Source "${{ github.workspace }}\packages"
-    #     shell: pwsh
-
-      - name: 🔍 Verify packages on runner
-        run: |
-          Write-Host "=== Does packages folder exist? ==="
-          Test-Path "${{ github.workspace }}\packages"
-
-          Write-Host "`n=== EntityFramework ==="
-          Test-Path "${{ github.workspace }}\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.dll"
-
-          Write-Host "`n=== Newtonsoft ==="
-          Test-Path "${{ github.workspace }}\packages\Newtonsoft.Json.7.0.1\lib\net45\Newtonsoft.Json.dll"
-
-          Write-Host "`n=== Oracle ==="
-          Test-Path "${{ github.workspace }}\packages\Oracle.OracleClient.4.121.2\lib\net40\Oracle.ManagedDataAccess.dll"
-
-          Write-Host "`n=== packages folder size ==="
-          (Get-ChildItem "${{ github.workspace }}\packages" -Recurse | Measure-Object).Count
-        shell: pwsh
-
-      - name: 🧹 Clean solution
-        run: |
-          $roslynPath = (Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio" `
-            -Recurse -Filter "csc.exe" | `
-            Where-Object { $_.FullName -match "Roslyn" } | `
-            Select-Object -First 1).DirectoryName
-
-          $csproj = (Get-ChildItem -Recurse -Filter "*.csproj" | `
-            Where-Object { $_.FullName -match "NeoErp.Web" } | `
-            Select-Object -First 1).FullName
-          Write-Host "Cleaning project: $csproj"
-
-          msbuild $csproj `
-            /t:Clean `
-            /p:Configuration=Release `
-            /p:Platform="AnyCPU" `
-            /p:SolutionDir="${{ github.workspace }}\\" `
-            /p:CscToolPath="$roslynPath" `
-            /p:CscToolExe="csc.exe" `
-            /verbosity:minimal
-        shell: pwsh
+      # This step is critical. It links the packages to the MSBuild context.
+      - name: 📦 Restore NuGet Packages
+        run: nuget restore NeoErp.sln  # <-- Replace with your actual Solution file name (.sln)
 
       - name: 🏗️ Build NeoErp.Web (Release)
         run: |
+          # Dynamically find the Roslyn path for modern C# features
           $roslynPath = (Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio" `
             -Recurse -Filter "csc.exe" | `
             Where-Object { $_.FullName -match "Roslyn" } | `
             Select-Object -First 1).DirectoryName
 
-          $csproj = (Get-ChildItem -Recurse -Filter "*.csproj" | `
-            Where-Object { $_.FullName -match "NeoErp.Web" } | `
-            Select-Object -First 1).FullName
+          # Identify the project to build
+          $csproj = (Get-ChildItem -Recurse -Filter "NeoErp.Web.csproj" | Select-Object -First 1).FullName
           Write-Host "Building project: $csproj"
 
           msbuild $csproj `
@@ -118,7 +44,6 @@ jobs:
             /p:Configuration=Release `
             /p:Platform="AnyCPU" `
             /p:VisualStudioVersion=17.0 `
-            /p:RestorePackages=false `
             /p:SolutionDir="${{ github.workspace }}\\" `
             /p:CscToolPath="$roslynPath" `
             /p:CscToolExe="csc.exe" `
@@ -133,7 +58,7 @@ jobs:
 
           New-Item -ItemType Directory -Path $dest -Force | Out-Null
 
-          # Folders
+          # Copy Standard Folders
           $folders = @("Views","Content","Scripts","Images","fonts","js","Areas","App_Start")
           foreach ($folder in $folders) {
             $from = Join-Path $src $folder
@@ -144,8 +69,9 @@ jobs:
             }
           }
 
-          # bin: only NeoErp.Distribution DLLs
-          $binSrc  = Join-Path $src "bin\Release"
+          # bin: only NeoErp.Distribution DLLs from the build output
+          # Note: We look in NeoErp.Web\bin because that's where MSBuild outputs the final binaries
+          $binSrc  = "${{ github.workspace }}\NeoErp.Web\bin"
           $binDest = Join-Path $dest "bin"
           New-Item -ItemType Directory -Path $binDest -Force | Out-Null
 
