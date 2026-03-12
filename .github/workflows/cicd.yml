@@ -31,60 +31,46 @@ jobs:
           nuget restore "$sln" -PackagesDirectory "${{ github.workspace }}\packages"
         shell: pwsh
 
-      - name: 🧹 Clean Project Files (Fix HintPaths)
+      - name: 🧹 Clean Project Files (Absolute Path Fix)
         run: |
-          # This script finds all .csproj files and removes the directory prefix from HintPaths
-          # Changing '..\..\packages\' to just 'packages\' so MSBuild can find them relative to the solution
           Get-ChildItem -Recurse -Filter "*.csproj" | ForEach-Object {
             $content = Get-Content $_.FullName
-            $content = $content -replace '\.\.\\\.\.\\packages\\', 'D:\a\dnm\dnm\packages\'
-            $content = $content -replace '\.\.\\packages\\', 'D:\a\dnm\dnm\packages\'
+            # This regex replaces any variation of ../packages/ with the absolute workspace path
+            # It targets both HintPaths and Import Project paths
+            $absolutePath = "D:\a\dnm\dnm\packages\"
+            $content = $content -replace 'Include="..\\..\\packages\\', "Include=""$absolutePath"
+            $content = $content -replace 'Include="..\\packages\\', "Include=""$absolutePath"
+            $content = $content -replace 'Project="..\\..\\packages\\', "Project=""$absolutePath"
+            $content = $content -replace 'Project="..\\packages\\', "Project=""$absolutePath"
+            $content = $content -replace '<HintPath>..\\..\\packages\\', "<HintPath>$absolutePath"
+            $content = $content -replace '<HintPath>..\\packages\\', "<HintPath>$absolutePath"
+            
             $content | Set-Content $_.FullName
-            Write-Host "Fixed HintPaths in $($_.Name)"
+            Write-Host "Fixed absolute paths in $($_.Name)"
           }
         shell: pwsh
 
-      - name: 🏗️ Build Solution (Final Force Mode)
+      - name: 🏗️ Build Solution
         run: |
-          # 1. Locate Roslyn
           $roslynPath = (Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio" `
             -Recurse -Filter "csc.exe" | `
             Where-Object { $_.FullName -match "Roslyn" } | `
             Select-Object -First 1).DirectoryName
 
           $sln = (Get-ChildItem -Filter "*.sln" | Select-Object -First 1).FullName
-          
-          # 2. Find the SPECIFIC DLLs that are failing
-          # We search for the best matches in the packages folder
-          $efDll = (Get-ChildItem -Path "D:\a\dnm\dnm\packages" -Recurse -Filter "EntityFramework.dll" | Select-Object -First 1).FullName
-          $jsonDll = (Get-ChildItem -Path "D:\a\dnm\dnm\packages" -Recurse -Filter "Newtonsoft.Json.dll" | Select-Object -First 1).FullName
-          $oracleDll = (Get-ChildItem -Path "D:\a\dnm\dnm\packages" -Recurse -Filter "Oracle.ManagedDataAccess.dll" | Select-Object -First 1).FullName
-          
-          Write-Host "Manually mapped EntityFramework to: $efDll"
-          Write-Host "Manually mapped Newtonsoft to: $jsonDll"
 
-          # 3. Create a Response File
-          # We use /reference to force-feed the DLLs to the compiler
-          $rspContent = @"
-          /p:Configuration=Release
-          /p:Platform="Any CPU"
-          /p:VisualStudioVersion=17.0
-          /p:SolutionDir="D:\a\dnm\dnm\\"
-          /p:AdditionalLibPaths="D:\a\dnm\dnm\packages"
-          /p:CscToolPath="$roslynPath"
-          /p:CscToolExe="csc.exe"
-          /p:RestorePackages=false
-          /p:Unsafe=true
-          /m
-          /verbosity:minimal
-          "@
-          $rspContent | Out-File -FilePath "build.rsp" -Encoding utf8
-
-          # 4. Run MSBuild
-          # We also pass the specific references as properties
-          msbuild "$sln" /t:Rebuild "@build.rsp" `
-            /p:ReferencePath="D:\a\dnm\dnm\packages" `
-            /p:ForceImportBeforeCppTargets="$(pwd)\force.targets"
+          msbuild "$sln" `
+            /t:Rebuild `
+            /p:Configuration=Release `
+            /p:Platform="Any CPU" `
+            /p:VisualStudioVersion=17.0 `
+            /p:SolutionDir="D:\a\dnm\dnm\\" `
+            /p:CscToolPath="$roslynPath" `
+            /p:CscToolExe="csc.exe" `
+            /p:RestorePackages=false `
+            /p:ForceFullPaths=true `
+            /m `
+            /verbosity:minimal
         shell: pwsh
 
       - name: 📂 Collect plugin into publish folder
