@@ -71,18 +71,36 @@ jobs:
 
       - name: 🏗️ Build Solution
         run: |
-            $sln = (Get-ChildItem -Filter "*.sln" | Select-Object -First 1).FullName
-            msbuild $sln `
+          # 1. Dynamically locate MSBuild
+          $msbuildPath = (Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio" `
+            -Recurse -Filter "MSBuild.exe" | `
+            Where-Object { $_.FullName -match "Bin" } | `
+            Select-Object -First 1).FullName
+          
+          # 2. Locate Roslyn Compiler (csc.exe)
+          $roslynPath = (Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio" `
+            -Recurse -Filter "csc.exe" | `
+            Where-Object { $_.FullName -match "Roslyn" } | `
+            Select-Object -First 1).DirectoryName
+
+          $sln = (Get-ChildItem -Filter "*.sln" | Select-Object -First 1).FullName
+          Write-Host "Using MSBuild: $msbuildPath"
+          Write-Host "Building: $sln"
+
+          # 3. Execute Build
+          & $msbuildPath "$sln" `
             /t:Rebuild `
             /p:Configuration=Release `
             /p:Platform="Any CPU" `
+            /p:VisualStudioVersion=17.0 `
+            /p:SolutionDir="${{ github.workspace }}\\" `
+            /p:CscToolPath="$roslynPath" `
+            /p:CscToolExe="csc.exe" `
             /p:RestorePackages=false `
-            /p:SolutionDir="D:\a\dnm\dnm\\" `
-            /p:RestorePackagesPath="D:\a\dnm\dnm\packages" `
+            /p:ForceFullPaths=true `
             /m `
             /verbosity:minimal
         shell: pwsh
-
 
       - name: 📂 Collect plugin into publish folder
         run: |
