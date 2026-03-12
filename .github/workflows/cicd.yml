@@ -48,20 +48,26 @@ jobs:
 
       - name: 🏗️ Build Solution
         run: |
-          # 1. Locate the correct Roslyn compiler path for VS 2022
+          # 1. Locate MSBuild.exe
+          $msbuildPath = (Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio" `
+            -Recurse -Filter "MSBuild.exe" | `
+            Where-Object { $_.FullName -match "Bin" } | `
+            Select-Object -First 1).FullName
+          
+          Write-Host "Found MSBuild at: $msbuildPath"
+
+          # 2. Locate the correct Roslyn compiler path
           $roslynPath = (Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio" `
             -Recurse -Filter "csc.exe" | `
             Where-Object { $_.FullName -match "Roslyn" } | `
             Select-Object -First 1).DirectoryName
 
-          # 2. Identify the solution file
+          # 3. Identify the solution file
           $sln = (Get-ChildItem -Filter "*.sln" | Select-Object -First 1).FullName
           Write-Host "Building Solution: $sln"
 
-          # 3. Execute MSBuild with necessary legacy flags
-          # ForceFullPaths ensures error reporting is accurate
-          # CscToolPath ensures we use the modern compiler for .NET 4.8
-          msbuild "$sln" `
+          # 4. Execute MSBuild using the & operator
+          & $msbuildPath "$sln" `
             /t:Rebuild `
             /p:Configuration=Release `
             /p:Platform="Any CPU" `
