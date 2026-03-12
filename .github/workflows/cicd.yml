@@ -31,7 +31,7 @@ jobs:
           nuget restore "$sln" -PackagesDirectory "${{ github.workspace }}\packages"
         shell: pwsh
 
-      - name: 🏗️ Build Solution (Response File Mode)
+      - name: 🏗️ Build Solution (Environment Override Mode)
         run: |
           # 1. Locate Roslyn
           $roslynPath = (Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio" `
@@ -39,23 +39,25 @@ jobs:
             Where-Object { $_.FullName -match "Roslyn" } | `
             Select-Object -First 1).DirectoryName
 
-          # 2. Find the Solution
           $sln = (Get-ChildItem -Filter "*.sln" | Select-Object -First 1).FullName
           
-          # 3. Collect paths
+          # 2. Collect every single DLL folder
           $libPaths = (Get-ChildItem -Path "${{ github.workspace }}\packages" -Recurse -Filter "*.dll" | `
                        Select-Object -ExpandProperty DirectoryName | `
                        Select-Object -Unique)
-          $refPath = $libPaths -join ";"
+          $refPathString = $libPaths -join ";"
 
-          # 4. Create a Response File (.rsp) to avoid command-line length limits
-          # We put the problematic ReferencePath property inside this file
+          # 3. SET SYSTEM-LEVEL ENVIRONMENT VARIABLES
+          # This forces the compiler (csc.exe) to look here regardless of what the .csproj says
+          $env:ReferencePath = $refPathString
+          $env:LIB = $refPathString
+
+          # 4. Create the Response File (Simplified)
           $rspContent = @"
           /p:Configuration=Release
           /p:Platform="Any CPU"
           /p:VisualStudioVersion=17.0
           /p:SolutionDir="${{ github.workspace }}\\"
-          /p:ReferencePath="$refPath"
           /p:CscToolPath="$roslynPath"
           /p:CscToolExe="csc.exe"
           /p:RestorePackages=false
@@ -64,9 +66,9 @@ jobs:
           "@
           $rspContent | Out-File -FilePath "build.rsp" -Encoding utf8
 
-          Write-Host "Injected $($libPaths.Count) paths into build.rsp. Running MSBuild..."
-
-          # 5. Run MSBuild using the @ syntax to reference the response file
+          Write-Host "Forcing ReferencePath via Environment and RSP..."
+          
+          # 5. Run MSBuild
           msbuild "$sln" /t:Rebuild "@build.rsp"
         shell: pwsh
 
