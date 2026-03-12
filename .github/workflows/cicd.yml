@@ -23,35 +23,34 @@ jobs:
       - name: 🔧 Setup NuGet
         uses: NuGet/setup-nuget@v2
 
-      # Automatically finds the .sln file and restores it
       - name: 📦 Restore NuGet Packages
         run: |
           $sln = (Get-ChildItem -Filter "*.sln" | Select-Object -First 1).FullName
           Write-Host "Restoring solution: $sln"
-          nuget restore "$sln"
+          # Force restore even if it thinks they exist
+          nuget restore "$sln" -PackagesDirectory "${{ github.workspace }}\packages"
         shell: pwsh
 
-      - name: 🏗️ Build NeoErp.Web (Release)
+      - name: 🏗️ Build Solution
         run: |
-          # Find Roslyn compiler path
           $roslynPath = (Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio" `
             -Recurse -Filter "csc.exe" | `
             Where-Object { $_.FullName -match "Roslyn" } | `
             Select-Object -First 1).DirectoryName
 
-          # Find the Web project
-          $csproj = (Get-ChildItem -Recurse -Filter "NeoErp.Web.csproj" | Select-Object -First 1).FullName
-          Write-Host "Building project: $csproj"
+          $sln = (Get-ChildItem -Filter "*.sln" | Select-Object -First 1).FullName
+          Write-Host "Building Solution: $sln"
 
-          msbuild $csproj `
+          # Building the SLN instead of CSPROJ ensures NeoErp.Data is built with correct references
+          msbuild "$sln" `
             /t:Rebuild `
             /p:Configuration=Release `
             /p:Platform="AnyCPU" `
             /p:VisualStudioVersion=17.0 `
-            /p:SolutionDir="${{ github.workspace }}\\" `
             /p:CscToolPath="$roslynPath" `
             /p:CscToolExe="csc.exe" `
-            /m `
+            /p:RestorePackages=false `
+            /p:MaxCpuCount=1 `
             /verbosity:minimal
         shell: pwsh
 
@@ -59,7 +58,6 @@ jobs:
         run: |
           $src  = "${{ github.workspace }}\NeoErp.Web\Areas\NeoErp.Distribution"
           $dest = "${{ github.workspace }}\publish"
-
           New-Item -ItemType Directory -Path $dest -Force | Out-Null
 
           # Standard Folders
@@ -68,12 +66,11 @@ jobs:
             $from = Join-Path $src $folder
             $to   = Join-Path $dest $folder
             if (Test-Path $from) {
-              Write-Host "Copying folder: $folder"
               Copy-Item -Path $from -Destination $to -Recurse -Force
             }
           }
 
-          # bin: focus on output DLLs
+          # bin: Grab DLLs from the Web bin (where they end up after build)
           $binSrc  = "${{ github.workspace }}\NeoErp.Web\bin"
           $binDest = Join-Path $dest "bin"
           New-Item -ItemType Directory -Path $binDest -Force | Out-Null
@@ -81,28 +78,15 @@ jobs:
           if (Test-Path $binSrc) {
             Get-ChildItem -Path $binSrc -File |
               Where-Object { $_.Name -match '^NeoErp\.Distribution' } |
-              ForEach-Object {
-                Write-Host "Copying DLL: $($_.Name)"
-                Copy-Item -Path $_.FullName -Destination $binDest -Force
-              }
+              ForEach-Object { Copy-Item -Path $_.FullName -Destination $binDest -Force }
           }
 
           # Root-level files
-          $rootFiles = @(
-            "Web.config","Description.txt","ProductCondition.xml",
-            "GiftItemCategory.xml","DependencyRegistrar.cs",
-            "DistributionAreaRegistration.cs","DistributionPlugin.cs","packages.config"
-          )
+          $rootFiles = @("Web.config","Description.txt","ProductCondition.xml","packages.config")
           foreach ($file in $rootFiles) {
             $from = Join-Path $src $file
-            if (Test-Path $from) {
-              Write-Host "Copying file: $file"
-              Copy-Item -Path $from -Destination $dest -Force
-            }
+            if (Test-Path $from) { Copy-Item -Path $from -Destination $dest -Force }
           }
-
-          Write-Host "`n── publish folder contents ──"
-          Get-ChildItem -Path $dest -Recurse | Select-Object FullName
         shell: pwsh
 
       - name: 📤 Upload publish artifact
@@ -110,4 +94,4 @@ jobs:
         with:
           name: NeoErp.Distribution-v${{ github.run_number }}
           path: ${{ github.workspace }}\publish\
-          retention-days: 30
+          retention-days: 15
