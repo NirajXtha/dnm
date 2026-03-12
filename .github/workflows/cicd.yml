@@ -31,7 +31,7 @@ jobs:
           nuget restore "$sln" -PackagesDirectory "${{ github.workspace }}\packages"
         shell: pwsh
 
-      - name: 🏗️ Build Solution (Aggressive Reference Mode)
+      - name: 🏗️ Build Solution (Response File Mode)
         run: |
           # 1. Locate Roslyn
           $roslynPath = (Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio" `
@@ -39,34 +39,35 @@ jobs:
             Where-Object { $_.FullName -match "Roslyn" } | `
             Select-Object -First 1).DirectoryName
 
-          # 2. Find the Solution file
+          # 2. Find the Solution
           $sln = (Get-ChildItem -Filter "*.sln" | Select-Object -First 1).FullName
           
-          # 3. AGGRESSIVE: Find every folder inside /packages that contains a .dll
-          # This bypasses broken "..\..\packages" paths in your .csproj files
-          Write-Host "Searching for DLL libraries in packages folder..."
+          # 3. Collect paths
           $libPaths = (Get-ChildItem -Path "${{ github.workspace }}\packages" -Recurse -Filter "*.dll" | `
                        Select-Object -ExpandProperty DirectoryName | `
                        Select-Object -Unique)
-          
           $refPath = $libPaths -join ";"
-          Write-Host "Injecting $($libPaths.Count) unique library paths into MSBuild."
 
-          # 4. Run MSBuild
-          # ReferencePath: Overrides the HintPath inside the project files
-          # SolutionDir: Ensures $(SolutionDir) macros resolve to the root
-          msbuild "$sln" `
-            /t:Rebuild `
-            /p:Configuration=Release `
-            /p:Platform="Any CPU" `
-            /p:VisualStudioVersion=17.0 `
-            /p:SolutionDir="${{ github.workspace }}\\" `
-            /p:ReferencePath="$refPath" `
-            /p:CscToolPath="$roslynPath" `
-            /p:CscToolExe="csc.exe" `
-            /p:RestorePackages=false `
-            /m `
-            /verbosity:minimal
+          # 4. Create a Response File (.rsp) to avoid command-line length limits
+          # We put the problematic ReferencePath property inside this file
+          $rspContent = @"
+          /p:Configuration=Release
+          /p:Platform="Any CPU"
+          /p:VisualStudioVersion=17.0
+          /p:SolutionDir="${{ github.workspace }}\\"
+          /p:ReferencePath="$refPath"
+          /p:CscToolPath="$roslynPath"
+          /p:CscToolExe="csc.exe"
+          /p:RestorePackages=false
+          /m
+          /verbosity:minimal
+          "@
+          $rspContent | Out-File -FilePath "build.rsp" -Encoding utf8
+
+          Write-Host "Injected $($libPaths.Count) paths into build.rsp. Running MSBuild..."
+
+          # 5. Run MSBuild using the @ syntax to reference the response file
+          msbuild "$sln" /t:Rebuild "@build.rsp"
         shell: pwsh
 
       - name: 📂 Collect plugin into publish folder
