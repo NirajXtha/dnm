@@ -31,7 +31,7 @@ jobs:
           nuget restore "$sln" -PackagesDirectory "${{ github.workspace }}\packages"
         shell: pwsh
 
-      - name: 🏗️ Build Solution (Environment Override Mode)
+      - name: 🏗️ Build Solution (Search Path Mode)
         run: |
           # 1. Locate Roslyn
           $roslynPath = (Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio" `
@@ -41,23 +41,22 @@ jobs:
 
           $sln = (Get-ChildItem -Filter "*.sln" | Select-Object -First 1).FullName
           
-          # 2. Collect every single DLL folder
+          # 2. Gather every single lib folder (Recursive)
           $libPaths = (Get-ChildItem -Path "${{ github.workspace }}\packages" -Recurse -Filter "*.dll" | `
                        Select-Object -ExpandProperty DirectoryName | `
                        Select-Object -Unique)
-          $refPathString = $libPaths -join ";"
+          
+          # 3. Create a special 'AssemblySearchPaths' property
+          # {CandidateAssemblyFiles} and {HintPathFromItem} are the defaults we want to supplement
+          $searchPaths = ($libPaths -join ";") + ";{CandidateAssemblyFiles};{HintPathFromItem};{RawFileName};{GAC}"
 
-          # 3. SET SYSTEM-LEVEL ENVIRONMENT VARIABLES
-          # This forces the compiler (csc.exe) to look here regardless of what the .csproj says
-          $env:ReferencePath = $refPathString
-          $env:LIB = $refPathString
-
-          # 4. Create the Response File (Simplified)
+          # 4. Create the Response File
           $rspContent = @"
           /p:Configuration=Release
           /p:Platform="Any CPU"
           /p:VisualStudioVersion=17.0
           /p:SolutionDir="${{ github.workspace }}\\"
+          /p:AssemblySearchPaths="$searchPaths"
           /p:CscToolPath="$roslynPath"
           /p:CscToolExe="csc.exe"
           /p:RestorePackages=false
@@ -66,7 +65,7 @@ jobs:
           "@
           $rspContent | Out-File -FilePath "build.rsp" -Encoding utf8
 
-          Write-Host "Forcing ReferencePath via Environment and RSP..."
+          Write-Host "Forcing MSBuild to search $($libPaths.Count) NuGet folders first..."
           
           # 5. Run MSBuild
           msbuild "$sln" /t:Rebuild "@build.rsp"
