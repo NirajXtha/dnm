@@ -61,14 +61,24 @@ jobs:
 
       - name: 📂 Ensure local packages are available
         run: |
-            $localPackages = "${{ github.workspace }}\packages"   # repo folder
-            $nugetPackages = "D:\a\dnm\dnm\packages"              # MSBuild working folder
+            $nugetPackages = "D:\a\dnm\dnm\packages"
 
+            # Create target folder if missing
+            New-Item -ItemType Directory -Path $nugetPackages -Force | Out-Null
+
+            # Copy packages from each project folder into the MSBuild packages folder
+            $projectPackages = @(
+            "${{ github.workspace }}\NeoErp.Web\packages",
+            "${{ github.workspace }}\NeoErp.Data\packages"
+            )
+
+            foreach ($localPackages in $projectPackages) {
             if (Test-Path $localPackages) {
-            Write-Host "Copying local packages from $localPackages to $nugetPackages"
-            Copy-Item -Path "$localPackages\*" -Destination $nugetPackages -Recurse -Force
+                Write-Host "Copying local packages from $localPackages to $nugetPackages"
+                Copy-Item -Path "$localPackages\*" -Destination $nugetPackages -Recurse -Force
             } else {
-            Write-Host "No local packages folder found in repo."
+                Write-Host "No local packages folder found at $localPackages"
+            }
             }
         shell: pwsh
 
