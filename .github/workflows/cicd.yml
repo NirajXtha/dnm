@@ -33,20 +33,25 @@ jobs:
 
       - name: 🏗️ Build Solution
         run: |
+          # Find Roslyn compiler
           $roslynPath = (Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio" `
             -Recurse -Filter "csc.exe" | `
             Where-Object { $_.FullName -match "Roslyn" } | `
             Select-Object -First 1).DirectoryName
 
           $sln = (Get-ChildItem -Filter "*.sln" | Select-Object -First 1).FullName
-          
-          # We force MSBuild to look at our specific packages folder
+          Write-Host "Building Solution: $sln"
+
+          # Use MSBuild with explicit package overrides
+          # The key is ReferencePath, which tells MSBuild where to look for DLLs 
+          # when the HintPath in the .csproj is wrong.
           msbuild "$sln" `
             /t:Rebuild `
             /p:Configuration=Release `
             /p:Platform="Any CPU" `
             /p:VisualStudioVersion=17.0 `
             /p:SolutionDir="${{ github.workspace }}\\" `
+            /p:ReferencePath="${{ github.workspace }}\packages" `
             /p:NuGetPackagesDirectory="${{ github.workspace }}\packages" `
             /p:CscToolPath="$roslynPath" `
             /p:CscToolExe="csc.exe" `
