@@ -12,38 +12,34 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: ⬇️ Checkout repository
+      - name: 🛒 Checkout Repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: 🔧 Setup MSBuild
-        uses: microsoft/setup-msbuild@v2
 
       - name: 🔧 Setup NuGet
         uses: NuGet/setup-nuget@v2
+        with:
+          nuget-version: 'latest'
 
       - name: 📦 Restore NuGet Packages
-        run: |
-          $sln = (Get-ChildItem -Filter "*.sln" | Select-Object -First 1).FullName
-          # Create a local packages folder at the root
-          New-Item -ItemType Directory -Path "${{ github.workspace }}\packages" -Force
-          nuget restore "$sln" -PackagesDirectory "${{ github.workspace }}\packages"
+        run: nuget restore (Get-ChildItem -Filter "*.sln" | Select-Object -First 1).FullName
         shell: pwsh
 
-      - name: 🧹 Clean Project Files (Absolute Path Fix)
+      - name: 🧹 Clean Project Files (Fix Absolute HintPaths)
         run: |
+          # This script rewrites every .csproj to use absolute paths on the D: drive
+          # It fixes both DLL references (HintPath) and Build Tools (Import Project)
           Get-ChildItem -Recurse -Filter "*.csproj" | ForEach-Object {
             $content = Get-Content $_.FullName
-            # This regex replaces any variation of ../packages/ with the absolute workspace path
-            # It targets both HintPaths and Import Project paths
             $absolutePath = "D:\a\dnm\dnm\packages\"
-            $content = $content -replace 'Include="..\\..\\packages\\', "Include=""$absolutePath"
-            $content = $content -replace 'Include="..\\packages\\', "Include=""$absolutePath"
-            $content = $content -replace 'Project="..\\..\\packages\\', "Project=""$absolutePath"
-            $content = $content -replace 'Project="..\\packages\\', "Project=""$absolutePath"
-            $content = $content -replace '<HintPath>..\\..\\packages\\', "<HintPath>$absolutePath"
-            $content = $content -replace '<HintPath>..\\packages\\', "<HintPath>$absolutePath"
+            
+            # Replace relative paths with the absolute workspace path
+            # Covers HintPaths, Include paths, and Project Import paths
+            $content = $content -replace 'Include="\.\.\\\.\.\\packages\\', "Include=""$absolutePath"
+            $content = $content -replace 'Include="\.\.\\packages\\', "Include=""$absolutePath"
+            $content = $content -replace 'Project="\.\.\\\.\.\\packages\\', "Project=""$absolutePath"
+            $content = $content -replace 'Project="\.\.\\packages\\', "Project=""$absolutePath"
+            $content = $content -replace '<HintPath>\.\.\\\.\.\\packages\\', "<HintPath>$absolutePath"
+            $content = $content -replace '<HintPath>\.\.\\packages\\', "<HintPath>$absolutePath"
             
             $content | Set-Content $_.FullName
             Write-Host "Fixed absolute paths in $($_.Name)"
@@ -52,13 +48,19 @@ jobs:
 
       - name: 🏗️ Build Solution
         run: |
+          # 1. Locate the correct Roslyn compiler path for VS 2022
           $roslynPath = (Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio" `
             -Recurse -Filter "csc.exe" | `
             Where-Object { $_.FullName -match "Roslyn" } | `
             Select-Object -First 1).DirectoryName
 
+          # 2. Identify the solution file
           $sln = (Get-ChildItem -Filter "*.sln" | Select-Object -First 1).FullName
+          Write-Host "Building Solution: $sln"
 
+          # 3. Execute MSBuild with necessary legacy flags
+          # ForceFullPaths ensures error reporting is accurate
+          # CscToolPath ensures we use the modern compiler for .NET 4.8
           msbuild "$sln" `
             /t:Rebuild `
             /p:Configuration=Release `
