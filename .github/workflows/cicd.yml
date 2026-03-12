@@ -26,8 +26,8 @@ jobs:
       - name: 📦 Restore NuGet Packages
         run: |
           $sln = (Get-ChildItem -Filter "*.sln" | Select-Object -First 1).FullName
-          Write-Host "Restoring solution: $sln"
-          # Explicitly pointing to the packages directory helps MSBuild resolve HintPaths
+          # Create a local packages folder at the root
+          New-Item -ItemType Directory -Path "${{ github.workspace }}\packages" -Force
           nuget restore "$sln" -PackagesDirectory "${{ github.workspace }}\packages"
         shell: pwsh
 
@@ -39,19 +39,17 @@ jobs:
             Select-Object -First 1).DirectoryName
 
           $sln = (Get-ChildItem -Filter "*.sln" | Select-Object -First 1).FullName
-          Write-Host "Building Solution: $sln"
-
-          # NOTE: "Any CPU" (with space) is required for .sln files 
-          # "AnyCPU" (no space) is usually for .csproj files
+          
+          # We force MSBuild to look at our specific packages folder
           msbuild "$sln" `
             /t:Rebuild `
             /p:Configuration=Release `
             /p:Platform="Any CPU" `
             /p:VisualStudioVersion=17.0 `
             /p:SolutionDir="${{ github.workspace }}\\" `
+            /p:NuGetPackagesDirectory="${{ github.workspace }}\packages" `
             /p:CscToolPath="$roslynPath" `
             /p:CscToolExe="csc.exe" `
-            /p:RestorePackages=false `
             /m `
             /verbosity:minimal
         shell: pwsh
@@ -62,31 +60,30 @@ jobs:
           $dest = "${{ github.workspace }}\publish"
           New-Item -ItemType Directory -Path $dest -Force | Out-Null
 
-          # Standard folders to copy
+          # Copy essential folders
           $folders = @("Views","Content","Scripts","Images","fonts","js","Areas","App_Start")
           foreach ($folder in $folders) {
-            $from = Join-Path $src $folder
-            if (Test-Path $from) {
-              Copy-Item -Path $from -Destination (Join-Path $dest $folder) -Recurse -Force
+            $path = Join-Path $src $folder
+            if (Test-Path $path) {
+              Copy-Item -Path $path -Destination (Join-Path $dest $folder) -Recurse -Force
             }
           }
 
-          # bin: Grab DLLs from the Web bin where they are compiled
+          # bin: Grab the compiled DLLs from the Web project's bin
           $binSrc  = "${{ github.workspace }}\NeoErp.Web\bin"
           $binDest = Join-Path $dest "bin"
           New-Item -ItemType Directory -Path $binDest -Force | Out-Null
-
           if (Test-Path $binSrc) {
-            Get-ChildItem -Path $binSrc -File |
-              Where-Object { $_.Name -match '^NeoErp\.Distribution' } |
-              ForEach-Object { Copy-Item -Path $_.FullName -Destination $binDest -Force }
+            Get-ChildItem -Path $binSrc -File | Where-Object { $_.Name -match '^NeoErp\.Distribution' } | ForEach-Object {
+              Copy-Item -Path $_.FullName -Destination $binDest -Force
+            }
           }
 
-          # Root files
-          $rootFiles = @("Web.config","Description.txt","ProductCondition.xml","packages.config")
+          # Root config files
+          $rootFiles = @("Web.config","Description.txt","ProductCondition.xml")
           foreach ($file in $rootFiles) {
-            $from = Join-Path $src $file
-            if (Test-Path $from) { Copy-Item -Path $from -Destination $dest -Force }
+            $path = Join-Path $src $file
+            if (Test-Path $path) { Copy-Item -Path $path -Destination $dest -Force }
           }
         shell: pwsh
 
