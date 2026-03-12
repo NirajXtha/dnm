@@ -17,6 +17,20 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: 🔍 Verify DLLs on runner
+        run: |
+          $ef   = Test-Path "${{ github.workspace }}\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.dll"
+          $json = Test-Path "${{ github.workspace }}\packages\Newtonsoft.Json.7.0.1\lib\net45\Newtonsoft.Json.dll"
+          $ora  = Test-Path "${{ github.workspace }}\packages\Oracle.OracleClient.4.121.2\lib\net40\Oracle.ManagedDataAccess.dll"
+
+          Write-Host "EntityFramework.dll present : $ef"
+          Write-Host "Newtonsoft.Json.dll present : $json"
+          Write-Host "Oracle.ManagedDataAccess.dll present : $ora"
+
+          Write-Host "`n=== Total files checked out in packages ==="
+          (Get-ChildItem "${{ github.workspace }}\packages" -Recurse -Filter "*.dll" | Measure-Object).Count
+        shell: pwsh
+        
       - name: 🔍 Diagnose packages
         run: |
           Write-Host "=== packages folder root ==="
@@ -64,7 +78,7 @@ jobs:
           Write-Host "`n=== packages folder size ==="
           (Get-ChildItem "${{ github.workspace }}\packages" -Recurse | Measure-Object).Count
         shell: pwsh
-        
+
       - name: 🧹 Clean solution
         run: |
           $roslynPath = (Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio" `
