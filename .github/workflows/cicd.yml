@@ -16,6 +16,22 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          
+      - name: 🔍 Diagnose packages
+        run: |
+          Write-Host "=== packages folder root ==="
+          Get-ChildItem "${{ github.workspace }}\packages" | Select-Object Name
+
+          Write-Host "`n=== EntityFramework in packages? ==="
+          Get-ChildItem "${{ github.workspace }}\packages" -Recurse -Filter "EntityFramework.dll" | Select-Object FullName
+
+          Write-Host "`n=== Newtonsoft in packages? ==="
+          Get-ChildItem "${{ github.workspace }}\packages" -Recurse -Filter "Newtonsoft.Json.dll" | Select-Object FullName
+
+          Write-Host "`n=== HintPaths in NeoErp.Data.csproj ==="
+          $csproj = Get-Content "${{ github.workspace }}\Core\NeoErp.Data\NeoErp.Data.csproj"
+          $csproj | Select-String "HintPath"
+        shell: pwsh
 
       - name: 🔧 Setup MSBuild
         uses: microsoft/setup-msbuild@v2
