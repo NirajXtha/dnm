@@ -45,41 +45,34 @@ jobs:
             Write-Host "Fixed absolute paths in $($_.Name)"
           }
         shell: pwsh
+      - name: 📂 Ensure local packages are available
+        run: |
+            $localPackages = "${{ github.workspace }}\packages"
+            $nugetPackages = "D:\a\dnm\dnm\packages"
+
+            # Create target folder if missing
+            New-Item -ItemType Directory -Path $nugetPackages -Force | Out-Null
+
+            # Copy all local packages into the MSBuild packages folder
+            Copy-Item -Path "$localPackages\*" -Destination $nugetPackages -Recurse -Force
+
+            Write-Host "Copied local packages to $nugetPackages"
+        shell: pwsh
 
       - name: 🏗️ Build Solution
         run: |
-          # 1. Locate MSBuild.exe
-          $msbuildPath = (Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio" `
-            -Recurse -Filter "MSBuild.exe" | `
-            Where-Object { $_.FullName -match "Bin" } | `
-            Select-Object -First 1).FullName
-          
-          Write-Host "Found MSBuild at: $msbuildPath"
-
-          # 2. Locate the correct Roslyn compiler path
-          $roslynPath = (Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio" `
-            -Recurse -Filter "csc.exe" | `
-            Where-Object { $_.FullName -match "Roslyn" } | `
-            Select-Object -First 1).DirectoryName
-
-          # 3. Identify the solution file
-          $sln = (Get-ChildItem -Filter "*.sln" | Select-Object -First 1).FullName
-          Write-Host "Building Solution: $sln"
-
-          # 4. Execute MSBuild using the & operator
-          & $msbuildPath "$sln" `
+            $sln = (Get-ChildItem -Filter "*.sln" | Select-Object -First 1).FullName
+            msbuild $sln `
             /t:Rebuild `
             /p:Configuration=Release `
             /p:Platform="Any CPU" `
-            /p:VisualStudioVersion=17.0 `
-            /p:SolutionDir="D:\a\dnm\dnm\\" `
-            /p:CscToolPath="$roslynPath" `
-            /p:CscToolExe="csc.exe" `
             /p:RestorePackages=false `
-            /p:ForceFullPaths=true `
+            /p:SolutionDir="D:\a\dnm\dnm\\" `
+            /p:RestorePackagesPath="D:\a\dnm\dnm\packages" `
             /m `
             /verbosity:minimal
         shell: pwsh
+
 
       - name: 📂 Collect plugin into publish folder
         run: |
