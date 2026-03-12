@@ -59,20 +59,18 @@ jobs:
             Write-Host "Copied local packages to $nugetPackages"
         shell: pwsh
 
-      - name: 🏗️ Build Solution
+      - name: 📂 Ensure local packages are available
         run: |
-            $sln = (Get-ChildItem -Filter "*.sln" | Select-Object -First 1).FullName
-            msbuild $sln `
-            /t:Rebuild `
-            /p:Configuration=Release `
-            /p:Platform="Any CPU" `
-            /p:RestorePackages=false `
-            /p:SolutionDir="D:\a\dnm\dnm\\" `
-            /p:RestorePackagesPath="D:\a\dnm\dnm\packages" `
-            /m `
-            /verbosity:minimal
-        shell: pwsh
+            $localPackages = "${{ github.workspace }}\packages"   # repo folder
+            $nugetPackages = "D:\a\dnm\dnm\packages"              # MSBuild working folder
 
+            if (Test-Path $localPackages) {
+            Write-Host "Copying local packages from $localPackages to $nugetPackages"
+            Copy-Item -Path "$localPackages\*" -Destination $nugetPackages -Recurse -Force
+            } else {
+            Write-Host "No local packages folder found in repo."
+            }
+        shell: pwsh
 
       - name: 📂 Collect plugin into publish folder
         run: |
