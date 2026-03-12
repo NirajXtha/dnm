@@ -24,6 +24,71 @@ jobs:
         run: nuget restore (Get-ChildItem -Filter "*.sln" | Select-Object -First 1).FullName
         shell: pwsh
 
+      - name: 📂 Merge local packages into runner packages folder and verify
+        run: |
+            $runnerPackages = "D:\a\dnm\dnm\packages"
+            # Ensure runner packages folder exists
+            New-Item -ItemType Directory -Path $runnerPackages -Force | Out-Null
+
+            # Find all 'packages' folders inside the checked-out repo
+            $repoPackages = Get-ChildItem -Path "${{ github.workspace }}" -Recurse -Directory -Filter packages -ErrorAction SilentlyContinue
+
+            if (-not $repoPackages) {
+            Write-Host "No packages folders found in repo."
+            } else {
+            foreach ($pkgDir in $repoPackages) {
+                $src = $pkgDir.FullName
+                # Skip if source is same as runner target
+                if ($src.TrimEnd('\') -ieq $runnerPackages.TrimEnd('\')) {
+                Write-Host "Skipping copy: source equals destination: $src"
+                continue
+                }
+                Write-Host "Copying from $src to $runnerPackages"
+                Copy-Item -Path (Join-Path $src '*') -Destination $runnerPackages -Recurse -Force
+            }
+            }
+
+            # Quick verification: list top-level package folders and check for key files
+            Write-Host "=== Runner packages folder contents (top-level) ==="
+            Get-ChildItem -Path $runnerPackages -Directory | Select-Object -First 50 | ForEach-Object { Write-Host $_.Name }
+
+            # Check for common assemblies / nupkgs that must be present
+            $checks = @(
+            "Newtonsoft.Json",
+            "EntityFramework",
+            "Oracle.ManagedDataAccess",
+            "Oracle.ManagedDataAccess.EntityFramework"
+            )
+
+            foreach ($c in $checks) {
+            $found = Get-ChildItem -Path $runnerPackages -Recurse -Filter "*$c*.nupkg" -ErrorAction SilentlyContinue
+            if ($found) {
+                Write-Host "FOUND package artifacts for $c"
+            } else {
+                $dllFound = Get-ChildItem -Path $runnerPackages -Recurse -Include "$c*.dll" -ErrorAction SilentlyContinue
+                if ($dllFound) {
+                Write-Host "FOUND DLLs for $c"
+                } else {
+                Write-Host "MISSING: $c (no nupkg or dll found in $runnerPackages)"
+                }
+            }
+            }
+
+            # Fail early if critical packages are missing (optional)
+            $missing = @()
+            foreach ($c in $checks) {
+            $exists = (Get-ChildItem -Path $runnerPackages -Recurse -Filter "*$c*.nupkg" -ErrorAction SilentlyContinue) -or
+                        (Get-ChildItem -Path $runnerPackages -Recurse -Include "$c*.dll" -ErrorAction SilentlyContinue)
+            if (-not $exists) { $missing += $c }
+            }
+            if ($missing.Count -gt 0) {
+            Write-Host "ERROR: The following critical packages are missing: $($missing -join ', ')"
+            exit 1
+            } else {
+            Write-Host "All critical packages present."
+            }
+        shell: pwsh
+
       - name: 🧹 Clean Project Files (Fix Absolute HintPaths)
         run: |
           # This script rewrites every .csproj to use absolute paths on the D: drive
@@ -71,35 +136,10 @@ jobs:
 
       - name: 🏗️ Build Solution
         run: |
-          # 1. Dynamically locate MSBuild
-          $msbuildPath = (Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio" `
-            -Recurse -Filter "MSBuild.exe" | `
-            Where-Object { $_.FullName -match "Bin" } | `
-            Select-Object -First 1).FullName
-          
-          # 2. Locate Roslyn Compiler (csc.exe)
-          $roslynPath = (Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio" `
-            -Recurse -Filter "csc.exe" | `
-            Where-Object { $_.FullName -match "Roslyn" } | `
-            Select-Object -First 1).DirectoryName
-
-          $sln = (Get-ChildItem -Filter "*.sln" | Select-Object -First 1).FullName
-          Write-Host "Using MSBuild: $msbuildPath"
-          Write-Host "Building: $sln"
-
-          # 3. Execute Build
-          & $msbuildPath "$sln" `
-            /t:Rebuild `
-            /p:Configuration=Release `
-            /p:Platform="Any CPU" `
-            /p:VisualStudioVersion=17.0 `
-            /p:SolutionDir="${{ github.workspace }}\\" `
-            /p:CscToolPath="$roslynPath" `
-            /p:CscToolExe="csc.exe" `
-            /p:RestorePackages=false `
-            /p:ForceFullPaths=true `
-            /m `
-            /verbosity:minimal
+            $msbuildPath = (Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio" -Recurse -Filter "MSBuild.exe" | Where-Object { $_.FullName -match "Bin" } | Select-Object -First 1).FullName
+            $roslynPath = (Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio" -Recurse -Filter "csc.exe" | Where-Object { $_.FullName -match "Roslyn" } | Select-Object -First 1).DirectoryName
+            $sln = (Get-ChildItem -Filter "*.sln" | Select-Object -First 1).FullName
+            & $msbuildPath "$sln" /t:Rebuild /p:Configuration=Release /p:Platform="Any CPU" /p:VisualStudioVersion=17.0 /p:SolutionDir="${{ github.workspace }}\\" /p:CscToolPath="$roslynPath" /p:CscToolExe="csc.exe" /p:RestorePackages=false /p:ForceFullPaths=true /m /verbosity:minimal
         shell: pwsh
 
       - name: 📂 Collect plugin into publish folder
