@@ -22,14 +22,24 @@ jobs:
 
       - name: 🏗️ Build full solution (Release)
         run: |
+          # Find the VS 2022 Roslyn compiler path on the runner
+          $roslynPath = (Get-ChildItem -Path "C:\Program Files\Microsoft Visual Studio" `
+            -Recurse -Filter "csc.exe" | `
+            Where-Object { $_.FullName -match "Roslyn" } | `
+            Select-Object -First 1).DirectoryName
+          Write-Host "Roslyn path: $roslynPath"
+
           $sln = (Get-ChildItem -Recurse -Filter "*.sln" | Select-Object -First 1).FullName
           Write-Host "Found solution: $sln"
+
           msbuild $sln `
             /p:Configuration=Release `
             /p:Platform="Any CPU" `
             /p:VisualStudioVersion=17.0 `
             /p:RestorePackages=false `
             /p:SolutionDir="${{ github.workspace }}\\" `
+            /p:CscToolPath="$roslynPath" `
+            /p:CscToolExe="csc.exe" `
             /m `
             /verbosity:minimal
         shell: pwsh
